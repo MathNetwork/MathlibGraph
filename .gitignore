@@ -1,0 +1,44 @@
+# Mathlib4 source (cloned separately)
+mathlib4/
+
+# Independent repos
+meetings/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.synctex.gz
+*.toc
+!paper/figures/*.pdf
+_minted/
+
+# Backups
+sections_backup/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated output
+src/output/
+output/
+
+# HuggingFace cache
+.cache/
+
+# Node / docs build
+node_modules/
+.next/
+docs/out/
+
+# OS
+.DS_Store
+.vscode/

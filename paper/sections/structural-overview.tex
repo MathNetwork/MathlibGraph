@@ -1,0 +1,187 @@
+\section{Structural and Cross-Level Properties}
+\label{sec:structural-overview}
+
+The preceding section defined the three dependency graphs and reported their basic edge-level statistics. We now ask two complementary questions: (i)~do the three graphs share common structural signatures, or does each level have its own character? and (ii)~how do the three organizational systems---file boundaries, namespace boundaries, and logical dependencies---align and diverge when overlaid?
+
+The first question is addressed by five network-analytic tools applied uniformly across all three levels: degree distribution (\S\ref{sec:sa-degree}), DAG depth (\S\ref{sec:dag-depth}), centrality (\S\ref{sec:sa-centrality}), community detection (\S\ref{sec:sa-community}), and robustness (\S\ref{sec:sa-robustness}). The full analysis is reported in Appendix~\ref{sec:structural-analysis}; we summarize the key findings here. The second question is addressed by three cross-level measurements: namespace--module alignment, module cohesion, and namespace--declaration interaction. The full analysis is reported in Appendix~\ref{sec:cross_level}; this section extracts the definitions and results that are essential to the main narrative.
+
+\subsection{Structural Properties}
+\label{sec:structural-summary}
+\label{sec:graph-analysis}
+
+\input{sections/analysis}
+
+\subsubsection{Cross-Level Structural Comparison}
+
+\paragraph{Degree distributions.}
+In $G_{\mathrm{module}}$, the out-degree $\deg^{+}(m) = |\mathrm{imports}(m)|$ counts the modules that $m$ directly imports; the in-degree $\deg^{-}(m)$ counts how many others depend on~$m$. High in-degree identifies \emph{infrastructure}; high out-degree identifies an \emph{integrator}. All three graphs share heavy-tailed degree distributions in which lognormal fits outperform pure power laws, confirming that the ``few hubs, many low-degree nodes'' pattern is universal across granularities (Table~\ref{tab:degree-stats}, Table~\ref{tab:thm-degree}, Table~\ref{tab:ns-degree-stats}; Appendix~\ref{sec:sa-degree}).
+
+The key asymmetry is directional: \emph{in-degree} (how often a node is cited) is heavy-tailed and open-ended---a property of the \emph{product}---while \emph{out-degree} (how many premises a single proof invokes) is bounded by the cognitive complexity of a proof---a property of the \emph{process}. At the declaration level, the in-degree maximum is $89{,}936$ (\decl{OfNat.ofNat}) while the out-degree maximum is only~$522$; the standard deviation ratio exceeds $21:1$.
+
+\paragraph{DAG depth.}
+The DAG depth---the length of the longest directed path---reveals a striking inversion. The module graph, organized by human file boundaries, is the \emph{deepest}: $154$ topological layers. The declaration graph, determined by mathematical logic, is shallower: $84$ layers. The namespace graph is nearly flat: after SCC condensation, only $8$ layers remain (Appendix~\ref{sec:dag-depth}). Depth is thus a feature of the production \emph{process} (file organization) rather than of the mathematical \emph{product}.
+
+\paragraph{Centrality.}
+Three centrality measures---in-degree, PageRank, and betweenness---identify largely disjoint sets of important nodes at every level, demonstrating that structural importance is irreducibly multidimensional: a node can be heavily used without being foundational, and foundational without being a bridge (Tables~\ref{tab:centrality}, \ref{tab:thm-centrality}, \ref{tab:ns-centrality}; Appendix~\ref{sec:sa-centrality}).
+
+\paragraph{Community detection.}
+Louvain community detection recovers recognizable mathematical disciplines at all levels: modularity is $0.64$ (module), $0.48$ (declaration), and $0.28$ (namespace). The alignment between Louvain communities and the namespace hierarchy is moderate (NMI~$= 0.42$ at module level, $0.34$ at declaration level, $0.25$ at namespace level). Only \ns{CategoryTheory} achieves near-complete community--namespace correspondence ($97.4\%$ at the declaration level), suggesting genuine disciplinary autonomy (Appendix~\ref{sec:sa-community}).
+
+\paragraph{Robustness.}
+All three graphs exhibit the classic hub-dominated vulnerability signature: high resilience under random failure, extreme fragility under targeted attack. At $20\%$ targeted removal, the giant component shrinks to $58\%$ (module), $46\%$ (declaration), and $21\%$ (namespace). The namespace graph's heightened fragility reflects the concentration of connectivity in a small number of infrastructure namespaces (Appendix~\ref{sec:sa-robustness}).
+
+\subsection{Cross-Level Alignment}
+\label{sec:cross-level-summary}
+
+\subsubsection{Module--Declaration Interaction}
+\label{sec:cohesion-main}
+
+In $G_{\mathrm{thm}}$, each module becomes a \emph{region}---a set of declaration-vertices sharing a common source file. For each module~$m$, let $\mathcal{D}_m \subseteq \mathcal{D}$ denote its declarations. We partition the incident edges into two classes:
+\begin{align*}
+  E_{\mathrm{int}}(m) &= \{(d_1, d_2) \in E_{\mathrm{thm}} \mid d_1, d_2 \in \mathcal{D}_m\}, \\
+  E_{\mathrm{ext}}(m) &= \{(d_1, d_2) \in E_{\mathrm{thm}} \mid d_1 \in \mathcal{D}_m \oplus d_2 \in \mathcal{D}_m\},
+\end{align*}
+where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates this partition: of six dependency edges among declarations in \module{Data.Nat.Basic}, \module{Data.Nat.Defs}, and \module{Init.Prelude}, only one stays within its module---the rest pierce through file boundaries.
+
+\begin{definition}[Module cohesion]
+\label{def:cohesion}
+The \emph{cohesion} of a module~$m$ is
+\[
+  \mathrm{coh}(m) = \frac{|E_{\mathrm{int}}(m)|}{|E_{\mathrm{int}}(m)| + |E_{\mathrm{ext}}(m)|},
+\]
+with the convention that $\mathrm{coh}(m) = 0$ when $|E_{\mathrm{int}}(m)| + |E_{\mathrm{ext}}(m)| = 0$.
+\end{definition}
+
+Module cohesion is low throughout: the mean is~$0.107$ and the median is~$0.074$. Internal edges constitute only about $10\%$ of a typical module's total connectivity. If module boundaries reflected logical structure, cohesion would cluster near~$1$; the observed value indicates that file boundaries and dependency structure are only weakly aligned.
+
+The gap between the module graph and declaration-level dependencies is striking: aggregating $G_{\mathrm{thm}}$ to the module level yields $215{,}211$ cross-file edges versus $23{,}235$ in~$G_{\mathrm{module}}$---a $9.1\times$ amplification. Only $7.8\%$ of cross-file declaration dependencies correspond to a direct import; the remaining $92.2\%$ are reached through transitive chains. The module graph functions as a sparse gateway: each file declares a handful of direct imports (mean out-degree~$3.1$), but through transitivity these few edges open access to a vast dependency space. Full details are provided in Appendix~\ref{sec:cohesion}.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt, semithick},
+]
+  % Module: Data.Nat.Defs (top)
+  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (defs) at (2.1,3.0) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,3.7) {\module{Data.Nat.Defs}};
+  \node[dot] (sea) at (1.0,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.2,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+
+  % Module: Data.Nat.Basic (middle)
+  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (basic) at (2.1,1.2) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,1.9) {\module{Data.Nat.Basic}};
+  \node[dot] (ac) at (1.0,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.2,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+
+  % Module: Init.Prelude (bottom)
+  \node[modbox, minimum width=2.4cm, minimum height=0.8cm] (init) at (2.1,-0.6) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,0.0) {\module{Init.Prelude}};
+  \node[dot] (er) at (2.1,-0.6) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+
+  % Intra-module edge (solid)
+  \draw[dep] (alc) -- (ac);
+
+  % Cross-module edges (dashed)
+  \draw[depext] (sea) -- (ac);
+  \draw[depext] (ac) -- (er);
+  \draw[depext] (alc) to[out=-60,in=30] (er);
+  \draw[depext] (sea) to[out=-120,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=45] (er);
+\end{tikzpicture}
+\caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
+\label{fig:ns-vs-mod-module}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
+]
+  % Namespace: Nat (large box spanning both sets)
+  \node[nsbox, minimum width=4.6cm, minimum height=3.2cm] (nat) at (2.1,2.1) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,3.9) {\ns{Nat}};
+
+  % Top row
+  \node[dot] (sea) at (1.0,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.2,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+
+  % Bottom row
+  \node[dot] (ac) at (1.0,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.2,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+
+  % Namespace: Eq (bottom)
+  \node[nsbox, minimum width=2.4cm, minimum height=0.8cm] (eq) at (2.1,-0.6) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,0.0) {\ns{Eq}};
+  \node[dot] (er) at (2.1,-0.6) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+
+  % Intra-namespace edges (solid)
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (sea) -- (ac);
+
+  % Cross-namespace edges (dashed)
+  \draw[depext] (ac) -- (er);
+  \draw[depext] (alc) to[out=-60,in=30] (er);
+  \draw[depext] (sea) to[out=-120,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=45] (er);
+\end{tikzpicture}
+\caption{Grouped by \textcolor{green!50!black}{namespace}. $2$ of $6$ edges are intra-namespace (solid); $4$ are cross-namespace (dashed). Containment~$\approx 22.2\%$.}
+\label{fig:ns-vs-mod-namespace}
+\end{subfigure}
+\caption{The same five declarations and six dependency edges, grouped by module (a) vs.\ namespace~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries, spanning multiple files, capture more intra-group dependencies than file boundaries---explaining why containment ($22.2\%$) exceeds cohesion ($10.7\%$).}
+\label{fig:ns-vs-mod}
+\end{figure}
+
+\subsubsection{Namespace--Declaration Interaction}
+\label{sec:ns-decl-main}
+
+The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries. We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
+
+The comparison reveals a consistent ordering: namespace containment at depth~$1$ ($22.2\%$) exceeds file-level containment ($15.6\%$), which in turn exceeds module cohesion ($10.7\%$). Namespaces, as conceptual categories, retain slightly more dependency traffic than files---a naming domain like \ns{Nat} captures more intra-group dependencies than the file \module{Data.Nat.Basic}, because the namespace spans multiple files and encloses a larger set of related declarations. But all three figures are far below~$50\%$: regardless of which human boundary one draws---naming hierarchy or file system---the majority of mathematical dependencies cross it. Full details are provided in Appendix~\ref{sec:ns-decl-interaction}.
+
+\subsubsection{The Granularity Equilibrium}
+\label{sec:granularity-main}
+
+The cross-level analysis implicitly rests on a design parameter that is itself a process-trace: the granularity of modules. \module{Mathlib}'s $6{,}993$ modules contain $308{,}129$ declarations, yielding a mean of approximately $44$ declarations per module. This ratio is not determined by mathematics---it is determined by the cognitive capacity of human developers. At one extreme, one declaration per module would make $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$ ($308$K modules, unnavigable). At the other, all declarations in one module would collapse $G_{\mathrm{module}}$ to a single vertex. The current equilibrium---approximately $44$ declarations per module, cohesion~$0.107$, $9.1\times$ edge amplification---represents a compromise shaped by human cognitive constraints. The same argument applies to the namespace axis, where \module{Mathlib}'s ${\sim}20$ declarations per leaf namespace reflects naming conventions that balance logical grouping against navigational convenience (Appendix~\ref{sec:three-layers}).
+
+\subsubsection{Three Layers Combined}
+\label{sec:three-layers-main}
+
+Table~\ref{tab:three-layers} assembles the cross-level measurements.
+
+\begin{table}[ht]
+\centering
+\caption{Cross-level alignment summary. Each row compares two organizational layers.}
+\label{tab:three-layers}
+\begin{tabular}{llrl}
+\toprule
+Comparison & Measure & Value & Interpretation \\
+\midrule
+Namespace vs.\ module            & NMI          & $0.71$  & High: human--human agreement \\
+Namespace vs.\ Louvain community & NMI          & $0.34$  & Moderate: human $\neq$ logic \\
+Namespace vs.\ declaration       & Containment  & $22.2\%$ & Low: naming $\neq$ dependency \\
+Module vs.\ declaration          & Cohesion     & $0.107$ & Low: files $\neq$ logical units \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The table reveals the central tension of this paper in quantitative form. Human organizational decisions---naming and filing---agree with each other (NMI~$= 0.71$) far more than either agrees with the logical structure of the dependency graph (NMI~$= 0.34$, cohesion~$0.107$, containment~$22.2\%$). The divergence is systematic, not accidental: it arises from the fundamental mismatch between the hierarchical nature of human organizational process and the cross-cutting nature of inherited mathematical structure.

@@ -1,0 +1,157 @@
+# Data Pipeline
+
+The dataset is extracted from Mathlib4 commit [`534cf0b`](https://github.com/leanprover-community/mathlib4/commit/534cf0b) (2 Feb 2026) using two external tools, then merged and uploaded to HuggingFace.
+
+## Extraction Tools
+
+### 1. Node extraction with `lean4export`
+
+[lean4export](https://github.com/leanprover/lean4export) dumps every declaration in the Lean environment as NDJSON. We parse this into a flat CSV:
+
+```python
+# src/parser/from_lean4export.py
+# Input:  lean4export output (.ndjson)
+# Output: nodes.csv (name, kind, module)
+```
+
+Each row represents a declaration with its fully qualified name, kind (`theorem`, `definition`, `abbrev`, `inductive`, `constructor`, `opaque`, `axiom`, `quotient`), and the module it belongs to.
+
+### 2. Edge extraction with `lean-training-data`
+
+[lean-training-data](https://github.com/kim-em/lean-training-data) extracts the premises used in each proof:
+
+```bash
+# Run from Mathlib root
+lake exe premises Mathlib
+```
+
+This produces a text file listing, for each declaration, the premises it invokes. We parse this into an edge list:
+
+```python
+# src/parser/from_premises.py
+# Input:  premises output (.txt)
+# Output: edges.csv (source, target, is_explicit, is_simplifier)
+```
+
+### 3. Merge and validate
+
+```python
+# src/parser/merge.py
+# Validates that all edge endpoints exist in the node set
+# Reports coverage statistics
+```
+
+## Dataset Schema
+
+### `mathlib_nodes.csv` (317,655 rows, 308,129 unique declarations)
+
+| Column | Type | Example |
+|--------|------|---------|
+| `name` | string | `CategoryTheory.Functor.comp_id` |
+| `kind` | string | `theorem` |
+| `module` | string | `CategoryTheory.Functor` |
+
+9,526 rows are duplicates from `@[to_additive]` mirroring. Deduplicate with:
+
+```python
+nodes = nodes.drop_duplicates(subset="name", keep="first")
+```
+
+### `mathlib_edges.csv` (8,436,366 rows)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `source` | string | The declaration that uses the premise |
+| `target` | string | The premise being used |
+| `is_explicit` | bool | Appears in explicit arguments |
+| `is_simplifier` | bool | Used by the simplifier |
+
+### Full environment files
+
+`nodes.csv` (633,364 rows) and `edges.csv` (10,889,011 rows) include the full Lean + Std + Mathlib environment. The `mathlib_*` files are the Mathlib-only subset.
+
+## Loading Data
+
+All analysis scripts load from HuggingFace:
+
+```python
+from datasets import load_dataset
+
+nodes_ds = load_dataset("MathNetwork/MathlibGraph",
+                        data_files="mathlib_nodes.csv", split="train")
+edges_ds = load_dataset("MathNetwork/MathlibGraph",
+                        data_files="mathlib_edges.csv", split="train")
+
+nodes = nodes_ds.to_pandas().drop_duplicates(subset="name", keep="first")
+edges = edges_ds.to_pandas()
+```
+
+## Building the Module Import Graph
+
+The module graph is built by scanning Mathlib source files directly (not from HuggingFace), since it requires parsing `import` statements:
+
+```python
+# Used in: plot_dag_depth.py, plot_robustness_curves.py, plot_community_figures.py
+
+from pathlib import Path
+import re, networkx as nx
+
+MATHLIB_ROOT = Path("mathlib4/Mathlib")
+
+def lean_path_to_module(path):
+    rel = path.relative_to(MATHLIB_ROOT.parent)
+    return str(rel).replace("/", ".").removesuffix(".lean")
+
+def parse_imports(path):
+    """Extract import targets from a .lean file header."""
+    imports = []
+    with open(path, "r") as f:
+        for line in f:
+            m = re.match(r"^(?:public\s+)?import\s+([\w.]+)", line.strip())
+            if m:
+                imports.append(m.group(1))
+            elif not line.strip() or line.strip().startswith("--"):
+                continue
+            else:
+                break  # imports only appear at the top
+    return imports
+
+G_module = nx.DiGraph()
+file_modules = set()
+for lean_file in MATHLIB_ROOT.rglob("*.lean"):
+    mod = lean_path_to_module(lean_file)
+    file_modules.add(mod)
+    G_module.add_node(mod)
+
+for lean_file in MATHLIB_ROOT.rglob("*.lean"):
+    mod = lean_path_to_module(lean_file)
+    for imp in parse_imports(lean_file):
+        if imp in file_modules:
+            G_module.add_edge(mod, imp)
+
+# Result: 7,563 nodes, 23,570 edges
+```
+
+## Building the Namespace Graph
+
+The namespace graph aggregates declaration-level edges by truncating names to depth `k`:
+
+```python
+def ns_at_depth(name, k=2):
+    """Truncate 'Mathlib.Algebra.Group.Basic' at depth k=2 -> 'Mathlib.Algebra'"""
+    parts = name.split(".")
+    if len(parts) <= k:
+        return ".".join(parts[:-1]) if len(parts) > 1 else "_root_"
+    return ".".join(parts[:k])
+
+# Aggregate edges
+decl_to_ns = {name: ns_at_depth(name, k=2) for name in node_names}
+ns_edges = set()
+for _, row in edges.iterrows():
+    ns_s = decl_to_ns.get(row["source"])
+    ns_t = decl_to_ns.get(row["target"])
+    if ns_s and ns_t and ns_s != ns_t:
+        ns_edges.add((ns_s, ns_t))
+
+# Result: ~6,300 namespace nodes, ~92,000 edges
+```

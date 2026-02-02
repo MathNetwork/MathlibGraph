@@ -1,0 +1,131 @@
+# Analysis Scripts
+
+## Full Pipeline
+
+`src/main.py` orchestrates the complete analysis pipeline. It loads data from HuggingFace, builds the declaration graph, and runs all structural analyses:
+
+```bash
+python src/main.py
+```
+
+This produces a markdown report in `src/output/full_analysis_report.md` and all CSV/PNG outputs.
+
+For a quick check without expensive computations (no betweenness, no robustness):
+
+```bash
+python src/quick_stats.py
+```
+
+## Single-Task Runners
+
+Each runner focuses on one analysis. Useful for re-running specific computations:
+
+| Script | What it computes | Output |
+|--------|-----------------|--------|
+| `run_pagerank_community.py` | PageRank, HITS, Louvain communities | `pagerank_top50.csv`, `hits_top50.csv`, `communities.csv` |
+| `run_betweenness.py` | Betweenness centrality (sampled, k=500) | `betweenness_top50.csv` |
+| `run_degree_fit.py` | Power-law fitting for degree distributions | `powerlaw_fit_results.csv` |
+| `run_cascade_robustness.py` | Cascade impact + robustness curves | `cascade_top30.csv`, `robustness_data.csv` |
+
+```bash
+# Example: run just the centrality analysis
+python src/run_pagerank_community.py
+```
+
+## Reusable Analysis Modules
+
+Located in `src/analysis/`, these are imported by `main.py` and the runners:
+
+### `analysis.structure.descriptive`
+
+Basic graph statistics:
+
+```python
+from analysis.structure.descriptive import basic_statistics
+
+stats = basic_statistics(G)
+# Returns: nodes, edges, density, is_dag, largest WCC size
+```
+
+### `analysis.structure.degree`
+
+Degree distribution with power-law fitting using the [`powerlaw`](https://github.com/jeffalstott/powerlaw) library:
+
+```python
+from analysis.structure.degree import degree_distribution_analysis
+
+results = degree_distribution_analysis(G, output_dir="output/")
+# Fits power-law to in-degree and out-degree
+# Returns: alpha, xmin, p-value for each
+```
+
+### `analysis.structure.centrality`
+
+PageRank, HITS, and betweenness:
+
+```python
+from analysis.structure.centrality import pagerank_hits_analysis, betweenness_analysis
+
+pr, hits = pagerank_hits_analysis(G, output_dir="output/")
+betw = betweenness_analysis(G, k=500, output_dir="output/")
+```
+
+### `analysis.structure.community`
+
+Louvain community detection on the undirected projection:
+
+```python
+from analysis.structure.community import community_detection
+
+communities = community_detection(G, wcc, pagerank, output_dir="output/")
+# Returns list of (community_id, size, top_nodes)
+```
+
+### `analysis.dynamics.cascade`
+
+Cascade impact (single-node removal) and robustness curves (progressive removal):
+
+```python
+from analysis.dynamics.cascade import cascade_analysis, robustness_analysis
+
+cascade = cascade_analysis(G, pagerank, output_dir="output/")
+robustness = robustness_analysis(G, pagerank, output_dir="output/")
+# Robustness: random vs targeted (by PageRank) node removal
+```
+
+## Namespace and Module Analysis
+
+These standalone scripts compute cross-level metrics:
+
+| Script | What it measures | Key metric |
+|--------|-----------------|------------|
+| `module_cohesion.py` | Fraction of edges staying within modules | Cohesion = 0.107 |
+| `namespace_graph.py` | Containment at each namespace depth | Containment decay curve |
+| `module_containment_decay.py` | Containment at file-system levels | Top-dir: 48.9%, file: 15.6% |
+| `namespace_vs_module.py` | NMI between namespace and module partitions | NMI = 0.71 |
+| `namespace_module_cross.py` | Cross-tabulation of namespaces x modules | NMI, ARI scores |
+| `namespace_full_analysis.py` | Full analysis of G_ns^(2) | Degree, PageRank, communities, robustness |
+| `build_namespace_graph.py` | Build and compare G_ns, G_file, G_import | Edge counts, overlap statistics |
+| `build_file_mapping.py` | Scan Mathlib source for declaration-to-file mapping | `declaration_to_file_module.csv` |
+| `import_depth_vs_usage_depth.py` | Compare import chain depth vs actual usage depth | Per-module depth comparison |
+| `theorem_vs_lemma.py` | Compare theorem vs lemma citation rates | Theorems cited 1.47x more |
+| `supplementary_analysis.py` | Degree by kind, NMI, edge breakdown, zero-citation | `supplementary_stats.txt` |
+| `build_cooccurrence.py` | Premise co-occurrence statistics | `cooccurrence_stats.txt` |
+
+```bash
+# Example: compute module cohesion
+python src/module_cohesion.py
+
+# Example: full namespace-level analysis
+python src/namespace_full_analysis.py
+```
+
+## Tests
+
+Parser unit tests using pytest:
+
+```bash
+pytest src/tests/
+```
+
+Covers `from_lean4export.py`, `from_premises.py`, and `merge.py`.

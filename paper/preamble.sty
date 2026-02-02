@@ -1,0 +1,107 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{preamble}[2025/02/05 MathLibGraph paper preamble]
+
+% ---------- encoding & fonts ----------
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+
+% ---------- mathematics ----------
+\RequirePackage{amsmath,amssymb,amsthm}
+
+% ---------- layout ----------
+\RequirePackage{geometry}
+\geometry{margin=1in}
+\emergencystretch=2em
+
+% ---------- hyperlinks ----------
+\RequirePackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!70!black,
+  citecolor=green!50!black,
+  urlcolor=blue!70!black
+}
+
+% ---------- code highlighting ----------
+\RequirePackage{xcolor}
+\RequirePackage{minted}
+\usemintedstyle{tango}
+
+\newminted{lean4}{
+  fontsize=\small,
+  breaklines,
+  frame=single,
+  framesep=2mm,
+  bgcolor=gray!5
+}
+\newcommand{\lean}[1]{\mintinline{lean4}{#1}}
+
+% Allow line breaks at dots in identifiers
+\ExplSyntaxOn
+\tl_new:N \l__mfgraph_ident_tl
+\cs_new_protected:Nn \__mfgraph_break_dots:n
+  {
+    \tl_set:Nn \l__mfgraph_ident_tl { #1 }
+    \tl_replace_all:Nnn \l__mfgraph_ident_tl { . } { .\allowbreak }
+    \tl_use:N \l__mfgraph_ident_tl
+  }
+\cs_set_eq:NN \identbreakdots \__mfgraph_break_dots:n
+\ExplSyntaxOff
+\newcommand{\module}[1]{\textcolor{blue!60!black}{\texttt{\identbreakdots{#1}}}}
+\newcommand{\decl}[1]{\textcolor{red!70!black}{\texttt{\identbreakdots{#1}}}}
+\newcommand{\ns}[1]{\textcolor{green!50!black}{\texttt{\identbreakdots{#1}}}}
+
+% ---------- styled code boxes (§5-consistent coloring) ----------
+\newsavebox{\codeboxsavebox}
+\newenvironment{codebox}{%
+  \begin{lrbox}{\codeboxsavebox}%
+  \begin{minipage}{\dimexpr\linewidth-16pt}%
+  \small\ttfamily\raggedright%
+}{%
+  \end{minipage}%
+  \end{lrbox}%
+  \par\smallskip\noindent
+  {\setlength{\fboxsep}{6pt}\setlength{\fboxrule}{0.4pt}%
+  \fcolorbox{black!30}{gray!5}{\usebox{\codeboxsavebox}}}%
+  \par\smallskip
+}
+
+% ---------- tables ----------
+\RequirePackage{booktabs}
+
+% ---------- graphics & floats ----------
+\RequirePackage{graphicx}
+\RequirePackage{float}
+\RequirePackage{subcaption}
+
+% ---------- diagrams ----------
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\RequirePackage[edges]{forest}
+
+% ---------- finding boxes ----------
+\newsavebox{\findingbox}
+\newenvironment{finding}[1][]{%
+  \begin{lrbox}{\findingbox}%
+  \begin{minipage}{\dimexpr\linewidth-12pt}%
+  \ifx&#1&\else{\bfseries #1}\par\smallskip\fi
+}{%
+  \end{minipage}%
+  \end{lrbox}%
+  \par\medskip\noindent
+  \fcolorbox{blue!75!black}{blue!5!white}{%
+    \usebox{\findingbox}%
+  }%
+  \par\medskip
+}
+
+% ---------- author comments ----------
+\newcommand{\xinze}[1]{\textcolor{blue}{(\textbf{Comments}: #1)}}
+
+% ---------- theorem environments ----------
+\newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{property}[definition]{Property}
+\newtheorem{example}[definition]{Example}
+\newtheorem{remark}[definition]{Remark}

@@ -1,0 +1,272 @@
+\subsection{The Namespace Graph}
+\label{sec:namespace-graph}
+
+The module-level analysis of \S\ref{sec:module-import} treats each source file as a single vertex. At the opposite extreme, the declaration-level analysis of \S\ref{sec:theorem-premise} treats every theorem and definition as its own vertex. Between these extremes lies a natural intermediate structure: the \emph{namespace}. In Lean~4, every declaration~$d$ carries a fully qualified name---e.g., \decl{Nat.Prime.dvd\_mul}---whose dot-separated components encode a hierarchical naming convention. By truncating names to different depths, we obtain a continuously parameterized family of dependency graphs that interpolates between the coarse module level and the fine declaration level. This section constructs these graphs and measures how \emph{containment}---the proportion of edges that stay within namespace boundaries---decays as granularity increases.
+
+The following example illustrates how Lean's naming mechanisms determine fully qualified names:
+
+\begin{codebox}
+\textit{\color{gray}-- \textbf{Namespace blocks} determine the declaration's qualified name:}\\
+\textbf{namespace} \textcolor{green!50!black}{Nat}\\
+\hspace{1.5em}\textbf{theorem} \textcolor{red!70!black}{add\_comm} (a b : Nat) : a + b = b + a := \ldots\\
+\hspace{1.5em}\textit{\color{gray}-- fully qualified name: \textcolor{red!70!black}{Nat.add\_comm} \quad(depth 1)}\\[3pt]
+\hspace{1.5em}\textbf{namespace} \textcolor{green!50!black}{Prime}\\
+\hspace{3em}\textbf{theorem} \textcolor{red!70!black}{dvd\_mul} (hp : Prime p) : p | a * b $\to$ \ldots\ := \ldots\\
+\hspace{3em}\textit{\color{gray}-- fully qualified name: \textcolor{red!70!black}{Nat.Prime.dvd\_mul} \quad(depth 2)}\\
+\hspace{1.5em}\textbf{end} \textcolor{green!50!black}{Prime}\\
+\textbf{end} \textcolor{green!50!black}{Nat}\\[6pt]
+\textit{\color{gray}-- \textbf{File path} determines the module name (a separate hierarchy):}\\
+\textit{\color{gray}-- File:}\quad \textcolor{blue!60!black}{Mathlib/Data/Nat/Prime/Basic.lean}\\
+\textit{\color{gray}-- Module:}\quad \textcolor{blue!60!black}{Mathlib.Data.Nat.Prime.Basic}\\[3pt]
+\textbf{namespace} \textcolor{green!50!black}{Nat.Prime}\\
+\hspace{1.5em}\textbf{theorem} \textcolor{red!70!black}{eq\_one\_or\_self\_of\_dvd} \ldots\ := \ldots\\
+\hspace{1.5em}\textit{\color{gray}-- qualified name: \textcolor{red!70!black}{Nat.Prime.eq\_one\_or\_self\_of\_dvd}}\\
+\textbf{end} \textcolor{green!50!black}{Nat.Prime}
+\end{codebox}
+
+\noindent
+Each declaration's fully qualified name is a dot-separated sequence determined by its enclosing \texttt{namespace} blocks (\textcolor{green!50!black}{green}), not by the file path. The file path determines the \emph{module} name (\textcolor{blue!60!black}{blue}), which governs \texttt{import} visibility but does not affect qualified names. In practice, \module{Mathlib} conventions strongly correlate the two hierarchies---declarations in \ns{Nat.Prime} typically live in modules under \module{Mathlib.Data.Nat.Prime}---but the correlation is a social convention, not a language rule. A single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}). The truncation $\mathrm{ns}_k(d)$ used in Definition~\ref{def:ns-graph} below extracts the first~$k$ components of the qualified name: at depth~$1$, both \decl{Nat.add\_comm} and \decl{Nat.Prime.dvd\_mul} belong to~\ns{Nat}; at depth~$2$, they separate into~\ns{Nat} and~\ns{Nat.Prime}.
+
+The $308{,}129$ declarations in \module{Mathlib} span six depth levels. Table~\ref{tab:ns-depth-count} shows how the number of distinct namespaces grows with truncation depth.
+
+\begin{table}[ht]
+\centering
+\caption{Number of distinct namespaces at each truncation depth~$k$.}
+\label{tab:ns-depth-count}
+\begin{tabular}{cr}
+\toprule
+Depth $k$ & $|\mathcal{N}_k|$ \\
+\midrule
+1          & $3{,}184$ \\
+2          & $10{,}097$ \\
+3          & $13{,}785$ \\
+4          & $15{,}198$ \\
+5          & $15{,}443$ \\
+6 (max)    & $15{,}456$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Growth saturates rapidly: $90\%$ of all namespaces are distinguished by depth~$3$. Declarations with names of the form $X.y$ (a single namespace component plus a short name) account for $67\%$ of all declarations; only $10\%$ have depth $\ge 4$. The naming convention of \module{Mathlib} is, in practice, shallow.
+
+\paragraph{The Family of Namespace Graphs}
+\label{sec:ns-definition}
+
+\begin{definition}[Namespace graph at depth~$k$]
+\label{def:ns-graph}
+For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declaration~$d$ truncated to depth~$k$: the first $k$ dot-separated components of $d$'s fully qualified name. If $d$'s name has fewer than $k+1$ components, $\mathrm{ns}_k(d)$ defaults to the full parent namespace; if $d$'s name has no dot, $\mathrm{ns}_k(d) = \ns{\_root\_}$. The \emph{namespace graph at depth~$k$} is the weighted directed graph
+\[
+  G_{\mathrm{ns}}^{(k)} = (\mathcal{N}_k,\, E_k),
+\]
+where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set of all distinct depth-$k$ namespaces, and each edge $(n_1, n_2) \in E_k$ carries a weight equal to the number of edges $(d_1, d_2) \in E_{\mathrm{thm}}$ such that $\mathrm{ns}_k(d_1) = n_1 \neq n_2 = \mathrm{ns}_k(d_2)$.
+\end{definition}
+\xinze{LeanScout pipeline: could cross-validate}
+
+This definition yields not a single graph but a \emph{family} of graphs parameterized by the truncation depth~$k$. At $k = 1$, we obtain $3{,}184$ coarse namespaces---\ns{Nat}, \ns{Set}, \ns{CategoryTheory}---that correspond roughly (but not identically) to the top-level name components discussed in \S\ref{sec:thm-cross-namespace}. At the maximum depth ($k = 6$), we recover the full parent-namespace granularity with $15{,}456$ nodes. The parameterization is unique to namespace analysis: neither the module graph~$G_{\mathrm{module}}$ nor the theorem--premise graph~$G_{\mathrm{thm}}$ admits a comparable continuous refinement. Figure~\ref{fig:ns-aggregation} illustrates the aggregation for a concrete example.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10},
+  agg/.style={->, >=Stealth, gray!50, very thick, dashed, shorten <=2pt, shorten >=2pt},
+]
+  % ==================== Panel (a): G_thm ====================
+  % Blue module background fills
+  \fill[blue!6, rounded corners=3pt] (-0.3,-2.1) rectangle (2.5,1.8);
+  \fill[blue!6, rounded corners=3pt] (3.5,-0.6) rectangle (5.6,1.8);
+  % Green namespace fills (depth 2)
+  \fill[green!8, rounded corners=3pt] (0.0,-0.15) rectangle (5.3,1.25);
+  \fill[green!8, rounded corners=2pt] (0.0,-1.75) rectangle (2.2,-0.55);
+  % Blue module borders
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.1) rectangle (2.5,1.8);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-0.2,1.75) {\textnormal{\module{Data.Nat.Basic}}};
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (3.5,-0.6) rectangle (5.6,1.8);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (3.6,1.75) {\textnormal{\module{Data.Nat.Defs}}};
+  % Green namespace borders (depth 2)
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-0.15) rectangle (5.3,1.25);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.3) {\ns{Nat}};
+  \draw[green!50!black, rounded corners=2pt, thick, dashed]
+    (0.0,-1.75) rectangle (2.2,-0.55);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,-0.5) {\ns{Nat.Primrec}};
+  % Declaration dots (staggered diagonally to avoid label overlap)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_comm}]
+    (ac) at (1.8,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_left\_comm}]
+    (alc) at (0.5,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.6,-1.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (4.1,0.8) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (4.1,0.2) {};
+  % Dependency arrows: solid=intra-module, dashed=cross-module, dotted=cross-namespace
+  \draw[dep] (alc) -- (ac);
+  \draw[dep, dashed] (sea) to[out=175,in=10] (ac);
+  \draw[dep, dashed] (za) to[out=175,in=-10] (alc);
+  \draw[dep, densely dotted, thick] (prz) to[out=70,in=-100] (ac);
+  % Blue import arrow: Data.Nat.Defs imports Data.Nat.Basic
+  \draw[->, >=Stealth, blue!60!black, thick]
+    (3.5,1.55) -- node[above, font=\tiny\sffamily, text=blue!60!black] {\texttt{import}} (2.5,1.55);
+  % Panel label
+  \node[font=\small\sffamily, anchor=north] at (2.6,-2.5) {(a) $G_{\mathrm{thm}}$};
+
+  % ==================== Arrow a → b ====================
+  \draw[agg] (5.9,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    node[below, font=\tiny\sffamily, text=gray!60] {depth $2$} (7.3,-0.1);
+
+  % ==================== Panel (b): G_ns^(2) ====================
+  % Nat namespace node
+  \node[nsbox, minimum width=2.2cm, minimum height=1.1cm]
+    (nat2) at (8.8,0.55) {};
+  \node[font=\small\sffamily\bfseries, green!50!black] at (8.8,0.75) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (8.8,0.3) {4 declarations};
+  % Nat.Primrec namespace node
+  \node[nsbox, minimum width=2.2cm, minimum height=0.85cm]
+    (npr2) at (8.8,-1.15) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.8,-0.97) {\ns{Nat.Primrec}};
+  \node[font=\tiny\sffamily, text=gray] at (8.8,-1.35) {1 declaration};
+  % Cross-namespace edge: Nat.Primrec → Nat (green = namespace-level)
+  \draw[->, >=Stealth, green!50!black, thick] (npr2) --
+    node[right, font=\tiny, text=green!50!black] {$w\!=\!1$} (nat2);
+  \node[font=\tiny\itshape, text=gray, align=center] at (8.8,-2.0)
+    {\decl{Primrec.zero} $\to$ \decl{add\_comm}};
+  % Faded self-loop for absorbed internal edges
+  \draw[green!50!black, ->, >=Stealth, thin, opacity=0.35]
+    ([xshift=-4pt]nat2.north) to[out=130,in=50,looseness=6]
+    ([xshift=4pt]nat2.north);
+  \node[font=\tiny, text=green!40!black] at (8.8,1.75) {$3$ internal};
+  % Panel label
+  \node[font=\small\sffamily, anchor=north] at (8.8,-2.5) {(b) $G_{\mathrm{ns}}^{(2)}$};
+
+  % ==================== Arrow b → c ====================
+  \draw[agg] (10.3,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    node[below, font=\tiny\sffamily, text=gray!60] {depth $1$} (11.7,-0.1);
+
+  % ==================== Panel (c): G_ns^(1) ====================
+  \node[nsbox, minimum width=2.2cm, minimum height=2.2cm]
+    (nat1) at (13.0,-0.1) {};
+  \node[font=\small\sffamily\bfseries, green!50!black] at (13.0,0.4) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (13.0,0.05) {5 declarations};
+  \node[font=\tiny\sffamily, text=gray] at (13.0,-0.3) {4 internal edges};
+  \node[font=\tiny\itshape, text=red!50!black] at (13.0,-0.7) {contain.\,$=100\%$};
+  % Panel label
+  \node[font=\small\sffamily, anchor=north] at (13.0,-2.5) {(c) $G_{\mathrm{ns}}^{(1)}$};
+\end{tikzpicture}
+\caption{The aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Five declarations (\textcolor{red!70!black}{red dots}) and their dependencies (\textcolor{red!70!black}{red arrows}: solid = intra-module, dashed = cross-module, dotted = cross-namespace) in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green dashed boxes} mark depth-$2$ namespace boundaries, \textcolor{blue!60!black}{blue dashed boxes} mark module boundaries, and the \textcolor{blue!60!black}{blue arrow} shows the module-level import edge from~$G_{\mathrm{module}}$. (b)~Aggregation to depth-$2$ namespaces: declarations merge into \textcolor{green!50!black}{green namespace nodes}; the three intra-\ns{Nat} edges (one solid, two dashed) become internal, and the single cross-namespace edge (dotted) becomes a weighted \textcolor{green!50!black}{green edge} in~$G_{\mathrm{ns}}^{(2)}$. (c)~Aggregation to depth~$1$: all five declarations share namespace \ns{Nat}; every edge is now internal, and containment reaches $100\%$. All names have the \texttt{Nat.}\ prefix removed.}
+\label{fig:ns-aggregation}
+\end{figure}
+
+As depth~$k$ increases, namespace boundaries split while module boundaries remain fixed, converting intra-namespace edges into cross-namespace edges and driving containment downward.
+
+\noindent\textbf{Cycles in the namespace graph.}
+\label{rem:ns-cycles}
+Unlike $G_{\mathrm{module}}$ and $G_{\mathrm{thm}}$, which are directed acyclic graphs---the compiler and the type-checker respectively forbid circular dependencies---the namespace graph $G_{\mathrm{ns}}^{(k)}$ can contain directed cycles. Two namespaces may depend on each other: namespace~$A$ contains a declaration that cites a declaration in namespace~$B$, while $B$ contains a different declaration that cites one in~$A$. The underlying declaration-level graph remains acyclic, but the aggregation into namespaces collapses the strict topological ordering.
+
+At depth~$2$, $G_{\mathrm{ns}}^{(2)}$ contains $38$ strongly connected components with more than one node, the largest comprising $5{,}899$ namespaces---$58\%$ of all depth-$2$ namespaces. This giant component reflects the deeply interconnected core of Mathlib: most mathematical sub-disciplines at this granularity depend mutually on one another. The remaining $37$ non-trivial components are small (at most $25$ nodes each). This structural difference---DAGs at the module and declaration levels, cyclic graphs at the namespace level---reflects the fact that namespace boundaries, unlike file boundaries, are not constrained by a compiler-enforced import ordering.
+
+Figure~\ref{fig:ns-cycle-example} illustrates how a cycle arises from acyclic declaration-level dependencies.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10,
+                minimum width=2.8cm, minimum height=1.6cm},
+  agg/.style={->, >=Stealth, gray!50, very thick, dashed,
+              shorten <=2pt, shorten >=2pt},
+]
+  % ============ Panel (a): Declaration level ============
+  \node[font=\small\sffamily, anchor=south] at (2.0,2.5) {(a) $G_{\mathrm{thm}}$ (acyclic)};
+  % Namespace boxes
+  \fill[green!8, rounded corners=3pt] (-0.3,-0.3) rectangle (2.0,2.2);
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-0.3) rectangle (2.0,2.2);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (-0.2,2.15) {\ns{Nat}};
+
+  \fill[green!8, rounded corners=3pt] (2.5,-0.3) rectangle (4.8,2.2);
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (2.5,-0.3) rectangle (4.8,2.2);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (2.6,2.15) {\ns{Int}};
+
+  % Declarations
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black, align=center]below:prime\_iff\_\\[-1pt]prime\_int}]
+    (npip) at (1.0,1.4) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:lcm}]
+    (nlcm) at (1.0,0.3) {};
+
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:dvd\_natAbs}]
+    (idna) at (3.5,1.4) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:lcm\_neg}]
+    (ilcm) at (3.5,0.3) {};
+
+  % Declaration-level edges (no cycle!)
+  \draw[dep] (npip) -- (idna);
+  \draw[dep] (ilcm) -- (nlcm);
+
+  % ============ Arrow a → b ============
+  \draw[agg] (5.3,0.95) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    (7.0,0.95);
+
+  % ============ Panel (b): Namespace level ============
+  \node[font=\small\sffamily, anchor=south] at (9.5,2.5) {(b) $G_{\mathrm{ns}}^{(2)}$ (cyclic)};
+  \node[nsbox, minimum width=1.6cm, minimum height=1.3cm] (ns_nat) at (8.0,0.95) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.0,1.1) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (8.0,0.7) {2 decls};
+
+  \node[nsbox, minimum width=1.6cm, minimum height=1.3cm] (ns_int) at (11.0,0.95) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (11.0,1.1) {\ns{Int}};
+  \node[font=\tiny\sffamily, text=gray] at (11.0,0.7) {2 decls};
+
+  % Namespace-level edges: cycle!
+  % Top arrow: Nat top-right → Int top-left
+  \draw[->, >=Stealth, green!50!black, thick]
+    ([yshift=2pt]ns_nat.north east) to[out=30,in=150]
+    node[above, font=\tiny, text=green!40!black] {$w\!=\!1$}
+    ([yshift=2pt]ns_int.north west);
+  % Bottom arrow: Int bottom-left → Nat bottom-right
+  \draw[->, >=Stealth, green!50!black, thick]
+    ([yshift=-2pt]ns_int.south west) to[out=210,in=330]
+    node[below, font=\tiny, text=green!40!black] {$w\!=\!1$}
+    ([yshift=-2pt]ns_nat.south east);
+\end{tikzpicture}
+\caption{How aggregation creates cycles. (a)~At the declaration level, two edges cross the \ns{Nat}--\ns{Int} boundary in opposite directions: \decl{Nat.prime\_iff\_prime\_int} cites \decl{Int.dvd\_natAbs}, and \decl{Int.lcm\_neg} cites \decl{Nat.lcm}. No cycle exists among these four declarations. (b)~After aggregation to depth-$2$ namespaces, both edges collapse to namespace-level edges, creating a directed cycle \ns{Nat} $\to$ \ns{Int} $\to$ \ns{Nat}. The declaration-level DAG property is lost.}
+\label{fig:ns-cycle-example}
+\end{figure}
+
+\paragraph{Containment Decay}
+\label{sec:containment-decay}
+
+We now quantify how namespace containment erodes as the grouping becomes finer.
+
+\begin{definition}[Containment ratio]
+\label{def:containment}
+The \emph{containment ratio at depth~$k$} is the proportion of edges in $G_{\mathrm{thm}}$ whose endpoints share the same depth-$k$ namespace:
+\[
+  \mathrm{contain}(k) \;=\; \frac{|E_{\mathrm{intra}}^{(k)}|}{|E_{\mathrm{thm}}|},
+  \qquad
+  E_{\mathrm{intra}}^{(k)} = \{(d_1,d_2) \in E_{\mathrm{thm}} \mid \mathrm{ns}_k(d_1) = \mathrm{ns}_k(d_2)\}.
+\]
+\end{definition}
+
+\noindent
+This definition parallels the module containment ratio (Definition~\ref{def:module-containment}), which measures the same concept at a coarser granularity: there, the denominator is $|E_{\mathrm{module}}|$ (import edges between modules) and the grouping is by dot-separated module path; here, the denominator is $|E_{\mathrm{thm}}|$ (all declaration-level dependency edges) and the grouping is by namespace truncation. The two metrics are thus not directly comparable in magnitude, since they operate on different edge sets.
+
+A containment ratio of $1$ would mean all dependencies stay within namespace boundaries; $0$ would mean every edge crosses a boundary. The decay is steep (Table~\ref{tab:containment-decay} and Figure~\ref{fig:containment-curve} in Appendix~\ref{app:ns-detail}): at the top-level directory ($32$ units), containment is $48.9\%$; by namespace depth~$1$ ($3{,}184$ units) it drops to $22.2\%$; and by depth~$2$ ($10{,}097$ units) it saturates at ${\sim}14\%$, with further refinement adding almost nothing. The steepest single drop occurs at the discipline--sub-discipline transition, where a single step costs $26.7$ percentage points. File-level containment ($15.6\%$) falls between depth~$1$ and depth~$2$, offering no advantage beyond that of a mid-level namespace.
+
+Degree distribution, centrality, community detection, and robustness analyses for the namespace graph are reported in Appendix~\ref{app:ns-detail}.
+
