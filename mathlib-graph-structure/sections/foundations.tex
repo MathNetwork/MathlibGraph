@@ -1,4 +1,4 @@
-\section{The Structure of Mathlib}
+\section{The Namespace Tree}
 
 \subsection{Module Names}
 
@@ -8,44 +8,87 @@ A \emph{module name} in Mathlib is a dot-separated sequence of identifiers, such
 \]
 We write $\mathcal{M}$ for the set of all module names in Mathlib. All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the Mathlib repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$.
 
-The \emph{depth} of a module name is the number of components. For example, $\texttt{Mathlib.Algebra.Group.Defs}$ has depth~$4$. The maximum depth in Mathlib is~$12$.
+\begin{definition}[Depth]
+The \emph{depth} of a module name is the number of dot-separated components. Formally, if a module name is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
+\end{definition}
+
+\begin{example}
+\leavevmode
+\begin{itemize}
+  \item $\texttt{Mathlib}$ has depth~$1$.
+  \item $\texttt{Mathlib.Algebra}$ has depth~$2$.
+  \item $\texttt{Mathlib.Algebra.Group.Defs}$ has depth~$4$.
+\end{itemize}
+The maximum depth in Mathlib is~$7$.\footnote{Attained by, e.g., \texttt{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
+\end{example}
 
 \subsection{The Prefix Tree}
 
-Module names are organized hierarchically. We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, $\texttt{Mathlib.Algebra}$ is a prefix of $\texttt{Mathlib.Algebra.Group.Defs}$.
+Module names are organized hierarchically: each dot-separated name mirrors a path in the source repository.
 
-The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ where:
-\begin{itemize}
-  \item The root is $\texttt{Mathlib}$
-  \item There is an edge $m \to m'$ if $m'$ extends $m$ by exactly one component
-\end{itemize}
+\begin{figure}[ht]
+\centering
+\begin{forest}
+  for tree={
+    font=\small\ttfamily,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+        (!u.south west) +(7.5pt,0) |- (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1 {insert before={[,phantom]}} {}
+    },
+    fit=band,
+    before computing xy={l=15pt},
+  }
+[Mathlib/
+  [Algebra/
+    [Group/
+      [Defs.lean]
+      [Basic.lean]
+    ]
+    [Ring/
+      [Defs.lean]
+    ]
+  ]
+  [Analysis/
+    [Normed/
+      [Group/
+        [Basic.lean]
+      ]
+    ]
+  ]
+  [Data/
+    [Nat/
+      [Notation.lean]
+    ]
+  ]
+]
+\end{forest}
+\caption{A fragment of the Mathlib source tree (commit \texttt{534cf0b}). Each path corresponds to a module name: for example, \texttt{Mathlib/Algebra/Group/Defs.lean} defines the module \texttt{Mathlib.Algebra.Group.Defs}, with dots replacing path separators.}
+\label{fig:prefix-tree}
+\end{figure}
+
+We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, $\texttt{Mathlib.Algebra}$ is a prefix of $\texttt{Mathlib.Algebra.Group.Defs}$.
+
+The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\texttt{Mathlib}$, where
+\[
+  E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
+\]
 
 The top-level directories (children of the root) include \texttt{Algebra} (1257 files), \texttt{CategoryTheory} (982 files), \texttt{Analysis} (755 files), etc.
 
-\begin{remark}
-$T$ and the import graph $G_{\mathrm{import}}$ (defined in Section~\ref{sec:import-graph}) are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
-\end{remark}
+%%% ----------------------------------------------------------------
 
-\subsection{Graph-Theoretic Definitions}
-
-\begin{definition}[Directed graph]
-A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \emph{vertex set}) and $E \subseteq V \times V$ (called the \emph{edge set}).
-\end{definition}
-
-\begin{definition}[Path]
-A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \leq i < k$. The \emph{length} of the path is $k$.
-\end{definition}
-
-\begin{definition}[Cycle]
-A \emph{cycle} is a path $(v_0, v_1, \ldots, v_k)$ with $k \geq 1$ and $v_k = v_0$.
-\end{definition}
-
-\begin{definition}[Directed acyclic graph]
-A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ contains no cycle.
-\end{definition}
-
-\subsection{The Import Graph}
+\section{The Import Graph}
 \label{sec:import-graph}
+
+\subsection{Import Statements in Lean~4}
 
 Each Lean source file begins with \texttt{import} statements that declare its dependencies. For example, the file \texttt{Mathlib/Data/Nat/Notation.lean} contains:
 
@@ -74,6 +117,30 @@ Each file is a \emph{vertex} in the import graph; each \texttt{import} statement
 
 Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-exports the imported module to downstream dependents. For the purposes of the import graph, both forms create an edge—they differ only in visibility, not in the dependency relationship.
 
+\subsection{Graph-Theoretic Preliminaries}
+
+\begin{definition}[Directed graph]
+A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \emph{vertex set}) and $E \subseteq V \times V$ (called the \emph{edge set}).
+\end{definition}
+
+\begin{definition}[Path]
+A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \leq i < k$. The \emph{length} of the path is $k$.
+\end{definition}
+
+\begin{definition}[Cycle]
+A \emph{cycle} is a path $(v_0, v_1, \ldots, v_k)$ with $k \geq 1$ and $v_k = v_0$.
+\end{definition}
+
+\begin{definition}[Directed acyclic graph]
+A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ contains no cycle.
+\end{definition}
+
+\begin{definition}[Rooted tree]
+A \emph{rooted tree} is a DAG $T = (V, E)$ with a distinguished vertex $r \in V$ (the \emph{root}) such that for every $v \in V$ there is a unique directed path from $r$ to $v$.
+\end{definition}
+
+\subsection{Definition and Basic Properties}
+
 Let $\mathcal{M}$ be the set of Mathlib module names. For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
 
 \begin{definition}[Import graph]
@@ -82,6 +149,10 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
   E_{\mathrm{import}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
 \]
 \end{definition}
+
+\begin{remark}
+The prefix tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
+\end{remark}
 
 \begin{figure}[ht]
 \centering
