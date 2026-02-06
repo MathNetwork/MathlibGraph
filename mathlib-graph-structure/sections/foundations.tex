@@ -64,7 +64,11 @@ $G_{\mathrm{import}}$ is acyclic.
 \end{proposition}
 
 \begin{proof}
-Verified computationally: a topological sort on $G_{\mathrm{import}}$ succeeds, producing a linear ordering of all modules. Alternatively, the Lean compiler enforces acyclicity by rejecting circular imports at compile time.
+The Lean compiler processes modules in a well-defined compilation order: before compiling a module $m$, every module in $\mathrm{imports}(m)$ must already be compiled. Since Mathlib compiles successfully, there exists an injective function $\sigma \colon \mathcal{M} \to \mathbb{N}$ (the compilation order) such that
+\[
+  m_2 \in \mathrm{imports}(m_1) \implies \sigma(m_2) < \sigma(m_1).
+\]
+Suppose for contradiction that $G_{\mathrm{import}}$ contains a cycle $(m_0, m_1, \ldots, m_k = m_0)$ with $k \geq 1$. Then $(m_i, m_{i+1}) \in E$ for each $i$, so $\sigma(m_0) > \sigma(m_1) > \cdots > \sigma(m_k) = \sigma(m_0)$, a contradiction.
 \end{proof}
 
 \begin{corollary}
