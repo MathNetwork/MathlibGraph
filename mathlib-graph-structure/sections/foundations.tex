@@ -79,7 +79,7 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
 \end{definition}
 
 \begin{remark}
-The prefix tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. An edge in $T$ connects a module to its immediate namespace parent (e.g., \texttt{Mathlib.Algebra.Group.Defs} $\to$ \texttt{Mathlib.Algebra.Group}), while an edge in $G_{\mathrm{import}}$ reflects an explicit dependency (e.g., \texttt{Mathlib.Algebra.Group.Defs} $\to$ \texttt{Mathlib.Data.Nat.Notation}). In particular, import edges need not respect the namespace hierarchy.
+$T$ and $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
 \end{remark}
 
 \begin{figure}[ht]
