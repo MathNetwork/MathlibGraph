@@ -29,6 +29,8 @@ Define the set of \emph{non-empty} strings:
 A \emph{word} is an element $w \in \Sigma^+$, i.e.\ a string of length at least one
 (for example, \texttt{Mathlib}, \texttt{Algebra}, \texttt{Group}).
 
+For a string $s \in \Sigma^*$, we denote its \textbf{length} by $|s|$, the number of characters in $s$.
+
 Let $W = \Sigma^+$ denote the set of all non-empty strings. Define the set of \textbf{Mathlib words} as
 \[
   W_{\mathrm{Mathlib}} := \{w \in W \mid w \text{ appears as a component in some Mathlib module name}\}.
@@ -39,7 +41,7 @@ This is a finite set containing elements such as
 \]
 For brevity, we write $\mathcal{W} := W_{\mathrm{Mathlib}}$.
 
-For a string $s \in \Sigma^*$, we denote its \textbf{length} by $|s|$, the number of characters in $s$. For $k \geq 1$, we write
+For $k \geq 1$, we write
 \[
   \mathcal{W}^k := \underbrace{\mathcal{W} \times \mathcal{W} \times \cdots \times \mathcal{W}}_{k \text{ times}}
 \]
