@@ -2,49 +2,41 @@
 
 Mathlib organises its source code as a collection of \texttt{.lean} files arranged in a hierarchical directory structure. Each file corresponds to a \emph{module}, and its position in the directory tree is encoded by a dot-separated name such as \texttt{Mathlib.Algebra.Group}. Because every module can \texttt{import} other modules, two natural structures coexist: a tree given by the hierarchical naming, and a directed acyclic graph given by the import relation. Our goal in this section is to formalise both structures from first principles. We begin at the coarsest level---the namespace hierarchy that mirrors the file system---and then introduce the import relation that cuts across it.
 
-We adopt standard notation from formal language theory~\cite{hopcroft2006}. An \emph{alphabet} $\Sigma$ is a finite non-empty set of symbols. A \emph{string} over $\Sigma$ is a finite sequence of symbols from $\Sigma$. The set of all strings is denoted $\Sigma^*$ (Kleene star), and $\Sigma^+ := \Sigma^* \setminus \{\epsilon\}$ denotes the set of non-empty strings.
+\subsection{Strings and Module Names}
+
+We adopt standard notation from formal language theory~\cite{hopcroft2006}.
+
+\begin{definition}[Alphabet and strings]
+An \emph{alphabet} $\Sigma$ is a finite non-empty set of symbols. A \emph{string} over $\Sigma$ is a finite sequence of symbols from $\Sigma$. We denote by $\Sigma^*$ the set of all strings over $\Sigma$ (the \emph{Kleene star}), and by $\Sigma^+ := \Sigma^* \setminus \{\epsilon\}$ the set of non-empty strings, where $\epsilon$ denotes the empty string.
+\end{definition}
+
+In the context of Lean and Mathlib, we work with the ASCII alphabet $\Sigma = \{0, 1, \ldots, 127\}$. A \emph{word} is a non-empty string, i.e., an element of $\Sigma^+$.
+
+\begin{definition}[Mathlib words]
+The set of \emph{Mathlib words} is
+\[
+  \mathcal{W} := \{w \in \Sigma^+ \mid w \text{ appears as a component in some Mathlib module name}\}.
+\]
+This is a finite set containing elements such as $\texttt{Mathlib}$, $\texttt{Algebra}$, $\texttt{Group}$, $\texttt{Defs}$, $\texttt{Topology}$, $\texttt{Basic}$, etc.
+\end{definition}
 
 \begin{definition}[Module names]
-Recall that $\Sigma^*$ is the set of all finite strings (including the empty string~$\epsilon$).
-Define the set of \emph{non-empty} strings:
+A \emph{module name} is a non-empty finite sequence of Mathlib words. We write $\mathcal{W}^k$ for the set of $k$-tuples of words, and define
 \[
-  \Sigma^+ := \Sigma^* \setminus \{\epsilon\}.
+  \mathcal{W}^+ := \bigcup_{k \geq 1} \mathcal{W}^k.
 \]
-A \emph{word} is an element $w \in \Sigma^+$, i.e.\ a string of length at least one
-(for example, \texttt{Mathlib}, \texttt{Algebra}, \texttt{Group}).
+The set of \emph{Mathlib module names} is a finite subset
+\[
+  \mathcal{M} \subset \mathcal{W}^+
+\]
+consisting of module names that actually appear in the library.
 
-For a string $s \in \Sigma^*$, we denote its \textbf{length} by $|s|$, the number of characters in $s$.
-
-Let $W = \Sigma^+$ denote the set of all non-empty strings. Define the set of \textbf{Mathlib words} as
-\[
-  W_{\mathrm{Mathlib}} := \{w \in W \mid w \text{ appears as a component in some Mathlib module name}\}.
-\]
-This is a finite set containing elements such as
-\[
-  \texttt{Mathlib}, \texttt{Algebra}, \texttt{Group}, \texttt{Defs}, \texttt{Ring}, \texttt{Data}, \texttt{Nat}, \texttt{Topology}, \ldots
-\]
-For brevity, we write $\mathcal{W} := W_{\mathrm{Mathlib}}$.
-
-For $k \geq 1$, we write
-\[
-  \mathcal{W}^k := \underbrace{\mathcal{W} \times \mathcal{W} \times \cdots \times \mathcal{W}}_{k \text{ times}}
-\]
-for the set of all $k$-tuples of Mathlib words. Define
-\[
-  \mathcal{W}^+ := \bigcup_{k \geq 1} \mathcal{W}^k,
-\]
-the set of all non-empty finite sequences of Mathlib words.
-
-A \textbf{module name} is a non-empty finite sequence of Mathlib words. The set of all Mathlib module names is
-\[
-  \mathcal{M} \subset \mathcal{W}^+ = \bigcup_{k \geq 1} \mathcal{W}^k,
-\]
-the subset of $\mathcal{W}^+$ consisting of module names that actually appear in the library.
-We adopt the dot notation and write $w_1.w_2.\cdots.w_k$ for the tuple
-$(w_1, \ldots, w_k) \in \mathcal{M}$.
-For instance, the tuple $(\texttt{Mathlib},\, \texttt{Algebra},\, \texttt{Group})$
-is written \texttt{Mathlib.Algebra.Group}.
+We adopt dot notation: for a tuple $(w_1, w_2, \ldots, w_k) \in \mathcal{W}^+$, we write $w_1.w_2.\cdots.w_k$. For instance, the tuple $(\texttt{Mathlib}, \texttt{Algebra}, \texttt{Group})$ is written $\texttt{Mathlib.Algebra.Group}$.
 \end{definition}
+
+\begin{example}
+Mathlib contains $|\mathcal{M}| = 7{,}563$ module names. The set $\mathcal{W}$ of Mathlib words has $|\mathcal{W}| = 3{,}855$ elements. The maximum depth (i.e., the maximum $k$ such that some module name has $k$ components) is $12$.
+\end{example}
 
 \begin{definition}[Prefix tree]
 Define a partial order on $\mathcal{M}$: $m \leq m'$ if and only if $m$ is a prefix of~$m'$.
