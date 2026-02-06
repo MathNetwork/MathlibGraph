@@ -2,62 +2,7 @@
 
 Mathlib organises its source code as a collection of \texttt{.lean} files arranged in a hierarchical directory structure. Each file corresponds to a \emph{module}, and its position in the directory tree is encoded by a dot-separated name such as \texttt{Mathlib.Algebra.Group}. Because every module can \texttt{import} other modules, two natural structures coexist: a tree given by the hierarchical naming, and a directed acyclic graph given by the import relation. Our goal in this section is to formalise both structures from first principles. We begin at the coarsest level---the namespace hierarchy that mirrors the file system---and then introduce the import relation that cuts across it.
 
-\begin{definition}[Natural numbers]
-Let $\emptyset$ denote the empty set. Define the natural numbers via the von Neumann construction:
-\[
-  0 := \emptyset, \qquad n+1 := n \cup \{n\}.
-\]
-\end{definition}
-
-\subsection*{Character encoding}
-
-We define characters as natural numbers. The \emph{alphabet} is the set
-\[
-  \Sigma := \{0, 1, 2, \ldots, 127\} \subset \mathbb{N}.
-\]
-To interpret these numbers as characters, we adopt the standard \emph{ASCII convention}: each $n \in \Sigma$ corresponds to a specific character. For example, $65$ represents \texttt{A}, $97$ represents \texttt{a}, $48$ represents \texttt{0}, etc.
-
-The characters relevant to Mathlib module names and their ASCII codes are:
-
-\begin{center}
-\begin{tabular}{cccccccccccc}
-\toprule
-Char & Code & \quad & Char & Code & \quad & Char & Code & \quad & Char & Code \\
-\midrule
-\texttt{A} & 65 & & \texttt{N} & 78 & & \texttt{a} & 97 & & \texttt{n} & 110 \\
-\texttt{B} & 66 & & \texttt{O} & 79 & & \texttt{b} & 98 & & \texttt{o} & 111 \\
-\texttt{C} & 67 & & \texttt{P} & 80 & & \texttt{c} & 99 & & \texttt{p} & 112 \\
-\texttt{D} & 68 & & \texttt{Q} & 81 & & \texttt{d} & 100 & & \texttt{q} & 113 \\
-\texttt{E} & 69 & & \texttt{R} & 82 & & \texttt{e} & 101 & & \texttt{r} & 114 \\
-\texttt{F} & 70 & & \texttt{S} & 83 & & \texttt{f} & 102 & & \texttt{s} & 115 \\
-\texttt{G} & 71 & & \texttt{T} & 84 & & \texttt{g} & 103 & & \texttt{t} & 116 \\
-\texttt{H} & 72 & & \texttt{U} & 85 & & \texttt{h} & 104 & & \texttt{u} & 117 \\
-\texttt{I} & 73 & & \texttt{V} & 86 & & \texttt{i} & 105 & & \texttt{v} & 118 \\
-\texttt{J} & 74 & & \texttt{W} & 87 & & \texttt{j} & 106 & & \texttt{w} & 119 \\
-\texttt{K} & 75 & & \texttt{X} & 88 & & \texttt{k} & 107 & & \texttt{x} & 120 \\
-\texttt{L} & 76 & & \texttt{Y} & 89 & & \texttt{l} & 108 & & \texttt{y} & 121 \\
-\texttt{M} & 77 & & \texttt{Z} & 90 & & \texttt{m} & 109 & & \texttt{z} & 122 \\
-\midrule
-\texttt{0} & 48 & & \texttt{.} & 46 & & \texttt{\_} & 95 & & & \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent
-Under this convention, the string \texttt{Algebra} corresponds to the function $s \colon 7 \to \Sigma$ with
-\[
-  s(0) = 65,\; s(1) = 108,\; s(2) = 103,\; s(3) = 101,\; s(4) = 98,\; s(5) = 114,\; s(6) = 97.
-\]
-
-\begin{definition}[Characters and strings]
-A \emph{character} is an element of $\Sigma$. A \emph{string} of length~$n$ is a function $s \colon n \to \Sigma$, where $n = \{0, 1, \ldots, n-1\}$ is the von Neumann ordinal. That is, $s$ assigns to each position $i < n$ a character $s(i) \in \Sigma$.
-
-For each $n \in \mathbb{N}$, let $\Sigma^n := \{s : n \to \Sigma\}$ denote the set of all strings of length $n$. The set of all finite strings is
-\[
-  \Sigma^* := \bigcup_{n \in \mathbb{N}} \Sigma^n.
-\]
-In particular, $\Sigma^0 = \{\epsilon\}$ contains only the empty string (the unique function $\emptyset \to \Sigma$).
-\end{definition}
+We adopt standard notation from formal language theory~\cite{hopcroft2006}. An \emph{alphabet} $\Sigma$ is a finite non-empty set of symbols. A \emph{string} over $\Sigma$ is a finite sequence of symbols from $\Sigma$. The set of all strings is denoted $\Sigma^*$ (Kleene star), and $\Sigma^+ := \Sigma^* \setminus \{\epsilon\}$ denotes the set of non-empty strings.
 
 \begin{definition}[Module names]
 Recall that $\Sigma^*$ is the set of all finite strings (including the empty string~$\epsilon$).
