@@ -78,4 +78,32 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
 \]
 \end{definition}
 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={draw, rounded corners, font=\small\ttfamily, inner sep=4pt, minimum height=1.4em},
+  dep/.style={fill=gray!10},
+  center/.style={fill=blue!15, thick},
+  >=Stealth,
+  every edge/.style={draw, ->},
+]
+  \node[center] (c) {Algebra.Group.Defs};
+  \node[dep, below left=1.2cm and 2.5cm of c]  (n1) {Regular.Defs};
+  \node[dep, below left=1.2cm and 0.5cm of c]  (n2) {Data.Int.Notation};
+  \node[dep, below=1.2cm of c]                 (n3) {Data.Nat.BinaryRec};
+  \node[dep, below right=1.2cm and 0.5cm of c] (n4) {Tactic.OfNat};
+  \node[dep, below right=1.2cm and 2.5cm of c] (n5) {Data.Nat.Notation};
+  \node[dep, below=2.6cm of c]                 (n6) {Tactic.MkIffOfInductiveProp};
+
+  \draw (c) -- (n1);
+  \draw (c) -- (n2);
+  \draw (c) -- (n3);
+  \draw (c) -- (n4);
+  \draw (c) -- (n5);
+  \draw (c) -- (n6);
+\end{tikzpicture}
+\caption{The local neighbourhood of \texttt{Algebra.Group.Defs} in $G_{\mathrm{import}}$: the module and its six direct imports (edges point from importer to imported).}
+\label{fig:import-subgraph}
+\end{figure}
+
 The import graph $G_{\mathrm{import}}$ is acyclic: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} In particular, $G_{\mathrm{import}}$ is a DAG.
