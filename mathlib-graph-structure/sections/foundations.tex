@@ -48,14 +48,12 @@ Each Lean source file begins with \texttt{import} statements that declare its de
 module
 
 public import Mathlib.Init
-
-notation "\bN" => Nat
 \end{minted}
 
 \noindent
-This file defines one thing (the notation $\mathbb{N}$ for \texttt{Nat}) and depends on exactly one other module: \texttt{Mathlib.Init}.
+This file depends on exactly one other module: \texttt{Mathlib.Init}.
 
-A file with more dependencies is \texttt{Mathlib/Algebra/Group/Defs.lean}:
+A file with more dependencies is \texttt{Mathlib/Algebra/Group/Defs.lean}, which imports nine modules (shown here in abbreviated form):
 
 \begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
 module
@@ -63,12 +61,7 @@ module
 public import Batteries.Logic
 public import Mathlib.Algebra.Notation.Defs
 public import Mathlib.Algebra.Regular.Defs
-public import Mathlib.Data.Int.Notation
-public import Mathlib.Data.Nat.BinaryRec
-public import Mathlib.Tactic.MkIffOfInductiveProp
-public import Mathlib.Tactic.OfNat
-public import Mathlib.Tactic.Basic
-public import Mathlib.Data.Nat.Notation
+  -- ... 6 more imports
 \end{minted}
 
 \noindent
