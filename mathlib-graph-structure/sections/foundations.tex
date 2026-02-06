@@ -81,48 +81,21 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
+  every node/.style={font=\small\ttfamily, inner sep=2pt},
   dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  root/.style={circle, fill=blue!60, minimum size=4pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin, gray!70},
+  >=Stealth, every edge/.style={draw, ->, thin},
 ]
-  % Level 0
-  \node[root, label=above:{\scriptsize\ttfamily Algebra.Group.Defs}] (c) at (0,0) {};
+  \node[dot, label=above:{Algebra.Group.Defs}] (a) at (0,0) {};
+  \node[dot, label=left:{Data.Int.Notation}]   (b) at (-1.5,-1.5) {};
+  \node[dot, label=right:{Data.Nat.Notation}]  (c) at (1.5,-1.5) {};
+  \node[dot, label=below:{Init}]               (d) at (0,-3) {};
 
-  % Level 1
-  \node[dot, label=below left:{\scriptsize\ttfamily Algebra.Regular.Defs}] (r1) at (-5,-1.5) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Data.Int.Notation}]         (r2) at (-3,-1.5) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Data.Nat.BinaryRec}]        (r3) at (-1,-1.5) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Tactic.OfNat}]              (r4) at (1,-1.5) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Data.Nat.Notation}]         (r5) at (3,-1.5) {};
-  \node[dot, label=below right:{\scriptsize\ttfamily Tactic.MkIffOfInductiveProp}] (r6) at (5,-1.5) {};
-
-  % Level 2
-  \node[dot, label=below left:{\scriptsize\ttfamily Algebra.Notation.Defs}] (s1) at (-5,-3.2) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Init}]                       (s2) at (0,-3.2) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Lean.Meta}]                  (s3) at (3.5,-3.2) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Lean.Name}]                  (s4) at (5,-3.2) {};
-  \node[dot, label=below:{\scriptsize\ttfamily Tactic.TypeStar}]            (s5) at (6.5,-3.2) {};
-
-  % Level 0 -> Level 1
-  \draw (c) -- (r1);
-  \draw (c) -- (r2);
-  \draw (c) -- (r3);
-  \draw (c) -- (r4);
-  \draw (c) -- (r5);
-  \draw (c) -- (r6);
-
-  % Level 1 -> Level 2
-  \draw (r1) -- (s1);
-  \draw (r2) -- (s2);
-  \draw (r3) -- (s2);
-  \draw (r4) -- (s2);
-  \draw (r5) -- (s2);
-  \draw (r6) -- (s3);
-  \draw (r6) -- (s4);
-  \draw (r6) -- (s5);
+  \draw (a) -- (b);
+  \draw (a) -- (c);
+  \draw (b) -- (d);
+  \draw (c) -- (d);
 \end{tikzpicture}
-\caption{Two-hop neighbourhood of \texttt{Algebra.Group.Defs} in $G_{\mathrm{import}}$. Four level-1 modules converge on \texttt{Init}, illustrating the DAG structure. All module names are shown with the \texttt{Mathlib.}\ prefix removed.}
+\caption{A fragment of $G_{\mathrm{import}}$: \texttt{Algebra.Group.Defs} imports two modules that both depend on \texttt{Init}, forming a diamond. All names have the \texttt{Mathlib.}\ prefix removed.}
 \label{fig:import-subgraph}
 \end{figure}
 
