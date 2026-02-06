@@ -229,7 +229,7 @@ Since $G_{\mathrm{import}}$ is a DAG, it has a unique \emph{transitive reduction
 \begin{definition}[Transitive reduction]
 The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}^{-} = (\mathcal{M}, E_{\mathrm{import}}^{-})$ where
 \[
-  E_{\mathrm{import}}^{-} = E_{\mathrm{import}} \setminus \{(m_1, m_2) \mid \exists\, \text{path } m_1 \to \cdots \to m_2 \text{ in } G_{\mathrm{import}} \text{ of length} \ge 2\}.
+  E_{\mathrm{import}}^{-} = E_{\mathrm{import}} \setminus \{(m_1, m_2)\in E_{\mathrm{import}} \mid \exists\, \text{path } m_1 \to \cdots \to m_2 \text{ in } G_{\mathrm{import}} \text{ of length} \ge 2\}.
 \]
 \end{definition}
 
@@ -281,4 +281,4 @@ The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}
 
 The raw import graph has $|E_{\mathrm{import}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{import}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless.
 
-The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified that its reduced graph ($20{,}881$ edges including the umbrella root \texttt{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \texttt{Mathlib} to its direct children.
+The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified \textcolor{red}{(via our own parser)} that its reduced graph ($20{,}881$ edges including the umbrella root \texttt{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \texttt{Mathlib} to its direct children.
