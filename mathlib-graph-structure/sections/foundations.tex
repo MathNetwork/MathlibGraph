@@ -1,135 +1,40 @@
-\section{Foundations}
+\section{The Structure of Mathlib}
 
-Mathlib organises its source code as a collection of \texttt{.lean} files arranged in a hierarchical directory structure. Each file corresponds to a \emph{module}, and its position in the directory tree is encoded by a dot-separated name such as \texttt{Mathlib.Algebra.Group}. Because every module can \texttt{import} other modules, two natural structures coexist: a tree given by the hierarchical naming, and a directed acyclic graph given by the import relation. Our goal in this section is to formalise both structures from first principles. We begin at the coarsest level---the namespace hierarchy that mirrors the file system---and then introduce the import relation that cuts across it.
+\subsection{Module Names}
 
-\subsection{Strings and Module Names}
-
-We adopt standard notation from formal language theory~\cite{hopcroft2006}.
-
-\begin{definition}[Alphabet and strings]
-An \emph{alphabet} $\Sigma$ is a finite non-empty set of symbols. A \emph{string} over $\Sigma$ is a finite sequence of symbols from $\Sigma$. We denote by $\Sigma^*$ the set of all strings over $\Sigma$ (the \emph{Kleene star}), and by $\Sigma^+ := \Sigma^* \setminus \{\epsilon\}$ the set of non-empty strings, where $\epsilon$ denotes the empty string.
-\end{definition}
-
-In the context of Lean and Mathlib, we work with the ASCII alphabet $\Sigma = \{0, 1, \ldots, 127\}$. A \emph{word} is a non-empty string, i.e., an element of $\Sigma^+$.
-
-\begin{definition}[Mathlib words]
-The set of \emph{Mathlib words} is
+A \emph{module name} in Mathlib is a dot-separated sequence of identifiers, such as
 \[
-  \mathcal{W} := \{w \in \Sigma^+ \mid w \text{ appears as a component in some Mathlib module name}\}.
+  \texttt{Mathlib.Algebra.Group.Defs}
 \]
-This is a finite set containing elements such as $\texttt{Mathlib}$, $\texttt{Algebra}$, $\texttt{Group}$, $\texttt{Defs}$, $\texttt{Topology}$, $\texttt{Basic}$, etc.
-\end{definition}
+We write $\mathcal{M}$ for the set of all module names in Mathlib. As of version X.X, $|\mathcal{M}| = 7{,}563$.
 
-\begin{definition}[Module names]
-A \emph{module name} is a non-empty finite sequence of Mathlib words. We write $\mathcal{W}^k$ for the set of $k$-tuples of words, and define
-\[
-  \mathcal{W}^+ := \bigcup_{k \geq 1} \mathcal{W}^k.
-\]
-The set of \emph{Mathlib module names} is a finite subset
-\[
-  \mathcal{M} \subset \mathcal{W}^+
-\]
-consisting of module names that actually appear in the library.
+The \emph{depth} of a module name is the number of components. For example, $\texttt{Mathlib.Algebra.Group.Defs}$ has depth~$4$. The maximum depth in Mathlib is~$12$.
 
-We adopt dot notation: for a tuple $(w_1, w_2, \ldots, w_k) \in \mathcal{W}^+$, we write $w_1.w_2.\cdots.w_k$. For instance, the tuple $(\texttt{Mathlib}, \texttt{Algebra}, \texttt{Group})$ is written $\texttt{Mathlib.Algebra.Group}$.
-\end{definition}
+\subsection{The Prefix Tree}
 
-\begin{example}
-Mathlib contains $|\mathcal{M}| = 7{,}563$ module names. The set $\mathcal{W}$ of Mathlib words has $|\mathcal{W}| = 3{,}855$ elements. The maximum depth (i.e., the maximum $k$ such that some module name has $k$ components) is $12$.
-\end{example}
+Module names are organized hierarchically. We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, $\texttt{Mathlib.Algebra}$ is a prefix of $\texttt{Mathlib.Algebra.Group.Defs}$.
 
-\begin{definition}[Prefix tree]
-Define a partial order on $\mathcal{M}$: $m \leq m'$ if and only if $m$ is a prefix of~$m'$.
-Then $(\mathcal{M}, \leq)$ is a rooted tree.
-\end{definition}
-
-\begin{example}
-Consider the following subset of $\mathcal{M}$:
-\begin{align*}
-  \{\; & \texttt{Mathlib},\;
-         \texttt{Mathlib.Algebra},\;
-         \texttt{Mathlib.Algebra.Group}, \\
-       & \texttt{Mathlib.Algebra.Ring},\;
-         \texttt{Mathlib.Data},\;
-         \texttt{Mathlib.Data.Nat} \;\}.
-\end{align*}
-The prefix order gives the tree:
-\[
-  \texttt{Mathlib}
-  \begin{cases}
-    \texttt{.Algebra}
-    \begin{cases}
-      \texttt{.Group} \\
-      \texttt{.Ring}
-    \end{cases} \\[6pt]
-    \texttt{.Data}
-    \begin{cases}
-      \texttt{.Nat}
-    \end{cases}
-  \end{cases}
-\]
-Here $\texttt{Mathlib} \leq \texttt{Mathlib.Algebra} \leq \texttt{Mathlib.Algebra.Group}$,
-but $\texttt{Mathlib.Algebra.Group}$ and $\texttt{Mathlib.Data.Nat}$ are incomparable.
-\end{example}
-
-\begin{definition}[File contents and import extraction]
-Let $\mathrm{Content} \colon \mathcal{M} \to \Sigma^*$ assign to each module its source code. Define:
-\[
-  \mathrm{imports}(m) := \bigl\{m' \in \mathcal{M} \mid \texttt{"import } m'\texttt{"} \text{ is a substring of } \mathrm{Content}(m)\bigr\}.
-\]
-\end{definition}
-
-\begin{example}
-Suppose the file \texttt{Mathlib/Algebra/Group.lean} contains:
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-import Mathlib.Algebra.Ring
-import Mathlib.Data.Nat
-
-class Group (G : Type) extends Monoid G where
-  inv : G -> G
-  mul_left_inv : forall a : G, inv a * a = 1
-\end{minted}
-Then $\mathrm{Content}(\texttt{Mathlib.Algebra.Group})$ is the entire string above.
-Since it contains the substrings \texttt{"import Mathlib.Algebra.Ring"}
-and \texttt{"import Mathlib.Data.Nat"}, we obtain
-\[
-  \mathrm{imports}(\texttt{Mathlib.Algebra.Group})
-  = \{\texttt{Mathlib.Algebra.Ring},\; \texttt{Mathlib.Data.Nat}\}.
-\]
-\end{example}
-
-\begin{definition}[Dependency graph]
-The \emph{module dependency graph} of Mathlib is:
-\[
-  G = (\mathcal{M},\, E), \qquad E = \{(m, m') : m' \in \mathrm{imports}(m)\}.
-\]
-\end{definition}
-
-\begin{example}
-Continuing the previous example, suppose the import relations are:
+The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ where:
 \begin{itemize}
-  \item \texttt{Mathlib.Algebra.Group} imports \texttt{Mathlib.Algebra.Ring} and \texttt{Mathlib.Data.Nat};
-  \item \texttt{Mathlib.Algebra.Ring} imports \texttt{Mathlib.Data.Nat};
-  \item \texttt{Mathlib.Data.Nat} imports \texttt{Mathlib.Data}.
+  \item The root is $\texttt{Mathlib}$
+  \item There is an edge $m \to m'$ if $m'$ extends $m$ by exactly one component
 \end{itemize}
-Then the corresponding subgraph of~$G$ is:
-\begin{center}
-\begin{tikzpicture}[
-    >=Stealth,
-    node distance=1.8cm and 2.5cm,
-    every node/.style={font=\small\ttfamily}
-  ]
-  \node (AG) {Algebra.Group};
-  \node (AR) [below left=of AG] {Algebra.Ring};
-  \node (DN) [below right=of AG] {Data.Nat};
-  \node (D)  [below=of DN] {Data};
-  \draw[->] (AG) -- (AR);
-  \draw[->] (AG) -- (DN);
-  \draw[->] (AR) -- (DN);
-  \draw[->] (DN) -- (D);
-\end{tikzpicture}
-\end{center}
-Each arrow $m \to m'$ indicates that $m$ imports~$m'$.
-Note that the import edges cut across the prefix tree: \texttt{Algebra.Group}
-depends on \texttt{Data.Nat}, which lies in a different branch.
+
+The top-level directories (children of the root) include \texttt{Algebra} (1257 files), \texttt{CategoryTheory} (982 files), \texttt{Analysis} (755 files), etc.
+
+\subsection{The Import Graph}
+
+Each module $m \in \mathcal{M}$ imports a set of other modules $\mathrm{imports}(m) \subseteq \mathcal{M}$. This defines a directed graph $G = (\mathcal{M}, E_G)$ where
+\[
+  (m_1, m_2) \in E_G \iff m_2 \in \mathrm{imports}(m_1).
+\]
+
+This graph is a DAG (directed acyclic graph): there are no circular imports.
+
+\begin{example}
+The module \texttt{Mathlib.Algebra.Group.Defs} imports 8 modules, including:
+\begin{itemize}
+  \item \texttt{Mathlib.Algebra.Notation.Defs}
+  \item \texttt{Mathlib.Data.Int.Notation}
+\end{itemize}
 \end{example}
