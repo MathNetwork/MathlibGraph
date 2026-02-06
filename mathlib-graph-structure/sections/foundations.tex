@@ -9,6 +9,40 @@ Let $\emptyset$ denote the empty set. Define the natural numbers via the von Neu
 \]
 \end{definition}
 
+\subsection*{Character encoding}
+
+To represent text within set theory, we encode characters as natural numbers. The standard \emph{ASCII encoding} assigns to each character a unique integer in $\{0, 1, \ldots, 127\}$. The printable characters relevant to Mathlib module names include:
+
+\begin{center}
+\begin{tabular}{cccccccccccc}
+\toprule
+Char & Code & \quad & Char & Code & \quad & Char & Code & \quad & Char & Code \\
+\midrule
+\texttt{A} & 65 & & \texttt{N} & 78 & & \texttt{a} & 97 & & \texttt{n} & 110 \\
+\texttt{B} & 66 & & \texttt{O} & 79 & & \texttt{b} & 98 & & \texttt{o} & 111 \\
+\texttt{C} & 67 & & \texttt{P} & 80 & & \texttt{c} & 99 & & \texttt{p} & 112 \\
+\texttt{D} & 68 & & \texttt{Q} & 81 & & \texttt{d} & 100 & & \texttt{q} & 113 \\
+\texttt{E} & 69 & & \texttt{R} & 82 & & \texttt{e} & 101 & & \texttt{r} & 114 \\
+\texttt{F} & 70 & & \texttt{S} & 83 & & \texttt{f} & 102 & & \texttt{s} & 115 \\
+\texttt{G} & 71 & & \texttt{T} & 84 & & \texttt{g} & 103 & & \texttt{t} & 116 \\
+\texttt{H} & 72 & & \texttt{U} & 85 & & \texttt{h} & 104 & & \texttt{u} & 117 \\
+\texttt{I} & 73 & & \texttt{V} & 86 & & \texttt{i} & 105 & & \texttt{v} & 118 \\
+\texttt{J} & 74 & & \texttt{W} & 87 & & \texttt{j} & 106 & & \texttt{w} & 119 \\
+\texttt{K} & 75 & & \texttt{X} & 88 & & \texttt{k} & 107 & & \texttt{x} & 120 \\
+\texttt{L} & 76 & & \texttt{Y} & 89 & & \texttt{l} & 108 & & \texttt{y} & 121 \\
+\texttt{M} & 77 & & \texttt{Z} & 90 & & \texttt{m} & 109 & & \texttt{z} & 122 \\
+\midrule
+\texttt{0} & 48 & & \texttt{.} & 46 & & \texttt{\_} & 95 & & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+Under this encoding, the string \texttt{Algebra} becomes the function $s \colon 7 \to \Sigma$ with
+\[
+  s(0) = 65,\; s(1) = 108,\; s(2) = 103,\; s(3) = 101,\; s(4) = 98,\; s(5) = 114,\; s(6) = 97.
+\]
+
 \begin{definition}[Characters and strings]
 In set theory, characters are not primitive objects. We represent them as natural numbers via the standard ASCII encoding: for example, $65 \leftrightarrow \texttt{A}$, $97 \leftrightarrow \texttt{a}$, $48 \leftrightarrow \texttt{0}$, etc.
 
