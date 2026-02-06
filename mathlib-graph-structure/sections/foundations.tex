@@ -43,14 +43,8 @@ Char & Code & \quad & Char & Code & \quad & Char & Code & \quad & Char & Code \\
 \end{tabular}
 \end{center}
 
-\noindent
-Under this convention, the string \texttt{Algebra} corresponds to the function $s \colon 7 \to \Sigma$ with
-\[
-  s(0) = 65,\; s(1) = 108,\; s(2) = 103,\; s(3) = 101,\; s(4) = 98,\; s(5) = 114,\; s(6) = 97.
-\]
-
-\begin{definition}[Characters and strings]
-A \emph{character} is an element of $\Sigma$. A \emph{string} of length~$n$ is a function $s \colon n \to \Sigma$, where $n = \{0, 1, \ldots, n-1\}$ is the von Neumann ordinal. That is, $s$ assigns to each position $i < n$ a character $s(i) \in \Sigma$.
+\begin{definition}[Strings]
+A \emph{string} of length~$n$ is a function $s \colon n \to \Sigma$, where $n = \{0, 1, \ldots, n-1\}$ is the von Neumann ordinal. That is, $s$ assigns to each position $i < n$ a character $s(i) \in \Sigma$.
 
 For each $n \in \mathbb{N}$, let $\Sigma^n := \{s : n \to \Sigma\}$ denote the set of all strings of length $n$. The set of all finite strings is
 \[
