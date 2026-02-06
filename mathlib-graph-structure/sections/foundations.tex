@@ -74,7 +74,9 @@ public import Mathlib.Data.Nat.Notation
 \noindent
 Each file is a \emph{vertex} in the import graph; each \texttt{import} statement is a directed \emph{edge} from the importing module to the imported module.
 
-Let $\mathcal{M}$ be the set of Mathlib module names. For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$.
+Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-exports the imported module to downstream dependents. For the purposes of the import graph, both forms create an edge—they differ only in visibility, not in the dependency relationship.
+
+Let $\mathcal{M}$ be the set of Mathlib module names. For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
 
 \begin{definition}[Import graph]
 The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\mathrm{import}})$ where
@@ -82,16 +84,5 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
   E_{\mathrm{import}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
 \]
 \end{definition}
-$G_{\mathrm{import}}$ is a directed graph since $\mathcal{M}$ is a finite set (of $7{,}563$ module names), and $E_{import} \subseteq \mathcal{M} \times \mathcal{M}$ by construction.
 
-\begin{proposition}
-$G_{\mathrm{import}}$ is acyclic.
-\end{proposition}
-
-\begin{proof}
-  \textcolor{red}{unfininshed}
-\end{proof}
-
-\begin{corollary}
-$G_{\mathrm{import}}$ is a DAG.
-\end{corollary}
+The import graph $G_{\mathrm{import}}$ is acyclic: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} In particular, $G_{\mathrm{import}}$ is a DAG.
