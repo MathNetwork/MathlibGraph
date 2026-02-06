@@ -22,6 +22,10 @@ The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ where:
 
 The top-level directories (children of the root) include \texttt{Algebra} (1257 files), \texttt{CategoryTheory} (982 files), \texttt{Analysis} (755 files), etc.
 
+\begin{remark}
+$T$ and the import graph $G_{\mathrm{import}}$ (defined in Section~\ref{sec:import-graph}) are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
+\end{remark}
+
 \subsection{Graph-Theoretic Definitions}
 
 \begin{definition}[Directed graph]
@@ -41,6 +45,7 @@ A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ co
 \end{definition}
 
 \subsection{The Import Graph}
+\label{sec:import-graph}
 
 Each Lean source file begins with \texttt{import} statements that declare its dependencies. For example, the file \texttt{Mathlib/Data/Nat/Notation.lean} contains:
 
@@ -77,10 +82,6 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
   E_{\mathrm{import}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
 \]
 \end{definition}
-
-\begin{remark}
-$T$ and $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
-\end{remark}
 
 \begin{figure}[ht]
 \centering
