@@ -60,9 +60,11 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
 
 \begin{figure}[H]
 \centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
 \begin{forest}
   for tree={
-    font=\small\ttfamily,
+    font=\scriptsize\ttfamily,
     grow'=0,
     child anchor=west,
     parent anchor=south,
@@ -76,23 +78,12 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
       if n=1 {insert before={[,phantom]}} {}
     },
     fit=band,
-    before computing xy={l=15pt},
+    before computing xy={l=13pt},
   }
 [Mathlib/
   [Algebra/
     [Group/
       [Defs.lean]
-      [Basic.lean]
-    ]
-    [Ring/
-      [Defs.lean]
-    ]
-  ]
-  [Analysis/
-    [Normed/
-      [Group/
-        [Basic.lean]
-      ]
     ]
   ]
   [Data/
@@ -100,9 +91,39 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
       [Notation.lean]
     ]
   ]
+  [\ldots, edge={draw, densely dotted}]
 ]
 \end{forest}
-\caption{A fragment of the Mathlib source tree (commit \texttt{534cf0b}). Each file path corresponds to a module name with dots replacing path separators, e.g., \texttt{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} defines \texttt{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
+\caption{Directory structure}
+\label{fig:dir-tree}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.52\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
+  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
+  >=Stealth, every edge/.style={draw, ->, thin},
+]
+  \node[dot, label=above:{Mathlib}]              (root) at (1.8,0) {};
+  \node[dot, label=left:{Algebra}]               (alg)  at (0,-1.3) {};
+  \node[dot, label=right:{Data}]                 (dat)  at (3.6,-1.3) {};
+  \node[dot, label=left:{Algebra.Group}]         (grp)  at (0,-2.6) {};
+  \node[dot, label=right:{Data.Nat}]             (nat)  at (3.6,-2.6) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]   (gd)   at (0,-3.9) {};
+  \node[dot, label=below:{Data.Nat.Notation}]    (nn)   at (3.6,-3.9) {};
+  \draw (root) -- (alg);
+  \draw (root) -- (dat);
+  \draw (alg)  -- (grp);
+  \draw (dat)  -- (nat);
+  \draw (grp)  -- (gd);
+  \draw (nat)  -- (nn);
+  \node[font=\scriptsize, text=gray] at (1.8,-1.3) {$\cdots$};
+\end{tikzpicture}
+\caption{Namespace tree $T$: each edge $\in E_T$}
+\label{fig:namespace-tree}
+\end{subfigure}
+\caption{A fragment of the Mathlib source tree (commit \texttt{534cf0b}). Left: the directory layout. Right: the corresponding rooted tree~$T$. Each directory path maps to a module name with dots replacing separators, e.g., \texttt{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} $\leftrightarrow$ \texttt{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
 \label{fig:prefix-tree}
 \end{figure}
 
@@ -154,6 +175,23 @@ The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\m
 \]
 \end{definition}
 
+Since \texttt{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mathlib.Init}, we have the edge $(\texttt{Data.Nat.Notation},\; \texttt{Init}) \in E_{\mathrm{import}}$:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt},
+  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
+  >=Stealth, every edge/.style={draw, ->, thin},
+]
+  \node[dot, label=above:{Init}]              (b) at (0,0) {};
+  \node[dot, label=above:{Data.Nat.Notation}] (a) at (4,0) {};
+  \draw (a) -- (b);
+\end{tikzpicture}
+\caption{The simplest import edge: \texttt{Data.Nat.Notation} imports \texttt{Init}. All names have the \texttt{Mathlib.}\ prefix removed.}
+\label{fig:single-import-edge}
+\end{figure}
+
 \begin{remark}
 The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
 \end{remark}
@@ -165,10 +203,10 @@ The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct s
   dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
   >=Stealth, every edge/.style={draw, ->, thin},
 ]
-  \node[dot, label=above:{Algebra.Group.Defs}] (a) at (0,0) {};
-  \node[dot, label=left:{Data.Int.Notation}]   (b) at (-1.5,-1.5) {};
-  \node[dot, label=right:{Data.Nat.Notation}]  (c) at (1.5,-1.5) {};
-  \node[dot, label=below:{Init}]               (d) at (0,-3) {};
+  \node[dot, label=above:{Init}]                (d) at (0,0) {};
+  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.5,-1.5) {};
+  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.5,-1.5) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-3) {};
 
   \draw (a) -- (b);
   \draw (a) -- (c);
@@ -180,3 +218,65 @@ The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct s
 \end{figure}
 
 The import graph $G_{\mathrm{import}}$ is acyclic: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} In particular, $G_{\mathrm{import}}$ is a DAG.
+
+\subsection{Transitive Reduction and Redundant Imports}
+\label{sec:transitive-reduction}
+
+Since $G_{\mathrm{import}}$ is a DAG, it has a unique \emph{transitive reduction}~\cite{ahu1972}: the smallest subgraph $G_{\mathrm{import}}^{-} \subseteq G_{\mathrm{import}}$ with the same reachability relation. An edge $(m_1, m_2) \in E_{\mathrm{import}}$ is \emph{transitively redundant} if $m_2$ is reachable from $m_1$ via a path of length $\ge 2$ in $G_{\mathrm{import}}$---that is, the dependency is already implied by other imports.
+
+\begin{definition}[Transitive reduction]
+The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}^{-} = (\mathcal{M}, E_{\mathrm{import}}^{-})$ where
+\[
+  E_{\mathrm{import}}^{-} = E_{\mathrm{import}} \setminus \{(m_1, m_2) \mid \exists\, \text{path } m_1 \to \cdots \to m_2 \text{ in } G_{\mathrm{import}} \text{ of length} \ge 2\}.
+\]
+\end{definition}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=1pt},
+  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
+  >=Stealth, every edge/.style={draw, ->, thin},
+]
+  \node[dot, label=above:{Init}]                (d) at (0,0) {};
+  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.2,-1.2) {};
+  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.2,-1.2) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-2.4) {};
+
+  \draw (a) -- (b);
+  \draw (a) -- (c);
+  \draw (b) -- (d);
+  \draw (c) -- (d);
+  \draw[red, dashed, thick] (a) -- (d);
+\end{tikzpicture}
+\caption{Subgraph of $G_{\mathrm{import}}$}
+\label{fig:tr-graph}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\vspace{0pt}\raggedleft
+\scriptsize\ttfamily
+\begin{tabular}[t]{@{}l@{}}
+  \textnormal{\sffamily\bfseries Data/Int/Notation.lean} \\[1pt]
+  \hspace{1em}public import Init \\[6pt]
+  \textnormal{\sffamily\bfseries Data/Nat/Notation.lean} \\[1pt]
+  \hspace{1em}public import Init \\[6pt]
+  \textnormal{\sffamily\bfseries Algebra/Group/Defs.lean} \\[1pt]
+  \hspace{1em}public import Data.Int.Notation \\
+  \hspace{1em}public import Data.Nat.Notation \\
+  \hspace{1em}\textcolor{red}{public import Init}
+    \textnormal{\sffamily\color{red} $\leftarrow$ would be redundant} \\
+\end{tabular}
+\caption{Source file headers}
+\label{fig:tr-source}
+\end{subfigure}
+\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \texttt{Algebra.Group.Defs} were to import \texttt{Init} directly (dashed red edge), that edge would be transitively redundant: \texttt{Init} is already reachable via both \texttt{Data.Int.Notation} and \texttt{Data.Nat.Notation}. All names have the \texttt{Mathlib.}\ prefix removed.}
+\label{fig:transitive-reduction}
+\end{figure}
+
+The raw import graph has $|E_{\mathrm{import}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{import}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless.
+
+The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified that its reduced graph ($20{,}881$ edges including the umbrella root \texttt{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \texttt{Mathlib} to its direct children.
