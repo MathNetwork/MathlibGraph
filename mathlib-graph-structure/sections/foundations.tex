@@ -42,6 +42,38 @@ A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ co
 
 \subsection{The Import Graph}
 
+Each Lean source file begins with \texttt{import} statements that declare its dependencies. For example, the file \texttt{Mathlib/Data/Nat/Notation.lean} contains:
+
+\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
+module
+
+public import Mathlib.Init
+
+notation "ℕ" => Nat
+\end{minted}
+
+\noindent
+This file defines one thing (the notation $\mathbb{N}$ for \texttt{Nat}) and depends on exactly one other module: \texttt{Mathlib.Init}.
+
+A file with more dependencies is \texttt{Mathlib/Algebra/Group/Defs.lean}:
+
+\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
+module
+
+public import Batteries.Logic
+public import Mathlib.Algebra.Notation.Defs
+public import Mathlib.Algebra.Regular.Defs
+public import Mathlib.Data.Int.Notation
+public import Mathlib.Data.Nat.BinaryRec
+public import Mathlib.Tactic.MkIffOfInductiveProp
+public import Mathlib.Tactic.OfNat
+public import Mathlib.Tactic.Basic
+public import Mathlib.Data.Nat.Notation
+\end{minted}
+
+\noindent
+Each file is a \emph{vertex} in the import graph; each \texttt{import} statement is a directed \emph{edge} from the importing module to the imported module.
+
 Let $\mathcal{M}$ be the set of Mathlib module names. For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$.
 
 \begin{definition}[Import graph]
@@ -64,7 +96,7 @@ $G_{\mathrm{import}}$ is acyclic.
 \end{proposition}
 
 \begin{proof}
-We apply Kahn's algorithm to $G_{\mathrm{import}}$: repeatedly remove a vertex with in-degree zero and all its outgoing edges. The algorithm terminates after removing all $7{,}563$ vertices, producing a topological ordering $\sigma \colon \mathcal{M} \to \{1, \ldots, |\mathcal{M}|\}$ satisfying $(m_1, m_2) \in E \implies \sigma(m_2) < \sigma(m_1)$. A finite directed graph admits a topological ordering if and only if it is acyclic~\cite{cormen2009}.
+  \textcolor{red}{unfininshed}
 \end{proof}
 
 \begin{corollary}
