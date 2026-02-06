@@ -1,0 +1,45 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{preamble}[2025/02/05 MathLibGraph paper preamble]
+
+% ---------- encoding & fonts ----------
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+
+% ---------- mathematics ----------
+\RequirePackage{amsmath,amssymb,amsthm}
+
+% ---------- layout ----------
+\RequirePackage{geometry}
+\geometry{margin=1in}
+
+% ---------- hyperlinks ----------
+\RequirePackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!70!black,
+  citecolor=green!50!black,
+  urlcolor=blue!70!black
+}
+
+% ---------- code highlighting ----------
+\RequirePackage{xcolor}
+\RequirePackage{minted}
+\usemintedstyle{tango}
+
+\newminted{lean4}{
+  fontsize=\small,
+  breaklines,
+  frame=single,
+  framesep=2mm,
+  bgcolor=gray!5
+}
+\newcommand{\lean}[1]{\mintinline{lean4}{#1}}
+
+% ---------- diagrams ----------
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+% ---------- theorem environments ----------
+\newtheorem{definition}{Definition}[section]
+\newtheorem{property}[definition]{Property}
+\newtheorem{example}[definition]{Example}

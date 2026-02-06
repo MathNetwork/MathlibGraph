@@ -1,0 +1,30 @@
+\section{Graph Models}
+
+We consider three graph structures built from the Mathlib codebase.
+
+\subsection{Model 1: File Import DAG}
+
+Let $G_1 = (V_1, E_1)$ be a directed graph where:
+\begin{itemize}
+  \item $V_1 = \{m \mid m \text{ is a \texttt{.lean} file/module in Mathlib}\}$
+  \item $E_1 = \{(A, B) \in V_1 \times V_1 \mid A \text{ contains the statement } \texttt{import } B\}$
+\end{itemize}
+
+\subsection{Model 2: Declaration Dependency Graph}
+
+Let $G_2 = (V_2, E_2)$ be a directed graph where:
+\begin{itemize}
+  \item $V_2 = \{d \mid d \text{ is a declaration (theorem/definition/lemma, etc.) in Mathlib}\}$
+  \item $E_2 = \{(d_1, d_2) \in V_2 \times V_2 \mid d_1 \text{'s proof term references } d_2\}$
+\end{itemize}
+
+\subsection{Model 3: Bipartite Graph}
+
+Let $G_3 = (V_1 \cup V_2,\, E_3)$ be a bipartite graph where:
+\begin{itemize}
+  \item $E_3 = \{(m, d) \mid m \in V_1,\; d \in V_2,\; d \text{ is defined in file } m\}$
+\end{itemize}
+
+\begin{property}
+$G_1$ and $G_2$ are both directed acyclic graphs (DAGs).
+\end{property}

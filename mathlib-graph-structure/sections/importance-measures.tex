@@ -1,0 +1,30 @@
+\section{Importance Measures}
+
+\subsection{Downstream influence}
+
+\begin{definition}[Downstream influence]
+\[
+  \mathrm{Infl}(v) = \sum_{u \in \mathrm{Down}(v)} w(u).
+\]
+Unweighted version: $\mathrm{Infl}_0(v) = |\mathrm{Down}(v)|$.
+\end{definition}
+
+\subsection{Upstream dependency burden}
+
+\begin{definition}[Upstream dependency burden]
+\[
+  \mathrm{Burden}(v) = \sum_{u \in \mathrm{Up}(v)} w(u).
+\]
+Unweighted version: $\mathrm{Burden}_0(v) = |\mathrm{Up}(v)|$.
+\end{definition}
+
+\subsection{DAG betweenness centrality}
+
+\begin{definition}[DAG betweenness centrality]
+Let $\mathcal{S} = \{v \in V \mid \deg^-(v) = 0\}$ be the set of sources and
+$\mathcal{T} = \{v \in V \mid \deg^+(v) = 0\}$ the set of sinks.
+For $s \in \mathcal{S}$, $t \in \mathcal{T}$, let $\sigma_{st}$ be the number of directed paths from $s$ to $t$, and $\sigma_{st}(v)$ the number of those paths passing through~$v$. Then
+\[
+  \mathrm{Betw}(v) = \sum_{s \in \mathcal{S}} \sum_{t \in \mathcal{T}} \frac{\sigma_{st}(v)}{\sigma_{st}}.
+\]
+\end{definition}

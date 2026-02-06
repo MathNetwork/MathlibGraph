@@ -1,0 +1,143 @@
+\section{Foundations}
+
+Mathlib organises its source code as a collection of \texttt{.lean} files arranged in a hierarchical directory structure. Each file corresponds to a \emph{module}, and its position in the directory tree is encoded by a dot-separated name such as \texttt{Mathlib.Algebra.Group}. Because every module can \texttt{import} other modules, two natural structures coexist: a tree given by the hierarchical naming, and a directed acyclic graph given by the import relation. Our goal in this section is to formalise both structures from first principles. We begin at the coarsest level---the namespace hierarchy that mirrors the file system---and then introduce the import relation that cuts across it.
+
+\begin{definition}[Natural numbers]
+Let $\emptyset$ denote the empty set. Define the natural numbers via the von Neumann construction:
+\[
+  0 := \emptyset, \qquad n+1 := n \cup \{n\}.
+\]
+\end{definition}
+
+\begin{definition}[Characters and strings]
+Fix a finite alphabet $\Sigma \subset \mathbb{N}$ with $|\Sigma| = 128$ (ASCII).
+A \emph{string} of length~$n$ is a function $s \colon n \to \Sigma$.
+Denote by $\Sigma^*$ the set of all finite strings.
+\end{definition}
+
+\begin{definition}[Module names]
+Recall that $\Sigma^*$ is the set of all finite strings (including the empty string~$\epsilon$).
+Define the set of \emph{non-empty} strings:
+\[
+  \Sigma^+ := \Sigma^* \setminus \{\epsilon\}.
+\]
+A \emph{word} is an element $w \in \Sigma^+$, i.e.\ a string of length at least one
+(for example, \texttt{Mathlib}, \texttt{Algebra}, \texttt{Group}).
+
+A \emph{module name} is a non-empty finite sequence of words.
+Writing $W$ for the set of all words, we define
+\[
+  \mathcal{M} := W^+ = \bigcup_{k \geq 1} W^k,
+\]
+where $W^k$ denotes the set of all $k$-tuples of words:
+\begin{itemize}
+  \item $W^1$: a single word, e.g.\ $(\texttt{Mathlib})$;
+  \item $W^2$: a pair of words, e.g.\ $(\texttt{Mathlib},\, \texttt{Algebra})$;
+  \item $W^3$: a triple, e.g.\ $(\texttt{Mathlib},\, \texttt{Algebra},\, \texttt{Group})$.
+\end{itemize}
+We adopt the dot notation and write $w_1.w_2.\cdots.w_k$ for the tuple
+$(w_1, \ldots, w_k) \in \mathcal{M}$.
+For instance, the tuple $(\texttt{Mathlib},\, \texttt{Algebra},\, \texttt{Group})$
+is written \texttt{Mathlib.Algebra.Group}.
+
+In summary, $\mathcal{M}$ is the set of all valid module names:
+\[
+  \mathcal{M} = \{\texttt{Mathlib},\; \texttt{Mathlib.Algebra},\; \texttt{Mathlib.Algebra.Group},\; \ldots\}.
+\]
+\end{definition}
+
+\begin{definition}[Prefix tree]
+Define a partial order on $\mathcal{M}$: $m \leq m'$ if and only if $m$ is a prefix of~$m'$.
+Then $(\mathcal{M}, \leq)$ is a rooted tree.
+\end{definition}
+
+\begin{example}
+Consider the following subset of $\mathcal{M}$:
+\begin{align*}
+  \{\; & \texttt{Mathlib},\;
+         \texttt{Mathlib.Algebra},\;
+         \texttt{Mathlib.Algebra.Group}, \\
+       & \texttt{Mathlib.Algebra.Ring},\;
+         \texttt{Mathlib.Data},\;
+         \texttt{Mathlib.Data.Nat} \;\}.
+\end{align*}
+The prefix order gives the tree:
+\[
+  \texttt{Mathlib}
+  \begin{cases}
+    \texttt{.Algebra}
+    \begin{cases}
+      \texttt{.Group} \\
+      \texttt{.Ring}
+    \end{cases} \\[6pt]
+    \texttt{.Data}
+    \begin{cases}
+      \texttt{.Nat}
+    \end{cases}
+  \end{cases}
+\]
+Here $\texttt{Mathlib} \leq \texttt{Mathlib.Algebra} \leq \texttt{Mathlib.Algebra.Group}$,
+but $\texttt{Mathlib.Algebra.Group}$ and $\texttt{Mathlib.Data.Nat}$ are incomparable.
+\end{example}
+
+\begin{definition}[File contents and import extraction]
+Let $\mathrm{Content} \colon \mathcal{M} \to \Sigma^*$ assign to each module its source code. Define:
+\[
+  \mathrm{imports}(m) := \bigl\{m' \in \mathcal{M} \mid \texttt{"import } m'\texttt{"} \text{ is a substring of } \mathrm{Content}(m)\bigr\}.
+\]
+\end{definition}
+
+\begin{example}
+Suppose the file \texttt{Mathlib/Algebra/Group.lean} contains:
+\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
+import Mathlib.Algebra.Ring
+import Mathlib.Data.Nat
+
+class Group (G : Type) extends Monoid G where
+  inv : G -> G
+  mul_left_inv : forall a : G, inv a * a = 1
+\end{minted}
+Then $\mathrm{Content}(\texttt{Mathlib.Algebra.Group})$ is the entire string above.
+Since it contains the substrings \texttt{"import Mathlib.Algebra.Ring"}
+and \texttt{"import Mathlib.Data.Nat"}, we obtain
+\[
+  \mathrm{imports}(\texttt{Mathlib.Algebra.Group})
+  = \{\texttt{Mathlib.Algebra.Ring},\; \texttt{Mathlib.Data.Nat}\}.
+\]
+\end{example}
+
+\begin{definition}[Dependency graph]
+The \emph{module dependency graph} of Mathlib is:
+\[
+  G = (\mathcal{M},\, E), \qquad E = \{(m, m') : m' \in \mathrm{imports}(m)\}.
+\]
+\end{definition}
+
+\begin{example}
+Continuing the previous example, suppose the import relations are:
+\begin{itemize}
+  \item \texttt{Mathlib.Algebra.Group} imports \texttt{Mathlib.Algebra.Ring} and \texttt{Mathlib.Data.Nat};
+  \item \texttt{Mathlib.Algebra.Ring} imports \texttt{Mathlib.Data.Nat};
+  \item \texttt{Mathlib.Data.Nat} imports \texttt{Mathlib.Data}.
+\end{itemize}
+Then the corresponding subgraph of~$G$ is:
+\begin{center}
+\begin{tikzpicture}[
+    >=Stealth,
+    node distance=1.8cm and 2.5cm,
+    every node/.style={font=\small\ttfamily}
+  ]
+  \node (AG) {Algebra.Group};
+  \node (AR) [below left=of AG] {Algebra.Ring};
+  \node (DN) [below right=of AG] {Data.Nat};
+  \node (D)  [below=of DN] {Data};
+  \draw[->] (AG) -- (AR);
+  \draw[->] (AG) -- (DN);
+  \draw[->] (AR) -- (DN);
+  \draw[->] (DN) -- (D);
+\end{tikzpicture}
+\end{center}
+Each arrow $m \to m'$ indicates that $m$ imports~$m'$.
+Note that the import edges cut across the prefix tree: \texttt{Algebra.Group}
+depends on \texttt{Data.Nat}, which lies in a different branch.
+\end{example}
