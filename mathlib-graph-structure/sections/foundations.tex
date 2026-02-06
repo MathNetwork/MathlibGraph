@@ -4,9 +4,14 @@
 
 A \emph{module name} in Mathlib is a dot-separated sequence of identifiers, such as
 \[
-  \texttt{Mathlib.Algebra.Group.Defs}
+  \texttt{Mathlib.Algebra.Group.Defs}.
 \]
-We write $\mathcal{M}$ for the set of all module names in Mathlib. All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the Mathlib repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$.
+We write $\mathcal{M}$ for the set of all module names in Mathlib:
+\begin{align*}
+  \mathcal{M} = \{\; &\texttt{Mathlib.Init},\\
+    &\texttt{Mathlib.Algebra.Group.Defs},\\
+    &\texttt{Mathlib.Analysis.Normed.Group.Basic},\; \ldots\,\}.
+\end{align*} All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the Mathlib repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$.
 
 \begin{definition}[Depth]
 The \emph{depth} of a module name is the number of dot-separated components. Formally, if a module name is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
@@ -26,7 +31,7 @@ The maximum depth in Mathlib is~$7$.\footnote{Attained by, e.g., \texttt{Mathlib
 
 Module names are organized hierarchically: each dot-separated name mirrors a path in the source repository.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{forest}
   for tree={
@@ -70,7 +75,7 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
   ]
 ]
 \end{forest}
-\caption{A fragment of the Mathlib source tree (commit \texttt{534cf0b}). Each path corresponds to a module name: for example, \texttt{Mathlib/Algebra/Group/Defs.lean} defines the module \texttt{Mathlib.Algebra.Group.Defs}, with dots replacing path separators.}
+\caption{A fragment of the Mathlib source tree (commit \texttt{534cf0b}). Each file path corresponds to a module name with dots replacing path separators, e.g., \texttt{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} defines \texttt{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
 \label{fig:prefix-tree}
 \end{figure}
 
@@ -124,7 +129,7 @@ A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \e
 \end{definition}
 
 \begin{definition}[Path]
-A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \leq i < k$. The \emph{length} of the path is $k$.
+A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \le i < k$. The \emph{length} of the path is~$k$.
 \end{definition}
 
 \begin{definition}[Cycle]
