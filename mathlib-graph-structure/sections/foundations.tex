@@ -24,26 +24,35 @@ Define the set of \emph{non-empty} strings:
 A \emph{word} is an element $w \in \Sigma^+$, i.e.\ a string of length at least one
 (for example, \texttt{Mathlib}, \texttt{Algebra}, \texttt{Group}).
 
-A \emph{module name} is a non-empty finite sequence of words.
-Writing $W$ for the set of all words, we define
+Let $W = \Sigma^+$ denote the set of all non-empty strings. Define the set of \textbf{Mathlib words} as
 \[
-  \mathcal{M} := W^+ = \bigcup_{k \geq 1} W^k,
+  W_{\mathrm{Mathlib}} := \{w \in W \mid w \text{ appears as a component in some Mathlib module name}\}.
 \]
-where $W^k$ denotes the set of all $k$-tuples of words:
-\begin{itemize}
-  \item $W^1$: a single word, e.g.\ $(\texttt{Mathlib})$;
-  \item $W^2$: a pair of words, e.g.\ $(\texttt{Mathlib},\, \texttt{Algebra})$;
-  \item $W^3$: a triple, e.g.\ $(\texttt{Mathlib},\, \texttt{Algebra},\, \texttt{Group})$.
-\end{itemize}
+This is a finite set containing elements such as
+\[
+  \texttt{Mathlib}, \texttt{Algebra}, \texttt{Group}, \texttt{Defs}, \texttt{Ring}, \texttt{Data}, \texttt{Nat}, \texttt{Topology}, \ldots
+\]
+For brevity, we write $\mathcal{W} := W_{\mathrm{Mathlib}}$.
+
+For a string $s \in \Sigma^*$, we denote its \textbf{length} by $|s|$, the number of characters in $s$. For $k \geq 1$, we write
+\[
+  \mathcal{W}^k := \underbrace{\mathcal{W} \times \mathcal{W} \times \cdots \times \mathcal{W}}_{k \text{ times}}
+\]
+for the set of all $k$-tuples of Mathlib words. Define
+\[
+  \mathcal{W}^+ := \bigcup_{k \geq 1} \mathcal{W}^k,
+\]
+the set of all non-empty finite sequences of Mathlib words.
+
+A \textbf{module name} is a non-empty finite sequence of Mathlib words. The set of all Mathlib module names is
+\[
+  \mathcal{M} \subset \mathcal{W}^+ = \bigcup_{k \geq 1} \mathcal{W}^k,
+\]
+the subset of $\mathcal{W}^+$ consisting of module names that actually appear in the library.
 We adopt the dot notation and write $w_1.w_2.\cdots.w_k$ for the tuple
 $(w_1, \ldots, w_k) \in \mathcal{M}$.
 For instance, the tuple $(\texttt{Mathlib},\, \texttt{Algebra},\, \texttt{Group})$
 is written \texttt{Mathlib.Algebra.Group}.
-
-In summary, $\mathcal{M}$ is the set of all valid module names:
-\[
-  \mathcal{M} = \{\texttt{Mathlib},\; \texttt{Mathlib.Algebra},\; \texttt{Mathlib.Algebra.Group},\; \ldots\}.
-\]
 \end{definition}
 
 \begin{definition}[Prefix tree]
