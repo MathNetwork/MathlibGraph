@@ -77,19 +77,12 @@ Each file is a \emph{vertex} in the import graph; each \texttt{import} statement
 Let $\mathcal{M}$ be the set of Mathlib module names. For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$.
 
 \begin{definition}[Import graph]
-The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E)$ where
+The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\mathrm{import}})$ where
 \[
-  E = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
+  E_{\mathrm{import}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
 \]
 \end{definition}
-
-\begin{proposition}
-$G_{\mathrm{import}}$ is a directed graph.
-\end{proposition}
-
-\begin{proof}
-$\mathcal{M}$ is a finite set (of $7{,}563$ module names), and $E \subseteq \mathcal{M} \times \mathcal{M}$ by construction.
-\end{proof}
+$G_{\mathrm{import}}$ is a directed graph since $\mathcal{M}$ is a finite set (of $7{,}563$ module names), and $E_{import} \subseteq \mathcal{M} \times \mathcal{M}$ by construction.
 
 \begin{proposition}
 $G_{\mathrm{import}}$ is acyclic.
