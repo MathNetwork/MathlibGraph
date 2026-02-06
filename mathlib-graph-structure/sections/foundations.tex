@@ -11,7 +11,13 @@ Let $\emptyset$ denote the empty set. Define the natural numbers via the von Neu
 
 \subsection*{Character encoding}
 
-To represent text within set theory, we encode characters as natural numbers. The standard \emph{ASCII encoding} assigns to each character a unique integer in $\{0, 1, \ldots, 127\}$. The printable characters relevant to Mathlib module names include:
+We define characters as natural numbers. The \emph{alphabet} is the set
+\[
+  \Sigma := \{0, 1, 2, \ldots, 127\} \subset \mathbb{N}.
+\]
+To interpret these numbers as characters, we adopt the standard \emph{ASCII convention}: each $n \in \Sigma$ corresponds to a specific character. For example, $65$ represents \texttt{A}, $97$ represents \texttt{a}, $48$ represents \texttt{0}, etc.
+
+The characters relevant to Mathlib module names and their ASCII codes are:
 
 \begin{center}
 \begin{tabular}{cccccccccccc}
@@ -38,21 +44,13 @@ Char & Code & \quad & Char & Code & \quad & Char & Code & \quad & Char & Code \\
 \end{center}
 
 \noindent
-Under this encoding, the string \texttt{Algebra} becomes the function $s \colon 7 \to \Sigma$ with
+Under this convention, the string \texttt{Algebra} corresponds to the function $s \colon 7 \to \Sigma$ with
 \[
   s(0) = 65,\; s(1) = 108,\; s(2) = 103,\; s(3) = 101,\; s(4) = 98,\; s(5) = 114,\; s(6) = 97.
 \]
 
 \begin{definition}[Characters and strings]
-In set theory, characters are not primitive objects. We represent them as natural numbers via the standard ASCII encoding: for example, $65 \leftrightarrow \texttt{A}$, $97 \leftrightarrow \texttt{a}$, $48 \leftrightarrow \texttt{0}$, etc.
-
-Fix the \emph{alphabet}
-\[
-  \Sigma := \{0, 1, 2, \ldots, 127\} \subset \mathbb{N},
-\]
-the set of ASCII character codes.
-
-A \emph{string} of length~$n$ is a function $s \colon n \to \Sigma$, where $n = \{0, 1, \ldots, n-1\}$ is the von Neumann ordinal. That is, $s$ assigns to each position $i < n$ a character $s(i) \in \Sigma$.
+A \emph{character} is an element of $\Sigma$. A \emph{string} of length~$n$ is a function $s \colon n \to \Sigma$, where $n = \{0, 1, \ldots, n-1\}$ is the von Neumann ordinal. That is, $s$ assigns to each position $i < n$ a character $s(i) \in \Sigma$.
 
 For each $n \in \mathbb{N}$, let $\Sigma^n := \{s : n \to \Sigma\}$ denote the set of all strings of length $n$. The set of all finite strings is
 \[
