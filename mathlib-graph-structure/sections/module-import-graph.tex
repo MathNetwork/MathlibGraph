@@ -328,18 +328,7 @@ The degree distribution identifies which modules serve as hubs, but not where th
 
 \subsubsection{Depth and Layered Structure}
 \label{sec:dag-depth}
-
-\begin{definition}[Depth of a DAG]
-The \emph{depth} of a DAG $G$ is the length of its longest directed path.
-\end{definition}
-
-\begin{definition}[Source and sink]
-A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^{+}(m) = 0$.
-\end{definition}
-
-\begin{definition}[Topological level]
-In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
-\end{definition}
+Recall that The \emph{depth} of a DAG $G$ is the length of its longest directed path. A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^{+}(m) = 0$. In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
 
 In particular, all sources (modules with no incoming edges) sit at level~$0$, while the unique sink \texttt{Tactic.Linter.DirectoryDependency} sits at level~$153$.
 
@@ -482,6 +471,8 @@ Dependency for compilation follows the strict logical requirements of the type c
 \noindent \textit{2. The architectural source of compilation bottlenecks.} \\
 The layer-width profile reveals a distinct \textit{funnel topology}: a massive leaf layer ($>1,400$ modules) resting on a deep, narrow foundation. This extreme verticality (153 layers) contrasts sharply with the flatter citation graphs of informal mathematics. While this depth ensures rigorous consistency, it creates significant structural fragility: changes in the narrow ``waist'' of the funnel (high-betweenness modules) trigger massive recompilation cascades. This identifies a critical scalability challenge: as libraries grow, the depth of the dependency chain becomes a liability that may require aggressive modularization or distinct compilation units.
 
+Moreover, this topology imposes a distinct evolutionary pressure on the library's development. Unlike informal mathematics, where foundational texts are static references, the modules in Mathlib's ``theoretical waist'' remain mutable code. The depth of 153 layers implies that the maintenance cost of a lemma is strictly a function of its topological depth: a change in the narrow waist invalidates the verification of thousands of downstream results. Consequently, we predict that monolithic libraries will eventually hit a \textit{critical depth threshold} where the cost of coherence checks exceeds the capacity for rapid iteration. Future architectures will likely need to break this funnel into \textit{federated tiers}---effectively freezing the foundational layers into pre-compiled artifacts---to decouple the logical necessity of depth from the operational necessity of build speed.
+
 \medskip
 \noindent \textit{3. Centrality as a proxy for maintenance roles.} \\
 We propose that centrality measures in formal libraries should be interpreted as distinct maintenance signals.
@@ -492,9 +483,13 @@ We propose that centrality measures in formal libraries should be interpreted as
 \end{itemize}
 Refactoring a high-betweenness module is riskier than refactoring a high in-degree module, as the former disrupts the connective tissue between theories.
 
+This taxonomy offers a blueprint for automated maintenance. Currently, continuous integration systems treat all modifications with uniform computational cost, yet the \textit{structural cost} of breaking a bridge module is disproportionately higher. By embedding these centrality metrics into the review pipeline, maintainers can implement \textit{adaptive stability guarantees}: enforcing strict backward compatibility for the axiomatic core (high PageRank) and the connective bridges (high betweenness), while permitting rapid, experimental iteration on the vocabulary (high in-degree) and the leaves. This evolution toward metric-driven governance is essential to sustain the collaborative growth of a unified mathematical library, preventing it from collapsing under the maintenance burden of its own interconnected weight.
+
 \medskip
-These three findings---the cognitive redundancy layer, the deep funnel architecture, and the divergence of centrality roles---taken together, suggest a hypothesis about the growth mechanism of formal libraries.
+These three observations---the cognitive redundancy layer, the deep funnel architecture, and the divergence of centrality roles---taken together, suggest a hypothesis about the growth mechanism of formal libraries.
 
 \medskip
 \noindent \textit{Hypothesis: The Curated Small-World.} \\
 Finally, we hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, Mathlib grows via \textit{semantic attachment}: new modules cluster tightly within namespaces (high local clustering), while deliberately placed bridge modules (high betweenness) maintain global connectivity. This structure likely represents an optimal evolutionary state for collaborative formalization, balancing the isolation needed for parallel development with the connectivity needed for a unified mathematical universe.
+
+The fact that 100\% of modules belong to a single weakly connected component provides empirical evidence for the structural unification of mathematical theories within Mathlib. While the namespace tree partitions the library into distinct hierarchies, the density of inter-namespace edges (37.1\%) functions as a system of high-betweenness shortcuts that prevent the library from fracturing into isolated ``theory islands.'' Our analysis of targeted node removal (Table 3) demonstrates that this connectivity is remarkably resilient; as noted in Remark 3.13, over 99\% of modules remain in the giant component even after the removal of the five most central hubs. We conclude that Mathlib’s curated small-world topology is what enables foundational improvements in one domain (e.g., Algebra) to propagate efficiently to distant ones (e.g., Analysis), ensuring that the library remains a globally coherent, rather than merely modular, corpus of knowledge.
