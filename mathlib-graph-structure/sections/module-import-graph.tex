@@ -297,6 +297,8 @@ Max    & $167$  & $315$  & $151$  & $70$   \\
 
 The module with the highest in-degree in both graphs is \texttt{Mathlib.Init} ($\deg^{-} = 167$ in $G_{\mathrm{import}}$, $151$ in $G_{\mathrm{import}}^{-}$), the foundational module that most files depend on. Other high in-degree modules include \texttt{Tactic.Common} ($74$), \texttt{Analysis.Normed.Group.Basic} ($57$), and \texttt{Algebra.Ring.Defs} ($42$). The highest out-degree belongs to \texttt{Mathlib.Tactic} ($315$ in $G_{\mathrm{import}}$), which serves as an umbrella file aggregating tactic imports; transitive reduction reduces this to~$60$.
 
+We plot the degree distributions on logarithmic axes (log--log scale). This is a standard diagnostic in network science: if the distribution follows a power law $P(k) \propto k^{-\gamma}$, the data points align along a straight line with slope~$-\gamma$. Deviations from linearity indicate departures from pure power-law behavior. More concretely, the logarithmic scale compresses the long tail of the distribution, making it possible to visualize both the bulk of low-degree modules and the rare high-degree hubs in a single plot---on a linear scale, the hubs would be invisible outliers.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/degree_distribution.pdf}
