@@ -203,6 +203,18 @@ The contrast between these two structures is conceptually significant. The names
 \label{fig:import-subgraph}
 \end{figure}
 
+The contrast between these two structures is conceptually significant. 
+The namespace tree $T$ encodes a \emph{cognitive} organization of 
+mathematics: its top-level directories---\texttt{Algebra}, 
+\texttt{Analysis}, \texttt{Topology}---reflect a classification that 
+mathematicians established long before formalization. The import graph 
+$G_{\mathrm{import}}$, by contrast, encodes \emph{logical} 
+dependencies that need not respect this classification. The extent to 
+which $G_{\mathrm{import}}$ deviates from $T$---edges that cross 
+namespace boundaries, dependencies that link distant branches of the 
+tree---reveals the internal structure of mathematics that no human 
+taxonomy fully captures.
+
 The import graph $G_{\mathrm{import}}$ is DAG: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} 
 
 \subsection{Transitive Reduction and Redundant Imports}
@@ -440,17 +452,13 @@ Removing the five highest in-degree modules (\texttt{Init}, \texttt{Tactic.Commo
 The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the import graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
 \end{remark}
 
-\subsection{\textcolor{red}{Conclusion!}}
-\textcolor{red}{Hypothesis!}
-
 \subsection{Conclusion}
 \label{sec:module_conclusion}
-
 Our structural analysis of the Mathlib module import graph allows us to characterize the architecture of a large-scale formal library. We find that Mathlib does not resemble a random network or a simple hierarchy; rather, it is a \textit{deep, engineered backbone} supporting a vast, shallow application layer. These findings have three implications for the future of formal mathematical libraries.
 
 \medskip
 \noindent \textit{1. The tension between logical precision and cognitive management.} \\
-The divergence between the raw import graph $G_{\text{import}}$ and its transitive reduction $G_{\text{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy is not merely inefficiency; it represents the \textit{cognitive API} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
+The divergence between the raw import graph $G_{\text{import}}$ and its transitive reduction $G_{\text{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy is not merely inefficiency; it represents the \textit{cognitive API}\textcolor{red}{Really like this name "cognative API"} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
 
 \medskip
 \noindent \textit{2. The architectural source of compilation bottlenecks.} \\
