@@ -462,13 +462,15 @@ Removing the five highest in-degree modules (\texttt{Init}, \texttt{Tactic.Commo
 The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the import graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
 \end{remark}
 
-\subsection{Conclusion}
+\subsection{Analysis}
 \label{sec:module_conclusion}
 Our structural analysis of the Mathlib module import graph allows us to characterize the architecture of a large-scale formal library. We find that Mathlib does not resemble a random network or a simple hierarchy; rather, it is a \textit{deep, engineered backbone} supporting a vast, shallow application layer. These findings have three implications for the future of formal mathematical libraries.
 
 \medskip
 \noindent \textit{1. The tension between logical precision and cognitive management.} \\
 The divergence between the raw import graph $G_{\mathrm{import}}$ and its transitive reduction $G_{\mathrm{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy is not merely inefficiency; it represents the \textit{cognitive API} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
+
+Dependency for compilation follows the strict logical requirements of the type checker, ensuring that the build system avoids cycles and minimizes checking time. In contrast, dependency for discovery serves the human prover and the automation: it brings tactics, notation, and type class instances into scope, populating the context for search and elaboration. We argue that the 17.5\% redundancy observed in Mathlib is not an inefficiency but a structural feature that creates robustness against refactoring and simplifies the user interface. Optimizing solely for the transitive reduction would likely degrade the interactive experience, suggesting that future proof assistants should explicitly model these two layers separately: a minimal graph for the build system and a rich, redundant graph for the user.
 
 \medskip
 \noindent \textit{2. The architectural source of compilation bottlenecks.} \\
