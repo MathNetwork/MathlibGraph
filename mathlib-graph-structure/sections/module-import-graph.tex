@@ -290,6 +290,7 @@ Unless stated otherwise, statistics are reported for both the raw import graph $
 Recall that for a vertex $m$ in a directed graph $G = (V, E)$, the \emph{in-degree} is $\deg^{-}(m) = |\{m' \in V : (m', m) \in E\}|$ and the \emph{out-degree} is $\deg^{+}(m) = |\{m' \in V : (m, m') \in E\}|$.
 
 In $G_{\mathrm{import}}$, the out-degree $\deg^{+}(m) = |\mathrm{imports}(m)|$: it counts the number of modules that $m$ directly imports. The in-degree $\deg^{-}(m)$ counts how many other modules depend on~$m$.
+Structurally, in-degree measures how foundational a module is---how many others build upon it---while out-degree measures how much of the library a module assembles. A high in-degree module is \emph{infrastructure}; a high out-degree module is an \emph{integrator}.
 
 \begin{table}[H]
 \centering
@@ -316,12 +317,13 @@ We plot the degree distributions on logarithmic axes (log--log scale). Let $P(k)
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/degree_distribution.pdf}
-\caption{In-degree and out-degree distributions on log--log axes, for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Dashed lines show power-law references $k^{-\gamma}$ fitted to each distribution; deviations at high degrees indicate that the distributions are heavy-tailed but not clean power laws. Both distributions are heavy-tailed: most modules have small degree, while a few hub modules have degree exceeding~$100$.}
+\caption{In-degree (blue) and out-degree (orange) distributions on log--log axes for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Dashed lines show power-law references $k^{-\gamma}$. Two features are visually salient: (i)~the in-degree distributions are nearly identical across the two panels, confirming that transitive reduction barely affects how many modules depend on a given file; (ii)~the out-degree tail contracts sharply under transitive reduction (maximum dropping from $315$ to $70$), reflecting the removal of redundant umbrella imports.}
 \label{fig:degree-distribution}
 \end{figure}
 
 \begin{remark}
 Both degree distributions are heavy-tailed but do not cleanly fit a power law. The out-degree distribution, in particular, becomes much more concentrated after transitive reduction (maximum dropping from $315$ to $70$, standard deviation from $4.12$ to $1.83$), indicating that many high-out-degree imports are transitively redundant.
+In contrast, the in-degree distribution is barely affected by transitive reduction (maximum: $167 \to 151$; standard deviation: $4.69 \to 3.91$). This asymmetry has a structural explanation: redundant edges arise primarily from developers importing umbrella modules---an act that inflates the importer's out-degree without changing the importee's in-degree. The cognitive redundancy identified in \S\ref{sec:transitive-reduction} is \emph{directional}: it lives in the ``I depend on others'' direction, not the ``others depend on me'' direction.
 \end{remark}
 
 The degree distribution identifies which modules serve as hubs, but not where these hubs sit in the dependency chain. We turn next to the vertical structure of the DAG.
@@ -362,10 +364,12 @@ For a module $m = \texttt{Mathlib.}X.Y.\cdots$, the \emph{top-level namespace} i
 
 An edge $(m_1, m_2) \in E_{\mathrm{import}}$ is \emph{intra-namespace} if $\mathrm{ns}(m_1) = \mathrm{ns}(m_2)$ and \emph{inter-namespace} otherwise. In $G_{\mathrm{import}}$, $14{,}464$ edges ($61.4\%$) are intra-namespace and $9{,}106$ ($38.6\%$) are inter-namespace. In $G_{\mathrm{import}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.
 
+If the import graph perfectly respected the namespace hierarchy---that is, if every module only depended on modules within its own namespace---the heatmap below would be purely diagonal. Each off-diagonal bright cell therefore represents a point where the logical structure of proofs departs from the cognitive classification of~$T$.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/namespace_heatmap.pdf}
-\caption{Heatmap of inter-namespace import counts (log scale) for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Rows are importing namespaces; columns are imported namespaces. The diagonal captures intra-namespace edges.}
+\caption{Import counts between top-level namespaces (log scale) for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Each cell $(i, j)$ counts edges from namespace~$i$ (row) to namespace~$j$ (column); the diagonal captures intra-namespace imports. Off-diagonal bright cells reveal cross-namespace dependencies that violate the cognitive classification of~$T$. The most prominent off-diagonal entries include \texttt{RingTheory}$\,\to\,$\texttt{Algebra} and the bidirectional coupling between \texttt{Algebra} and \texttt{Data}.}
 \label{fig:namespace-heatmap}
 \end{figure}
 
@@ -382,6 +386,8 @@ We compare three centrality measures to identify the most structurally important
 The \emph{PageRank} of a vertex $m$ in a directed graph is the stationary probability of $m$ under a random walk that, at each step, follows an outgoing edge uniformly at random with probability $\alpha$ (the damping factor, typically $\alpha = 0.85$) and jumps to a uniformly random vertex with probability $1 - \alpha$.
 \end{definition}
 
+Intuitively, PageRank answers the question: \emph{if you start at a random module and repeatedly follow dependency edges, where do you end up most often?} Modules with high PageRank sit at the bottom of many dependency chains---they are the deep foundations on which the library ultimately rests, even if few files import them directly.
+
 \begin{definition}[Betweenness centrality~\cite{freeman1977}]
 The \emph{betweenness centrality} of a vertex $m$ is
 \[
@@ -389,6 +395,8 @@ The \emph{betweenness centrality} of a vertex $m$ is
 \]
 where $\sigma_{st}$ is the number of shortest paths from $s$ to $t$, and $\sigma_{st}(m)$ is the number of those paths passing through~$m$.
 \end{definition}
+
+Intuitively, betweenness answers the question: \emph{if you need to travel from any module~$A$ to any module~$B$ along the shortest dependency path, which modules do you pass through most often?} High-betweenness modules are the bridges between otherwise distant mathematical theories; removing them would force dependency paths to take long detours.
 
 \begin{table}[H]
 \centering
@@ -423,11 +431,13 @@ FD = FiniteDimension, DD = DirectoryDependency, CompileInd. = CompileInductive, 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/centrality_analysis.pdf}
-\caption{Scatter plots of centrality measures in $G_{\mathrm{import}}$. Left and center: in-degree vs.\ PageRank (raw and TR). Right: betweenness vs.\ PageRank (raw). The measures are positively correlated but highlight different structural roles.}
+\caption{Scatter plots of centrality measures in $G_{\mathrm{import}}$; each point represents one module. Left and center: in-degree vs.\ PageRank (raw and TR). Right: betweenness vs.\ PageRank (raw). If any two measures were equivalent, points would cluster along a diagonal line; the wide scatter in each panel confirms that the three centrality measures capture distinct structural roles. Notable outliers are labeled.}
 \label{fig:centrality}
 \end{figure}
 
-The three rankings largely differ: the only module appearing in all three top-20 lists is \texttt{Mathlib.Init}. In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \texttt{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \texttt{LinearAlgebra.Span.Basic} and \texttt{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
+The three rankings largely differ: the only module appearing in all three top-20 lists is \texttt{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:module_conclusion}.
+
+In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \texttt{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \texttt{LinearAlgebra.Span.Basic} and \texttt{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
 
 Centrality identifies the modules that hold the network together. A natural follow-up question is: what happens if these critical modules are removed? We assess the structural robustness of $G_{\mathrm{import}}$ under targeted removal.
 
