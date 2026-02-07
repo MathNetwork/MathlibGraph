@@ -144,6 +144,17 @@ for col, (in_vals, out_vals, label) in enumerate([
     degs = [d for d in degs if d > 0]
     counts = [in_counter[d] for d in degs]
     ax.scatter(degs, counts, s=12, color="steelblue", alpha=0.7)
+    # Power-law reference line: fit gamma via MLE on in-degree >= k_min
+    in_arr = np.array([v for v in in_vals if v >= 2])
+    if len(in_arr) > 0:
+        gamma = 1 + len(in_arr) / np.sum(np.log(in_arr / 1.5))
+        k_ref = np.logspace(np.log10(2), np.log10(max(degs)), 50)
+        # scale so the line passes through the empirical count at k=2
+        c0 = in_counter.get(2, in_counter.get(3, 1))
+        ref_line = c0 * (k_ref / 2) ** (-gamma)
+        ax.plot(k_ref, ref_line, "k--", linewidth=1, alpha=0.6,
+                label=rf"$k^{{-{gamma:.2f}}}$")
+        ax.legend(fontsize=8, loc="upper right")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("In-degree")
