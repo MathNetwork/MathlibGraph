@@ -268,7 +268,21 @@ The \texttt{importGraph} tool applies transitive reduction by default when gener
 \subsection{Structural Analysis}
 \label{sec:structural-analysis}
 
-We now analyze the global structure of $G_{\mathrm{import}}$. Unless stated otherwise, statistics are reported for both the raw import graph $G_{\mathrm{import}}$ and its transitive reduction~$G_{\mathrm{import}}^{-}$.
+Having defined the namespace tree $T$ and the import graph $G_{\mathrm{import}}$, and identified the 17.5\% redundancy gap between $G_{\mathrm{import}}$ and its transitive reduction (\S\ref{sec:transitive-reduction}), we now ask: \emph{what kind of network does formalization produce, and how does it relate to the cognitive classification encoded in $T$?}
+
+To answer this, we need to understand four things about $G_{\mathrm{import}}$:
+
+\begin{enumerate}
+\item \textbf{Shape.} What is the macroscopic geometry of the dependency network---is it flat or deep, uniform or concentrated? We address this through degree distribution (\S\ref{sec:degree-distribution}), which reveals whether dependencies cluster around a few hubs, and DAG depth (\S\ref{sec:dag-depth}), which reveals the vertical extent of the dependency chain. Together, these determine the basic geometry of $G_{\mathrm{import}}$.
+
+\item \textbf{Deviation from cognitive classification.} To what extent does $G_{\mathrm{import}}$ respect the boundaries drawn by the namespace tree $T$? We measure this directly through cross-namespace dependency analysis (\S\ref{sec:cross-namespace}), which quantifies the gap between how mathematicians organize their subject and how formal proofs actually depend on one another.
+
+\item \textbf{Critical nodes.} Which modules hold the network together, and in what sense? We address this through centrality analysis (\S\ref{sec:centrality}), computing three complementary measures---in-degree, PageRank, and betweenness---each capturing a different structural role.
+
+\item \textbf{Resilience.} How fragile is the network when critical modules are removed? Robustness analysis (\S\ref{sec:robustness}) answers this, and connects directly to the redundancy question: do the 17.5\% ``unnecessary'' edges serve a structural purpose?
+\end{enumerate}
+
+Unless stated otherwise, statistics are reported for both the raw import graph $G_{\mathrm{import}}$ and its transitive reduction $G_{\mathrm{import}}^{-}$. Comparing the two throughout reveals which structural features reflect genuine logical necessity and which arise from the cognitive redundancy identified in \S\ref{sec:transitive-reduction}.
 
 \subsubsection{Degree Distribution}
 \label{sec:degree-distribution}
