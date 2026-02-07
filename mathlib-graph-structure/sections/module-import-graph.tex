@@ -428,6 +428,8 @@ $\deg^{-}$ & Module & PR & Module & $c_B$ & Module \\
 ABO = Algebra.BigOperators.Group, AS = Analysis.SpecificLimits,\\
 FD = FiniteDimension, DD = DirectoryDependency, CompileInd. = CompileInductive, Fin. = Finiteness.
 
+We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:centrality}. Out-degree is omitted from this comparison because it measures a module's role as an \emph{importer}---how many prerequisites it gathers---rather than its structural position within the network. Moreover, as shown in \S\ref{sec:degree-distribution}, high out-degree values largely reflect redundant umbrella imports and collapse under transitive reduction, making out-degree a poor proxy for structural importance.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/centrality_analysis.pdf}
