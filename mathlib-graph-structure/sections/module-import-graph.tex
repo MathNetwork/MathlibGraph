@@ -8,10 +8,8 @@ Yet the cognitive structure of mathematical practice does not vanish---it leaves
 
 What kind of network does formalization produce? The import graph could, in principle, resemble a random network (if dependencies were spread uniformly), a rigid hierarchy (mirroring the namespace tree), or something more structured. We investigate this question through five lenses: degree distribution (\S\ref{sec:degree-distribution}), DAG depth (\S\ref{sec:dag-depth}), cross-namespace dependencies (\S\ref{sec:cross-namespace}), centrality (\S\ref{sec:centrality}), and robustness (\S\ref{sec:robustness}). Throughout, the namespace tree $T$ serves as a cognitive baseline: the extent to which $G_{\mathrm{import}}$ deviates from $T$ measures the gap between how mathematicians classify their subject and how formal proofs actually depend on one another.
 
-\textcolor{red}{make every mathlib in \texttt{Mathlib}}
 \subsection{Module Names}
 \label{sec:module-names}
-\textcolor{red}{recall the definition of "module", either path, and module}
 A \emph{module name} in Mathlib is a dot-separated sequence of identifiers, such as
 \[
   \texttt{Mathlib.Algebra.Group.Defs}.
@@ -113,7 +111,7 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
 
 We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, $\texttt{Mathlib.Algebra}$ is a prefix of $\texttt{Mathlib.Algebra.Group.Defs}$.
 
-The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\texttt{Mathlib}$ (\textcolor{red}{we call this tree namespace tree} as "Definition"), where
+The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\texttt{Mathlib}$, which we call the \emph{namespace tree}, where
 \[
   E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
 \]
@@ -203,18 +201,6 @@ The contrast between these two structures is conceptually significant. The names
 \label{fig:import-subgraph}
 \end{figure}
 
-The contrast between these two structures is conceptually significant. 
-The namespace tree $T$ encodes a \emph{cognitive} organization of 
-mathematics: its top-level directories---\texttt{Algebra}, 
-\texttt{Analysis}, \texttt{Topology}---reflect a classification that 
-mathematicians established long before formalization. The import graph 
-$G_{\mathrm{import}}$, by contrast, encodes \emph{logical} 
-dependencies that need not respect this classification. The extent to 
-which $G_{\mathrm{import}}$ deviates from $T$---edges that cross 
-namespace boundaries, dependencies that link distant branches of the 
-tree---reveals the internal structure of mathematics that no human 
-taxonomy fully captures.
-
 The import graph $G_{\mathrm{import}}$ is DAG: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} 
 
 \subsection{Transitive Reduction and Redundant Imports}
@@ -275,7 +261,7 @@ The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}
 \label{fig:transitive-reduction}
 \end{figure}
 
-The raw import graph has $|E_{\mathrm{import}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{import}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless.
+The raw import graph has $|E_{\mathrm{import}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{import}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. These redundant edges are not accidents of careless coding. Developers deliberately import umbrella modules---such as importing all of group theory rather than a single lemma---to maintain a navigable mental model of the library. The redundancy reflects a cognitive need: the gap between what the compiler requires and what the human reader requires to understand a file's mathematical context.
 
 The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \texttt{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \texttt{Mathlib} to its direct children.
 
@@ -283,7 +269,7 @@ The \texttt{importGraph} tool applies transitive reduction by default when gener
 \label{sec:structural-analysis}
 
 We now analyze the global structure of $G_{\mathrm{import}}$. Unless stated otherwise, statistics are reported for both the raw import graph $G_{\mathrm{import}}$ and its transitive reduction~$G_{\mathrm{import}}^{-}$.
-\textcolor{red}{Why we need to study both. we should have some notes to explain this}
+
 \subsubsection{Degree Distribution}
 \label{sec:degree-distribution}
 
@@ -322,6 +308,8 @@ The module with the highest in-degree in both graphs is \texttt{Mathlib.Init} ($
 Both degree distributions are heavy-tailed but do not cleanly fit a power law. The out-degree distribution, in particular, becomes much more concentrated after transitive reduction (maximum dropping from $315$ to $70$, standard deviation from $4.12$ to $1.83$), indicating that many high-out-degree imports are transitively redundant.
 \end{remark}
 
+The degree distribution identifies which modules serve as hubs, but not where these hubs sit in the dependency chain. We turn next to the vertical structure of the DAG.
+
 \subsubsection{Depth and Layered Structure}
 \label{sec:dag-depth}
 
@@ -349,8 +337,10 @@ $G_{\mathrm{import}}$ has $1{,}433$ source modules (files that no other Mathlib 
 \end{figure}
 
 \begin{remark}
-The layer-width profile has a characteristic ``funnel'' shape: very wide at the top (many independent leaf files), narrowing through the middle layers (where mathematical theories converge), and tapering to a single sink at the bottom. This shape reflects the fact that advanced mathematics is built on a narrow foundation of shared definitions and tactics.
+The layer-width profile has a characteristic ``funnel'' shape: very wide at the top (many independent leaf files), narrowing through the middle layers (where mathematical theories converge), and tapering to a single sink at the bottom. This shape reflects the fact that advanced mathematics is built on a narrow foundation of shared definitions and tactics. This narrow waist also has engineering consequences: any change to a module in the bottleneck layers propagates upward through a large fraction of the library, creating recompilation cascades whose cost grows with the depth of the funnel.
 \end{remark}
+
+The funnel topology describes the global shape of $G_{\mathrm{import}}$, but treats all edges equally. We now ask how these edges relate to the namespace tree $T$: do imports stay within the boundaries that mathematicians have drawn, or do they routinely cross them?
 
 \subsubsection{Cross-Namespace Dependencies}
 \label{sec:cross-namespace}
@@ -369,6 +359,8 @@ An edge $(m_1, m_2) \in E_{\mathrm{import}}$ is \emph{intra-namespace} if $\math
 \end{figure}
 
 The strongest inter-namespace dependency is \texttt{RingTheory} $\to$ \texttt{Algebra} ($485$ edges in $G_{\mathrm{import}}$), followed by \texttt{Data} $\to$ \texttt{Algebra} ($377$) and \texttt{Algebra} $\to$ \texttt{Data} ($318$). The bidirectional flow between \texttt{Algebra} and \texttt{Data} reflects their tight coupling: algebraic structures depend on basic data types, while data type lemmas often require algebraic properties. \texttt{Analysis} $\to$ \texttt{Topology} ($289$) confirms the expected mathematical dependency of analysis on topological foundations.
+
+The cross-namespace analysis reveals that a substantial fraction of dependencies violate the cognitive classification encoded in $T$. Which specific modules are responsible for bridging these distant regions? We address this through centrality analysis.
 
 \subsubsection{Centrality}
 \label{sec:centrality}
@@ -426,6 +418,8 @@ FD = FiniteDimension, DD = DirectoryDependency, CompileInd. = CompileInductive, 
 
 The three rankings largely differ: the only module appearing in all three top-20 lists is \texttt{Mathlib.Init}. In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \texttt{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \texttt{LinearAlgebra.Span.Basic} and \texttt{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
 
+Centrality identifies the modules that hold the network together. A natural follow-up question is: what happens if these critical modules are removed? We assess the structural robustness of $G_{\mathrm{import}}$ under targeted removal.
+
 \subsubsection{Robustness}
 \label{sec:robustness}
 
@@ -458,7 +452,7 @@ Our structural analysis of the Mathlib module import graph allows us to characte
 
 \medskip
 \noindent \textit{1. The tension between logical precision and cognitive management.} \\
-The divergence between the raw import graph $G_{\text{import}}$ and its transitive reduction $G_{\text{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy is not merely inefficiency; it represents the \textit{cognitive API}\textcolor{red}{Really like this name "cognative API"} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
+The divergence between the raw import graph $G_{\mathrm{import}}$ and its transitive reduction $G_{\mathrm{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy is not merely inefficiency; it represents the \textit{cognitive API} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
 
 \medskip
 \noindent \textit{2. The architectural source of compilation bottlenecks.} \\
@@ -473,6 +467,9 @@ We propose that centrality measures in formal libraries should be interpreted as
     \item \textit{Betweenness} identifies \textit{structural bridges} (modules that connect disparate mathematical subfields).
 \end{itemize}
 Refactoring a high-betweenness module is riskier than refactoring a high in-degree module, as the former disrupts the connective tissue between theories.
+
+\medskip
+These three findings---the cognitive redundancy layer, the deep funnel architecture, and the divergence of centrality roles---taken together, suggest a hypothesis about the growth mechanism of formal libraries.
 
 \medskip
 \noindent \textit{Hypothesis: The Curated Small-World.} \\
