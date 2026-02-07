@@ -328,18 +328,7 @@ The degree distribution identifies which modules serve as hubs, but not where th
 
 \subsubsection{Depth and Layered Structure}
 \label{sec:dag-depth}
-
-\begin{definition}[Depth of a DAG]
-The \emph{depth} of a DAG $G$ is the length of its longest directed path.
-\end{definition}
-
-\begin{definition}[Source and sink]
-A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^{+}(m) = 0$.
-\end{definition}
-
-\begin{definition}[Topological level]
-In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
-\end{definition}
+Recall that The \emph{depth} of a DAG $G$ is the length of its longest directed path. A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^{+}(m) = 0$. In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
 
 The depth of $G_{\mathrm{import}}$ is $153$, attained by a path from \texttt{NumberTheory.LSeries.PrimesInAP} (a leaf-level number theory result) down to \texttt{Tactic.Linter.DirectoryDependency} (a low-level linter utility). This path traverses number theory, special functions, measure theory, topology, order theory, logic, and tactic infrastructure---reflecting the deep dependency chain required to formalize analytic number theory.
 
@@ -476,6 +465,8 @@ Dependency for compilation follows the strict logical requirements of the type c
 \noindent \textit{2. The architectural source of compilation bottlenecks.} \\
 The layer-width profile reveals a distinct \textit{funnel topology}: a massive leaf layer ($>1,400$ modules) resting on a deep, narrow foundation. This extreme verticality (153 layers) contrasts sharply with the flatter citation graphs of informal mathematics. While this depth ensures rigorous consistency, it creates significant structural fragility: changes in the narrow ``waist'' of the funnel (high-betweenness modules) trigger massive recompilation cascades. This identifies a critical scalability challenge: as libraries grow, the depth of the dependency chain becomes a liability that may require aggressive modularization or distinct compilation units.
 
+Moreover, this topology imposes a distinct evolutionary pressure on the library's development. Unlike informal mathematics, where foundational texts are static references, the modules in Mathlib's ``theoretical waist'' remain mutable code. The depth of 153 layers implies that the maintenance cost of a lemma is strictly a function of its topological depth: a change in the narrow waist invalidates the verification of thousands of downstream results. Consequently, we predict that monolithic libraries will eventually hit a \textit{critical depth threshold} where the cost of coherence checks exceeds the capacity for rapid iteration. Future architectures will likely need to break this funnel into \textit{federated tiers}---effectively freezing the foundational layers into pre-compiled artifacts---to decouple the logical necessity of depth from the operational necessity of build speed.
+
 \medskip
 \noindent \textit{3. Centrality as a proxy for maintenance roles.} \\
 We propose that centrality measures in formal libraries should be interpreted as distinct maintenance signals.
@@ -486,8 +477,10 @@ We propose that centrality measures in formal libraries should be interpreted as
 \end{itemize}
 Refactoring a high-betweenness module is riskier than refactoring a high in-degree module, as the former disrupts the connective tissue between theories.
 
+This taxonomy offers a blueprint for automated maintenance. Currently, continuous integration systems treat all modifications with uniform computational cost, yet the \textit{structural cost} of breaking a bridge module is disproportionately higher. By embedding these centrality metrics into the review pipeline, maintainers can implement \textit{adaptive stability guarantees}: enforcing strict backward compatibility for the axiomatic core (high PageRank) and the connective bridges (high betweenness), while permitting rapid, experimental iteration on the vocabulary (high in-degree) and the leaves. This evolution toward metric-driven governance is essential to sustain the collaborative growth of a unified mathematical library, preventing it from collapsing under the maintenance burden of its own interconnected weight.
+
 \medskip
-These three findings---the cognitive redundancy layer, the deep funnel architecture, and the divergence of centrality roles---taken together, suggest a hypothesis about the growth mechanism of formal libraries.
+These three observations---the cognitive redundancy layer, the deep funnel architecture, and the divergence of centrality roles---taken together, suggest a hypothesis about the growth mechanism of formal libraries.
 
 \medskip
 \noindent \textit{Hypothesis: The Curated Small-World.} \\
