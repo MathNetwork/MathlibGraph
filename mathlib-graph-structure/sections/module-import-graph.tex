@@ -341,14 +341,20 @@ A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^
 In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
 \end{definition}
 
+In particular, all sources (modules with no incoming edges) sit at level~$0$, while the unique sink \texttt{Tactic.Linter.DirectoryDependency} sits at level~$153$.
+
 The depth of $G_{\mathrm{import}}$ is $153$, attained by a path from \texttt{NumberTheory.LSeries.PrimesInAP} (a leaf-level number theory result) down to \texttt{Tactic.Linter.DirectoryDependency} (a low-level linter utility). This path traverses number theory, special functions, measure theory, topology, order theory, logic, and tactic infrastructure---reflecting the deep dependency chain required to formalize analytic number theory.
 
 $G_{\mathrm{import}}$ has $1{,}433$ source modules (files that no other Mathlib file imports) and exactly $1$~sink (\texttt{Tactic.Linter.DirectoryDependency}, the unique module with no imports within Mathlib). The topological levels partition $\mathcal{M}$ into $154$ layers, with a maximum layer width of $1{,}433$ (the source layer) and a median width of~$25$.
 
+Notably, the layer-width profiles of $G_{\mathrm{import}}$ and $G_{\mathrm{import}}^{-}$ are nearly identical: the number of layers, the position of the peak, and the overall funnel shape are preserved under transitive reduction. This means that the vertical structure of the dependency chain reflects genuine logical necessity rather than cognitive redundancy---the 17.5\% redundant edges identified in \S\ref{sec:transitive-reduction} add lateral shortcuts within layers but do not alter the depth of the graph.
+
+A secondary peak is visible near level~$126$, where approximately $59$ modules concentrate---roughly $6$ to $15$ times the width of surrounding layers. This anomaly warrants further investigation; it may reflect a layer of tactic infrastructure or a mathematical theory that branches into many parallel lemmas at a specific depth.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/dag_structure.pdf}
-\caption{Number of modules at each topological level for $G_{\mathrm{import}}$ (top) and $G_{\mathrm{import}}^{-}$ (bottom). Level~$0$ contains the $1{,}433$ source modules; the depth extends to level~$153$.}
+\caption{DAG width by topological layer for $G_{\mathrm{import}}$ (top) and $G_{\mathrm{import}}^{-}$ (bottom). The distributions share a characteristic funnel shape: a sharp peak at level~$0$ (over $1{,}400$ leaf modules), a rapid decay through the first $20$ layers, a long tail extending to level~$153$, and a secondary peak near level~$126$. The near-identical profiles confirm that the funnel topology arises from logical necessity, not from redundant imports.}
 \label{fig:dag-structure}
 \end{figure}
 
