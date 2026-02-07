@@ -1,12 +1,13 @@
 \section{Module-Level Graph Structures}
 
-Two natural module-level graph structures in \texttt{Mathlib} emerge from the practice of formalizing mathematics in Lean. The first comes from the file system: module names reflect their paths in the repository, forming a rooted tree (\S\ref{sec:module-names}--\ref{sec:namespace-tree}). The second comes from mathematical dependencies: each \texttt{import} statement declares that one module depends on another, forming a directed acyclic graph (\S\ref{sec:import-graph}). The former is a continuation, in the formal setting, of the way mathematicians have long classified their subject---categories such as algebra, analysis, and topology were established well before formalization, and Mathlib's namespace hierarchy faithfully inherits this tradition. The latter captures the actual logical dependencies between files: one module requires definitions and results from another. 
+Two natural module-level graph structures in \texttt{Mathlib} emerge from the practice of formalizing mathematics in Lean. 
+The first comes from the file system: module names reflect their paths in the repository, forming a rooted tree (\S\ref{sec:module-names}--\ref{sec:namespace-tree}). The second comes from mathematical dependencies: each \texttt{import} statement declares that one module depends on another, forming a directed acyclic graph (\S\ref{sec:import-graph}). The former is a continuation, in the formal setting, of the way mathematicians have long classified their subject---categories such as algebra, analysis, and topology were established well before formalization, and Mathlib's namespace hierarchy faithfully inherits this tradition. The latter captures the actual logical dependencies between files: one module requires definitions and results from another. 
 
 Such dependencies also exist in informal mathematics, analogous to citations between papers, but there they are implicit and incomplete. Formalization makes them explicit, exhaustive, and computable.
-
+\textcolor{red}{make every mathlib in \texttt{Mathlib}}
 \subsection{Module Names}
 \label{sec:module-names}
-
+\textcolor{red}{recall the definition of "module", either path, and module}
 A \emph{module name} in Mathlib is a dot-separated sequence of identifiers, such as
 \[
   \texttt{Mathlib.Algebra.Group.Defs}.
@@ -17,11 +18,7 @@ Each module name corresponds to a \texttt{.lean} source file, with dots replacin
     &\texttt{Mathlib.Algebra.Group.Defs},\\
     &\texttt{Mathlib.Analysis.Normed.Group.Basic},\; \ldots\,\}.
 \end{align*}
-All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the Mathlib repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section.
-
-\begin{definition}[Depth]
-The \emph{depth} of a module name is the number of dot-separated components. Formally, if a module name is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
-\end{definition}
+All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the Mathlib repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. The \emph{depth} of a module is the number of dot-separated components. Formally, if a module name is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
 
 \begin{example}
 \leavevmode
@@ -33,27 +30,8 @@ The \emph{depth} of a module name is the number of dot-separated components. For
 The maximum depth in Mathlib is~$7$.\footnote{Attained by, e.g., \texttt{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
 \end{example}
 
-We recall the standard graph-theoretic notions used throughout this paper.
-
-\begin{definition}[Directed graph]
-A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \emph{vertex set}) and $E \subseteq V \times V$ (called the \emph{edge set}).
-\end{definition}
-
-\begin{definition}[Path]
-A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \le i < k$. The \emph{length} of the path is~$k$.
-\end{definition}
-
-\begin{definition}[Cycle]
-A \emph{cycle} is a path $(v_0, v_1, \ldots, v_k)$ with $k \ge 1$ and $v_k = v_0$.
-\end{definition}
-
-\begin{definition}[Directed acyclic graph]
-A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ contains no cycle.
-\end{definition}
-
-\begin{definition}[Rooted tree]
-A \emph{rooted tree} is a DAG $T = (V, E)$ with a distinguished vertex $r \in V$ (the \emph{root}) such that for every $v \in V$ there is a unique directed path from $r$ to $v$.
-\end{definition}
+We recall the standard graph-theoretic notions used throughout this paper. A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \emph{vertex set}) and $E \subseteq V \times V$ (called the \emph{edge set}). A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \le i < k$. The \emph{length} of the path is~$k$.
+A \emph{cycle} is a path $(v_0, v_1, \ldots, v_k)$ with $k \ge 1$ and $v_k = v_0$. A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ contains no cycle. A \emph{rooted tree} is a DAG $T = (V, E)$ with a distinguished vertex $r \in V$ (the \emph{root}) such that for every $v \in V$ there is a unique directed path from $r$ to $v$.
 
 \subsection{The Namespace Tree}
 \label{sec:namespace-tree}
@@ -131,7 +109,7 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
 
 We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, $\texttt{Mathlib.Algebra}$ is a prefix of $\texttt{Mathlib.Algebra.Group.Defs}$.
 
-The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\texttt{Mathlib}$, where
+The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\texttt{Mathlib}$ (\textcolor{red}{we call this tree namespace tree} as "Definition"), where
 \[
   E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
 \]
@@ -219,7 +197,7 @@ The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct s
 \label{fig:import-subgraph}
 \end{figure}
 
-The import graph $G_{\mathrm{import}}$ is acyclic: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} In particular, $G_{\mathrm{import}}$ is a DAG.
+The import graph $G_{\mathrm{import}}$ is DAG: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} 
 
 \subsection{Transitive Reduction and Redundant Imports}
 \label{sec:transitive-reduction}
@@ -287,13 +265,11 @@ The \texttt{importGraph} tool applies transitive reduction by default when gener
 \label{sec:structural-analysis}
 
 We now analyze the global structure of $G_{\mathrm{import}}$. Unless stated otherwise, statistics are reported for both the raw import graph $G_{\mathrm{import}}$ and its transitive reduction~$G_{\mathrm{import}}^{-}$.
-
+\textcolor{red}{Why we need to study both. we should have some notes to explain this}
 \subsubsection{Degree Distribution}
 \label{sec:degree-distribution}
 
-\begin{definition}[In-degree and out-degree]
-For a vertex $m$ in a directed graph $G = (V, E)$, the \emph{in-degree} is $\deg^{-}(m) = |\{m' \in V : (m', m) \in E\}|$ and the \emph{out-degree} is $\deg^{+}(m) = |\{m' \in V : (m, m') \in E\}|$.
-\end{definition}
+Recall that for a vertex $m$ in a directed graph $G = (V, E)$, the \emph{in-degree} is $\deg^{-}(m) = |\{m' \in V : (m', m) \in E\}|$ and the \emph{out-degree} is $\deg^{+}(m) = |\{m' \in V : (m, m') \in E\}|$.
 
 In $G_{\mathrm{import}}$, the out-degree $\deg^{+}(m) = |\mathrm{imports}(m)|$: it counts the number of modules that $m$ directly imports. The in-degree $\deg^{-}(m)$ counts how many other modules depend on~$m$.
 
@@ -457,3 +433,33 @@ Removing the five highest in-degree modules (\texttt{Init}, \texttt{Tactic.Commo
 \begin{remark}
 The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the import graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
 \end{remark}
+
+\subsection{\textcolor{red}{Conclusion!}}
+\textcolor{red}{Hypothesis!}
+
+\subsection{Conclusion}
+\label{sec:module_conclusion}
+
+Our structural analysis of the Mathlib module import graph allows us to characterize the architecture of a large-scale formal library. We find that Mathlib does not resemble a random network or a simple hierarchy; rather, it is a \textit{deep, engineered backbone} supporting a vast, shallow application layer. These findings have three implications for the future of formal mathematical libraries.
+
+\medskip
+\noindent \textit{1. The tension between logical precision and cognitive management.} \\
+The divergence between the raw import graph $G_{\text{import}}$ and its transitive reduction $G_{\text{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy is not merely inefficiency; it represents the \textit{cognitive API} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
+
+\medskip
+\noindent \textit{2. The architectural source of compilation bottlenecks.} \\
+The layer-width profile reveals a distinct \textit{funnel topology}: a massive leaf layer ($>1,400$ modules) resting on a deep, narrow foundation. This extreme verticality (153 layers) contrasts sharply with the flatter citation graphs of informal mathematics. While this depth ensures rigorous consistency, it creates significant structural fragility: changes in the narrow ``waist'' of the funnel (high-betweenness modules) trigger massive recompilation cascades. This identifies a critical scalability challenge: as libraries grow, the depth of the dependency chain becomes a liability that may require aggressive modularization or distinct compilation units.
+
+\medskip
+\noindent \textit{3. Centrality as a proxy for maintenance roles.} \\
+We propose that centrality measures in formal libraries should be interpreted as distinct maintenance signals.
+\begin{itemize}
+    \item \textit{In-degree} identifies the \textit{vocabulary} of the library (utilities used locally).
+    \item \textit{PageRank} identifies the \textit{axiomatic core} (the deep dependencies that underpin the truth of the system).
+    \item \textit{Betweenness} identifies \textit{structural bridges} (modules that connect disparate mathematical subfields).
+\end{itemize}
+Refactoring a high-betweenness module is riskier than refactoring a high in-degree module, as the former disrupts the connective tissue between theories.
+
+\medskip
+\noindent \textit{Hypothesis: The Curated Small-World.} \\
+Finally, we hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, Mathlib grows via \textit{semantic attachment}: new modules cluster tightly within namespaces (high local clustering), while deliberately placed bridge modules (high betweenness) maintain global connectivity. This structure likely represents an optimal evolutionary state for collaborative formalization, balancing the isolation needed for parallel development with the connectivity needed for a unified mathematical universe.
