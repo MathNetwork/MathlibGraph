@@ -4,6 +4,10 @@ Two natural module-level graph structures in \texttt{Mathlib} emerge from the pr
 The first comes from the file system: module names reflect their paths in the repository, forming a rooted tree (\S\ref{sec:module-names}--\ref{sec:namespace-tree}). The second comes from mathematical dependencies: each \texttt{import} statement declares that one module depends on another, forming a directed acyclic graph (\S\ref{sec:import-graph}). The former is a continuation, in the formal setting, of the way mathematicians have long classified their subject---categories such as algebra, analysis, and topology were established well before formalization, and Mathlib's namespace hierarchy faithfully inherits this tradition. The latter captures the actual logical dependencies between files: one module requires definitions and results from another. 
 
 Such dependencies also exist in informal mathematics, analogous to citations between papers, but there they are implicit and incomplete. Formalization makes them explicit, exhaustive, and computable.
+Yet the cognitive structure of mathematical practice does not vanish---it leaves traces in the formal record, as we shall see in the divergence between the import graph and its transitive reduction (\S\ref{sec:module_conclusion}).
+
+What kind of network does formalization produce? The import graph could, in principle, resemble a random network (if dependencies were spread uniformly), a rigid hierarchy (mirroring the namespace tree), or something more structured. We investigate this question through five lenses: degree distribution (\S\ref{sec:degree-distribution}), DAG depth (\S\ref{sec:dag-depth}), cross-namespace dependencies (\S\ref{sec:cross-namespace}), centrality (\S\ref{sec:centrality}), and robustness (\S\ref{sec:robustness}). Throughout, the namespace tree $T$ serves as a cognitive baseline: the extent to which $G_{\mathrm{import}}$ deviates from $T$ measures the gap between how mathematicians classify their subject and how formal proofs actually depend on one another.
+
 \textcolor{red}{make every mathlib in \texttt{Mathlib}}
 \subsection{Module Names}
 \label{sec:module-names}
@@ -175,6 +179,8 @@ Since \texttt{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mat
 \begin{remark}
 The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
 \end{remark}
+
+The contrast between these two structures is conceptually significant. The namespace tree $T$ encodes a \emph{cognitive} organization of mathematics: its top-level directories---\texttt{Algebra}, \texttt{Analysis}, \texttt{Topology}---reflect a classification that mathematicians established long before formalization. The import graph $G_{\mathrm{import}}$, by contrast, encodes \emph{logical} dependencies that need not respect this classification. The extent to which $G_{\mathrm{import}}$ deviates from $T$---edges that cross namespace boundaries, dependencies that link distant branches of the tree---reveals the internal structure of mathematics that no human taxonomy fully captures.
 
 \begin{figure}[ht]
 \centering
