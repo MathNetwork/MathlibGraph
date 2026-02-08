@@ -85,11 +85,11 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
     (sea) at (4.1,0.8) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
     (za) at (4.1,0.2) {};
-  % Dependency arrows (solid = intra-namespace, dashed = cross-namespace)
+  % Dependency arrows: solid=intra-module, dashed=cross-module, dotted=cross-namespace
   \draw[dep] (alc) -- (ac);
-  \draw[dep] (sea) to[out=175,in=10] (ac);
-  \draw[dep] (za) to[out=175,in=-10] (alc);
-  \draw[depx] (prz) to[out=70,in=-100] (ac);
+  \draw[dep, dashed] (sea) to[out=175,in=10] (ac);
+  \draw[dep, dashed] (za) to[out=175,in=-10] (alc);
+  \draw[dep, densely dotted, thick] (prz) to[out=70,in=-100] (ac);
   % Blue import arrow: Data.Nat.Defs imports Data.Nat.Basic
   \draw[->, >=Stealth, blue!60!black, thick]
     (3.5,1.55) -- node[above, font=\tiny\sffamily, text=blue!60!black] {\texttt{import}} (2.5,1.55);
@@ -137,7 +137,7 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
   % Panel label
   \node[font=\small\sffamily, anchor=north] at (13.0,-2.5) {(c) $G_{\mathrm{ns}}^{(1)}$};
 \end{tikzpicture}
-\caption{The aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Five declarations (\textcolor{red!70!black}{red dots}) and their dependencies (\textcolor{red!70!black}{red arrows}) in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green dashed boxes} mark depth-$2$ namespace boundaries, \textcolor{blue!60!black}{blue dashed boxes} mark module boundaries, and the \textcolor{blue!60!black}{blue arrow} shows the module-level import edge from~$G_{\mathrm{import}}$. The dashed red arrow crosses a namespace boundary. (b)~Aggregation to depth-$2$ namespaces: declarations merge into \textcolor{green!50!black}{green namespace nodes}; the three intra-\ns{Nat} edges become internal (faded loop), and the single cross-namespace edge becomes a weighted \textcolor{green!50!black}{green edge} in~$G_{\mathrm{ns}}^{(2)}$. (c)~Aggregation to depth~$1$: all five declarations share namespace \ns{Nat}; every edge is now internal, and containment reaches $100\%$. All names have the \texttt{Nat.}\ prefix removed.}
+\caption{The aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Five declarations (\textcolor{red!70!black}{red dots}) and their dependencies (\textcolor{red!70!black}{red arrows}: solid = intra-module, dashed = cross-module, dotted = cross-namespace) in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green dashed boxes} mark depth-$2$ namespace boundaries, \textcolor{blue!60!black}{blue dashed boxes} mark module boundaries, and the \textcolor{blue!60!black}{blue arrow} shows the module-level import edge from~$G_{\mathrm{import}}$. (b)~Aggregation to depth-$2$ namespaces: declarations merge into \textcolor{green!50!black}{green namespace nodes}; the three intra-\ns{Nat} edges (one solid, two dashed) become internal, and the single cross-namespace edge (dotted) becomes a weighted \textcolor{green!50!black}{green edge} in~$G_{\mathrm{ns}}^{(2)}$. (c)~Aggregation to depth~$1$: all five declarations share namespace \ns{Nat}; every edge is now internal, and containment reaches $100\%$. All names have the \texttt{Nat.}\ prefix removed.}
 \label{fig:ns-aggregation}
 \end{figure}
 
