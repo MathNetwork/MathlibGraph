@@ -26,7 +26,7 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
     anchor=west,
     calign=first,
     edge path={
-      \noexpand\path [draw, blue!60!black, \forestoption{edge}]
+      \noexpand\path [draw, black, \forestoption{edge}]
         (!u.south west) +(7.5pt,0) |- (.child anchor)\forestoption{edge label};
     },
     before typesetting nodes={
@@ -59,18 +59,18 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 \raggedright\scriptsize
 \textsf{\bfseries\color{blue!60!black}Basic.lean}\\[2pt]
 \ttfamily
-\textbf{theorem} add\_comm (n m : Nat)\\
+\textbf{theorem} \textcolor{red!70!black}{add\_comm} (n m : Nat)\\
 \hspace{1.5em}: n + m = m + n := \textbf{by}\\
 \hspace{1.5em}induction n <;> simp [\textcolor{red!70!black}{Eq.refl}]\\[3pt]
-\textbf{theorem} add\_left\_comm (n m k : Nat)\\
+\textbf{theorem} \textcolor{red!70!black}{add\_left\_comm} (n m k : Nat)\\
 \hspace{1.5em}: n + (m + k) = m + (n + k) := \textbf{by}\\
 \hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; simp [\textcolor{red!70!black}{Eq.refl}]\\[6pt]
 \textsf{\bfseries\color{blue!60!black}Defs.lean}\\[2pt]
 \ttfamily
-\textbf{theorem} succ\_eq\_add\_one (n : Nat)\\
+\textbf{theorem} \textcolor{red!70!black}{succ\_eq\_add\_one} (n : Nat)\\
 \hspace{1.5em}: succ n = n + 1 := \textbf{by}\\
 \hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; exact \textcolor{red!70!black}{Eq.refl} \_\\[3pt]
-\textbf{theorem} zero\_add (n : Nat)\\
+\textbf{theorem} \textcolor{red!70!black}{zero\_add} (n : Nat)\\
 \hspace{1.5em}: 0 + n = n := \textbf{by}\\
 \hspace{1.5em}induction n <;> exact \textcolor{red!70!black}{Eq.refl} \_
 \caption{Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term generates a dependency edge in~(c).}
@@ -84,48 +84,48 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 \centering
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3.5pt, inner sep=0pt},
-  dep/.style={->, >=Stealth, red!70!black, semithick},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, black, semithick},
 ]
   % ── Card 3 (top, back): module Defs ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
-    (0.15,4.7) -- (5.65,4.7) -- (6.35,5.09) -- (0.85,5.09) -- cycle;
+    (0.2,4.7) -- (10.2,4.7) -- (11.4,5.09) -- (1.4,5.09) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
-    (0.15,4.7) -- (5.65,4.7) -- (5.65,4.57) -- (0.15,4.57) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.75,4.63)
+    (0.2,4.7) -- (10.2,4.7) -- (10.2,4.57) -- (0.2,4.57) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
     {\textnormal{\texttt{Defs}}};
-  \node[dot] (sea) at (2.0,4.88) {};
-  \node[font=\tiny\ttfamily, anchor=north] at (2.0,4.84) {succ\_eq\_add\_one};
-  \node[dot] (za)  at (4.3,4.88) {};
-  \node[font=\tiny\ttfamily, anchor=north] at (4.3,4.84) {zero\_add};
+  \node[dot] (sea) at (3.5,4.88) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
+  \node[dot] (za)  at (7.5,4.88) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.6,4.88) {zero\_add};
 
   % ── Card 2 (middle): module Basic ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
-    (0,2.5) -- (5.5,2.5) -- (6.2,2.89) -- (0.7,2.89) -- cycle;
+    (0,2.5) -- (10.0,2.5) -- (11.2,2.89) -- (1.2,2.89) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
-    (0,2.5) -- (5.5,2.5) -- (5.5,2.37) -- (0,2.37) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.6,2.43)
+    (0,2.5) -- (10.0,2.5) -- (10.0,2.37) -- (0,2.37) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
     {\textnormal{\texttt{Basic}}};
-  \node[dot] (ac)  at (1.85,2.68) {};
-  \node[font=\tiny\ttfamily, anchor=north] at (1.85,2.64) {add\_comm};
-  \node[dot] (alc) at (4.15,2.68) {};
-  \node[font=\tiny\ttfamily, anchor=north] at (4.15,2.64) {add\_left\_comm};
+  \node[dot] (ac)  at (3.3,2.68) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
+  \node[dot] (alc) at (7.3,2.68) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
 
   % ── Card 1 (bottom, front): other namespace ──
   \filldraw[fill=gray!6, draw=gray!50, semithick, line join=round]
-    (0.5,0.15) -- (4.7,0.15) -- (5.25,0.46) -- (1.05,0.46) -- cycle;
+    (1.0,0.15) -- (8.0,0.15) -- (8.9,0.46) -- (1.9,0.46) -- cycle;
   \filldraw[fill=gray!15, draw=gray!50, semithick, line join=round]
-    (0.5,0.15) -- (4.7,0.15) -- (4.7,0.03) -- (0.5,0.03) -- cycle;
-  \node[font=\tiny\sffamily, gray!60, anchor=west] at (4.8,0.09)
+    (1.0,0.15) -- (8.0,0.15) -- (8.0,0.03) -- (1.0,0.03) -- cycle;
+  \node[font=\tiny\sffamily, gray!60, anchor=west] at (8.2,0.09)
     {\textnormal{other ns}};
-  \node[dot] (er)  at (2.7,0.3) {};
-  \node[font=\tiny\ttfamily, anchor=south] at (2.7,0.35) {Eq.refl};
+  \node[dot] (er)  at (4.8,0.3) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
 
   % ── Namespace bracket (Data.Nat spans Cards 2–3) ──
   \draw[blue!50, semithick]
-    (-0.15,2.37) -- (-0.35,2.37) -- (-0.35,5.09) -- (-0.15,5.09);
+    (-0.2,2.37) -- (-0.5,2.37) -- (-0.5,5.09) -- (-0.2,5.09);
   \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
-    at (-0.55,3.73) {namespace \textnormal{\texttt{Data.Nat}}};
+    at (-0.75,3.73) {namespace \textnormal{\texttt{Data.Nat}}};
 
   % ── Dependency arrows (red = mathematical logic) ──
   % Intra-module: the ONLY arrow that stays on its card
