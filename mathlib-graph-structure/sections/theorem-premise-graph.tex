@@ -10,6 +10,22 @@ The main findings of this section are threefold. First, the hub structure of the
 
 The theorem--premise graph is constructed from two complementary data sources. The \texttt{lean4export} tool~\cite{lean4export} extracts the full environment of a Lean~4 project---every declaration, its type, its proof term, and the constants appearing in each---into a machine-readable format. The \texttt{lean-training-data} tool~\cite{lean_training_data} extracts premise-level dependencies by analyzing which constants appear in the proof term of each declaration. We combine these extractions into a single dataset, published on HuggingFace as \texttt{Xinze-Li-Moqian/mathfactor}.
 
+\paragraph{What is a premise?}
+When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Consider a simple example:
+
+\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
+-- Tactic proof (what the mathematician writes):
+theorem Nat.succ_pos (n : Nat) : 0 < n + 1 :=
+  Nat.zero_lt_succ n
+
+-- The proof term contains:
+--   Nat.zero_lt_succ   (a named constant from the environment -> premise)
+--   n                   (a local variable, bound by the theorem -> NOT a premise)
+\end{minted}
+
+\noindent
+The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \texttt{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
+
 \begin{definition}[Theorem--premise graph]
 \label{def:thm-graph}
 The \emph{theorem--premise graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in Mathlib, and
