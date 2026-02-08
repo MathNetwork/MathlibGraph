@@ -1,7 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage{preamble}
 
-\title{The network structure of \texttt{Mathlib}}
+\title{The network structure of \module{Mathlib}}
 \author{Xinze Li \and Simone Severini}
 \date{\today}
 
@@ -10,13 +10,13 @@
 \maketitle
 
 \begin{abstract}
-Formal mathematics libraries are strictly deterministic artifacts: every dependency is machine-verified, and the compiled artifact contains no ambiguity. Yet these libraries are built by humans through an uncertain process of exploration, organization, and judgment. We analyze the network structure of Mathlib---the largest unified library of formalized mathematics---to demonstrate that the deterministic product preserves measurable traces of the cognitive process that created it. Our analysis reveals three specific signatures of this human influence: a deep ``funnel'' topology (153 layers), a 17.5\% rate of transitively redundant imports, and a near-zero module cohesion (mean 0.025). These metrics indicate that developers align dependencies with human-readable ``cognitive containers'' rather than minimal logical requirements. We conclude that formalization does not dissolve human organization; instead, the ``cognitive habits'' of contributors are encoded in the dependency topology, structurally reshaping the logical product.
+Formal mathematics libraries are strictly deterministic artifacts: every dependency is machine-verified, and the compiled artifact contains no ambiguity. Yet these libraries are built by humans through an uncertain process of exploration, organization, and judgment. We analyze the network structure of \module{Mathlib}---the largest unified library of formalized mathematics---to demonstrate that the deterministic product preserves measurable traces of the cognitive process that created it. At the declaration level, dependency-driven community detection recovers recognizable mathematical disciplines, human importance judgments encoded in theorem-versus-lemma annotations are partially validated by the network topology, and a two-layer hub structure separates language infrastructure from mathematical infrastructure. Our analysis reveals three specific signatures of this human influence: a deep ``funnel'' topology (153 layers), a 17.5\% rate of transitively redundant imports, and a low module cohesion (mean 0.107). These metrics indicate that developers align dependencies with human-readable ``cognitive containers'' rather than minimal logical requirements. We conclude that formalization does not dissolve human organization; instead, the ``cognitive habits'' of contributors are encoded in the dependency topology, structurally reshaping the logical product.
 \end{abstract}
 
 \input{sections/introduction}
 \input{sections/module-import-graph}
 \input{sections/theorem-premise-graph}
-\input{sections/premise-co-occurrence-graph}
+\input{sections/module-declaration-interaction}
 \input{sections/conclusion}
 \bibliographystyle{plain}
 \bibliography{references}

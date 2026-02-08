@@ -59,6 +59,7 @@ Consider, for illustration, the namespace \module{Data.Nat}, which contains (amo
 \raggedright\scriptsize
 \textsf{\bfseries\color{blue!60!black}Basic.lean}\\[2pt]
 \ttfamily
+\textbf{import} \textcolor{blue!60!black}{Init.Prelude}\\[3pt]
 \textbf{theorem} \textcolor{red!70!black}{add\_comm} (n m : Nat)\\
 \hspace{1.5em}: n + m = m + n := \textbf{by}\\
 \hspace{1.5em}induction n <;> simp [\textcolor{red!70!black}{Eq.refl}]\\[3pt]
@@ -67,6 +68,8 @@ Consider, for illustration, the namespace \module{Data.Nat}, which contains (amo
 \hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; simp [\textcolor{red!70!black}{Eq.refl}]\\[6pt]
 \textsf{\bfseries\color{blue!60!black}Defs.lean}\\[2pt]
 \ttfamily
+\textbf{import} \textcolor{blue!60!black}{Data.Nat.Basic}\\
+\textbf{import} \textcolor{blue!60!black}{Init.Prelude}\\[3pt]
 \textbf{theorem} \textcolor{red!70!black}{succ\_eq\_add\_one} (n : Nat)\\
 \hspace{1.5em}: succ n = n + 1 := \textbf{by}\\
 \hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; exact \textcolor{red!70!black}{Eq.refl} \_\\[3pt]
@@ -86,6 +89,8 @@ Consider, for illustration, the namespace \module{Data.Nat}, which contains (amo
   every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
   dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
   dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  modimp/.style={->, >=Stealth, blue!60!black, thick},
 ]
   % ── Card 3 (top, back): module Defs ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
@@ -93,7 +98,7 @@ Consider, for illustration, the namespace \module{Data.Nat}, which contains (amo
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0.2,4.7) -- (10.2,4.7) -- (10.2,4.57) -- (0.2,4.57) -- cycle;
   \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
-    {\textnormal{\module{Defs}}};
+    {\textnormal{\module{Data.Nat.Defs}}};
   \node[dot] (sea) at (3.5,4.88) {};
   \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
   \node[dot] (za)  at (7.5,4.88) {};
@@ -105,19 +110,19 @@ Consider, for illustration, the namespace \module{Data.Nat}, which contains (amo
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0,2.5) -- (10.0,2.5) -- (10.0,2.37) -- (0,2.37) -- cycle;
   \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
-    {\textnormal{\module{Basic}}};
+    {\textnormal{\module{Data.Nat.Basic}}};
   \node[dot] (ac)  at (3.3,2.68) {};
   \node[font=\tiny\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
   \node[dot] (alc) at (7.3,2.68) {};
   \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
 
-  % ── Card 1 (bottom, front): other namespace ──
-  \filldraw[fill=gray!6, draw=gray!50, semithick, line join=round]
+  % ── Card 1 (bottom, front): module Init.Prelude ──
+  \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
     (1.0,0.15) -- (8.0,0.15) -- (8.9,0.46) -- (1.9,0.46) -- cycle;
-  \filldraw[fill=gray!15, draw=gray!50, semithick, line join=round]
+  \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (1.0,0.15) -- (8.0,0.15) -- (8.0,0.03) -- (1.0,0.03) -- cycle;
-  \node[font=\tiny\sffamily, gray!60, anchor=west] at (8.2,0.09)
-    {\textnormal{other ns}};
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (8.2,0.09)
+    {\textnormal{\module{Init.Prelude}}};
   \node[dot] (er)  at (4.8,0.3) {};
   \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
 
@@ -127,19 +132,27 @@ Consider, for illustration, the namespace \module{Data.Nat}, which contains (amo
   \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
     at (-0.75,3.73) {namespace \textnormal{\module{Data.Nat}}};
 
+  % ── Module import dots & arrows (blue = $G_{\mathrm{import}}$) ──
+  \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (md) at (9.8, 4.88) {};
+  \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (mb) at (10.0, 2.68) {};
+  \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (mo) at (7.2, 0.3) {};
+  \draw[modimp] (md) to[out=-85,in=85] (mb);                         % Defs → Basic
+  \draw[modimp] (mb) to[out=-70,in=40] (mo);                         % Basic → other ns
+  \draw[modimp] (md) to[out=-50,in=55] (mo);                         % Defs → other ns
+
   % ── Dependency arrows (red = mathematical logic) ──
   % Intra-module: the ONLY arrow that stays on its card
   \draw[dep] (alc) -- (ac);
-  % Cross-module: Card 3 → Card 2
-  \draw[dep] (sea) to[out=-88,in=92] (ac);
-  % Cross-namespace: all → Eq.refl (piercing through card boundaries)
-  \draw[dep] (ac)  to[out=-88,in=105] (er);
-  \draw[dep] (alc) to[out=-88,in=60] (er);
-  \draw[dep] (sea) to[out=-85,in=120] (er);
-  \draw[dep] (za)  to[out=-85,in=45] (er);
+  % Cross-module: Card 3 → Card 2 (external)
+  \draw[depext] (sea) to[out=-88,in=92] (ac);
+  % Cross-namespace: all → Eq.refl (external, piercing through card boundaries)
+  \draw[depext] (ac)  to[out=-88,in=105] (er);
+  \draw[depext] (alc) to[out=-88,in=60] (er);
+  \draw[depext] (sea) to[out=-85,in=120] (er);
+  \draw[depext] (za)  to[out=-85,in=45] (er);
 
 \end{tikzpicture}
-\caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; \textcolor{red!70!black}{red nodes} are declarations residing on their host card. Black arrows (mathematical dependencies) frequently pierce through module boundaries, visualizing the low cohesion: most logical traffic crosses the organizational layers that humans have imposed.}
+\caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; \textcolor{red!70!black}{red nodes} are declarations. Solid \textcolor{red!70!black}{red arrows} show intra-module edges ($E_{\mathrm{int}}$); dashed \textcolor{red!70!black}{red arrows} show external edges ($E_{\mathrm{ext}}$) that pierce module boundaries. \textcolor{blue!60!black}{Blue arrows} on the right show the corresponding module-level imports from $G_{\mathrm{import}}$.}
 \label{fig:dep-view}
 \end{subfigure}
 \caption{Three views of the same declarations. (a)~The file-system hierarchy and namespace tree~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level: human decisions determine which declarations reside in which file. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term is a premise that creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ (red arrows) layered by module (\textcolor{blue!60!black}{blue cards}); of six dependency edges, only one stays within its module---the rest pierce through the organizational layers, visualizing the low cohesion measured in this section. Together, the three panels show the full path from human file organization~(a) through proof terms~(b) to the dependency graph~(c). All declaration names have the \texttt{Nat.}\ prefix removed.}
@@ -217,29 +230,74 @@ Cohesion ranges from~$0$ (no internal edges: every dependency crosses the module
 
 \begin{table}[ht]
 \centering
-\caption{Global distribution of module cohesion across $15{,}456$ modules.}
+\caption{Global distribution of module cohesion across $6{,}993$ file-level modules.}
 \label{tab:cohesion-global}
 \begin{tabular}{lr}
 \toprule
 Statistic & Value \\
 \midrule
-Mean       & $0.025$ \\
-Median     & $0.000$ \\
-Std Dev    & $0.045$ \\
-Max        & $0.500$ \\
-Modules with $\mathrm{coh} = 0$ & $8{,}665$ / $15{,}456$ ($56.1\%$) \\
+Mean       & $0.107$ \\
+Median     & $0.074$ \\
+Std Dev    & $0.121$ \\
+Max        & $1.000$ \\
+Modules with $\mathrm{coh} = 0$ & $584$ / $6{,}993$ ($8.4\%$) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The central finding is stark: the median cohesion is exactly zero, and over half of all modules contain no internal edges whatsoever. The mean of~$0.025$ indicates that even among modules with nonzero cohesion, internal edges constitute a negligible fraction of total connectivity. No module exceeds a cohesion of~$0.5$.
+The central finding is that module cohesion is low throughout: the mean is~$0.107$ and the median is~$0.074$, indicating that internal edges constitute only about $10\%$ of a typical module's total connectivity. While $8.4\%$ of modules have zero internal edges, even the most cohesive modules rarely approach~$1$.
 
-These numbers have a precise structural interpretation. If module boundaries were aligned with the logical dependency structure---if ``belonging to the same module'' predicted ``depending on each other''---then cohesion values would cluster near~$1$. The observed mean of~$0.025$ indicates that the module boundary and the dependency structure are nearly orthogonal: knowing that two declarations share a module tells you almost nothing about whether one cites the other.
+These numbers have a precise structural interpretation. If module boundaries were aligned with the logical dependency structure---if ``belonging to the same module'' predicted ``depending on each other''---then cohesion values would cluster near~$1$. The observed mean of~$0.107$ indicates that the module boundary and the dependency structure are only weakly aligned: knowing that two declarations share a source file tells you little about whether one cites the other.
+
+\begin{remark}[Levels of granularity and the namespace dependency graph]
+\label{rem:ns-vs-file-cohesion}
+This paper analyzes two dependency graphs: the module-level import graph~$G_{\mathrm{import}}$ (\S\ref{sec:import-graph}), whose nodes are source files, and the declaration-level premise graph~$G_{\mathrm{thm}}$ (\S\ref{sec:theorem-premise}), whose nodes are individual theorems and definitions. A third natural construction---the \emph{namespace dependency graph}~$G_{\mathrm{ns}}$, in which each namespace is a node and an edge $A \to B$ indicates that some declaration in namespace~$A$ cites a declaration in namespace~$B$---occupies an intermediate level of granularity. We do not analyze~$G_{\mathrm{ns}}$ here because the relationship between namespaces and source files is many-to-many: a single namespace may span dozens of files, and a single file may contribute declarations to multiple namespaces. This many-to-many mapping makes it difficult to disentangle the namespace-level signal from file-level artifacts without additional normalization. The construction and analysis of~$G_{\mathrm{ns}}$ is deferred to future work (\S\ref{sec:future}).
+
+As a concrete illustration of this entanglement: if cohesion is computed using declaration-name prefixes as a proxy for modules (yielding approximately $15{,}000$ namespace-level units), the mean cohesion drops to~$0.034$ and $56\%$ of units have zero cohesion. The discrepancy arises because name-prefix grouping creates many single-declaration ``modules'' that trivially have no internal edges. The file-level cohesion reported here ($6{,}993$ modules, mean~$0.107$) is the more meaningful measure, since it corresponds to the actual organizational units that developers create and maintain.
+\end{remark}
+
+\subsection{Import Edges vs.\ Declaration-Level Dependencies}
+\label{sec:import_vs_declaration}
+
+Section~\ref{sec:import-graph} analyzed~$G_{\mathrm{import}}$, the graph of developer-written \texttt{import} statements; \S\ref{sec:theorem-premise} analyzed~$G_{\mathrm{thm}}$, the declaration-level premise graph. We now connect the two by aggregating~$G_{\mathrm{thm}}$ to the module level. Define the \emph{file-aggregated graph}~$G_{\mathrm{file}}$: its vertices are the same source files as~$G_{\mathrm{import}}$, and it contains an edge $m_1 \to m_2$ whenever some declaration in file~$m_1$ cites a declaration in file~$m_2$ (with $m_1 \neq m_2$). Comparing~$G_{\mathrm{file}}$ with~$G_{\mathrm{import}}$ reveals how much of the human-declared import structure corresponds to actual declaration-level usage.
+
+The scale difference is striking: $G_{\mathrm{file}}$ has $215{,}211$ edges, while~$G_{\mathrm{import}}$ has only $23{,}235$---the actual module-to-module dependencies at the declaration level outnumber the human-written imports by a factor of~$9.1\times$. Table~\ref{tab:import-vs-file} decomposes this gap.
+
+\begin{table}[ht]
+\centering
+\caption{Edge-level comparison of $G_{\mathrm{import}}$ (human-written imports) and $G_{\mathrm{file}}$ (declaration-aggregated dependencies).}
+\label{tab:import-vs-file}
+\begin{tabular}{lrr}
+\toprule
+Category & Edges & Percentage \\
+\midrule
+\multicolumn{3}{l}{\emph{$G_{\mathrm{import}}$ breakdown ($23{,}235$ edges):}} \\
+\quad Active imports (in both $G_{\mathrm{import}}$ and $G_{\mathrm{file}}$) & $16{,}742$ & $72.1\%$ \\
+\quad Unused imports ($G_{\mathrm{import}}$ only) & $6{,}493$ & $27.9\%$ \\
+\midrule
+\multicolumn{3}{l}{\emph{$G_{\mathrm{file}}$ breakdown ($215{,}211$ edges):}} \\
+\quad Direct import exists & $16{,}742$ & $7.8\%$ \\
+\quad Indirect, transitively reachable & $197{,}639$ & $91.8\%$ \\
+\quad Indirect, not reachable & $830$ & $0.4\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The table tells two complementary stories. From the import side, $72.1\%$ of import edges are \emph{active}---the importing file's declarations actually cite declarations in the imported file. The remaining $27.9\%$ are \emph{unused} at the declaration level: no declaration in the importing file directly references the imported module's contents. These imports exist to provide transitive visibility, bringing into scope not the imported module itself but the modules it in turn imports.
+
+From the declaration side, only $7.8\%$ of cross-file declaration dependencies correspond to a direct import edge. The remaining $92.2\%$ are \emph{indirect}: file~$A$'s declarations cite file~$B$'s declarations, but $A$ does not import~$B$ directly. Almost all of these ($197{,}639$ out of $198{,}469$) are transitively reachable through the import chain, confirming that the import graph, while sparse, provides sufficient transitive coverage. The $830$ edges ($0.4\%$) that are not transitively reachable correspond to cross-library references and mapping gaps at the boundary of the \module{Mathlib} source tree.
+
+The import graph thus functions as a sparse gateway: each file declares a handful of direct imports (mean out-degree $3.1$ in~$G_{\mathrm{import}}$), but through transitivity these few edges open access to a vast dependency space (mean out-degree $30.8$ in~$G_{\mathrm{file}}$). This $10\times$ amplification quantifies the indirectness between human-level organization and declaration-level logic: the cognitive act of writing an \texttt{import} statement is a coarse, high-level gesture that implicitly enables hundreds of fine-grained logical dependencies.
+
+\begin{remark}[Relationship to transitive redundancy]
+\label{rem:unused-vs-redundant}
+Section~\ref{sec:transitive-reduction} found that $17.5\%$ of import edges are \emph{transitively redundant}---removable without disconnecting the import graph. Here we find that $27.9\%$ are \emph{unused}---no declaration in the importing file directly cites the imported module. These two numbers measure different properties: redundancy is a graph-theoretic property (edge removability), while ``unused'' is a semantic property (absence of declaration-level citation). The gap between them ($27.9\% > 17.5\%$) has a precise interpretation: $78.4\%$ of unused imports are graph-theoretically \emph{essential}---they are the sole path through which some other module's declarations become transitively visible---while $21.6\%$ are both unused and transitively redundant. Conversely, some active imports are nonetheless transitively redundant: the importing file cites the imported module, but the same module was already reachable through an alternative import chain.
+\end{remark}
 
 \subsection{Cohesion by Namespace}
 \label{sec:cohesion-namespace}
 
-We group the~$15{,}456$ modules by their top-level namespace and compute the average cohesion within each group. Table~\ref{tab:cohesion-namespace} reports the results for namespaces with at least~$100$ modules.
+We group the~$6{,}993$ modules by their top-level namespace and compute the average cohesion within each group. Table~\ref{tab:cohesion-namespace} reports the results for namespaces with at least~$100$ modules.
 
 \begin{table}[ht]
 \centering
@@ -301,7 +359,7 @@ Module & Decl.\ & Int.\ edges & Ext.\ edges & Cohesion \\
 
 The highest-cohesion modules share a common pattern: they are \emph{self-contained developments}---a type, its API, and the lemmas about it, all in a single module. \module{LLVM} ($0.392$) is a compiler infrastructure module whose declarations form an internal dependency chain (instruction types referencing each other); \module{AbstractCompletion} ($0.353$) builds up a completion construction step by step; \module{SetTheory.PGame} ($0.283$, the largest high-cohesion module with $602$ declarations) develops combinatorial game theory as a self-contained theory. These are modules where the mathematical development is linear and localized---each declaration builds directly on the previous one within the same file.
 
-At the opposite extreme, $8{,}665$ modules have cohesion exactly zero. Among the zero-cohesion modules with at least~$10$ declarations, typical examples include \module{List.Sorted} ($28$ declarations, $226$ external edges), \module{Function.Odd} ($10$ declarations, $210$ external edges), and \module{CategoryTheory.Subfunctor.Subpresheaf} ($71$ declarations, $1{,}012$ external edges). These modules collect lemmas about a specific predicate or construction: every lemma in \module{List.Sorted} characterizes the \decl{Sorted} predicate on lists, but no lemma in that module cites another lemma in the same module---they all reach outward to \module{List}, \module{Nat}, \decl{Eq}, and other foundational declarations.
+At the opposite extreme, $584$ modules ($8.4\%$) have cohesion exactly zero. Among the zero-cohesion modules with at least~$10$ declarations, typical examples include \module{List.Sorted} ($28$ declarations, $226$ external edges), \module{Function.Odd} ($10$ declarations, $210$ external edges), and \module{CategoryTheory.Subfunctor.Subpresheaf} ($71$ declarations, $1{,}012$ external edges). These modules collect lemmas about a specific predicate or construction: every lemma in \module{List.Sorted} characterizes the \decl{Sorted} predicate on lists, but no lemma in that module cites another lemma in the same module---they all reach outward to \module{List}, \module{Nat}, \decl{Eq}, and other foundational declarations.
 
 \begin{remark}
 \label{rem:zero-cohesion}
@@ -323,21 +381,21 @@ Section & Metric & Value \\
 \midrule
 \S\ref{sec:cross-namespace} & Intra-namespace edges in $G_{\mathrm{import}}^{-}$ & $62.9\%$ \\
 \S\ref{sec:thm-cross-namespace} & Intra-module edges in $G_{\mathrm{thm}}$ & $9.6\%$ \\
-\S\ref{sec:cohesion} & Mean module cohesion & $0.025$ \\
+\S\ref{sec:cohesion} & Mean module cohesion & $0.107$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-At the module level, $62.9\%$ of reduced import edges stay within the same namespace (\S\ref{sec:cross-namespace})---the cognitive categories of the namespace tree~$T$ exert a moderate organizing force on inter-module dependencies. At the declaration level, only $9.6\%$ of edges in~$G_{\mathrm{thm}}$ remain within the same module (\S\ref{sec:thm-cross-namespace})---the module boundary is nearly invisible to individual declarations. The cohesion figure of~$0.025$ confirms this from the complementary direction: within a module, the ratio of internal to total edges is negligible.
+At the module level, $62.9\%$ of reduced import edges stay within the same namespace (\S\ref{sec:cross-namespace})---the cognitive categories of the namespace tree~$T$ exert a moderate organizing force on inter-module dependencies. At the declaration level, only $9.6\%$ of edges in~$G_{\mathrm{thm}}$ remain within the same module (\S\ref{sec:thm-cross-namespace})---the module boundary is nearly invisible to individual declarations. The cohesion figure of~$0.107$ confirms this from the complementary direction: within a module, the ratio of internal to total edges is small.
 
-These three numbers describe the same phenomenon at increasing magnification. At the coarsest level, modules cluster within namespaces---the cognitive taxonomy has real organizational force. Zoom in to individual declarations, and the module boundary nearly vanishes: declarations overwhelmingly depend on declarations elsewhere. Zoom in further, asking not just about individual edges but about the \emph{internal density} of each module, and the signal drops to~$2.5\%$. The module is a container that organizes the library for human cognition---for browsing, for discovery, for maintaining a mental model of what exists where---but it is not a unit of logical structure. The declarations inside a module are no more likely to depend on each other than on declarations in any other module of comparable size.
+These three numbers describe the same phenomenon at increasing magnification. At the coarsest level, modules cluster within namespaces---the cognitive taxonomy has real organizational force. Zoom in to individual declarations, and the module boundary nearly vanishes: declarations overwhelmingly depend on declarations elsewhere. Zoom in further, asking not just about individual edges but about the \emph{internal density} of each module, and the signal drops to~$10.7\%$. The module is a container that organizes the library for human cognition---for browsing, for discovery, for maintaining a mental model of what exists where---but it is not a unit of logical structure. The declarations inside a module are only modestly more likely to depend on each other than on declarations in any other module of comparable size.
 
 \begin{remark}
 \label{rem:module-role}
 The distinction between cognitive container and logical unit resolves an apparent paradox. On one hand, \module{Mathlib}'s module structure is carefully maintained: refactoring PRs regularly move files between directories, rename namespaces, and reorganize the hierarchy. On the other hand, our data shows that module boundaries have almost no relationship to logical dependency structure. Both observations are correct because they describe different functions. The module structure is maintained precisely because it serves cognitive navigation---developers need to find lemmas by topic---not because it reflects logical architecture. The maintenance effort is real but serves a human purpose, not a logical one.
 \end{remark}
 
-For \module{Mathlib} maintainers, module cohesion offers a quantitative refactoring signal: modules with cohesion near zero may be candidates for reorganization, while the $56.1\%$ zero-cohesion rate suggests that a systematic audit of module boundaries could improve the alignment between file organization and logical structure.
+For \module{Mathlib} maintainers, module cohesion offers a quantitative refactoring signal: modules with cohesion near zero may be candidates for reorganization, while the low overall mean ($0.107$) suggests that a systematic audit of module boundaries could improve the alignment between file organization and logical structure.
 
 \subsection{Implications for AI-Assisted Formalization}
 \label{sec:ai-implications}
@@ -346,6 +404,6 @@ The current module structure of \module{Mathlib} is optimized for human cognitio
 
 If AI systems become the primary producers or consumers of formal proofs, the cognitive navigation function of modules will diminish in importance. An AI premise-selection model does not browse the namespace tree; it queries a learned embedding space. An AI proof search does not rely on umbrella imports to bring relevant lemmas into scope; it retrieves premises from a global index. The organizational principles that justify the current module structure---conceptual proximity, navigable hierarchy, thematic coherence---are optimized for a cognitive agent that the AI is not.
 
-Two divergent evolutionary paths are plausible. In one trajectory, modules degrade into pure \emph{compilation units}: their boundaries are drawn to minimize build time and maximize parallelism, with no pretense of thematic coherence. Declarations would be distributed across files by dependency depth and compilation cost rather than by mathematical topic. In the other trajectory, modules evolve into \emph{semantic interfaces}---a new kind of cognitive container that serves both human understanding and AI retrieval. Rather than grouping ``all lemmas about $X$,'' a module might group ``all declarations needed to establish interface $Y$,'' where the interface is defined by a coherent set of types and their properties. This second trajectory would likely produce modules with higher cohesion than the current~$0.025$, since interface-oriented organization aligns more closely with dependency structure.
+Two divergent evolutionary paths are plausible. In one trajectory, modules degrade into pure \emph{compilation units}: their boundaries are drawn to minimize build time and maximize parallelism, with no pretense of thematic coherence. Declarations would be distributed across files by dependency depth and compilation cost rather than by mathematical topic. In the other trajectory, modules evolve into \emph{semantic interfaces}---a new kind of cognitive container that serves both human understanding and AI retrieval. Rather than grouping ``all lemmas about $X$,'' a module might group ``all declarations needed to establish interface $Y$,'' where the interface is defined by a coherent set of types and their properties. This second trajectory would likely produce modules with higher cohesion than the current~$0.107$, since interface-oriented organization aligns more closely with dependency structure.
 
-The cohesion data of this section provides a baseline for tracking this evolution. The current mean cohesion of~$0.025$ quantifies the degree to which human cognitive organization diverges from logical structure. As AI contributions to \module{Mathlib} increase---whether through tactic automation, premise selection, or full proof generation---monitoring cohesion over time will reveal whether the module structure is drifting toward compilation efficiency, toward semantic coherence, or remaining frozen in its current cognitive-container form.
+The cohesion data of this section provides a baseline for tracking this evolution. The current mean cohesion of~$0.107$ quantifies the degree to which human cognitive organization diverges from logical structure. As AI contributions to \module{Mathlib} increase---whether through tactic automation, premise selection, or full proof generation---monitoring cohesion over time will reveal whether the module structure is drifting toward compilation efficiency, toward semantic coherence, or remaining frozen in its current cognitive-container form.
