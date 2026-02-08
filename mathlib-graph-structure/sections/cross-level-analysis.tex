@@ -270,6 +270,141 @@ Section~\ref{sec:transitive-reduction} found $17.5\%$ of import edges transitive
 
 The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries. We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
 
+Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespace containment downward. At depth~$1$~(a), all five declarations share the namespace \texttt{Nat}, which spans both files; every dependency arrow is intra-namespace (solid). At depth~$2$~(b), \decl{Primrec.zero} separates into \texttt{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace (dashed). The file boundaries (\textcolor{blue!60!black}{blue}) are identical in both panels; only the namespace boundaries (\textcolor{green!40!black}{green}) change with~$k$.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[t]{0.47\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+]
+  % ── Blue module fills (bottom layer) ──
+  \fill[blue!6, rounded corners=3pt]
+    (-0.3,-2.3) rectangle (3.0,2.0);
+  \fill[blue!6, rounded corners=3pt]
+    (4.3,-0.8) rectangle (7.0,2.0);
+
+  % ── Green namespace fill (on top of blue) ──
+  \fill[green!10, rounded corners=3pt]
+    (0.0,-1.9) rectangle (6.7,1.4);
+
+  % ── Blue module borders ──
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.3) rectangle (3.0,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-0.2,1.95) {\textnormal{\module{Data.Nat.Basic}}};
+
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (4.3,-0.8) rectangle (7.0,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (4.4,1.95) {\textnormal{\module{Data.Nat.Defs}}};
+
+  % ── Green border for ns₁: Nat (drawn last → always visible) ──
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-1.9) rectangle (6.7,1.4);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.45) {$\mathrm{ns}_1$: Nat};
+
+  % ── Declarations ──
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
+    (ac) at (0.7,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
+    (alc) at (0.7,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.7,-1.3) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (5.0,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (5.0,0.15) {};
+
+  % ── All arrows solid (intra-namespace at depth 1) ──
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (sea) to[out=175,in=5] (ac);
+  \draw[dep] (za) to[out=175,in=-5] (alc);
+  \draw[dep] (prz) to[out=80,in=-90] (ac);
+\end{tikzpicture}
+\caption{Depth $k = 1$: one namespace. All edges are intra-namespace (solid).}
+\label{fig:ns-depth1}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.47\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
+]
+  % ── Blue module fills (bottom layer) ──
+  \fill[blue!6, rounded corners=3pt]
+    (-0.3,-2.3) rectangle (3.0,2.0);
+  \fill[blue!6, rounded corners=3pt]
+    (4.3,-0.8) rectangle (7.0,2.0);
+
+  % ── Green namespace fills (on top of blue) ──
+  \fill[green!10, rounded corners=3pt]
+    (0.0,-0.3) rectangle (6.7,1.4);
+  \fill[green!10, rounded corners=2pt]
+    (0.0,-1.9) rectangle (2.7,-0.7);
+
+  % ── Blue module borders ──
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.3) rectangle (3.0,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-0.2,1.95) {\textnormal{\module{Data.Nat.Basic}}};
+
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (4.3,-0.8) rectangle (7.0,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (4.4,1.95) {\textnormal{\module{Data.Nat.Defs}}};
+
+  % ── Green borders (drawn last → always visible) ──
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-0.3) rectangle (6.7,1.4);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.45) {$\mathrm{ns}_2$: Nat};
+
+  \draw[green!50!black, rounded corners=2pt, thick, dashed]
+    (0.0,-1.9) rectangle (2.7,-0.7);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,-0.65) {$\mathrm{ns}_2$: Nat.Primrec};
+
+  % ── Declarations (same positions as panel a) ──
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
+    (ac) at (0.7,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
+    (alc) at (0.7,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.7,-1.3) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (5.0,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (5.0,0.15) {};
+
+  % ── Primrec → Nat now cross-namespace (dashed) ──
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (sea) to[out=175,in=5] (ac);
+  \draw[dep] (za) to[out=175,in=-5] (alc);
+  \draw[depx] (prz) to[out=80,in=-90] (ac);
+\end{tikzpicture}
+\caption{Depth $k = 2$: \texttt{Nat.Primrec} separates. The same edge becomes cross-namespace (dashed).}
+\label{fig:ns-depth2}
+\end{subfigure}
+
+\medskip
+\footnotesize
+\textcolor{blue!60!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}~\textcolor{blue!60!black}{module (file)}\qquad
+\textcolor{green!40!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}~\textcolor{green!40!black}{namespace}\qquad
+\textcolor{red!70!black}{$\longrightarrow$}~\textcolor{red!70!black}{dependency}
+\normalsize
+
+\caption{The same five declarations and four dependency edges under two namespace depths. \textcolor{blue!60!black}{Blue dashed boxes}: module (file) boundaries---fixed at both depths. \textcolor{green!40!black}{Green dashed boxes}: namespace boundaries---change with~$k$. \textcolor{red!70!black}{Red arrows}: dependencies (solid = intra-namespace; dashed = cross-namespace). At depth~$1$~(a), all five declarations share the namespace \texttt{Nat}, which spans both files; every edge is intra-namespace. At depth~$2$~(b), \decl{Primrec.zero} separates into \texttt{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace. The file boundaries do not change---only the namespace boundaries move, driving containment downward. All names have the \texttt{Nat.}\ prefix removed.}
+\label{fig:ns-depth-grouping}
+\end{figure}
+
 At depth~$1$, namespace containment is $22.2\%$: roughly one in five edges stays within the same depth-$1$ namespace. By depth~$2$, containment drops to $14.2\%$ and saturates near $12.6\%$ by depth~$3$ (Table~\ref{tab:containment-decay}). Module cohesion, the mean proportion of a module's edges that stay internal, is $0.107$---close to the file-level containment of $15.6\%$ reported in the same table.
 
 The comparison reveals a consistent ordering: namespace containment at depth~$1$ ($22.2\%$) exceeds file-level containment ($15.6\%$), which in turn exceeds module cohesion ($10.7\%$). Namespaces, as conceptual categories, retain slightly more dependency traffic than files---a naming domain like \texttt{Nat} captures more intra-group dependencies than the file \module{Data.Nat.Basic}, because the namespace spans multiple files and encloses a larger set of related declarations. But all three figures are far below~$50\%$: regardless of which human boundary one draws---naming hierarchy or file system---the majority of mathematical dependencies cross it.
