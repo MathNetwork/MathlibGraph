@@ -41,78 +41,126 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
 
 \begin{figure}[ht]
 \centering
+\begin{subfigure}[t]{0.47\textwidth}
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+]
+  % ── Background: green fill for ns₁: Nat (all 5 decls) ──
+  \fill[green!10, rounded corners=3pt]
+    (0.0,-1.9) rectangle (6.7,1.4);
+
+  % ── Blue module boxes (on top of green fill) ──
+  \draw[blue!50!black, fill=blue!8, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.3) rectangle (3.0,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-0.2,1.95) {\textnormal{\module{Data.Nat.Basic}}};
+
+  \draw[blue!50!black, fill=blue!8, rounded corners=3pt, thick, dashed]
+    (4.3,-0.8) rectangle (7.0,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (4.4,1.95) {\textnormal{\module{Data.Nat.Defs}}};
+
+  % ── Green border for ns₁: Nat (drawn last → always visible) ──
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-1.9) rectangle (6.7,1.4);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.45) {$\mathrm{ns}_1$: Nat};
+
+  % ── Declarations ──
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
+    (ac) at (0.7,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
+    (alc) at (0.7,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.7,-1.3) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (5.0,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (5.0,0.15) {};
+
+  % ── All arrows solid (intra-namespace at depth 1) ──
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (sea) to[out=175,in=5] (ac);
+  \draw[dep] (za) to[out=175,in=-5] (alc);
+  \draw[dep] (prz) to[out=80,in=-90] (ac);
+\end{tikzpicture}
+\caption{Depth $k = 1$: one namespace. All edges are intra-namespace (solid).}
+\label{fig:ns-depth1}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.47\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
   dep/.style={->, >=Stealth, red!70!black, semithick},
   depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
 ]
-  % ── Layer 0 (back): namespace Nat spans both modules ──
-  \draw[green!50!black, fill=green!6, rounded corners=3pt, semithick, dashed]
-    (-1.9,-0.3) rectangle (7.4,1.5);
-  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
-    at (-1.85,1.45) {ns: Nat};
+  % ── Background: green fills ──
+  \fill[green!10, rounded corners=3pt]
+    (0.0,-0.3) rectangle (6.7,1.4);
+  \fill[green!10, rounded corners=2pt]
+    (0.0,-1.9) rectangle (2.7,-0.7);
 
-  % ── Layer 1: Module 1 — Data.Nat.Basic (left, taller) ──
-  \draw[blue!50!black, fill=blue!6, rounded corners=3pt, semithick, dashed]
-    (-2.2,-2.1) rectangle (2.2,2.0);
+  % ── Blue module boxes (same positions as panel a) ──
+  \draw[blue!50!black, fill=blue!8, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.3) rectangle (3.0,2.0);
   \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
-    at (-2.15,1.95) {\textnormal{\module{Data.Nat.Basic}}};
+    at (-0.2,1.95) {\textnormal{\module{Data.Nat.Basic}}};
 
-  % ── Layer 1: Module 2 — Data.Nat.Defs (right, shorter) ──
-  \draw[blue!50!black, fill=blue!6, rounded corners=3pt, semithick, dashed]
-    (4.3,-0.6) rectangle (7.7,1.7);
+  \draw[blue!50!black, fill=blue!8, rounded corners=3pt, thick, dashed]
+    (4.3,-0.8) rectangle (7.0,2.0);
   \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
-    at (4.35,1.65) {\textnormal{\module{Data.Nat.Defs}}};
+    at (4.4,1.95) {\textnormal{\module{Data.Nat.Defs}}};
 
-  % ── Layer 2: namespace Nat.Primrec (inside mod1 only) ──
-  \draw[green!50!black, fill=green!6, rounded corners=2pt, semithick, dashed]
-    (-1.8,-1.8) rectangle (1.8,-0.7);
-  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
-    at (-1.75,-0.75) {ns: Nat.Primrec};
+  % ── Green borders (drawn last → always visible) ──
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-0.3) rectangle (6.7,1.4);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.45) {$\mathrm{ns}_2$: Nat};
 
-  % ── Declarations in ns: Nat, file Data.Nat.Basic ──
+  \draw[green!50!black, rounded corners=2pt, thick, dashed]
+    (0.0,-1.9) rectangle (2.7,-0.7);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,-0.65) {$\mathrm{ns}_2$: Nat.Primrec};
+
+  % ── Declarations (same positions as panel a) ──
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (ac) at (-0.5,0.9) {};
+    (ac) at (0.7,0.9) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
-    (alc) at (-0.5,0.2) {};
-
-  % ── Declarations in ns: Nat, file Data.Nat.Defs ──
+    (alc) at (0.7,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.7,-1.3) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
-    (sea) at (5.2,0.8) {};
+    (sea) at (5.0,0.9) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
-    (za) at (5.2,0.2) {};
+    (za) at (5.0,0.15) {};
 
-  % ── Declaration in ns: Nat.Primrec, file Data.Nat.Basic ──
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero}]
-    (prz) at (-0.5,-1.3) {};
-
-  % ── Dependency arrows (red) ──
-  % Intra-module, intra-namespace
+  % ── Primrec → Nat now cross-namespace (dashed) ──
   \draw[dep] (alc) -- (ac);
-  % Cross-module, intra-namespace (Nat spans both files)
   \draw[dep] (sea) to[out=175,in=5] (ac);
-  \draw[dep] (za) to[out=175,in=-5] (ac);
-  % Cross-namespace (Primrec → Nat)
-  \draw[depx] (prz) to[out=60,in=-100] (ac);
-
-  % ── Legend ──
-  \node[anchor=north west, font=\tiny\sffamily] at (-2.3,-2.5) {%
-    \textcolor{blue!60!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}
-    \textcolor{blue!60!black}{module (file)}
-    \qquad
-    \textcolor{green!40!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}
-    \textcolor{green!40!black}{namespace}
-    \qquad
-    \textcolor{red!70!black}{$\longrightarrow$}
-    \textcolor{red!70!black}{dependency}
-  };
+  \draw[dep] (za) to[out=175,in=-5] (alc);
+  \draw[depx] (prz) to[out=80,in=-90] (ac);
 \end{tikzpicture}
-\caption{Three organizational layers. \textcolor{blue!60!black}{Blue dashed boxes}: module (file) boundaries. \textcolor{green!40!black}{Green dashed boxes}: namespace boundaries. \textcolor{red!70!black}{Red arrows}: mathematical dependencies (solid = intra-namespace; dashed = cross-namespace). The namespace \texttt{Nat} spans both files; the file \module{Data.Nat.Basic} contains two namespaces. This many-to-many overlap is the norm (NMI~$= 0.71$; \S\ref{sec:ns-module-alignment}).}
+\caption{Depth $k = 2$: \texttt{Nat.Primrec} separates. The same edge becomes cross-namespace (dashed).}
+\label{fig:ns-depth2}
+\end{subfigure}
+
+\medskip
+\footnotesize
+\textcolor{blue!60!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}~\textcolor{blue!60!black}{module (file)}\qquad
+\textcolor{green!40!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}~\textcolor{green!40!black}{namespace}\qquad
+\textcolor{red!70!black}{$\longrightarrow$}~\textcolor{red!70!black}{dependency}
+\normalsize
+
+\caption{The same five declarations and four dependency edges under two namespace depths. \textcolor{blue!60!black}{Blue dashed boxes}: module (file) boundaries---fixed at both depths. \textcolor{green!40!black}{Green dashed boxes}: namespace boundaries---change with~$k$. \textcolor{red!70!black}{Red arrows}: dependencies (solid = intra-namespace; dashed = cross-namespace). At depth~$1$~(a), all five declarations share the namespace \texttt{Nat}, which spans both files; every edge is intra-namespace. At depth~$2$~(b), \decl{Primrec.zero} separates into \texttt{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace. The file boundaries do not change---only the namespace boundaries move, driving containment downward. All names have the \texttt{Nat.}\ prefix removed.}
 \label{fig:ns-depth-grouping}
 \end{figure}
 
-Figure~\ref{fig:ns-depth-grouping} illustrates the three-layer structure. The namespace \texttt{Nat} spans two files: declarations \decl{add\_comm} and \decl{add\_left\_comm} reside in \module{Data.Nat.Basic}, while \decl{succ\_eq\_one} and \decl{zero\_add} reside in \module{Data.Nat.Defs}. Meanwhile, \module{Data.Nat.Basic} itself hosts a second namespace, \texttt{Nat.Primrec}. The dependency arrows---fixed by mathematical logic---cross both kinds of boundary. The blue and green boxes partially overlap but are not identical: this is the many-to-many relationship quantified in \S\ref{sec:ns-module-alignment}.
+Figure~\ref{fig:ns-depth-grouping} illustrates the mechanism. At depth~$1$~(a), all five declarations---including \decl{Primrec.zero}---share the namespace \texttt{Nat}, which spans both files; the green box crosses the gap between the two blue boxes, and every dependency arrow is intra-namespace (solid). At depth~$2$~(b), the same declarations and arrows are unchanged, but the namespace boundary has split: \decl{Primrec.zero} now belongs to \texttt{Nat.Primrec}, a sub-namespace confined to a single file. The arrow from \decl{Primrec.zero} to \decl{add\_comm}---previously intra-namespace---becomes cross-namespace (dashed). The file boundaries (blue) are identical in both panels; only the namespace boundaries (green) change with~$k$. This is the mechanism that drives containment downward as depth increases.
 
 \subsection{Containment Decay}
 \label{sec:containment-decay}
