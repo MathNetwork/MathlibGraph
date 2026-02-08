@@ -110,6 +110,11 @@ The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\m
   E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
 \]
 
+\begin{remark}[Terminological convention]
+\label{rem:ns-terminology}
+The tree~$T$ is constructed from \emph{module names} (file paths), not from Lean~4's \texttt{namespace} keyword. In Lean~4, the \texttt{namespace} keyword creates a naming scope that need not align with file boundaries: a single namespace may span many files, and a single file may contribute declarations to multiple namespaces (see Remark~\ref{rem:ns-vs-file-cohesion} for quantitative evidence). We use ``namespace tree'' throughout this paper to refer to the prefix hierarchy of module names---equivalently, the directory tree of the source repository. This convention follows \module{Mathlib}'s own practice, where top-level directories (\module{Algebra}, \module{Analysis}, \module{CategoryTheory}, etc.) serve as both directory names and the primary organizational categories. In \S\ref{sec:theorem-premise}, ``namespace'' refers instead to the prefix of a declaration's fully qualified name (e.g., the namespace of \decl{Nat.lt\_irrefl} is \module{Nat}), which is a related but distinct notion.
+\end{remark}
+
 The top-level directories (children of the root) include \module{Algebra} (1257 files), \module{CategoryTheory} (982 files), \module{Analysis} (755 files), etc.
 
 \subsection{The Import Graph}
@@ -167,7 +172,7 @@ Since \module{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mat
 \end{figure}
 
 \begin{remark}
-The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
+The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its prefix parent in the directory hierarchy; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
 \end{remark}
 
 The contrast between these two structures is conceptually significant. The namespace tree $T$ encodes a \emph{cognitive} organization of mathematics: its top-level directories---\module{Algebra}, \module{Analysis}, \module{Topology}---reflect a classification that mathematicians established long before formalization. The import graph $G_{\mathrm{import}}$, by contrast, encodes \emph{logical} dependencies that need not respect this classification. The extent to which $G_{\mathrm{import}}$ deviates from $T$---edges that cross namespace boundaries, dependencies that link distant branches of the tree---reveals the internal structure of mathematics that no human taxonomy fully captures.
@@ -317,7 +322,7 @@ We plot the degree distributions on logarithmic axes (log--log scale). Let $P(k)
 \begin{remark}
 Both degree distributions are heavy-tailed but do not cleanly fit a power law. The out-degree distribution, in particular, becomes much more concentrated after transitive reduction (maximum dropping from $315$ to $70$, standard deviation from $4.12$ to $1.83$), indicating that many high-out-degree imports are transitively redundant.
 In contrast, the in-degree distribution is barely affected by transitive reduction (maximum: $167 \to 151$; standard deviation: $4.69 \to 3.91$). This asymmetry has a structural explanation: redundant edges arise primarily from developers importing umbrella modules---an act that inflates the importer's out-degree without changing the importee's in-degree. The cognitive redundancy identified in \S\ref{sec:transitive-reduction} is \emph{directional}: it lives in the ``I depend on others'' direction, not the ``others depend on me'' direction.
-This directional asymmetry connects to the namespace tree $T$: developers inflate their out-degree by importing entire namespaces---effectively borrowing $T$'s cognitive categories as navigational shortcuts. The redundancy is not random; it follows the contours of~$T$.
+This directional asymmetry connects to the namespace tree $T$: developers inflate their out-degree by importing umbrella modules that aggregate entire sub-hierarchies---effectively borrowing $T$'s cognitive categories as navigational shortcuts. The redundancy is not random; it follows the contours of~$T$.
 \end{remark}
 
 The degree distribution identifies which modules serve as hubs, but not where these hubs sit in the dependency chain. We turn next to the vertical structure of the DAG.
@@ -352,8 +357,8 @@ The funnel topology describes the global shape of $G_{\mathrm{import}}$, but tre
 \subsubsection{Cross-Namespace Dependencies}
 \label{sec:cross-namespace}
 
-\begin{definition}[Top-level namespace]
-For a module $m = \module{Mathlib.}X.Y.\cdots$, the \emph{top-level namespace} is $\mathrm{ns}(m) = X$.
+\begin{definition}[Top-level directory]
+For a module $m = \module{Mathlib.}X.Y.\cdots$, the \emph{top-level directory} is $\mathrm{ns}(m) = X$, corresponding to the first directory component under the \module{Mathlib/} root.
 \end{definition}
 
 An edge $(m_1, m_2) \in E_{\mathrm{import}}$ is \emph{intra-namespace} if $\mathrm{ns}(m_1) = \mathrm{ns}(m_2)$ and \emph{inter-namespace} otherwise. In $G_{\mathrm{import}}$, $14{,}464$ edges ($61.4\%$) are intra-namespace and $9{,}106$ ($38.6\%$) are inter-namespace. In $G_{\mathrm{import}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.

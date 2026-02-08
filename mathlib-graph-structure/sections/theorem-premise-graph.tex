@@ -529,7 +529,7 @@ The exceptional case of category theory deserves emphasis. Its near-complete com
 \subsection{Cross-Namespace Flow}
 \label{sec:thm-cross-namespace}
 
-We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' modules.
+We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' names. Here ``module'' is the source file containing the declaration, and ``namespace'' is the first component of its fully qualified name (e.g., the namespace of \decl{Nat.lt\_irrefl} is \module{Nat})---a declaration-name prefix, distinct from the directory-based $\mathrm{ns}(m)$ of \S\ref{sec:cross-namespace} (see Remark~\ref{rem:ns-terminology}).
 
 \begin{table}[ht]
 \centering
