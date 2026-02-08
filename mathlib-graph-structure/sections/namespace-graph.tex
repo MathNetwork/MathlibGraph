@@ -46,52 +46,46 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
   dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
   dep/.style={->, >=Stealth, red!70!black, semithick},
   depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
-  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt,
-                 inner sep=8pt, semithick, dashed},
-  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=2pt,
-                inner sep=5pt, semithick, dashed},
 ]
-  % ── Module 1: Data.Nat.Basic (left, large) ──
-  \node[modbox, minimum width=4.5cm, minimum height=3.4cm]
-    (mod1) at (0,0) {};
-  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-2pt]mod1.north west)
-    {\textnormal{\module{Data.Nat.Basic}}};
+  % ── Layer 0 (back): namespace Nat spans both modules ──
+  \draw[green!50!black, fill=green!6, rounded corners=3pt, semithick, dashed]
+    (-1.9,-0.3) rectangle (7.4,1.5);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (-1.85,1.45) {ns: Nat};
 
-  % Namespace Nat (green, inside mod1, top portion)
-  \node[nsbox, minimum width=3.6cm, minimum height=1.2cm]
-    (ns_nat1) at (0,0.55) {};
-  \node[font=\tiny\sffamily, green!40!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]ns_nat1.north west) {ns: Nat};
+  % ── Layer 1: Module 1 — Data.Nat.Basic (left, taller) ──
+  \draw[blue!50!black, fill=blue!6, rounded corners=3pt, semithick, dashed]
+    (-2.2,-2.1) rectangle (2.2,2.0);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-2.15,1.95) {\textnormal{\module{Data.Nat.Basic}}};
+
+  % ── Layer 1: Module 2 — Data.Nat.Defs (right, shorter) ──
+  \draw[blue!50!black, fill=blue!6, rounded corners=3pt, semithick, dashed]
+    (4.3,-0.6) rectangle (7.7,1.7);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (4.35,1.65) {\textnormal{\module{Data.Nat.Defs}}};
+
+  % ── Layer 2: namespace Nat.Primrec (inside mod1 only) ──
+  \draw[green!50!black, fill=green!6, rounded corners=2pt, semithick, dashed]
+    (-1.8,-1.8) rectangle (1.8,-0.7);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (-1.75,-0.75) {ns: Nat.Primrec};
+
+  % ── Declarations in ns: Nat, file Data.Nat.Basic ──
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (ac) at (-0.5,0.55) {};
+    (ac) at (-0.5,0.9) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
-    (alc) at (-0.5,0.1) {};
+    (alc) at (-0.5,0.2) {};
 
-  % Namespace Nat.Primrec (green, inside mod1, bottom portion)
-  \node[nsbox, minimum width=3.6cm, minimum height=0.8cm]
-    (ns_pr) at (0,-1.0) {};
-  \node[font=\tiny\sffamily, green!40!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]ns_pr.north west) {ns: Nat.Primrec};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero}]
-    (prz) at (-0.5,-1.0) {};
-
-  % ── Module 2: Data.Nat.Defs (right) ──
-  \node[modbox, minimum width=3.8cm, minimum height=2.0cm]
-    (mod2) at (5.8,0.1) {};
-  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-2pt]mod2.north west)
-    {\textnormal{\module{Data.Nat.Defs}}};
-
-  % Namespace Nat (green, inside mod2 -- same ns as in mod1!)
-  \node[nsbox, minimum width=2.9cm, minimum height=1.2cm]
-    (ns_nat2) at (5.8,0.1) {};
-  \node[font=\tiny\sffamily, green!40!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]ns_nat2.north west) {ns: Nat};
+  % ── Declarations in ns: Nat, file Data.Nat.Defs ──
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
-    (sea) at (5.1,0.1) {};
+    (sea) at (5.2,0.8) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
-    (za) at (5.1,-0.35) {};
+    (za) at (5.2,0.2) {};
+
+  % ── Declaration in ns: Nat.Primrec, file Data.Nat.Basic ──
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero}]
+    (prz) at (-0.5,-1.3) {};
 
   % ── Dependency arrows (red) ──
   % Intra-module, intra-namespace
@@ -103,7 +97,7 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
   \draw[depx] (prz) to[out=60,in=-100] (ac);
 
   % ── Legend ──
-  \node[anchor=north west, font=\tiny\sffamily] at (-2.3,-2.1) {%
+  \node[anchor=north west, font=\tiny\sffamily] at (-2.3,-2.5) {%
     \textcolor{blue!60!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}
     \textcolor{blue!60!black}{module (file)}
     \qquad
