@@ -48,30 +48,7 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
   ]
 ]
 \end{forest}
-
-\vspace{8pt}
-
-% ── Namespace tree T, extended to declarations (same style as Figure 1(b), blue) ──
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
-  tnode/.style={circle, fill=blue!60!black, minimum size=3.5pt, inner sep=0pt},
-]
-  \node[font=\scriptsize\sffamily, blue!60!black] at (1.8,0.7) {Tree $T$};
-  \node[tnode, label={[font=\scriptsize\ttfamily, text=blue!60!black]above:Data.Nat}] (dn) at (1.8,0) {};
-  \node[tnode, label={[font=\scriptsize\ttfamily, text=blue!60!black]left:Basic}] (b) at (0.5,-1.0) {};
-  \node[tnode, label={[font=\scriptsize\ttfamily, text=blue!60!black]right:Defs}] (d) at (3.1,-1.0) {};
-  \node[tnode, label={[font=\tiny\ttfamily, text=blue!60!black]below:add\_comm}] (ac) at (-0.2,-2.2) {};
-  \node[tnode, label={[font=\tiny\ttfamily, text=blue!60!black, align=center]below:{add\_left\_\\[-2pt]comm}}] (alc) at (1.2,-2.2) {};
-  \node[tnode, label={[font=\tiny\ttfamily, text=blue!60!black, align=center]below:{succ\_eq\_\\[-2pt]add\_one}}] (sea) at (2.5,-2.2) {};
-  \node[tnode, label={[font=\tiny\ttfamily, text=blue!60!black]below:zero\_add}] (za) at (3.8,-2.2) {};
-  \draw[blue!60!black] (dn) -- (b);
-  \draw[blue!60!black] (dn) -- (d);
-  \draw[blue!60!black] (b) -- (ac);
-  \draw[blue!60!black] (b) -- (alc);
-  \draw[blue!60!black] (d) -- (sea);
-  \draw[blue!60!black] (d) -- (za);
-\end{tikzpicture}
-\caption{File-system hierarchy and namespace tree~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level.}
+\caption{File-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level.}
 \label{fig:tree-view}
 \end{subfigure}%
 \hfill
