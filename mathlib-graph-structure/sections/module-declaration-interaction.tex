@@ -294,40 +294,43 @@ The import graph thus functions as a sparse gateway: each file declares a handfu
 Section~\ref{sec:transitive-reduction} found that $17.5\%$ of import edges are \emph{transitively redundant}---removable without disconnecting the import graph. Here we find that $27.9\%$ are \emph{unused}---no declaration in the importing file directly cites the imported module. These two numbers measure different properties: redundancy is a graph-theoretic property (edge removability), while ``unused'' is a semantic property (absence of declaration-level citation). The gap between them ($27.9\% > 17.5\%$) has a precise interpretation: $78.4\%$ of unused imports are graph-theoretically \emph{essential}---they are the sole path through which some other module's declarations become transitively visible---while $21.6\%$ are both unused and transitively redundant. Conversely, some active imports are nonetheless transitively redundant: the importing file cites the imported module, but the same module was already reachable through an alternative import chain.
 \end{remark}
 
-\subsection{Cohesion by Namespace}
+\subsection{Cohesion by Directory}
 \label{sec:cohesion-namespace}
 
-We group the~$6{,}993$ modules by their top-level namespace and compute the average cohesion within each group. Table~\ref{tab:cohesion-namespace} reports the results for namespaces with at least~$100$ modules.
+We group the~$6{,}993$ modules by their top-level directory under \module{Mathlib/} and compute the average cohesion within each group. Table~\ref{tab:cohesion-namespace} reports the results for directories with at least~$100$ modules.
 
 \begin{table}[ht]
 \centering
-\caption{Average module cohesion by top-level namespace (namespaces with $\ge 100$ modules).}
+\caption{Average module cohesion by top-level directory (directories with $\ge 100$ modules).}
 \label{tab:cohesion-namespace}
 \begin{tabular}{lrr}
 \toprule
-Namespace & Modules & Mean cohesion \\
+Directory & Modules & Mean cohesion \\
 \midrule
-\module{Batteries}          & $202$   & $0.037$ \\
-\module{CategoryTheory}     & $2{,}694$ & $0.032$ \\
-\module{Mathlib}            & $277$   & $0.031$ \\
-\module{Nat}                & $173$   & $0.019$ \\
-\module{FirstOrder}         & $179$   & $0.029$ \\
-\module{Turing}             & $173$   & $0.029$ \\
-\module{SimpleGraph}        & $165$   & $0.022$ \\
-\module{AlgebraicGeometry}  & $210$   & $0.020$ \\
-\module{MeasureTheory}      & $330$   & $0.016$ \\
-\module{List}               & $294$   & $0.016$ \\
-\module{Set}                & $105$   & $0.015$ \\
-\module{Module}             & $134$   & $0.014$ \\
-\module{Algebra}            & $139$   & $0.013$ \\
-\module{LinearMap}          & $121$   & $0.007$ \\
+\module{Combinatorics}      & $163$     & $0.188$ \\
+\module{Data}               & $608$     & $0.174$ \\
+\module{Logic}              & $55$      & $0.170$ \\
+\module{Order}              & $293$     & $0.150$ \\
+\module{GroupTheory}        & $151$     & $0.133$ \\
+\module{CategoryTheory}     & $921$     & $0.115$ \\
+\module{AlgebraicTopology}  & $109$     & $0.107$ \\
+\module{AlgebraicGeometry}  & $105$     & $0.103$ \\
+\module{Topology}           & $591$     & $0.100$ \\
+\module{Algebra}            & $1{,}218$ & $0.090$ \\
+\module{NumberTheory}       & $207$     & $0.079$ \\
+\module{Probability}        & $111$     & $0.078$ \\
+\module{LinearAlgebra}      & $325$     & $0.076$ \\
+\module{Analysis}           & $702$     & $0.069$ \\
+\module{RingTheory}         & $621$     & $0.068$ \\
+\module{Geometry}           & $120$     & $0.066$ \\
+\module{MeasureTheory}      & $284$     & $0.066$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The variation across namespaces is modest: all large namespaces have mean cohesion below~$0.04$, and the mathematical core of the library sits below~$0.02$. The slightly higher values for \module{Batteries} ($0.037$) and \module{CategoryTheory} ($0.032$) reflect different mechanisms. \module{Batteries} contains utility modules for the Lean standard library---data structures, parsers, and algorithmic routines---whose implementations are more self-contained than mathematical developments. \module{CategoryTheory}, which \S\ref{sec:thm-community} identified as the most autonomous major discipline in~$G_{\mathrm{thm}}$ ($97.4\%$ community--namespace concentration), carries this autonomy down to the module level, albeit weakly: its cohesion of~$0.032$ is the highest among mathematical namespaces but still vanishingly small in absolute terms.
+The variation across directories spans a $2.8\times$ range, from \module{Combinatorics} ($0.188$) to \module{MeasureTheory} ($0.066$). The highest-cohesion directories---\module{Combinatorics}, \module{Data}, and \module{Order}---contain modules that develop concrete structures (graphs, lists, partial orders) with self-contained APIs: each file defines a type and proves lemmas about it, producing a comparatively high ratio of internal edges. \module{CategoryTheory}, which \S\ref{sec:thm-community} identified as the most autonomous major discipline in~$G_{\mathrm{thm}}$ ($97.4\%$ community--namespace concentration), has above-average cohesion ($0.115$), carrying its disciplinary autonomy down to the module level.
 
-The lowest cohesion values belong to \module{LinearMap} ($0.007$) and \module{Algebra} ($0.013$). These namespaces define the abstract interfaces of linear and algebraic structures---modules, rings, fields---that are instantiated and used across the entire library. Their declarations are the shared vocabulary of formalized mathematics; almost every dependency they participate in crosses the module boundary by design.
+The lowest cohesion values belong to \module{MeasureTheory} ($0.066$), \module{Geometry} ($0.066$), and \module{RingTheory} ($0.068$). These directories develop theories that draw heavily on definitions from \module{Algebra}, \module{Topology}, and \module{Analysis}---their declarations are boundary-spanning by nature, reaching outward to the shared vocabulary of formalized mathematics.
 
 \subsection{High-Cohesion and Zero-Cohesion Modules}
 \label{sec:cohesion-extremes}
@@ -343,27 +346,27 @@ To identify modules whose internal structure is unusually tight or unusually spa
 \toprule
 Module & Decl.\ & Int.\ edges & Ext.\ edges & Cohesion \\
 \midrule
-\module{LLVM}                    & $123$ & $298$   & $462$   & $0.392$ \\
-\module{Thunk}                   & $21$  & $32$    & $51$    & $0.386$ \\
-\module{AbstractCompletion}      & $52$  & $247$   & $453$   & $0.353$ \\
-\module{Mathlib.Ineq}            & $23$  & $28$    & $52$    & $0.350$ \\
-\module{CompareReals}            & $10$  & $25$    & $53$    & $0.321$ \\
-\module{RootPairingCat}          & $10$  & $22$    & $49$    & $0.310$ \\
-\module{ContinuousOpenMap}       & $25$  & $48$    & $111$   & $0.302$ \\
-\module{Erased}                  & $25$  & $47$    & $109$   & $0.301$ \\
-\module{SpectralMap}             & $27$  & $50$    & $120$   & $0.294$ \\
-\module{PseudoEpimorphism}       & $27$  & $54$    & $134$   & $0.287$ \\
+\module{Tactic.DeriveTraversable}     & $25$  & $34$  & $0$   & $1.000$ \\
+\module{Util.Notation3}               & $31$  & $40$  & $0$   & $1.000$ \\
+\module{Tactic.Sat.FromLRAT}          & $34$  & $107$ & $1$   & $0.991$ \\
+\module{Data.Erased}                  & $22$  & $64$  & $1$   & $0.985$ \\
+\module{Tactic.Simps.Basic}           & $24$  & $38$  & $2$   & $0.950$ \\
+\module{SetTheory.Lists}              & $43$  & $130$ & $11$  & $0.922$ \\
+\module{Data.TwoPointing}             & $23$  & $33$  & $5$   & $0.868$ \\
+\module{Combinatorics.Graph.Basic}    & $59$  & $171$ & $32$  & $0.842$ \\
+\module{Data.List.DropRight}          & $39$  & $52$  & $10$  & $0.839$ \\
+\module{Data.List.SplitOn}            & $12$  & $13$  & $1$   & $0.929$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The highest-cohesion modules share a common pattern: they are \emph{self-contained developments}---a type, its API, and the lemmas about it, all in a single module. \module{LLVM} ($0.392$) is a compiler infrastructure module whose declarations form an internal dependency chain (instruction types referencing each other); \module{AbstractCompletion} ($0.353$) builds up a completion construction step by step; \module{SetTheory.PGame} ($0.283$, the largest high-cohesion module with $602$ declarations) develops combinatorial game theory as a self-contained theory. These are modules where the mathematical development is linear and localized---each declaration builds directly on the previous one within the same file.
+The highest-cohesion modules fall into two categories. The first is \emph{tactic and metaprogramming modules}: \module{Tactic.DeriveTraversable} and \module{Util.Notation3} achieve perfect cohesion ($1.000$) because their declarations form closed internal chains with zero external edges---they are self-contained programs, not mathematical developments. The second category is \emph{concrete data structure modules}: \module{SetTheory.Lists} ($0.922$, $43$ declarations) develops a self-contained theory of hereditary lists; \module{Combinatorics.Graph.Basic} ($0.842$, $59$ declarations) defines simple graphs and proves basic properties; \module{Data.Erased} ($0.985$) implements a computationally erased wrapper type. In both categories, the file contains a type definition together with its API lemmas, producing a high ratio of internal edges.
 
-At the opposite extreme, $584$ modules ($8.4\%$) have cohesion exactly zero. Among the zero-cohesion modules with at least~$10$ declarations, typical examples include \module{List.Sorted} ($28$ declarations, $226$ external edges), \module{Function.Odd} ($10$ declarations, $210$ external edges), and \module{CategoryTheory.Subfunctor.Subpresheaf} ($71$ declarations, $1{,}012$ external edges). These modules collect lemmas about a specific predicate or construction: every lemma in \module{List.Sorted} characterizes the \decl{Sorted} predicate on lists, but no lemma in that module cites another lemma in the same module---they all reach outward to \module{List}, \module{Nat}, \decl{Eq}, and other foundational declarations.
+At the opposite extreme, $584$ modules ($8.4\%$) have cohesion exactly zero. Among the zero-cohesion modules with at least~$10$ declarations, typical examples include \module{Algebra.Group.Nat.Even} ($20$ declarations, $49$ external edges), \module{Data.Set.Order} ($17$ declarations, $123$ external edges), and \module{Order.Module.Pointwise} ($16$ declarations, $176$ external edges). These modules collect lemmas about a specific predicate or construction: every lemma in \module{Algebra.Group.Nat.Even} characterizes even-number properties, but no lemma in that module cites another lemma in the same module---they all reach outward to foundational definitions elsewhere.
 
 \begin{remark}
 \label{rem:zero-cohesion}
-A zero-cohesion module is not necessarily poorly organized. It is a \emph{lemma collection}: a set of declarations grouped by the concept they describe rather than by logical interdependence. Developers place ``all lemmas about \module{List.Sorted}'' in a single file so that a human can find them by topic, even though these lemmas depend on definitions and lemmas scattered across many other modules. This is precisely the organizational pattern one would expect from a library designed for human navigation. Zero cohesion is not a defect; it is the structural signature of cognitive organization.
+A zero-cohesion module is not necessarily poorly organized. It is a \emph{lemma collection}: a set of declarations grouped by the concept they describe rather than by logical interdependence. Developers place ``all lemmas about even natural numbers'' in \module{Algebra.Group.Nat.Even} so that a human can find them by topic, even though these lemmas depend on definitions and lemmas scattered across many other modules. This is precisely the organizational pattern one would expect from a library designed for human navigation. Zero cohesion is not a defect; it is the structural signature of cognitive organization.
 \end{remark}
 
 \subsection{The Module as Cognitive Container}
