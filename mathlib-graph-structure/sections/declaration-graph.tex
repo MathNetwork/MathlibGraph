@@ -25,9 +25,9 @@ When a mathematician writes a proof in Lean, the tactic script is compiled into 
 \noindent
 The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
 
-\begin{definition}[Theorem--premise graph]
+\begin{definition}[Declaration graph]
 \label{def:thm-graph}
-The \emph{theorem--premise graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
+The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
 \[
   E_{\mathrm{thm}} = \{(d_1, d_2) \in \mathcal{D} \times \mathcal{D} \mid d_2 \text{ appears as a premise in the proof term of } d_1\}.
 \]

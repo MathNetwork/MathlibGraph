@@ -28,9 +28,9 @@ Growth saturates rapidly: $90\%$ of all namespaces are distinguished by depth~$3
 \subsection{The Family of Namespace Graphs}
 \label{sec:ns-definition}
 
-\begin{definition}[Namespace dependency graph at depth~$k$]
+\begin{definition}[Namespace graph at depth~$k$]
 \label{def:ns-graph}
-For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declaration~$d$ truncated to depth~$k$: the first $k$ dot-separated components of $d$'s fully qualified name. If $d$'s name has fewer than $k+1$ components, $\mathrm{ns}_k(d)$ defaults to the full parent namespace; if $d$'s name has no dot, $\mathrm{ns}_k(d) = \ns{\_root\_}$. The \emph{namespace dependency graph at depth~$k$} is the weighted directed graph
+For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declaration~$d$ truncated to depth~$k$: the first $k$ dot-separated components of $d$'s fully qualified name. If $d$'s name has fewer than $k+1$ components, $\mathrm{ns}_k(d)$ defaults to the full parent namespace; if $d$'s name has no dot, $\mathrm{ns}_k(d) = \ns{\_root\_}$. The \emph{namespace graph at depth~$k$} is the weighted directed graph
 \[
   G_{\mathrm{ns}}^{(k)} = (\mathcal{N}_k,\, E_k),
 \]

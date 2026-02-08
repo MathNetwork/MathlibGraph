@@ -144,8 +144,8 @@ Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-e
 
 For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
 
-\begin{definition}[Import graph]
-The \emph{import graph} of \module{Mathlib} is $G_{\mathrm{import}} = (\mathcal{M}, E_{\mathrm{import}})$ where
+\begin{definition}[Module graph]
+The \emph{module graph} of \module{Mathlib} is $G_{\mathrm{import}} = (\mathcal{M}, E_{\mathrm{import}})$ where
 \[
   E_{\mathrm{import}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
 \]
