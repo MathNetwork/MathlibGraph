@@ -108,13 +108,15 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
     (npr2) at (8.8,-1.15) {};
   \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.8,-0.97) {\ns{Nat.Primrec}};
   \node[font=\tiny\sffamily, text=gray] at (8.8,-1.35) {1 declaration};
-  % Cross-namespace edge: Nat.Primrec → Nat
-  \draw[dep, thick] (npr2) -- node[right, font=\tiny, text=red!70!black] {$w\!=\!1$} (nat2);
+  % Cross-namespace edge: Nat.Primrec → Nat (green = namespace-level)
+  \draw[->, >=Stealth, green!50!black, thick] (npr2) --
+    node[right, font=\tiny, text=green!50!black] {$w\!=\!1$}
+    node[left, font=\tiny\itshape, text=gray, align=right] {from\\[-2pt]\decl{Primrec.zero}\\[-2pt]$\to$ \decl{add\_comm}} (nat2);
   % Faded self-loop for absorbed internal edges
-  \draw[red!70!black, ->, >=Stealth, thin, opacity=0.35]
+  \draw[green!50!black, ->, >=Stealth, thin, opacity=0.35]
     ([xshift=-4pt]nat2.north) to[out=130,in=50,looseness=6]
     ([xshift=4pt]nat2.north);
-  \node[font=\tiny, text=red!50!black] at (8.8,1.75) {$3$ internal};
+  \node[font=\tiny, text=green!40!black] at (8.8,1.75) {$3$ internal};
   % Panel label
   \node[font=\small\sffamily, anchor=north] at (8.8,-2.5) {(b) $G_{\mathrm{ns}}^{(2)}$};
 
