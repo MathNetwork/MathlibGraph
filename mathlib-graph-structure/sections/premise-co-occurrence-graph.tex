@@ -89,27 +89,27 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 ]
   % ── Card 3 (top, back): module Defs ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
-    (0.15,3.7) -- (5.65,3.7) -- (6.35,4.09) -- (0.85,4.09) -- cycle;
+    (0.15,4.7) -- (5.65,4.7) -- (6.35,5.09) -- (0.85,5.09) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
-    (0.15,3.7) -- (5.65,3.7) -- (5.65,3.57) -- (0.15,3.57) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.75,3.63)
+    (0.15,4.7) -- (5.65,4.7) -- (5.65,4.57) -- (0.15,4.57) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.75,4.63)
     {\textnormal{\texttt{Defs}}};
-  \node[dot] (sea) at (2.0,3.88) {};
-  \node[font=\tiny\ttfamily, anchor=south] at (2.0,3.93) {succ\_eq\_add\_one};
-  \node[dot] (za)  at (4.3,3.88) {};
-  \node[font=\tiny\ttfamily, anchor=south] at (4.3,3.93) {zero\_add};
+  \node[dot] (sea) at (2.0,4.88) {};
+  \node[font=\tiny\ttfamily, anchor=north] at (2.0,4.84) {succ\_eq\_add\_one};
+  \node[dot] (za)  at (4.3,4.88) {};
+  \node[font=\tiny\ttfamily, anchor=north] at (4.3,4.84) {zero\_add};
 
   % ── Card 2 (middle): module Basic ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
-    (0,2.0) -- (5.5,2.0) -- (6.2,2.39) -- (0.7,2.39) -- cycle;
+    (0,2.5) -- (5.5,2.5) -- (6.2,2.89) -- (0.7,2.89) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
-    (0,2.0) -- (5.5,2.0) -- (5.5,1.87) -- (0,1.87) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.6,1.93)
+    (0,2.5) -- (5.5,2.5) -- (5.5,2.37) -- (0,2.37) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.6,2.43)
     {\textnormal{\texttt{Basic}}};
-  \node[dot] (ac)  at (1.85,2.18) {};
-  \node[font=\tiny\ttfamily, anchor=south] at (1.85,2.23) {add\_comm};
-  \node[dot] (alc) at (4.15,2.18) {};
-  \node[font=\tiny\ttfamily, anchor=south] at (4.15,2.23) {add\_left\_comm};
+  \node[dot] (ac)  at (1.85,2.68) {};
+  \node[font=\tiny\ttfamily, anchor=north] at (1.85,2.64) {add\_comm};
+  \node[dot] (alc) at (4.15,2.68) {};
+  \node[font=\tiny\ttfamily, anchor=north] at (4.15,2.64) {add\_left\_comm};
 
   % ── Card 1 (bottom, front): other namespace ──
   \filldraw[fill=gray!6, draw=gray!50, semithick, line join=round]
@@ -123,20 +123,20 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 
   % ── Namespace bracket (Data.Nat spans Cards 2–3) ──
   \draw[blue!50, semithick]
-    (-0.15,1.87) -- (-0.35,1.87) -- (-0.35,4.09) -- (-0.15,4.09);
+    (-0.15,2.37) -- (-0.35,2.37) -- (-0.35,5.09) -- (-0.15,5.09);
   \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
-    at (-0.55,2.98) {namespace \textnormal{\texttt{Data.Nat}}};
+    at (-0.55,3.73) {namespace \textnormal{\texttt{Data.Nat}}};
 
   % ── Dependency arrows (red = mathematical logic) ──
   % Intra-module: the ONLY arrow that stays on its card
   \draw[dep] (alc) -- (ac);
   % Cross-module: Card 3 → Card 2
-  \draw[dep] (sea) to[out=-85,in=95] (ac);
+  \draw[dep] (sea) to[out=-88,in=92] (ac);
   % Cross-namespace: all → Eq.refl (piercing through card boundaries)
-  \draw[dep] (ac)  to[out=-85,in=105] (er);
-  \draw[dep] (alc) to[out=-85,in=65] (er);
-  \draw[dep] (sea) to[out=-80,in=120] (er);
-  \draw[dep] (za)  to[out=-80,in=50] (er);
+  \draw[dep] (ac)  to[out=-88,in=105] (er);
+  \draw[dep] (alc) to[out=-88,in=60] (er);
+  \draw[dep] (sea) to[out=-85,in=120] (er);
+  \draw[dep] (za)  to[out=-85,in=45] (er);
 
 \end{tikzpicture}
 \caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; declarations reside on their host card. \textcolor{red!70!black}{Red arrows} (mathematical dependencies) frequently pierce through module boundaries, visualizing the low cohesion: most logical traffic crosses the organizational layers that humans have imposed.}
