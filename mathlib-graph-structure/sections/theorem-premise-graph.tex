@@ -176,7 +176,7 @@ Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing defi
 
 \medskip
 \noindent
-With these eight kinds in hand, we now illustrate how $G_{\mathrm{thm}}$ records dependencies at the declaration level. Consider the theorem \texttt{Nat.add\_left\_comm}, which proves $a + (b + c) = b + (a + c)$ for natural numbers. A tactic-level proof reads:
+The \texttt{Nat.lt\_irrefl} example above showed a single theorem's premises; we now turn to a \emph{pair} of theorems to illustrate how shared premises create the hub structure that dominates $G_{\mathrm{thm}}$. Consider \texttt{Nat.add\_left\_comm}, which proves $a + (b + c) = b + (a + c)$ for natural numbers. A tactic-level proof reads:
 
 \begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
 theorem Nat.add_left_comm (a b c : Nat) :
@@ -259,7 +259,7 @@ axiom       & $3$         & ${<}0.1\%$ \\
 \end{tabular}
 \end{table}
 
-Theorems constitute nearly four-fifths of all declarations, with definitions accounting for the bulk of the remainder. The three axioms (\texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}) and three quotient types form the irreducible axiomatic foundation on which all 308,129 declarations ultimately rest.
+Theorems constitute nearly four-fifths of all declarations, with definitions accounting for the bulk of the remainder. The six axiom and quotient declarations at the bottom of the table---described in the paragraphs above---are few in number but structurally distinguished as the only pure sinks in $G_{\mathrm{thm}}$.
 
 The graph is almost entirely connected: $308{,}054$ of $308{,}129$ nodes ($99.98\%$) belong to a single weakly connected component. The remaining $75$ nodes distribute across $71$ tiny components, of which $69$ are singletons. This near-perfect connectivity---stronger even than the module-level graph, which is exactly connected---reflects the deep logical interdependence of mathematical declarations.
 
