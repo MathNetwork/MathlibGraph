@@ -196,7 +196,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
 \caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; \textcolor{red!70!black}{red nodes} are declarations. Solid \textcolor{red!70!black}{red arrows} show intra-module edges ($E_{\mathrm{int}}$); dashed \textcolor{red!70!black}{red arrows} show external edges ($E_{\mathrm{ext}}$) that pierce module boundaries. \textcolor{blue!60!black}{Blue arrows} on the right show the corresponding module-level imports from $G_{\mathrm{import}}$.}
 \label{fig:dep-view}
 \end{subfigure}
-\caption{Three views of the same declarations. (a)~The file-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ layered by module; of six dependency edges, only one stays within its module, visualizing the low cohesion of~$0.107$ (\S\ref{sec:cohesion}). The \textcolor{blue!60!black}{blue} boundaries represent source files, in contrast to the \textcolor{green!40!black}{green} namespace boundaries of Figure~\ref{fig:ns-depth-grouping}; the two layers partially overlap (NMI~$\approx 0.71$; \S\ref{sec:ns-mod-cross}). All names have the \texttt{Nat.}\ prefix removed.}
+\caption{Three views of the same declarations. (a)~The file-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ layered by module; of six dependency edges, only one stays within its module, visualizing the low cohesion of~$0.107$ (\S\ref{sec:cohesion}). The \textcolor{blue!60!black}{blue} boundaries represent source files, in contrast to the \textcolor{green!40!black}{green} namespace boundaries of Figure~\ref{fig:ns-aggregation}; the two layers partially overlap (NMI~$\approx 0.71$; \S\ref{sec:ns-mod-cross}). All names have the \texttt{Nat.}\ prefix removed.}
 \label{fig:module-region}
 \end{figure}
 
@@ -268,7 +268,7 @@ Section~\ref{sec:transitive-reduction} found $17.5\%$ of import edges transitive
 \subsection{Namespace--Declaration Interaction}
 \label{sec:ns-decl-interaction}
 
-The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries (see also Figure~\ref{fig:ns-depth-grouping}). We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
+The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries (see also Figure~\ref{fig:ns-aggregation}). We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
 
 At depth~$1$, namespace containment is $22.2\%$: roughly one in five edges stays within the same depth-$1$ namespace. By depth~$2$, containment drops to $14.2\%$ and saturates near $12.6\%$ by depth~$3$ (Table~\ref{tab:containment-decay}). Module cohesion, the mean proportion of a module's edges that stay internal, is $0.107$---close to the file-level containment of $15.6\%$ reported in the same table.
 
