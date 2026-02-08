@@ -74,11 +74,11 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
     (0.0,-1.75) rectangle (2.2,-0.55);
   \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
     at (0.1,-0.5) {\ns{Nat.Primrec}};
-  % Declaration dots
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (ac) at (0.6,0.8) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
-    (alc) at (0.6,0.2) {};
+  % Declaration dots (staggered diagonally to avoid label overlap)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_comm}]
+    (ac) at (1.8,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_left\_comm}]
+    (alc) at (0.5,0.15) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
     (prz) at (0.6,-1.15) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
@@ -87,9 +87,9 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
     (za) at (4.1,0.2) {};
   % Dependency arrows (solid = intra-namespace, dashed = cross-namespace)
   \draw[dep] (alc) -- (ac);
-  \draw[dep] (sea) to[out=175,in=5] (ac);
-  \draw[dep] (za) to[out=175,in=-5] (alc);
-  \draw[depx] (prz) to[out=70,in=-80] (ac);
+  \draw[dep] (sea) to[out=175,in=10] (ac);
+  \draw[dep] (za) to[out=175,in=-10] (alc);
+  \draw[depx] (prz) to[out=70,in=-100] (ac);
   % Panel label
   \node[font=\small\sffamily, anchor=north] at (2.6,-2.5) {(a) $G_{\mathrm{thm}}$};
 
