@@ -221,7 +221,7 @@ The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}
   every node/.style={font=\scriptsize\ttfamily, inner sep=1pt, text=blue!60!black},
   dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
   dep/.style={->, >=Stealth, thin, blue!60!black},
-  redundant/.style={->, >=Stealth, teal, dashed, thick},
+  redundant/.style={->, >=Stealth, orange!80!red, dashed, thick},
 ]
   \node[dot, label=above:{Init}]                (d) at (0,0) {};
   \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.2,-1.2) {};
@@ -249,13 +249,13 @@ The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}
   \textnormal{\sffamily\bfseries\color{blue!60!black} Algebra/Group/Defs.lean} \\[1pt]
   \hspace{1em}public import \textcolor{blue!60!black}{Data.Int.Notation} \\
   \hspace{1em}public import \textcolor{blue!60!black}{Data.Nat.Notation} \\
-  \hspace{1em}\textcolor{teal}{public import \textcolor{blue!60!black}{Init}}
-    \textnormal{\sffamily\color{teal} $\leftarrow$ would be redundant} \\
+  \hspace{1em}\textcolor{orange!80!red}{public import \textcolor{blue!60!black}{Init}}
+    \textnormal{\sffamily\color{orange!80!red} $\leftarrow$ would be redundant} \\
 \end{tabular}
 \caption{Source file headers}
 \label{fig:tr-source}
 \end{subfigure}
-\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \module{Algebra.Group.Defs} were to import \module{Init} directly (dashed teal edge), that edge would be transitively redundant: \module{Init} is already reachable via both \module{Data.Int.Notation} and \module{Data.Nat.Notation}. All names have the \module{Mathlib.}\ prefix removed.}
+\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \module{Algebra.Group.Defs} were to import \module{Init} directly (\textcolor{orange!80!red}{dashed orange} edge), that edge would be transitively redundant: \module{Init} is already reachable via both \module{Data.Int.Notation} and \module{Data.Nat.Notation}. All names have the \module{Mathlib.}\ prefix removed.}
 \label{fig:transitive-reduction}
 \end{figure}
 
