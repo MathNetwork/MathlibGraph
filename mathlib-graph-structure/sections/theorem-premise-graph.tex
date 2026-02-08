@@ -380,6 +380,35 @@ The degree-by-kind analysis reveals that the hub structure of $G_{\mathrm{thm}}$
 The import graph of \S\ref{sec:import-graph} conflates these two layers (a module contains both language infrastructure and mathematical content). The theorem--premise graph separates them, enabling the analyst to distinguish what belongs to mathematics from what belongs to its medium of expression.
 \end{remark}
 
+\subsubsection{Theorem vs.\ Lemma: Validating Human Importance Judgments}
+\label{sec:thm-vs-lemma}
+
+In Lean~4 source code, developers choose between \texttt{theorem} and \texttt{lemma} to declare propositions. While the kernel treats both identically---\texttt{lemma} is syntactic sugar for \texttt{theorem}---the choice carries cognitive significance: \texttt{theorem} typically marks a major result, while \texttt{lemma} signals an auxiliary stepping stone. Our extraction pipeline records both as kind \texttt{theorem}, erasing this distinction.
+
+To recover it, we parsed the Mathlib source code, tracking \texttt{namespace} blocks to reconstruct fully qualified names, and cross-referenced with~$G_{\mathrm{thm}}$. Of the $251{,}642$ propositions in the graph, $175{,}567$ ($69.8\%$) were matched to a source declaration: $129{,}444$ marked \texttt{theorem} and $46{,}123$ marked \texttt{lemma}.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lccc}
+\toprule
+Metric & \texttt{theorem} & \texttt{lemma} & Ratio \\
+\midrule
+Mean in-degree        & $5.16$ & $3.52$ & $1.47\times$ \\
+Zero-citation rate    & $37.2\%$ & $39.4\%$ & --- \\
+Mean PageRank         & $7.52 \times 10^{-7}$ & $6.83 \times 10^{-7}$ & $1.10\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Structural comparison of declarations marked \texttt{theorem} vs.\ \texttt{lemma} in source code. All three metrics confirm that human importance judgments align with topological prominence.}
+\label{tab:thm-vs-lemma}
+\end{table}
+
+All three metrics confirm that human importance judgments are validated by the logical structure: declarations that developers considered major results do occupy more prominent positions in the dependency network. The effect is moderate---a $1.47\times$ ratio in citation count, not an order-of-magnitude difference---suggesting that the theorem/lemma boundary is a noisy but genuine signal of structural importance.
+
+\begin{remark}[Misjudged importance]
+\label{rem:misjudged}
+The alignment is imperfect. Among the notable outliers: \texttt{funext} (function extensionality) is marked \texttt{lemma} in source code but has in-degree $15{,}574$, making it one of the most cited propositions in Mathlib. Conversely, $48{,}177$ declarations marked \texttt{theorem}---over a third of all matched theorems---have zero citations. The former represents underestimation of structural importance by the author; the latter represents overestimation, or more precisely, the distinction between importance as a mathematical result (worthy of the name ``theorem'') and importance as a dependency hub (actually reused by other proofs). In the language of our framework, the theorem/lemma distinction is a trace of the process---a record of the author's cognitive judgment at the time of writing---that the product partially but not fully corroborates.
+\end{remark}
+
 \subsection{Centrality and the Taxonomy of Importance}
 \label{sec:thm-centrality}
 

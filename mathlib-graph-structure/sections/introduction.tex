@@ -17,11 +17,11 @@ The coarsest granularity. Each module (source file) is a node; \texttt{import} s
 A finer granularity. Each theorem or definition is a node; the premises invoked in a proof form edges. This level penetrates into the mathematical content itself---no longer dependencies between files, but logical relations between theorems. It measures the \emph{reasoning structure} of mathematics: which theorems serve as core lemmas, which are isolated special cases, and how knowledge flows across theories.
 
 \medskip
-\noindent\textbf{Premise co-occurrence graph (\S5).}
-The finest granularity, and the one closest to the process. Two premises are connected by an edge whenever they are used together in the same proof. This graph does not reflect logical necessity---two premises may be logically unrelated---but rather the co-occurrence patterns of practice: which tools provers tend to reach for together during the search process. It is the most direct trace that the uncertain process of mathematical practice leaves in the deterministic product.
+\noindent\textbf{Module--declaration interaction (\S5).}
+The first two levels of analysis treat modules and declarations as separate objects. In \S5 we overlay them: each module becomes a \emph{region} in the theorem--premise graph, and we measure how well the human-drawn module boundaries align with the logical dependency structure. Module cohesion---the proportion of a module's dependency traffic that stays internal---quantifies this alignment. This cross-level analysis makes the central tension concrete: module boundaries are a human decision (process), while declaration-level dependencies are determined by logical necessity (product).
 
 \medskip
-The three graphs form a spectrum from product to process: the import graph lies closest to the product end (deterministic dependencies enforced by the compiler), the co-occurrence graph lies closest to the process end (a statistical projection of human search habits), and the theorem--premise graph sits between the two.
+Together, the three levels form a progression from coarse architecture (\S3) through fine-grained logical structure (\S4) to the tension between human organization and mathematical necessity (\S5).
 
 \section{Previous works}
 
