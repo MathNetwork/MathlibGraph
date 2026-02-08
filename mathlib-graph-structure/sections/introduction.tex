@@ -8,7 +8,7 @@ The central claim of this paper is that the network structure of a formal mathem
 
 Understanding this tension has practical consequences. For the engineers who maintain Lean and \module{Mathlib}, it determines where compilation bottlenecks arise and which refactorings are safe. For AI systems that increasingly generate formal proofs, the structural patterns of human-authored libraries define both the training distribution and the baseline against which automated contributions can be evaluated. For network scientists, a library of $308{,}129$ machine-verified declarations offers a rare example of a large-scale engineered network whose every edge is semantically guaranteed.
 
-We take \module{Mathlib} as our object of study and develop our analysis at three progressively finer levels of granularity:
+We take \module{Mathlib} as our object of study and develop our analysis at four progressively finer levels of granularity:
 
 \medskip
 \noindent\textbf{Module-level graph structures (\S3).}
@@ -19,11 +19,15 @@ The coarsest granularity. Each module (source file) is a node; \texttt{import} s
 A finer granularity. Each theorem or definition is a node; the premises invoked in a proof form edges. This level penetrates into the mathematical content itself---no longer dependencies between files, but logical relations between theorems. It measures the \emph{reasoning structure} of mathematics: which theorems serve as core lemmas, which are isolated special cases, and how knowledge flows across theories.
 
 \medskip
-\noindent\textbf{Module--declaration interaction (\S5).}
-The first two levels of analysis treat modules and declarations as separate objects. In \S5 we overlay them: each module becomes a \emph{region} in the theorem--premise graph, and we measure how well the human-drawn module boundaries align with the logical dependency structure. Module cohesion---the proportion of a module's dependency traffic that stays internal---quantifies this alignment. This cross-level analysis makes the central tension concrete: module boundaries are a human decision (process), while declaration-level dependencies are determined by logical necessity (product).
+\noindent\textbf{Namespace dependency graph (\S\ref{sec:namespace-graph}).}
+An intermediate granularity between modules and declarations. Each declaration's fully qualified name defines a hierarchy of namespaces at varying depths; truncating to depth~$k$ yields a family of dependency graphs $G_{\mathrm{ns}}^{(k)}$. We measure how \emph{containment}---the proportion of edges staying within namespace boundaries---decays from $48.9\%$ at the top-level directory to ${\sim}13\%$ at finer namespaces. This decay curve quantifies the scale at which human cognitive classification retains organizing force and the scale at which mathematical logic overwhelms it.
 
 \medskip
-Together, the three levels form a progression from coarse architecture (\S3) through fine-grained logical structure (\S4) to the tension between human organization and mathematical necessity (\S5). A fourth natural level---the namespace dependency graph, intermediate between modules and declarations---is discussed as future work in \S\ref{sec:future}. Beyond characterizing the network, we identify structural metrics---module cohesion, centrality rankings, zero-citation rates---that can serve as quantitative signals for library maintenance, compilation optimization, and AI training data curation.
+\noindent\textbf{Module--declaration interaction (\S\ref{sec:module-declaration}).}
+The first two levels of analysis treat modules and declarations as separate objects. In \S\ref{sec:module-declaration} we overlay them: each module becomes a \emph{region} in the theorem--premise graph, and we measure how well the human-drawn module boundaries align with the logical dependency structure. Module cohesion---the proportion of a module's dependency traffic that stays internal---quantifies this alignment. This cross-level analysis makes the central tension concrete: module boundaries are a human decision (process), while declaration-level dependencies are determined by logical necessity (product).
+
+\medskip
+Together, the four levels form a progression from coarse architecture (\S\ref{sec:import-graph}) through fine-grained logical structure (\S\ref{sec:theorem-premise}) and namespace-level containment decay (\S\ref{sec:namespace-graph}) to the tension between human organization and mathematical necessity (\S\ref{sec:module-declaration}). Beyond characterizing the network, we identify structural metrics---module cohesion, centrality rankings, zero-citation rates, containment curves---that can serve as quantitative signals for library maintenance, compilation optimization, and AI training data curation.
 
 \section{Previous works}
 
