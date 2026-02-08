@@ -80,48 +80,67 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 \vspace{0pt}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  dep/.style={->, >=Stealth, thin, red!70!black},
+  dot/.style={circle, fill=black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
 ]
-  % ── Namespace boundary (blue = human organization) ──
-  \fill[blue!5, rounded corners=8pt] (-0.2,-2.8) rectangle (7.0,1.5);
-  \draw[rounded corners=8pt, blue!50] (-0.2,-2.8) rectangle (7.0,1.5);
-  \node[font=\scriptsize\sffamily, anchor=south west, blue!60!black] at (0.0,1.6) {namespace \textnormal{\texttt{Data.Nat}}};
+  % ── Card 3 (top, back): module Defs ──
+  % Surface (parallelogram: isometric shear ~30°)
+  \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
+    (0.15,3.7) -- (5.65,3.7) -- (6.35,4.09) -- (0.85,4.09) -- cycle;
+  % Front face (card thickness)
+  \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
+    (0.15,3.7) -- (5.65,3.7) -- (5.65,3.57) -- (0.15,3.57) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.75,3.63)
+    {\textnormal{\texttt{Defs}}};
+  \node[dot] (sea) at (2.0,3.88) {};
+  \node[font=\tiny\ttfamily, anchor=south] at (2.0,3.93) {succ\_eq\_add\_one};
+  \node[dot] (za)  at (4.3,3.88) {};
+  \node[font=\tiny\ttfamily, anchor=south] at (4.3,3.93) {zero\_add};
 
-  % ── Module 1: Basic (blue = human organization) ──
-  \fill[blue!10, rounded corners=5pt] (0.1,-2.2) rectangle (3.2,1.1);
-  \draw[dashed, rounded corners=5pt, blue!50] (0.1,-2.2) rectangle (3.2,1.1);
-  \node[font=\scriptsize\sffamily, anchor=north west, blue!60!black] at (0.2,1.0) {module \textnormal{\texttt{Basic}}};
-  \node[dot, label=above:{add\_comm}]       (ac)  at (1.65,0.3) {};
-  \node[dot, label=below:{add\_left\_comm}]  (alc) at (1.65,-1.5) {};
+  % ── Card 2 (middle): module Basic ──
+  \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
+    (0,2.0) -- (5.5,2.0) -- (6.2,2.39) -- (0.7,2.39) -- cycle;
+  \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
+    (0,2.0) -- (5.5,2.0) -- (5.5,1.87) -- (0,1.87) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.6,1.93)
+    {\textnormal{\texttt{Basic}}};
+  \node[dot] (ac)  at (1.85,2.18) {};
+  \node[font=\tiny\ttfamily, anchor=south] at (1.85,2.23) {add\_comm};
+  \node[dot] (alc) at (4.15,2.18) {};
+  \node[font=\tiny\ttfamily, anchor=south] at (4.15,2.23) {add\_left\_comm};
 
-  % ── Module 2: Defs (blue = human organization) ──
-  \fill[blue!10, rounded corners=5pt] (3.5,-2.2) rectangle (6.8,1.1);
-  \draw[dashed, rounded corners=5pt, blue!50] (3.5,-2.2) rectangle (6.8,1.1);
-  \node[font=\scriptsize\sffamily, anchor=north west, blue!60!black] at (3.6,1.0) {module \textnormal{\texttt{Defs}}};
-  \node[dot, label=above:{succ\_eq\_add\_one}] (sea) at (5.15,0.3) {};
-  \node[dot, label=below:{zero\_add}]          (za)  at (5.15,-1.5) {};
+  % ── Card 1 (bottom, front): other namespace ──
+  \filldraw[fill=gray!6, draw=gray!50, semithick, line join=round]
+    (0.5,0.15) -- (4.7,0.15) -- (5.25,0.46) -- (1.05,0.46) -- cycle;
+  \filldraw[fill=gray!15, draw=gray!50, semithick, line join=round]
+    (0.5,0.15) -- (4.7,0.15) -- (4.7,0.03) -- (0.5,0.03) -- cycle;
+  \node[font=\tiny\sffamily, gray!60, anchor=west] at (4.8,0.09)
+    {\textnormal{other ns}};
+  \node[dot] (er)  at (2.7,0.3) {};
+  \node[font=\tiny\ttfamily, anchor=south] at (2.7,0.35) {Eq.refl};
 
-  % ── Dependency edges (red = mathematical logic) ──
-  % Intra-module
+  % ── Namespace bracket (Data.Nat spans Cards 2–3) ──
+  \draw[blue!50, semithick]
+    (-0.15,1.87) -- (-0.35,1.87) -- (-0.35,4.09) -- (-0.15,4.09);
+  \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
+    at (-0.55,2.98) {namespace \textnormal{\texttt{Data.Nat}}};
+
+  % ── Dependency arrows (red = mathematical logic) ──
+  % Intra-module: the ONLY arrow that stays on its card
   \draw[dep] (alc) -- (ac);
-  % Cross-module, intra-namespace
-  \draw[dep] (sea) to[out=170,in=-10] (ac);
-
-  % ── External node (cross-namespace) ──
-  \node[dot, label={[align=center]left:{Eq.refl\\[-2pt]{\normalfont\sffamily\tiny\color{gray}other ns}}}] (er) at (-1.5,-0.6) {};
-
-  % Cross-namespace
-  \draw[dep] (ac)  -- (er);
-  \draw[dep] (alc) to[out=180,in=-20] (er);
-  \draw[dep] (sea) to[out=170,in=30] (er);
-  \draw[dep] (za)  to[out=190,in=-30] (er);
+  % Cross-module: Card 3 → Card 2
+  \draw[dep] (sea) to[out=-85,in=95] (ac);
+  % Cross-namespace: all → Eq.refl (piercing through card boundaries)
+  \draw[dep] (ac)  to[out=-85,in=105] (er);
+  \draw[dep] (alc) to[out=-85,in=65] (er);
+  \draw[dep] (sea) to[out=-80,in=120] (er);
+  \draw[dep] (za)  to[out=-80,in=50] (er);
 
 \end{tikzpicture}
-\caption{Dependency structure $G_{\mathrm{thm}}$ (\textcolor{red!70!black}{red arrows}) overlaid on module boundaries (\textcolor{blue!60!black}{blue boxes}).}
+\caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; declarations reside on their host card. \textcolor{red!70!black}{Red arrows} (mathematical dependencies) frequently pierce through module boundaries, visualizing the low cohesion: most logical traffic crosses the organizational layers that humans have imposed.}
 \label{fig:dep-view}
 \end{subfigure}
-\caption{Two views of the same declarations. (a)~The file-system hierarchy and namespace tree~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level: human decisions determine which declarations reside in which file. (b)~The dependency structure~$G_{\mathrm{thm}}$ (\textcolor{red!70!black}{red arrows}) overlaid on the module boundaries (\textcolor{blue!60!black}{blue boxes}). The same five declarations appear in both views; comparing them reveals where organizational structure and logical structure diverge. All declaration names have the \texttt{Nat.}\ prefix removed.}
+\caption{Two views of the same declarations. (a)~The file-system hierarchy and namespace tree~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level: human decisions determine which declarations reside in which file. (b)~An isometric view of~$G_{\mathrm{thm}}$ (\textcolor{red!70!black}{red arrows}) layered by module (\textcolor{blue!60!black}{blue cards}). The same five declarations appear in both views; of six dependency edges, only one stays within its module---the rest pierce through the organizational layers, visualizing the low cohesion measured in this section. All declaration names have the \texttt{Nat.}\ prefix removed.}
 \label{fig:module-region}
 \end{figure}
 
