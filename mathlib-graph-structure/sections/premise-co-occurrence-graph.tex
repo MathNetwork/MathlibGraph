@@ -75,19 +75,44 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 \label{fig:tree-view}
 \end{subfigure}%
 \hfill
+% ── Panel (b): Source code (top right, next to tree) ──
 \begin{subfigure}[t]{0.60\textwidth}
 \centering
 \vspace{0pt}
+\raggedright\scriptsize
+\textsf{\bfseries\color{blue!60!black}Basic.lean}\\[2pt]
+\ttfamily
+\textbf{theorem} add\_comm (n m : Nat)\\
+\hspace{1.5em}: n + m = m + n := \textbf{by}\\
+\hspace{1.5em}induction n <;> simp [\textcolor{red!70!black}{Eq.refl}]\\[3pt]
+\textbf{theorem} add\_left\_comm (n m k : Nat)\\
+\hspace{1.5em}: n + (m + k) = m + (n + k) := \textbf{by}\\
+\hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; simp [\textcolor{red!70!black}{Eq.refl}]\\[6pt]
+\textsf{\bfseries\color{blue!60!black}Defs.lean}\\[2pt]
+\ttfamily
+\textbf{theorem} succ\_eq\_add\_one (n : Nat)\\
+\hspace{1.5em}: succ n = n + 1 := \textbf{by}\\
+\hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; exact \textcolor{red!70!black}{Eq.refl} \_\\[3pt]
+\textbf{theorem} zero\_add (n : Nat)\\
+\hspace{1.5em}: 0 + n = n := \textbf{by}\\
+\hspace{1.5em}induction n <;> exact \textcolor{red!70!black}{Eq.refl} \_
+\caption{Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term generates a dependency edge in~(c).}
+\label{fig:source-view}
+\end{subfigure}
+
+\par\vspace{4pt}
+
+% ── Panel (c): Isometric dependency graph (full width, bottom) ──
+\begin{subfigure}[b]{\textwidth}
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
   dot/.style={circle, fill=black, minimum size=3.5pt, inner sep=0pt},
   dep/.style={->, >=Stealth, red!70!black, semithick},
 ]
   % ── Card 3 (top, back): module Defs ──
-  % Surface (parallelogram: isometric shear ~30°)
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
     (0.15,3.7) -- (5.65,3.7) -- (6.35,4.09) -- (0.85,4.09) -- cycle;
-  % Front face (card thickness)
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0.15,3.7) -- (5.65,3.7) -- (5.65,3.57) -- (0.15,3.57) -- cycle;
   \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (5.75,3.63)
@@ -140,39 +165,7 @@ Consider, for illustration, the namespace \texttt{Data.Nat}, which contains (amo
 \caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; declarations reside on their host card. \textcolor{red!70!black}{Red arrows} (mathematical dependencies) frequently pierce through module boundaries, visualizing the low cohesion: most logical traffic crosses the organizational layers that humans have imposed.}
 \label{fig:dep-view}
 \end{subfigure}
-
-\par\vspace{4pt}
-
-% ── Panel (c): Source code ──
-\begin{subfigure}[b]{\textwidth}
-\centering
-\begin{minipage}[t]{0.46\textwidth}
-\raggedright\scriptsize
-\textsf{\bfseries\color{blue!60!black}Basic.lean}\\[2pt]
-\ttfamily
-\textbf{theorem} add\_comm (n m : Nat)\\
-\hspace{1.5em}: n + m = m + n := \textbf{by}\\
-\hspace{1.5em}induction n <;> simp [\textcolor{red!70!black}{Eq.refl}]\\[4pt]
-\textbf{theorem} add\_left\_comm (n m k : Nat)\\
-\hspace{1.5em}: n + (m + k) = m + (n + k) := \textbf{by}\\
-\hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; simp [\textcolor{red!70!black}{Eq.refl}]
-\end{minipage}%
-\hfill
-\begin{minipage}[t]{0.46\textwidth}
-\raggedright\scriptsize
-\textsf{\bfseries\color{blue!60!black}Defs.lean}\\[2pt]
-\ttfamily
-\textbf{theorem} succ\_eq\_add\_one (n : Nat)\\
-\hspace{1.5em}: succ n = n + 1 := \textbf{by}\\
-\hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; exact \textcolor{red!70!black}{Eq.refl} \_\\[4pt]
-\textbf{theorem} zero\_add (n : Nat)\\
-\hspace{1.5em}: 0 + n = n := \textbf{by}\\
-\hspace{1.5em}induction n <;> exact \textcolor{red!70!black}{Eq.refl} \_
-\end{minipage}
-\caption{Proof source code. Each \textcolor{red!70!black}{red identifier} in a proof term generates a dependency edge in~(b). Reading the code reveals why cohesion is low: proofs overwhelmingly cite declarations from other files.}
-\label{fig:source-view}
-\end{subfigure}
-\caption{Three views of the same declarations. (a)~The file-system hierarchy and namespace tree~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level: human decisions determine which declarations reside in which file. (b)~An isometric view of~$G_{\mathrm{thm}}$ (\textcolor{red!70!black}{red arrows}) layered by module (\textcolor{blue!60!black}{blue cards}); of six dependency edges, only one stays within its module---the rest pierce through the organizational layers. (c)~Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term is a premise that creates a dependency edge in~(b). Together, the three panels show the full path from human file organization~(a) through mathematical dependency~(b) to its origin in the proof terms~(c). All declaration names have the \texttt{Nat.}\ prefix removed.}
+\caption{Three views of the same declarations. (a)~The file-system hierarchy and namespace tree~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level: human decisions determine which declarations reside in which file. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term is a premise that creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ (\textcolor{red!70!black}{red arrows}) layered by module (\textcolor{blue!60!black}{blue cards}); of six dependency edges, only one stays within its module---the rest pierce through the organizational layers, visualizing the low cohesion measured in this section. Together, the three panels show the full path from human file organization~(a) through proof terms~(b) to the dependency graph~(c). All declaration names have the \texttt{Nat.}\ prefix removed.}
 \label{fig:module-region}
 \end{figure}
 
