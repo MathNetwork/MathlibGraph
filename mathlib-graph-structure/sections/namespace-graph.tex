@@ -30,14 +30,14 @@ Growth saturates rapidly: $90\%$ of all namespaces are distinguished by depth~$3
 
 \begin{definition}[Namespace dependency graph at depth~$k$]
 \label{def:ns-graph}
-For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declaration~$d$ truncated to depth~$k$: the first $k$ dot-separated components of $d$'s fully qualified name. If $d$'s name has fewer than $k+1$ components, $\mathrm{ns}_k(d)$ defaults to the full parent namespace; if $d$'s name has no dot, $\mathrm{ns}_k(d) = \texttt{\_root\_}$. The \emph{namespace dependency graph at depth~$k$} is the weighted directed graph
+For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declaration~$d$ truncated to depth~$k$: the first $k$ dot-separated components of $d$'s fully qualified name. If $d$'s name has fewer than $k+1$ components, $\mathrm{ns}_k(d)$ defaults to the full parent namespace; if $d$'s name has no dot, $\mathrm{ns}_k(d) = \ns{\_root\_}$. The \emph{namespace dependency graph at depth~$k$} is the weighted directed graph
 \[
   G_{\mathrm{ns}}^{(k)} = (\mathcal{N}_k,\, E_k),
 \]
 where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set of all distinct depth-$k$ namespaces, and each edge $(n_1, n_2) \in E_k$ carries a weight equal to the number of edges $(d_1, d_2) \in E_{\mathrm{thm}}$ such that $\mathrm{ns}_k(d_1) = n_1 \neq n_2 = \mathrm{ns}_k(d_2)$.
 \end{definition}
 
-This definition yields not a single graph but a \emph{family} of graphs parameterized by the truncation depth~$k$. At $k = 1$, we obtain $3{,}184$ coarse namespaces---\texttt{Nat}, \texttt{Set}, \texttt{CategoryTheory}---that correspond roughly (but not identically) to the top-level name components discussed in \S\ref{sec:thm-cross-namespace}. At the maximum depth ($k = 6$), we recover the full parent-namespace granularity with $15{,}456$ nodes. The parameterization is unique to namespace analysis: neither the import graph~$G_{\mathrm{import}}$ nor the theorem--premise graph~$G_{\mathrm{thm}}$ admits a comparable continuous refinement.
+This definition yields not a single graph but a \emph{family} of graphs parameterized by the truncation depth~$k$. At $k = 1$, we obtain $3{,}184$ coarse namespaces---\ns{Nat}, \ns{Set}, \ns{CategoryTheory}---that correspond roughly (but not identically) to the top-level name components discussed in \S\ref{sec:thm-cross-namespace}. At the maximum depth ($k = 6$), we recover the full parent-namespace granularity with $15{,}456$ nodes. The parameterization is unique to namespace analysis: neither the import graph~$G_{\mathrm{import}}$ nor the theorem--premise graph~$G_{\mathrm{thm}}$ admits a comparable continuous refinement.
 
 The mechanism is visualized in Figure~\ref{fig:ns-depth-grouping} (\S\ref{sec:ns-decl-interaction}): as depth~$k$ increases, namespace boundaries split while module boundaries remain fixed, converting intra-namespace edges into cross-namespace edges and driving containment downward.
 
@@ -87,9 +87,9 @@ The decay exhibits three regimes.
 
 \paragraph{Discipline-level containment (top-level directory, 48.9\%).} At the coarsest granularity---the $32$ top-level directories (\module{Algebra}, \module{CategoryTheory}, \module{Topology}, etc.)---nearly half of all declaration-level dependencies stay within the same directory. These discipline-level categories, inherited from centuries of mathematical practice, retain genuine organizational force: they capture the broadest fault lines of mathematical knowledge. Yet even here, more than half of all dependencies cross directory boundaries---confirming that no discipline is self-contained.
 
-\paragraph{The steepest drop (top-level directory $\to$ depth~$1$, $48.9\% \to 22.2\%$).} The largest single decrease in containment occurs when we move from $32$ directories to $3{,}184$ depth-$1$ namespaces. This transition refines discipline-level groupings (such as the directory \module{Data}) into their internal constituents (\texttt{Nat}, \texttt{Int}, \texttt{List}, \texttt{Set}, \texttt{Finset}, etc.). The steep drop indicates that discipline-level classification exerts substantial constraint on dependencies, but once we enter the interior of a discipline, the namespace boundaries between \texttt{Nat} and \texttt{Int}---or between \texttt{Set} and \texttt{Finset}---carry far less force. Mathematics, at sub-discipline granularity, is deeply interconnected.
+\paragraph{The steepest drop (top-level directory $\to$ depth~$1$, $48.9\% \to 22.2\%$).} The largest single decrease in containment occurs when we move from $32$ directories to $3{,}184$ depth-$1$ namespaces. This transition refines discipline-level groupings (such as the directory \module{Data}) into their internal constituents (\ns{Nat}, \ns{Int}, \ns{List}, \ns{Set}, \ns{Finset}, etc.). The steep drop indicates that discipline-level classification exerts substantial constraint on dependencies, but once we enter the interior of a discipline, the namespace boundaries between \ns{Nat} and \ns{Int}---or between \ns{Set} and \ns{Finset}---carry far less force. Mathematics, at sub-discipline granularity, is deeply interconnected.
 
-\paragraph{Rapid saturation (depth~$2$+, ${\sim}13\%$).} Beyond depth~$2$, containment barely decreases: from $14.2\%$ at depth~$2$ to $12.6\%$ at depth~$6$. Finer naming distinctions---separating \texttt{Nat.Prime} from \texttt{Nat}, or \texttt{CategoryTheory.Functor} from \texttt{CategoryTheory}---add almost no intra-namespace edges that were not already captured at depth~$2$. The cross-domain character of mathematical reasoning is fully exposed by the second level of the naming hierarchy.
+\paragraph{Rapid saturation (depth~$2$+, ${\sim}13\%$).} Beyond depth~$2$, containment barely decreases: from $14.2\%$ at depth~$2$ to $12.6\%$ at depth~$6$. Finer naming distinctions---separating \ns{Nat.Prime} from \ns{Nat}, or \ns{CategoryTheory.Functor} from \ns{CategoryTheory}---add almost no intra-namespace edges that were not already captured at depth~$2$. The cross-domain character of mathematical reasoning is fully exposed by the second level of the naming hierarchy.
 
 \paragraph{File-level containment (15.6\%).} The file-module level ($7{,}225$ units) falls between namespace depth~$1$ ($3{,}184$) and depth~$2$ ($10{,}097$) in both granularity and containment. A source file aggregates declarations from potentially multiple sub-namespaces, giving it slightly more containment power than depth-$2$ namespaces of comparable count. But the difference is marginal: files, as organizational containers, offer no containment advantage beyond that of a mid-level namespace.
 
@@ -115,13 +115,13 @@ Zero-degree & $3{,}920$ & $6$ \\
 \end{tabular}
 \end{table}
 
-The degree distribution is extremely skewed (Table~\ref{tab:ns-degree-stats}). The median in-degree of~$1$ versus a mean of~$33$ reveals a long tail: $3{,}920$ namespaces ($38.8\%$) have zero in-degree---they are referenced by no other namespace---while a handful attract thousands of incoming edges. The top namespaces by in-degree are \texttt{\_root\_} ($9{,}846$), \texttt{Eq} ($7{,}686$), \texttt{OfNat} ($4{,}390$), \texttt{Membership} ($3{,}407$), and \texttt{Semiring} ($3{,}252$). By out-degree, the leaders are \texttt{\_root\_} ($3{,}075$), \module{MeasureTheory} ($687$), \module{CategoryTheory} ($656$), and \texttt{Polynomial} ($615$).
+The degree distribution is extremely skewed (Table~\ref{tab:ns-degree-stats}). The median in-degree of~$1$ versus a mean of~$33$ reveals a long tail: $3{,}920$ namespaces ($38.8\%$) have zero in-degree---they are referenced by no other namespace---while a handful attract thousands of incoming edges. The top namespaces by in-degree are \ns{\_root\_} ($9{,}846$), \ns{Eq} ($7{,}686$), \ns{OfNat} ($4{,}390$), \ns{Membership} ($3{,}407$), and \ns{Semiring} ($3{,}252$). By out-degree, the leaders are \ns{\_root\_} ($3{,}075$), \ns{MeasureTheory} ($687$), \ns{CategoryTheory} ($656$), and \ns{Polynomial} ($615$).
 
 Power-law fitting yields $\alpha = 1.60$ ($x_{\min} = 4$) for in-degree and $\alpha = 1.90$ ($x_{\min} = 13$) for out-degree. In both cases, a lognormal distribution provides a significantly better fit than a pure power law (likelihood ratio $R = -10.6$ and $R = -289.7$, respectively; $p < 0.01$). This mirrors the pattern observed for $G_{\mathrm{import}}$ (\S\ref{sec:degree-distribution}): heavy-tailed distributions that are not cleanly power-law.
 
-\begin{remark}[The \texttt{\_root\_} artifact]
+\begin{remark}[The \ns{\_root\_} artifact]
 \label{rem:root-artifact}
-The namespace \texttt{\_root\_} dominates both in-degree and out-degree at depth~$2$. This is an artifact of the truncation rule in Definition~\ref{def:ns-graph}: declarations whose fully qualified names have fewer than three components---including foundational definitions such as \decl{Eq.refl}, \decl{Nat.succ}, and \decl{OfNat.ofNat}---are assigned to \texttt{\_root\_}. This namespace is not a coherent conceptual domain; it is a catch-all for the shallow infrastructure of the Lean type system. Its extreme centrality reflects naming-depth convention rather than mathematical importance: the most foundational constructs carry the shortest names. In the analysis that follows, we note where \texttt{\_root\_} distorts aggregate statistics.
+The namespace \ns{\_root\_} dominates both in-degree and out-degree at depth~$2$. This is an artifact of the truncation rule in Definition~\ref{def:ns-graph}: declarations whose fully qualified names have fewer than three components---including foundational definitions such as \decl{Eq.refl}, \decl{Nat.succ}, and \decl{OfNat.ofNat}---are assigned to \ns{\_root\_}. This namespace is not a coherent conceptual domain; it is a catch-all for the shallow infrastructure of the Lean type system. Its extreme centrality reflects naming-depth convention rather than mathematical importance: the most foundational constructs carry the shortest names. In the analysis that follows, we note where \ns{\_root\_} distorts aggregate statistics.
 \end{remark}
 
 \subsection{Centrality}
@@ -140,21 +140,21 @@ As in \S\ref{sec:centrality} and \S\ref{sec:thm-centrality}, we compute PageRank
 \cmidrule(lr){1-2} \cmidrule(lr){3-4}
 PR & Namespace & $c_B$ & Namespace \\
 \midrule
-.247 & \texttt{\_root\_}          & .248 & \texttt{\_root\_} \\
-.035 & \texttt{Eq}                & .065 & \texttt{And} \\
-.017 & \texttt{Set}               & .043 & \texttt{Eq} \\
-.015 & \texttt{Iff}               & .036 & \texttt{Exists} \\
-.014 & \texttt{OfNat}             & .031 & \texttt{Function} \\
-.012 & \texttt{Real}              & .030 & \texttt{Nat} \\
-.012 & \texttt{Nat}               & .029 & \module{CategoryTheory} \\
-.012 & \module{CategoryTheory}    & .019 & \module{MeasureTheory} \\
-.010 & \texttt{Preorder}          & .018 & \texttt{Set} \\
-.008 & \texttt{Semiring}          & .017 & \texttt{Module} \\
+.247 & \ns{\_root\_}          & .248 & \ns{\_root\_} \\
+.035 & \ns{Eq}                & .065 & \ns{And} \\
+.017 & \ns{Set}               & .043 & \ns{Eq} \\
+.015 & \ns{Iff}               & .036 & \ns{Exists} \\
+.014 & \ns{OfNat}             & .031 & \ns{Function} \\
+.012 & \ns{Real}              & .030 & \ns{Nat} \\
+.012 & \ns{Nat}               & .029 & \ns{CategoryTheory} \\
+.012 & \ns{CategoryTheory}    & .019 & \ns{MeasureTheory} \\
+.010 & \ns{Preorder}          & .018 & \ns{Set} \\
+.008 & \ns{Semiring}          & .017 & \ns{Module} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Excluding the \texttt{\_root\_} artifact (Remark~\ref{rem:root-artifact}), the two rankings reveal a clear separation (Table~\ref{tab:ns-centrality}). PageRank is dominated by mathematical infrastructure: \texttt{Eq}, \texttt{Set}, \texttt{OfNat}, \texttt{Real}, and \texttt{Preorder}---the foundational types and structures on which proofs ultimately rest. Betweenness centrality, by contrast, promotes logical connectives and bridging concepts: \texttt{And}, \texttt{Exists}, and \texttt{Function} occupy positions~$2$--$5$ by betweenness but do not appear in the PageRank top~$10$. These namespaces serve as structural bridges: proofs in distant mathematical theories must pass through logical connectives to compose their arguments.
+Excluding the \ns{\_root\_} artifact (Remark~\ref{rem:root-artifact}), the two rankings reveal a clear separation (Table~\ref{tab:ns-centrality}). PageRank is dominated by mathematical infrastructure: \ns{Eq}, \ns{Set}, \ns{OfNat}, \ns{Real}, and \ns{Preorder}---the foundational types and structures on which proofs ultimately rest. Betweenness centrality, by contrast, promotes logical connectives and bridging concepts: \ns{And}, \ns{Exists}, and \ns{Function} occupy positions~$2$--$5$ by betweenness but do not appear in the PageRank top~$10$. These namespaces serve as structural bridges: proofs in distant mathematical theories must pass through logical connectives to compose their arguments.
 
 This separation echoes the module-level finding of \S\ref{sec:centrality}, where no single module dominates all three centrality measures, and the declaration-level finding of \S\ref{sec:thm-centrality}, where in-degree, PageRank, and betweenness identify disjoint categories of importance. At the namespace level, the two available measures already diverge sharply, confirming that the multidimensionality of structural importance persists across all three granularities.
 
@@ -171,18 +171,18 @@ Louvain community detection on the undirected, weighted projection of $G_{\mathr
 \toprule
 ID & Size & Representative namespaces \\
 \midrule
-3 & $5{,}096$ & \texttt{\_root\_}, \texttt{Set}, \texttt{Nat} \\
-5 & $2{,}227$ & \texttt{Semiring}, \texttt{NonUnitalNonAssocSemiring}, \texttt{DFunLike} \\
-4 & $1{,}363$ & \texttt{Eq}, \module{CategoryTheory}, \module{CategoryTheory.Functor} \\
-0 & $1{,}041$ & \texttt{Real}, \texttt{Zero}, \texttt{Field} \\
-1 & $360$     & \texttt{DivInvMonoid}, \texttt{MulOne}, \texttt{MulOneClass} \\
+3 & $5{,}096$ & \ns{\_root\_}, \ns{Set}, \ns{Nat} \\
+5 & $2{,}227$ & \ns{Semiring}, \ns{NonUnitalNonAssocSemiring}, \ns{DFunLike} \\
+4 & $1{,}363$ & \ns{Eq}, \ns{CategoryTheory}, \ns{CategoryTheory.Functor} \\
+0 & $1{,}041$ & \ns{Real}, \ns{Zero}, \ns{Field} \\
+1 & $360$     & \ns{DivInvMonoid}, \ns{MulOne}, \ns{MulOneClass} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The namespace-level community structure differs markedly from the declaration-level structure (\S\ref{sec:thm-community}). At the declaration level, Louvain detection produces $22$ communities with modularity $0.48$ and NMI~$= 0.34$ against the top-level namespace hierarchy. At the namespace level, the number of communities is smaller ($10$ vs.\ $22$), the modularity is lower ($0.283$ vs.\ $0.48$), and the NMI with the top-level directory falls to~$0.253$ (Table~\ref{tab:ns-communities}).
 
-The lower modularity reflects the coarsening inherent in namespace aggregation. When thousands of declarations are collapsed into a single namespace node, the fine-grained community boundaries that Louvain detects at the declaration level are blurred. Edges between namespaces are weighted sums of many declaration-level edges, and the averaging effect smooths out the modular structure that exists at finer granularity. The largest community (ID~$3$, $5{,}096$ nodes) spans half the graph and lacks a coherent mathematical identity: its dominant members (\texttt{\_root\_}, \texttt{Set}, \texttt{Nat}) are foundational constructs used across all disciplines. This contrasts with the declaration-level communities, where the largest communities map onto recognizable mathematical disciplines (\S\ref{sec:thm-community}).
+The lower modularity reflects the coarsening inherent in namespace aggregation. When thousands of declarations are collapsed into a single namespace node, the fine-grained community boundaries that Louvain detects at the declaration level are blurred. Edges between namespaces are weighted sums of many declaration-level edges, and the averaging effect smooths out the modular structure that exists at finer granularity. The largest community (ID~$3$, $5{,}096$ nodes) spans half the graph and lacks a coherent mathematical identity: its dominant members (\ns{\_root\_}, \ns{Set}, \ns{Nat}) are foundational constructs used across all disciplines. This contrasts with the declaration-level communities, where the largest communities map onto recognizable mathematical disciplines (\S\ref{sec:thm-community}).
 
 \subsection{Robustness}
 \label{sec:ns-robustness}
@@ -206,7 +206,7 @@ $50\%$ & $0.477$ & $0.000$ & $0.477$ \\
 \end{tabular}
 \end{table}
 
-The pattern matches the classic scale-free vulnerability signature observed at both the module level (\S\ref{sec:robustness}) and the declaration level (\S\ref{sec:thm-robustness}): high resilience under random failure, extreme fragility under targeted attack (Table~\ref{tab:ns-robustness}). At $20\%$ targeted removal, the GCC collapses to $20.8\%$ of its original size---more severe than the declaration-level graph, where the same removal fraction leaves $46.1\%$ (\S\ref{sec:thm-robustness}). The namespace graph's greater fragility reflects the concentration of connectivity in the \texttt{\_root\_} super-node and a small number of infrastructure namespaces (Remark~\ref{rem:root-artifact}); once these are removed, the remaining mathematical namespaces fragment into isolated clusters with no shared foundation.
+The pattern matches the classic scale-free vulnerability signature observed at both the module level (\S\ref{sec:robustness}) and the declaration level (\S\ref{sec:thm-robustness}): high resilience under random failure, extreme fragility under targeted attack (Table~\ref{tab:ns-robustness}). At $20\%$ targeted removal, the GCC collapses to $20.8\%$ of its original size---more severe than the declaration-level graph, where the same removal fraction leaves $46.1\%$ (\S\ref{sec:thm-robustness}). The namespace graph's greater fragility reflects the concentration of connectivity in the \ns{\_root\_} super-node and a small number of infrastructure namespaces (Remark~\ref{rem:root-artifact}); once these are removed, the remaining mathematical namespaces fragment into isolated clusters with no shared foundation.
 
 \subsection{Analysis}
 \label{sec:ns-analysis}
@@ -219,9 +219,9 @@ The module-level containment decay (\S\ref{sec:module-containment}) tells a comp
 
 \paragraph{Structural interpolation.} The structural analysis of $G_{\mathrm{ns}}^{(2)}$ reveals properties that consistently interpolate between the module and declaration levels. Modularity ($0.283$) is lower than at the declaration level ($0.48$), and NMI with top-level directories ($0.253$) is lower than the declaration-level NMI ($0.34$). Both decreases reflect the coarsening effect of namespace aggregation: collapsing thousands of declarations into single nodes blurs the fine-grained community boundaries visible at the declaration level. Meanwhile, the two human organizational systems---naming and filing---agree with each other at NMI~$\approx 0.7$ (\S\ref{sec:ns-mod-cross}), far more than either agrees with the dependency-driven community structure. The namespace hierarchy and the file hierarchy are two correlated but non-identical projections of the same cognitive process; the dependency graph records a different, logically determined structure.
 
-Centrality analysis confirms the multidimensional taxonomy of importance identified in \S\ref{sec:centrality} and \S\ref{sec:thm-centrality}: PageRank and betweenness identify different structural roles at every granularity. At the namespace level, the separation is between mathematical infrastructure (PageRank: \texttt{Eq}, \texttt{Set}, \texttt{OfNat}) and logical bridges (betweenness: \texttt{And}, \texttt{Exists}, \texttt{Function}).
+Centrality analysis confirms the multidimensional taxonomy of importance identified in \S\ref{sec:centrality} and \S\ref{sec:thm-centrality}: PageRank and betweenness identify different structural roles at every granularity. At the namespace level, the separation is between mathematical infrastructure (PageRank: \ns{Eq}, \ns{Set}, \ns{OfNat}) and logical bridges (betweenness: \ns{And}, \ns{Exists}, \ns{Function}).
 
-\paragraph{The infrastructure bottleneck.} The namespace graph is more vulnerable to targeted attack than the declaration graph: $20\%$ targeted removal reduces the GCC to $20.8\%$, versus $46.1\%$ at the declaration level. This heightened fragility is a consequence of the \texttt{\_root\_} super-node (Remark~\ref{rem:root-artifact}), which concentrates a disproportionate share of connectivity. The namespace graph reveals, more starkly than the declaration graph, the structural dependence of formalized mathematics on a narrow foundation of shallow infrastructure.
+\paragraph{The infrastructure bottleneck.} The namespace graph is more vulnerable to targeted attack than the declaration graph: $20\%$ targeted removal reduces the GCC to $20.8\%$, versus $46.1\%$ at the declaration level. This heightened fragility is a consequence of the \ns{\_root\_} super-node (Remark~\ref{rem:root-artifact}), which concentrates a disproportionate share of connectivity. The namespace graph reveals, more starkly than the declaration graph, the structural dependence of formalized mathematics on a narrow foundation of shallow infrastructure.
 
 \begin{remark}
 \label{rem:import-vs-decl-cross}

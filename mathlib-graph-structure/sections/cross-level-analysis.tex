@@ -26,13 +26,13 @@ Unique modules (files)         & \multicolumn{2}{c}{$6{,}993$} \\
 NMI(namespace, module)         & $0.708$    & $0.766$ \\
 Single-file namespaces         & $50\%$     & $64\%$ \\
 Single-namespace files         & $58\%$     & $39\%$ \\
-Max files per namespace        & \multicolumn{2}{c}{$2{,}169$ (\texttt{\_root\_})} \\
+Max files per namespace        & \multicolumn{2}{c}{$2{,}169$ (\ns{\_root\_})} \\
 Max namespaces per file        & $31$       & $34$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-At depth~$1$, half of all namespaces appear in exactly one file---for these, naming and filing are perfectly aligned. But the tail is heavy: \module{CategoryTheory} spans $977$ files, and~$10\%$ of namespaces span more than $10$ files (Table~\ref{tab:ns-mod-cross}). In the reverse direction, $58\%$ of files contain declarations from only one namespace; the most namespace-diverse files are concentrated in topology: \module{Topology.Constructions} and \module{Topology.Separation.Basic} each host over $30$ depth-$1$ namespaces, reflecting their role as bridge files that simultaneously manipulate declarations from many conceptual domains.
+At depth~$1$, half of all namespaces appear in exactly one file---for these, naming and filing are perfectly aligned. But the tail is heavy: \ns{CategoryTheory} spans $977$ files, and~$10\%$ of namespaces span more than $10$ files (Table~\ref{tab:ns-mod-cross}). In the reverse direction, $58\%$ of files contain declarations from only one namespace; the most namespace-diverse files are concentrated in topology: \module{Topology.Constructions} and \module{Topology.Separation.Basic} each host over $30$ depth-$1$ namespaces, reflecting their role as bridge files that simultaneously manipulate declarations from many conceptual domains.
 
 The two directions of misalignment reflect distinct engineering pressures. When a namespace spans many files (namespace~$>$~module), a single conceptual domain has been partitioned into multiple compilation units---typically to manage build times. When a file contains many namespaces (module~$>$~namespace), related concepts from different naming domains have been gathered in one place for cognitive convenience. Both patterns are rational organizational decisions; they produce NMI~$\approx 0.7$ rather than~$1.0$ because the two pressures---compilation efficiency and cognitive proximity---do not always agree.
 
@@ -171,7 +171,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
   \draw[blue!50, semithick]
     (-0.2,2.37) -- (-0.5,2.37) -- (-0.5,5.09) -- (-0.2,5.09);
   \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
-    at (-0.75,3.73) {namespace \textnormal{\module{Data.Nat}}};
+    at (-0.75,3.73) {namespace \textnormal{\ns{Data.Nat}}};
 
   % ── Module import dots & arrows (blue = $G_{\mathrm{import}}$) ──
   \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (md) at (9.8, 4.88) {};
@@ -270,7 +270,7 @@ Section~\ref{sec:transitive-reduction} found $17.5\%$ of import edges transitive
 
 The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries. We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
 
-Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespace containment downward. At depth~$1$~(a), all five declarations share the namespace \texttt{Nat}, which spans both files; every dependency arrow is intra-namespace (solid). At depth~$2$~(b), \decl{Primrec.zero} separates into \texttt{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace (dashed). The file boundaries (\textcolor{blue!60!black}{blue}) are identical in both panels; only the namespace boundaries (\textcolor{green!40!black}{green}) change with~$k$.
+Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespace containment downward. At depth~$1$~(a), all five declarations share the namespace \ns{Nat}, which spans both files; every dependency arrow is intra-namespace (solid). At depth~$2$~(b), \decl{Primrec.zero} separates into \ns{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace (dashed). The file boundaries (\textcolor{blue!60!black}{blue}) are identical in both panels; only the namespace boundaries (\textcolor{green!40!black}{green}) change with~$k$.
 
 \begin{figure}[ht]
 \centering
@@ -306,7 +306,7 @@ Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespac
   \draw[green!50!black, rounded corners=3pt, thick, dashed]
     (0.0,-1.9) rectangle (6.7,1.4);
   \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
-    at (0.1,1.45) {$\mathrm{ns}_1$: Nat};
+    at (0.1,1.45) {$\mathrm{ns}_1$: \ns{Nat}};
 
   % ── Declarations ──
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
@@ -365,12 +365,12 @@ Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespac
   \draw[green!50!black, rounded corners=3pt, thick, dashed]
     (0.0,-0.3) rectangle (6.7,1.4);
   \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
-    at (0.1,1.45) {$\mathrm{ns}_2$: Nat};
+    at (0.1,1.45) {$\mathrm{ns}_2$: \ns{Nat}};
 
   \draw[green!50!black, rounded corners=2pt, thick, dashed]
     (0.0,-1.9) rectangle (2.7,-0.7);
   \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
-    at (0.1,-0.65) {$\mathrm{ns}_2$: Nat.Primrec};
+    at (0.1,-0.65) {$\mathrm{ns}_2$: \ns{Nat.Primrec}};
 
   % ── Declarations (same positions as panel a) ──
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
@@ -390,7 +390,7 @@ Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespac
   \draw[dep] (za) to[out=175,in=-5] (alc);
   \draw[depx] (prz) to[out=80,in=-90] (ac);
 \end{tikzpicture}
-\caption{Depth $k = 2$: \texttt{Nat.Primrec} separates. The same edge becomes cross-namespace (dashed).}
+\caption{Depth $k = 2$: \ns{Nat.Primrec} separates. The same edge becomes cross-namespace (dashed).}
 \label{fig:ns-depth2}
 \end{subfigure}
 
@@ -401,13 +401,13 @@ Figure~\ref{fig:ns-depth-grouping} visualizes the mechanism that drives namespac
 \textcolor{red!70!black}{$\longrightarrow$}~\textcolor{red!70!black}{dependency}
 \normalsize
 
-\caption{The same five declarations and four dependency edges under two namespace depths. \textcolor{blue!60!black}{Blue dashed boxes}: module (file) boundaries---fixed at both depths. \textcolor{green!40!black}{Green dashed boxes}: namespace boundaries---change with~$k$. \textcolor{red!70!black}{Red arrows}: dependencies (solid = intra-namespace; dashed = cross-namespace). At depth~$1$~(a), all five declarations share the namespace \texttt{Nat}, which spans both files; every edge is intra-namespace. At depth~$2$~(b), \decl{Primrec.zero} separates into \texttt{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace. The file boundaries do not change---only the namespace boundaries move, driving containment downward. All names have the \texttt{Nat.}\ prefix removed.}
+\caption{The same five declarations and four dependency edges under two namespace depths. \textcolor{blue!60!black}{Blue dashed boxes}: module (file) boundaries---fixed at both depths. \textcolor{green!40!black}{Green dashed boxes}: namespace boundaries---change with~$k$. \textcolor{red!70!black}{Red arrows}: dependencies (solid = intra-namespace; dashed = cross-namespace). At depth~$1$~(a), all five declarations share the namespace \ns{Nat}, which spans both files; every edge is intra-namespace. At depth~$2$~(b), \decl{Primrec.zero} separates into \ns{Nat.Primrec}; the arrow to \decl{add\_comm} becomes cross-namespace. The file boundaries do not change---only the namespace boundaries move, driving containment downward. All names have the \texttt{Nat.}\ prefix removed.}
 \label{fig:ns-depth-grouping}
 \end{figure}
 
 At depth~$1$, namespace containment is $22.2\%$: roughly one in five edges stays within the same depth-$1$ namespace. By depth~$2$, containment drops to $14.2\%$ and saturates near $12.6\%$ by depth~$3$ (Table~\ref{tab:containment-decay}). Module cohesion, the mean proportion of a module's edges that stay internal, is $0.107$---close to the file-level containment of $15.6\%$ reported in the same table.
 
-The comparison reveals a consistent ordering: namespace containment at depth~$1$ ($22.2\%$) exceeds file-level containment ($15.6\%$), which in turn exceeds module cohesion ($10.7\%$). Namespaces, as conceptual categories, retain slightly more dependency traffic than files---a naming domain like \texttt{Nat} captures more intra-group dependencies than the file \module{Data.Nat.Basic}, because the namespace spans multiple files and encloses a larger set of related declarations. But all three figures are far below~$50\%$: regardless of which human boundary one draws---naming hierarchy or file system---the majority of mathematical dependencies cross it.
+The comparison reveals a consistent ordering: namespace containment at depth~$1$ ($22.2\%$) exceeds file-level containment ($15.6\%$), which in turn exceeds module cohesion ($10.7\%$). Namespaces, as conceptual categories, retain slightly more dependency traffic than files---a naming domain like \ns{Nat} captures more intra-group dependencies than the file \module{Data.Nat.Basic}, because the namespace spans multiple files and encloses a larger set of related declarations. But all three figures are far below~$50\%$: regardless of which human boundary one draws---naming hierarchy or file system---the majority of mathematical dependencies cross it.
 
 \paragraph{Depth asymmetry.}
 \label{sec:depth-asymmetry}
@@ -457,7 +457,7 @@ Module vs.\ declaration          & Cohesion     & $0.107$ & Low: files $\neq$ lo
 
 Three findings emerge.
 
-\paragraph{Human coherence.} The NMI of~$0.71$ between namespaces and modules confirms that the two human organizational systems---naming and filing---largely agree. Developers who choose a file name and a namespace for a set of declarations are, in the majority of cases, making consistent decisions. The coherence is real but imperfect: $99.1\%$ of same-namespace declaration pairs reside in different files, because large namespaces like \module{CategoryTheory} are partitioned across hundreds of compilation units.
+\paragraph{Human coherence.} The NMI of~$0.71$ between namespaces and modules confirms that the two human organizational systems---naming and filing---largely agree. Developers who choose a file name and a namespace for a set of declarations are, in the majority of cases, making consistent decisions. The coherence is real but imperfect: $99.1\%$ of same-namespace declaration pairs reside in different files, because large namespaces like \ns{CategoryTheory} are partitioned across hundreds of compilation units.
 
 \paragraph{Human--logic divergence.} Every measure of alignment between human organization and logical structure is low. Namespace vs.\ Louvain community: NMI~$= 0.34$. Namespace containment at depth~$1$: $22.2\%$. Module cohesion: $0.107$. The logical communities discovered by Louvain decomposition (\S\ref{sec:thm-community}) bear only moderate resemblance to the naming hierarchy, and both module boundaries and namespace boundaries fail to contain more than a fraction of the dependency traffic. The problem is not that humans organize the library poorly---their internal consistency (NMI~$0.71$) is high---but that mathematical logic does not respect human cognitive categories.
 

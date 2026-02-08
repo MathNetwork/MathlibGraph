@@ -488,13 +488,13 @@ The modularity of $0.48$ indicates a moderately strong community structure---sig
 \toprule
 ID & Size & Theme & Top namespace(s) & Representatives \\
 \midrule
-0  & $63{,}763$ & Order / Sets / Filters & Set, Filter, Matroid & \decl{LE}, \decl{Set}, \decl{Iff.intro}, \decl{Zero} \\
-5  & $59{,}724$ & Category Theory & CategoryTheory (69\%) & \decl{CT.Category.mk}, \decl{Quiver}, \decl{CT.CategoryStruct} \\
-2  & $54{,}649$ & Algebra & LinearMap, Matrix, Module & \decl{outParam}, \decl{Zero.mk}, \decl{Semiring} \\
-1  & $49{,}739$ & Combinatorics / Discrete & List, Finset, SimpleGraph & \decl{OfNat.mk}, \decl{Eq.refl}, \decl{List.nil} \\
-11 & $38{,}245$ & Number Theory / Polynomials & Nat, Int, Polynomial & \decl{OfNat}, \decl{Mul}, \decl{Semiring.mk} \\
-7  & $37{,}368$ & Analysis / Probability & MeasureTheory, Real & \decl{Real}, \decl{MeasurableSpace} \\
-8  & $2{,}773$ & Model Theory / Set Theory & FirstOrder, SetTheory & \decl{FirstOrder.Language.mk} \\
+0  & $63{,}763$ & Order / Sets / Filters & \ns{Set}, \ns{Filter}, \ns{Matroid} & \decl{LE}, \decl{Set}, \decl{Iff.intro}, \decl{Zero} \\
+5  & $59{,}724$ & Category Theory & \ns{CategoryTheory} (69\%) & \decl{CT.Category.mk}, \decl{Quiver}, \decl{CT.CategoryStruct} \\
+2  & $54{,}649$ & Algebra & \ns{LinearMap}, \ns{Matrix}, \ns{Module} & \decl{outParam}, \decl{Zero.mk}, \decl{Semiring} \\
+1  & $49{,}739$ & Combinatorics / Discrete & \ns{List}, \ns{Finset}, \ns{SimpleGraph} & \decl{OfNat.mk}, \decl{Eq.refl}, \decl{List.nil} \\
+11 & $38{,}245$ & Number Theory / Polynomials & \ns{Nat}, \ns{Int}, \ns{Polynomial} & \decl{OfNat}, \decl{Mul}, \decl{Semiring.mk} \\
+7  & $37{,}368$ & Analysis / Probability & \ns{MeasureTheory}, \ns{Real} & \decl{Real}, \decl{MeasurableSpace} \\
+8  & $2{,}773$ & Model Theory / Set Theory & \ns{FirstOrder}, \ns{SetTheory} & \decl{FirstOrder.Language.mk} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -517,7 +517,7 @@ ARI & $0.1817$ & Weak-to-moderate agreement \\
 \end{tabular}
 \end{table}
 
-The moderate NMI and low ARI confirm that dependency topology and namespace organization are \emph{related but far from identical}. The most striking case is \module{CategoryTheory}: $97.4\%$ of its $42{,}094$ declarations fall into Community~$5$, and conversely, $68.7\%$ of Community~$5$ belongs to the \module{CategoryTheory} namespace. This near-perfect correspondence is unique among the major communities. By contrast, the largest community (Community~$0$, $63{,}763$ nodes) draws its largest namespace contribution from root-level declarations ($17.1\%$), followed by \module{Set} ($8.1\%$) and \module{MeasureTheory} ($4.6\%$)---no single namespace dominates.
+The moderate NMI and low ARI confirm that dependency topology and namespace organization are \emph{related but far from identical}. The most striking case is \ns{CategoryTheory}: $97.4\%$ of its $42{,}094$ declarations fall into Community~$5$, and conversely, $68.7\%$ of Community~$5$ belongs to the \ns{CategoryTheory} namespace. This near-perfect correspondence is unique among the major communities. By contrast, the largest community (Community~$0$, $63{,}763$ nodes) draws its largest namespace contribution from root-level declarations ($17.1\%$), followed by \ns{Set} ($8.1\%$) and \ns{MeasureTheory} ($4.6\%$)---no single namespace dominates.
 
 \begin{remark}
 \label{rem:nmi-tension}
@@ -529,7 +529,7 @@ The exceptional case of category theory deserves emphasis. Its near-complete com
 \subsection{Cross-Namespace Flow}
 \label{sec:thm-cross-namespace}
 
-We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' names. Here ``module'' is the source file containing the declaration, and ``namespace'' is the first component of its fully qualified name (e.g., the namespace of \decl{Nat.lt\_irrefl} is \module{Nat})---a declaration-name prefix, distinct from the directory-based $\mathrm{dir}(m)$ of \S\ref{sec:cross-namespace}.
+We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' names. Here ``module'' is the source file containing the declaration, and ``namespace'' is the first component of its fully qualified name (e.g., the namespace of \decl{Nat.lt\_irrefl} is \ns{Nat})---a declaration-name prefix, distinct from the directory-based $\mathrm{dir}(m)$ of \S\ref{sec:cross-namespace}.
 
 \begin{table}[ht]
 \centering
@@ -560,21 +560,21 @@ The comparison with the module-level cross-namespace rate is stark. In $G_{\math
 \toprule
 Namespace A & Namespace B & Edges \\
 \midrule
-AlgebraicGeometry  & CategoryTheory    & $38{,}042$ \\
-CategoryTheory     & Quiver            & $29{,}286$ \\
-CategoryTheory     & Eq                & $27{,}927$ \\
-CategoryTheory     & HomologicalComplex & $15{,}829$ \\
-MeasureTheory      & Real              & $15{,}668$ \\
-MeasureTheory      & Set               & $11{,}954$ \\
-MeasureTheory      & ProbabilityTheory & $11{,}734$ \\
-Eq                 & MeasureTheory     & $10{,}385$ \\
-Complex            & Real              & $10{,}370$ \\
-ENNReal            & MeasureTheory     & $10{,}302$ \\
+\ns{AlgebraicGeometry}  & \ns{CategoryTheory}    & $38{,}042$ \\
+\ns{CategoryTheory}     & \ns{Quiver}            & $29{,}286$ \\
+\ns{CategoryTheory}     & \ns{Eq}                & $27{,}927$ \\
+\ns{CategoryTheory}     & \ns{HomologicalComplex} & $15{,}829$ \\
+\ns{MeasureTheory}      & \ns{Real}              & $15{,}668$ \\
+\ns{MeasureTheory}      & \ns{Set}               & $11{,}954$ \\
+\ns{MeasureTheory}      & \ns{ProbabilityTheory} & $11{,}734$ \\
+\ns{Eq}                 & \ns{MeasureTheory}     & $10{,}385$ \\
+\ns{Complex}            & \ns{Real}              & $10{,}370$ \\
+\ns{ENNReal}            & \ns{MeasureTheory}     & $10{,}302$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The strongest cross-namespace coupling is \module{AlgebraicGeometry} $\leftrightarrow$ \module{CategoryTheory} ($38{,}042$ edges), reflecting algebraic geometry's fundamental dependence on categorical language---schemes, sheaves, and functors are inherently categorical constructions. The \module{MeasureTheory} $\leftrightarrow$ \module{Real} coupling ($15{,}668$ edges) represents the bridge between abstract measure theory and concrete analysis on $\mathbb{R}$. The presence of \module{Eq} as a namespace in multiple top pairs confirms the pervasive role of equality reasoning infrastructure across all mathematical domains.
+The strongest cross-namespace coupling is \ns{AlgebraicGeometry} $\leftrightarrow$ \ns{CategoryTheory} ($38{,}042$ edges), reflecting algebraic geometry's fundamental dependence on categorical language---schemes, sheaves, and functors are inherently categorical constructions. The \ns{MeasureTheory} $\leftrightarrow$ \ns{Real} coupling ($15{,}668$ edges) represents the bridge between abstract measure theory and concrete analysis on $\mathbb{R}$. The presence of \ns{Eq} as a namespace in multiple top pairs confirms the pervasive role of equality reasoning infrastructure across all mathematical domains.
 
 \subsection{Robustness}
 \label{sec:thm-robustness}
@@ -632,21 +632,21 @@ Of the $243{,}725$ theorems in $G_{\mathrm{thm}}$, $109{,}088$ ($44.8\%$) have i
 \cmidrule(lr){1-4} \cmidrule(lr){5-8}
 Namespace & Total & Zero & Rate & Namespace & Total & Zero & Rate \\
 \midrule
-AddEquiv           & $129$  & $119$ & $92.2\%$ & Primrec            & $133$ & $17$ & $12.8\%$ \\
-EMetric            & $192$  & $163$ & $84.9\%$ & AnalyticAt         & $102$ & $15$ & $14.7\%$ \\
-DomMulAct          & $105$  & $89$  & $84.8\%$ & AkraBazziRecurrence& $129$ & $21$ & $16.3\%$ \\
-Ordering           & $127$  & $105$ & $82.7\%$ & ContinuousWithinAt & $119$ & $20$ & $16.8\%$ \\
-LocallyConstant    & $113$  & $93$  & $82.3\%$ & HasFDerivWithinAt  & $120$ & $21$ & $17.5\%$ \\
-MulEquiv           & $243$  & $194$ & $79.8\%$ & ConvexOn           & $111$ & $20$ & $18.0\%$ \\
-AddSubgroup        & $111$  & $88$  & $79.3\%$ & LipschitzWith      & $113$ & $21$ & $18.6\%$ \\
-AddMonoidHom       & $138$  & $108$ & $78.3\%$ & DifferentiableAt   & $113$ & $21$ & $18.6\%$ \\
+\ns{AddEquiv}           & $129$  & $119$ & $92.2\%$ & \ns{Primrec}            & $133$ & $17$ & $12.8\%$ \\
+\ns{EMetric}            & $192$  & $163$ & $84.9\%$ & \ns{AnalyticAt}         & $102$ & $15$ & $14.7\%$ \\
+\ns{DomMulAct}          & $105$  & $89$  & $84.8\%$ & \ns{AkraBazziRecurrence}& $129$ & $21$ & $16.3\%$ \\
+\ns{Ordering}           & $127$  & $105$ & $82.7\%$ & \ns{ContinuousWithinAt} & $119$ & $20$ & $16.8\%$ \\
+\ns{LocallyConstant}    & $113$  & $93$  & $82.3\%$ & \ns{HasFDerivWithinAt}  & $120$ & $21$ & $17.5\%$ \\
+\ns{MulEquiv}           & $243$  & $194$ & $79.8\%$ & \ns{ConvexOn}           & $111$ & $20$ & $18.0\%$ \\
+\ns{AddSubgroup}        & $111$  & $88$  & $79.3\%$ & \ns{LipschitzWith}      & $113$ & $21$ & $18.6\%$ \\
+\ns{AddMonoidHom}       & $138$  & $108$ & $78.3\%$ & \ns{DifferentiableAt}   & $113$ & $21$ & $18.6\%$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The namespaces with the highest zero-citation rates---\module{AddEquiv} ($92.2\%$), \module{EMetric} ($84.9\%$), \module{MulEquiv} ($79.8\%$), \module{AddSubgroup} ($79.3\%$), \module{AddMonoidHom} ($78.3\%$)---share a common pattern: they are generated by the \texttt{@[to\_additive]} attribute, which systematically creates additive counterparts of multiplicative lemmas. These ``mirrored'' theorems exist for API completeness---ensuring that every statement about groups has an analogous statement about additive groups---but are rarely invoked directly in proof terms, because the original multiplicative version or a more general statement is typically preferred.
+The namespaces with the highest zero-citation rates---\ns{AddEquiv} ($92.2\%$), \ns{EMetric} ($84.9\%$), \ns{MulEquiv} ($79.8\%$), \ns{AddSubgroup} ($79.3\%$), \ns{AddMonoidHom} ($78.3\%$)---share a common pattern: they are generated by the \texttt{@[to\_additive]} attribute, which systematically creates additive counterparts of multiplicative lemmas. These ``mirrored'' theorems exist for API completeness---ensuring that every statement about groups has an analogous statement about additive groups---but are rarely invoked directly in proof terms, because the original multiplicative version or a more general statement is typically preferred.
 
-The namespaces with the lowest zero-citation rates tell a complementary story. \module{Primrec} ($12.8\%$), \module{AnalyticAt} ($14.7\%$), and the differentiation predicates (\module{HasFDerivWithinAt}, \module{DifferentiableAt}, \module{ContinuousWithinAt}) produce lemmas that are heavily reused as building blocks. These are the workbench tools of analysis and computability theory---nearly every theorem in these namespaces feeds into downstream proofs.
+The namespaces with the lowest zero-citation rates tell a complementary story. \ns{Primrec} ($12.8\%$), \ns{AnalyticAt} ($14.7\%$), and the differentiation predicates (\ns{HasFDerivWithinAt}, \ns{DifferentiableAt}, \ns{ContinuousWithinAt}) produce lemmas that are heavily reused as building blocks. These are the workbench tools of analysis and computability theory---nearly every theorem in these namespaces feeds into downstream proofs.
 
 \begin{remark}
 \label{rem:leaf-theorems}
@@ -666,7 +666,7 @@ The hub structure of $G_{\mathrm{thm}}$ decomposes into two layers that the impo
 
 \medskip
 \noindent\textit{2. Disciplinary autonomy as emergent community structure.}\\
-Louvain community detection recovers seven major mathematical disciplines from the dependency topology alone (Table~\ref{tab:thm-communities}), with a modularity of $0.48$. The alignment with namespace organization, however, is only moderate (NMI $= 0.34$, ARI $= 0.18$; Table~\ref{tab:thm-nmi}). Among the major namespaces, only \module{CategoryTheory} achieves near-complete community correspondence ($97.4\%$ concentration in a single community), suggesting that it is a genuinely autonomous mathematical discipline within \module{Mathlib}---self-contained in its dependency structure to a degree that no other branch achieves. All other communities are cross-namespace mixtures, confirming that the dependency topology discovers a structure related to, but distinct from, the human-imposed namespace hierarchy.
+Louvain community detection recovers seven major mathematical disciplines from the dependency topology alone (Table~\ref{tab:thm-communities}), with a modularity of $0.48$. The alignment with namespace organization, however, is only moderate (NMI $= 0.34$, ARI $= 0.18$; Table~\ref{tab:thm-nmi}). Among the major namespaces, only \ns{CategoryTheory} achieves near-complete community correspondence ($97.4\%$ concentration in a single community), suggesting that it is a genuinely autonomous mathematical discipline within \module{Mathlib}---self-contained in its dependency structure to a degree that no other branch achieves. All other communities are cross-namespace mixtures, confirming that the dependency topology discovers a structure related to, but distinct from, the human-imposed namespace hierarchy.
 
 \medskip
 \noindent\textit{3. The depth of cross-disciplinary entanglement.}\\
