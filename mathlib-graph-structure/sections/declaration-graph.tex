@@ -529,7 +529,7 @@ The exceptional case of category theory deserves emphasis. Its near-complete com
 \subsection{Cross-Namespace Flow}
 \label{sec:thm-cross-namespace}
 
-We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' names. Here ``module'' is the source file containing the declaration, and ``namespace'' is the first component of its fully qualified name (e.g., the namespace of \decl{Nat.lt\_irrefl} is \module{Nat})---a declaration-name prefix, distinct from the directory-based $\mathrm{ns}(m)$ of \S\ref{sec:cross-namespace} (see Remark~\ref{rem:ns-terminology}).
+We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' names. Here ``module'' is the source file containing the declaration, and ``namespace'' is the first component of its fully qualified name (e.g., the namespace of \decl{Nat.lt\_irrefl} is \module{Nat})---a declaration-name prefix, distinct from the directory-based $\mathrm{dir}(m)$ of \S\ref{sec:cross-namespace}.
 
 \begin{table}[ht]
 \centering
@@ -670,7 +670,7 @@ Louvain community detection recovers seven major mathematical disciplines from t
 
 \medskip
 \noindent\textit{3. The depth of cross-disciplinary entanglement.}\\
-The cross-namespace edge density of $G_{\mathrm{thm}}$ ($50.9\%$; Table~\ref{tab:thm-edge-breakdown}) far exceeds that of $G_{\mathrm{import}}^{-}$ ($37.1\%$; \S\ref{sec:cross-namespace}). This gap reveals that module-level analysis \emph{underestimates} the true extent of mathematical interdependence. Module boundaries bundle cross-namespace theorem dependencies into single intra-namespace import edges, creating an illusion of disciplinary containment that dissolves at finer granularity.
+The cross-namespace edge density of $G_{\mathrm{thm}}$ ($50.9\%$; Table~\ref{tab:thm-edge-breakdown}) far exceeds that of $G_{\mathrm{import}}^{-}$ ($37.1\%$; \S\ref{sec:cross-namespace}). This gap reveals that module-level analysis \emph{underestimates} the true extent of mathematical interdependence. Module boundaries bundle cross-namespace theorem dependencies into single intra-directory import edges, creating an illusion of disciplinary containment that dissolves at finer granularity.
 
 \medskip
 
