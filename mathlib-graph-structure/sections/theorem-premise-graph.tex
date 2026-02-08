@@ -13,22 +13,21 @@ The theorem--premise graph is constructed from two complementary data sources. T
 \paragraph{What is a premise?}
 When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Consider a simple example:
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
--- Tactic proof (what the mathematician writes):
-theorem Nat.succ_pos (n : Nat) : 0 < n + 1 :=
-  Nat.zero_lt_succ n
-
--- The proof term contains:
---   Nat.zero_lt_succ   (a named constant from the environment -> premise)
---   n                   (a local variable, bound by the theorem -> NOT a premise)
-\end{minted}
+\begin{codebox}
+\textit{\color{gray}-- Tactic proof (what the mathematician writes):}\\
+\textbf{theorem} \textcolor{red!70!black}{Nat.succ\_pos} (n : Nat) : 0 < n + 1 :=\\
+\hspace{1.5em}\textcolor{red!70!black}{Nat.zero\_lt\_succ} n\\[3pt]
+\textit{\color{gray}-- The proof term contains:}\\
+\textit{\color{gray}--\hspace{0.5em}Nat.zero\_lt\_succ\hspace{1em}(named constant from environment $\to$ premise)}\\
+\textit{\color{gray}--\hspace{0.5em}n\hspace{6.3em}(local variable, bound by theorem $\to$ NOT a premise)}
+\end{codebox}
 
 \noindent
-The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \texttt{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
+The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
 
 \begin{definition}[Theorem--premise graph]
 \label{def:thm-graph}
-The \emph{theorem--premise graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in Mathlib, and
+The \emph{theorem--premise graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
 \[
   E_{\mathrm{thm}} = \{(d_1, d_2) \in \mathcal{D} \times \mathcal{D} \mid d_2 \text{ appears as a premise in the proof term of } d_1\}.
 \]
@@ -40,9 +39,9 @@ The eight declaration kinds listed above are Lean~4's fundamental building block
 \paragraph{Theorem.}
 A proved mathematical statement. The kernel stores the proof term for verification but erases it at runtime. Lean also accepts the keyword \texttt{lemma}, which is stored identically as a \texttt{theorem} in the compiled environment; our dataset does not distinguish the two.
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-theorem Nat.add_comm (a b : Nat) : a + b = b + a := ...
-\end{minted}
+\begin{codebox}
+\textbf{theorem} \textcolor{red!70!black}{Nat.add\_comm} (a b : Nat) : a + b = b + a := \ldots
+\end{codebox}
 
 \noindent
 In~$G_{\mathrm{thm}}$, a theorem's \emph{out-edges} point to the premises invoked in its proof, while its \emph{in-edges} come from later theorems that cite it. Theorems constitute $79.1\%$ of all declarations.
@@ -50,90 +49,90 @@ In~$G_{\mathrm{thm}}$, a theorem's \emph{out-edges} point to the premises invoke
 \paragraph{Definition.}
 A computable function or constant whose body is retained at runtime. Definitions provide the computational content that theorems reason about.
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-def List.length : List a -> Nat
-  | [] => 0 | _ :: l => length l + 1
-\end{minted}
+\begin{codebox}
+\textbf{def} \textcolor{red!70!black}{List.length} : List a -> Nat\\
+\hspace{1.5em}| [] => 0 | \_ :: l => length l + 1
+\end{codebox}
 
 \noindent
-Because many theorems invoke the same core operations (e.g., \texttt{Set}, \texttt{Eq.mpr}), definitions tend to accumulate high in-degree.
+Because many theorems invoke the same core operations (e.g., \decl{Set}, \decl{Eq.mpr}), definitions tend to accumulate high in-degree.
 
 \paragraph{Abbreviation.}
 A definitionally transparent shorthand, declared with \texttt{abbrev}. The elaborator always unfolds abbreviations, so they act as notational glue---typically wrapping typeclass projections or operator notation.
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-abbrev OfNat.ofNat (n : Nat) [inst : OfNat a n] : a := inst.ofNat
-\end{minted}
+\begin{codebox}
+\textbf{abbrev} \textcolor{red!70!black}{OfNat.ofNat} (n : Nat) [inst : OfNat a n] : a := inst.ofNat
+\end{codebox}
 
 \noindent
-The most-cited node in the entire graph, \texttt{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it.
+The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it.
 
 \paragraph{Inductive.}
 The \texttt{inductive} keyword declares a new type by listing its introduction rules. The declaration itself becomes one node in $G_{\mathrm{thm}}$; each introduction rule becomes a separate \textbf{constructor} node (see below).
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-inductive Nat where
-  | zero : Nat
-  | succ (n : Nat) : Nat
-\end{minted}
+\begin{codebox}
+\textbf{inductive} \textcolor{red!70!black}{Nat} \textbf{where}\\
+\hspace{1.5em}| \textcolor{red!70!black}{zero} : Nat\\
+\hspace{1.5em}| \textcolor{red!70!black}{succ} (n : Nat) : Nat
+\end{codebox}
 
 \noindent
-Prominent inductive types in $G_{\mathrm{thm}}$ include \texttt{CategoryTheory.Category} (in-degree $44{,}487$), \texttt{Real} ($26{,}637$), and \texttt{Module} ($23{,}404$).
+Prominent inductive types in $G_{\mathrm{thm}}$ include \decl{CategoryTheory.Category} (in-degree $44{,}487$), \decl{Real} ($26{,}637$), and \decl{Module} ($23{,}404$).
 
 \paragraph{Constructor.}
-The introduction rules of an inductive type, auto-generated by the \texttt{inductive} declaration above. They are the \emph{only} way to build a value of the inductive type. For example, the declaration \texttt{inductive Nat} above produces two constructor declarations:
+The introduction rules of an inductive type, auto-generated by the \texttt{inductive} declaration above. They are the \emph{only} way to build a value of the inductive type. For example, the declaration \texttt{inductive} \decl{Nat} above produces two constructor declarations:
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-Nat.zero : Nat                    -- build zero
-Nat.succ : Nat -> Nat             -- build a successor
-\end{minted}
+\begin{codebox}
+\textcolor{red!70!black}{Nat.zero} : Nat\hfill\textit{\color{gray}-- build zero}\\
+\textcolor{red!70!black}{Nat.succ} : Nat -> Nat\hfill\textit{\color{gray}-- build a successor}
+\end{codebox}
 
 \noindent
-Similarly, the inductive type \texttt{Eq} (propositional equality) has a single constructor \texttt{Eq.refl}, which is the sole way to introduce an equality proof. With in-degree $69{,}580$, it is the most-cited constructor in $G_{\mathrm{thm}}$.
+Similarly, the inductive type \decl{Eq} (propositional equality) has a single constructor \decl{Eq.refl}, which is the sole way to introduce an equality proof. With in-degree $69{,}580$, it is the most-cited constructor in $G_{\mathrm{thm}}$.
 
 \paragraph{Opaque.}
 A definition whose body is sealed from the kernel: downstream proofs cannot unfold it. Opaques appear mainly in low-level system code such as floating-point arithmetic.
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-opaque Float.add : Float -> Float -> Float
-\end{minted}
+\begin{codebox}
+\textbf{opaque} \textcolor{red!70!black}{Float.add} : Float -> Float -> Float
+\end{codebox}
 
 \paragraph{Quotient.}
 Three kernel primitives that support quotient type constructions. Unlike all other declaration kinds, quotients are built into the Lean kernel rather than defined in library code:
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-Quot.mk   : (r : a -> a -> Prop) -> a -> Quot r
-Quot.lift  : (f : a -> b) -> ... -> Quot r -> b
-Quot.ind   : (p : Quot r -> Prop) -> ... -> (q : Quot r) -> p q
-\end{minted}
+\begin{codebox}
+\textcolor{red!70!black}{Quot.mk}\hspace{1.1em}: (r : a -> a -> Prop) -> a -> Quot r\\
+\textcolor{red!70!black}{Quot.lift}\hspace{0.3em}: (f : a -> b) -> \ldots\ -> Quot r -> b\\
+\textcolor{red!70!black}{Quot.ind}\hspace{0.6em}: (p : Quot r -> Prop) -> \ldots\ -> (q : Quot r) -> p q
+\end{codebox}
 
 \paragraph{Axiom.}
-A constant accepted without proof---the irreducible foundation. Mathlib uses exactly three axioms, on which all $308{,}129$ declarations ultimately rest:
+A constant accepted without proof---the irreducible foundation. \module{Mathlib} uses exactly three axioms, on which all $308{,}129$ declarations ultimately rest:
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-axiom propext : (a <-> b) -> a = b        -- propositional extensionality
-axiom Classical.choice : Nonempty a -> a   -- the axiom of choice
-axiom Quot.sound : r a b -> Quot.mk r a = Quot.mk r b
-\end{minted}
+\begin{codebox}
+\textbf{axiom} \textcolor{red!70!black}{propext} : (a <-> b) -> a = b\hfill\textit{\color{gray}-- propositional extensionality}\\
+\textbf{axiom} \textcolor{red!70!black}{Classical.choice} : Nonempty a -> a\hfill\textit{\color{gray}-- the axiom of choice}\\
+\textbf{axiom} \textcolor{red!70!black}{Quot.sound} : r a b -> Quot.mk r a = Quot.mk r b
+\end{codebox}
 
 \paragraph{Edge directionality.}
-Not all declaration kinds participate equally in $G_{\mathrm{thm}}$. An edge $(d_1, d_2)$ means that $d_1$'s proof or body \emph{cites} $d_2$; it does not imply an edge in the reverse direction. For example, the theorem \texttt{Nat.lt\_irrefl} proves the irreflexivity of strict ordering on natural numbers: no $n$ satisfies $n < n$.
+Not all declaration kinds participate equally in $G_{\mathrm{thm}}$. An edge $(d_1, d_2)$ means that $d_1$'s proof or body \emph{cites} $d_2$; it does not imply an edge in the reverse direction. For example, the theorem \decl{Nat.lt\_irrefl} proves the irreflexivity of strict ordering on natural numbers: no $n$ satisfies $n < n$.
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
--- Irreflexivity of < on natural numbers
-theorem Nat.lt_irrefl (n : Nat) : Not (n < n) :=
-  Nat.not_succ_le_self n
-\end{minted}
+\begin{codebox}
+\textit{\color{gray}-- Irreflexivity of < on natural numbers}\\
+\textbf{theorem} \textcolor{red!70!black}{Nat.lt\_irrefl} (n : Nat) : Not (n < n) :=\\
+\hspace{1.5em}\textcolor{red!70!black}{Nat.not\_succ\_le\_self} n
+\end{codebox}
 
 \noindent
-The proof invokes \texttt{Nat.not\_succ\_le\_self}, which establishes that $n + 1 \le n$ is impossible (since $<$ on \texttt{Nat} is defined as $a < b \iff a + 1 \le b$, the statement $n < n$ reduces to $n + 1 \le n$). The kernel also records two infrastructure premises: \texttt{LT.lt}, the abbreviation that provides the $<$~notation, and \texttt{instLTNat}, the typeclass instance that connects $<$ to \texttt{Nat}. This gives three edges:
+The proof invokes \decl{Nat.not\_succ\_le\_self}, which establishes that $n + 1 \le n$ is impossible (since $<$ on \decl{Nat} is defined as $a < b \iff a + 1 \le b$, the statement $n < n$ reduces to $n + 1 \le n$). The kernel also records two infrastructure premises: \decl{LT.lt}, the abbreviation that provides the $<$~notation, and \decl{instLTNat}, the typeclass instance that connects $<$ to \decl{Nat}. This gives three edges:
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\small\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin},
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, red!70!black},
 ]
   % Premises (cited) at top
   \node[dot, label={[align=center]above:{not\_succ\_le\_self\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}theorem}}}] (thm) at (-3.2,0) {};
@@ -141,11 +140,11 @@ The proof invokes \texttt{Nat.not\_succ\_le\_self}, which establishes that $n + 
   \node[dot, label={[align=center]above:{instLTNat\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}definition}}}]       (def) at (3.2,0) {};
   % Citing theorem at bottom
   \node[dot, label=below:{Nat.lt\_irrefl}] (t) at (0,-1.8) {};
-  \draw (t) -- (thm);
-  \draw (t) -- (ab);
-  \draw (t) -- (def);
+  \draw[dep] (t) -- (thm);
+  \draw[dep] (t) -- (ab);
+  \draw[dep] (t) -- (def);
 \end{tikzpicture}
-\caption{Premise edges for the theorem \texttt{Nat.lt\_irrefl}: the mathematical premise \texttt{not\_succ\_le\_self} (a theorem) and two infrastructure premises \texttt{LT.lt} (an abbreviation providing $<$ notation) and \texttt{instLTNat} (a typeclass instance). The edges are directed: none of the three premises cites \texttt{lt\_irrefl} in return.}
+\caption{Premise edges for the theorem \decl{Nat.lt\_irrefl}: the mathematical premise \decl{not\_succ\_le\_self} (a theorem) and two infrastructure premises \decl{LT.lt} (an abbreviation providing $<$ notation) and \decl{instLTNat} (a typeclass instance). The edges are directed: none of the three premises cites \decl{lt\_irrefl} in return.}
 \label{fig:thm-single-edge}
 \end{figure}
 
@@ -172,17 +171,17 @@ axiom/opaque/quotient &   & $1$k       &            &        & \\
 \end{table}
 
 \noindent
-Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing definitions and abbreviations---the computational and notational infrastructure on which proofs are built. Axioms and quotients are near-pure sinks: they receive citations but produce almost none (combined out-degree $= 3$). The graph is nearly acyclic; the only bidirectional edges ($4{,}713$ pairs) link inductive types to their own constructors (e.g., \texttt{Nat}~$\leftrightarrow$~\texttt{Nat.succ}), a structural artifact of how inductive definitions reference their introduction rules and vice versa.
+Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing definitions and abbreviations---the computational and notational infrastructure on which proofs are built. Axioms and quotients are near-pure sinks: they receive citations but produce almost none (combined out-degree $= 3$). The graph is nearly acyclic; the only bidirectional edges ($4{,}713$ pairs) link inductive types to their own constructors (e.g., \decl{Nat}~$\leftrightarrow$~\decl{Nat.succ}), a structural artifact of how inductive definitions reference their introduction rules and vice versa.
 
 \medskip
 \noindent
-The \texttt{Nat.lt\_irrefl} example above showed a single theorem's premises; we now turn to a \emph{pair} of theorems to illustrate how shared premises create the hub structure that dominates $G_{\mathrm{thm}}$. Consider \texttt{Nat.add\_left\_comm}, which proves $a + (b + c) = b + (a + c)$ for natural numbers. A tactic-level proof reads:
+The \decl{Nat.lt\_irrefl} example above showed a single theorem's premises; we now turn to a \emph{pair} of theorems to illustrate how shared premises create the hub structure that dominates $G_{\mathrm{thm}}$. Consider \decl{Nat.add\_left\_comm}, which proves $a + (b + c) = b + (a + c)$ for natural numbers. A tactic-level proof reads:
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-theorem Nat.add_left_comm (a b c : Nat) :
-    a + (b + c) = b + (a + c) := by
-  rw [← Nat.add_assoc, Nat.add_comm a b, Nat.add_assoc]
-\end{minted}
+\begin{codebox}
+\textbf{theorem} \textcolor{red!70!black}{Nat.add\_left\_comm} (a b c : Nat) :\\
+\hspace{2em}a + (b + c) = b + (a + c) := \textbf{by}\\
+\hspace{1.5em}rw [$\leftarrow$ \textcolor{red!70!black}{Nat.add\_assoc}, \textcolor{red!70!black}{Nat.add\_comm} a b, \textcolor{red!70!black}{Nat.add\_assoc}]
+\end{codebox}
 
 \noindent
 The \texttt{lean-training-data} tool extracts premises not from the tactic script but from the compiled \emph{proof term}. For this theorem, the extracted premises are:
@@ -191,24 +190,24 @@ The \texttt{lean-training-data} tool extracts premises not from the tactic scrip
 \begin{center}
 \small
 \begin{tabular}{ll}
-\textit{Mathematical premises:} & \texttt{Nat.add\_comm}, \texttt{Nat.add\_assoc} \\
-\textit{Equality infrastructure:} & \texttt{Eq.refl}, \texttt{Eq.symm}, \texttt{Eq.mpr} \\
-\textit{Typeclass instances:} & \texttt{instHAdd}, \texttt{HAdd.hAdd}, \texttt{instAddNat}
+\textit{Mathematical premises:} & \decl{Nat.add\_comm}, \decl{Nat.add\_assoc} \\
+\textit{Equality infrastructure:} & \decl{Eq.refl}, \decl{Eq.symm}, \decl{Eq.mpr} \\
+\textit{Typeclass instances:} & \decl{instHAdd}, \decl{HAdd.hAdd}, \decl{instAddNat}
 \end{tabular}
 \end{center}
 \smallskip
 
 \noindent
-The first two are the mathematical lemmas that the proof logically depends on. The remaining six are \emph{language infrastructure}: equality combinators that the kernel requires to compose rewriting steps, and typeclass instances that elaborate the \texttt{+}~notation into the concrete function \texttt{Nat.add}. Every edge in $E_{\mathrm{thm}}$ records one such dependency, so this single theorem contributes eight edges.
+The first two are the mathematical lemmas that the proof logically depends on. The remaining six are \emph{language infrastructure}: equality combinators that the kernel requires to compose rewriting steps, and typeclass instances that elaborate the \texttt{+}~notation into the concrete function \decl{Nat.add}. Every edge in $E_{\mathrm{thm}}$ records one such dependency, so this single theorem contributes eight edges.
 
-A closely related theorem, \texttt{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \texttt{Eq.refl}---a constructor with in-degree $69{,}580$---is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
+A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \decl{Eq.refl}---a constructor with in-degree $69{,}580$---is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\small\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin},
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, red!70!black},
 ]
   % Top row: shared premises (cited)
   \node[dot, label=above:{add\_comm}]  (ac) at (-3,0) {};
@@ -220,21 +219,21 @@ A closely related theorem, \texttt{Nat.add\_right\_comm} ($a + b + c = a + c + b
   \node[dot, label=below:{add\_right\_comm}] (arc) at (2.2,-2)  {};
 
   % Edges from add_left_comm
-  \draw (alc) -- (ac);
-  \draw (alc) -- (aa);
-  \draw (alc) -- (er);
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (alc) -- (aa);
+  \draw[dep] (alc) -- (er);
 
   % Edges from add_right_comm
-  \draw (arc) -- (ac);
-  \draw (arc) -- (aa);
-  \draw (arc) -- (er);
+  \draw[dep] (arc) -- (ac);
+  \draw[dep] (arc) -- (aa);
+  \draw[dep] (arc) -- (er);
 \end{tikzpicture}
-\caption{A fragment of $G_{\mathrm{thm}}$: the theorems \texttt{add\_left\_comm} and \texttt{add\_right\_comm} both cite the premises \texttt{add\_comm}, \texttt{add\_assoc}, and \texttt{Eq.refl}. Infrastructure premises (\texttt{instHAdd}, \texttt{Eq.symm}, etc.) are omitted for clarity. The shared node \texttt{Eq.refl} (in-degree $69{,}580$) exemplifies the hub phenomenon analyzed in \S\ref{sec:thm-degree}. All names have the \texttt{Nat.}\ prefix removed except \texttt{Eq.refl}.}
+\caption{A fragment of $G_{\mathrm{thm}}$: the theorems \decl{add\_left\_comm} and \decl{add\_right\_comm} both cite the premises \decl{add\_comm}, \decl{add\_assoc}, and \decl{Eq.refl}. Infrastructure premises (\decl{instHAdd}, \decl{Eq.symm}, etc.) are omitted for clarity. The shared node \decl{Eq.refl} (in-degree $69{,}580$) exemplifies the hub phenomenon analyzed in \S\ref{sec:thm-degree}. All names have the \texttt{Nat.}\ prefix removed except \decl{Eq.refl}.}
 \label{fig:thm-fragment}
 \end{figure}
 
 \begin{remark}
-The module \texttt{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{import}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{import}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{import}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
+The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{import}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{import}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{import}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
 \end{remark}
 
 At the commit analyzed, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. In comparison with the module-level import graph of \S\ref{sec:import-graph} ($|\mathcal{M}| = 7{,}563$ nodes, $|E_{\mathrm{import}}| = 23{,}570$ edges), the theorem--premise graph has roughly $40\times$ more nodes and $360\times$ more edges. The enormous increase in edge count reflects the fact that a single module import implicitly carries hundreds of individual premise dependencies; $G_{\mathrm{thm}}$ makes each of these dependencies explicit.
@@ -318,7 +317,7 @@ For out-degree, the picture is categorically different: \emph{every} alternative
 
 \begin{remark}
 \label{rem:thm-degree-asymmetry}
-This asymmetry has a structural explanation that connects directly to the central tension of the paper. In-degree measures how often a declaration is \emph{cited}---a cumulative, open-ended quantity determined by the logical structure of the completed library (the product). There is no upper bound: \texttt{OfNat.ofNat} can be cited by any proof that involves a numeral, and its in-degree ($89{,}936$) reflects a form of preferential attachment in which foundational declarations attract ever more dependents. Out-degree, by contrast, measures how many premises a single proof \emph{invokes}---a quantity bounded by the cognitive and logical complexity of that proof (the process). No human-written proof cites $90{,}000$ lemmas; the maximum out-degree of~$522$ reflects the practical ceiling of proof complexity. The in-degree distribution records the product; the out-degree distribution records the process.
+This asymmetry has a structural explanation that connects directly to the central tension of the paper. In-degree measures how often a declaration is \emph{cited}---a cumulative, open-ended quantity determined by the logical structure of the completed library (the product). There is no upper bound: \decl{OfNat.ofNat} can be cited by any proof that involves a numeral, and its in-degree ($89{,}936$) reflects a form of preferential attachment in which foundational declarations attract ever more dependents. Out-degree, by contrast, measures how many premises a single proof \emph{invokes}---a quantity bounded by the cognitive and logical complexity of that proof (the process). No human-written proof cites $90{,}000$ lemmas; the maximum out-degree of~$522$ reflects the practical ceiling of proof complexity. The in-degree distribution records the product; the out-degree distribution records the process.
 \end{remark}
 
 \begin{figure}[ht]
@@ -361,21 +360,21 @@ opaque      & $499$     & $0.5$     & $0$   & $21$       & $1.4$      & $3.9$ & 
 \end{tabular}
 \end{table}
 
-The pattern is systematic. Axioms sit at the absolute bottom of the dependency chain: they have the highest average in-degree ($7{,}823$) and near-zero out-degree. Among the three axioms, \texttt{propext} (propositional extensionality) accounts for $23{,}226$ incoming edges---it is invoked in roughly one out of every thirteen declarations. \texttt{Classical.choice} ($169$) and \texttt{Quot.sound} ($73$) are invoked far less frequently, suggesting that the vast majority of Mathlib's reasoning is constructive at the proof-term level, with classical logic concentrated in specific branches.
+The pattern is systematic. Axioms sit at the absolute bottom of the dependency chain: they have the highest average in-degree ($7{,}823$) and near-zero out-degree. Among the three axioms, \decl{propext} (propositional extensionality) accounts for $23{,}226$ incoming edges---it is invoked in roughly one out of every thirteen declarations. \decl{Classical.choice} ($169$) and \decl{Quot.sound} ($73$) are invoked far less frequently, suggesting that the vast majority of \module{Mathlib}'s reasoning is constructive at the proof-term level, with classical logic concentrated in specific branches.
 
-Inductive types have high in-degree (mean~$273$, median~$31$) and very low out-degree (mean~$4.1$). These are the structural skeletons of mathematics: type definitions that many theorems depend on but that themselves depend on little. Their in-degree top~$10$ reads as a catalogue of core mathematical concepts: \texttt{CategoryTheory.Category} ($44{,}487$), \texttt{Real} ($26{,}637$), \texttt{TopologicalSpace} ($25{,}310$), \texttt{CategoryTheory.Functor} ($24{,}295$), \texttt{Module} ($23{,}404$), \texttt{CommRing} ($20{,}837$).
+Inductive types have high in-degree (mean~$273$, median~$31$) and very low out-degree (mean~$4.1$). These are the structural skeletons of mathematics: type definitions that many theorems depend on but that themselves depend on little. Their in-degree top~$10$ reads as a catalogue of core mathematical concepts: \decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{TopologicalSpace} ($25{,}310$), \decl{CategoryTheory.Functor} ($24{,}295$), \decl{Module} ($23{,}404$), \decl{CommRing} ($20{,}837$).
 
-Theorems occupy the opposite pole: low in-degree (mean~$5.5$, median~$1$) and the highest out-degree (mean~$30.8$, max~$522$). Theorems are \emph{consumers} of dependencies, not providers. The few high-in-degree theorems are not deep mathematical results but equality reasoning lemmas: \texttt{Eq.trans} ($58{,}686$), \texttt{of\_eq\_true} ($48{,}801$), \texttt{congrFun'} ($45{,}516$), \texttt{Eq.symm} ($42{,}542$). These are workhorses of Lean's elaborator and tactic framework---proof infrastructure, not mathematical content.
+Theorems occupy the opposite pole: low in-degree (mean~$5.5$, median~$1$) and the highest out-degree (mean~$30.8$, max~$522$). Theorems are \emph{consumers} of dependencies, not providers. The few high-in-degree theorems are not deep mathematical results but equality reasoning lemmas: \decl{Eq.trans} ($58{,}686$), \decl{of\_eq\_true} ($48{,}801$), \decl{congrFun'} ($45{,}516$), \decl{Eq.symm} ($42{,}542$). These are workhorses of Lean's elaborator and tactic framework---proof infrastructure, not mathematical content.
 
-Abbreviations (\texttt{abbrev}) have the most extreme in-degree distribution among non-axiom types: mean~$438$, maximum~$89{,}936$ (\texttt{OfNat.ofNat}). These are type-class coercion paths that the elaborator inserts automatically during type-checking. Their high citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning.
+Abbreviations (\texttt{abbrev}) have the most extreme in-degree distribution among non-axiom types: mean~$438$, maximum~$89{,}936$ (\decl{OfNat.ofNat}). These are type-class coercion paths that the elaborator inserts automatically during type-checking. Their high citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning.
 
 \begin{remark}
 \label{rem:two-layers}
 The degree-by-kind analysis reveals that the hub structure of $G_{\mathrm{thm}}$ decomposes into two distinct infrastructure layers:
 \begin{enumerate}
-\item \textbf{Language infrastructure.} The highest-cited declarations---\texttt{OfNat.ofNat} ($89{,}936$), \texttt{Eq.refl} ($69{,}580$), \texttt{DFunLike.coe} ($65{,}437$), \texttt{Eq.mpr} ($62{,}942$)---are artifacts of Lean's type system: numeral coercions, equality constructors, function-like coercions. Their prominence is determined by the design of the proof assistant, not by the logical structure of mathematics. These nodes are invisible in $G_{\mathrm{import}}$ (which treats entire modules as atoms) and constitute the first layer of process-trace in the product.
+\item \textbf{Language infrastructure.} The highest-cited declarations---\decl{OfNat.ofNat} ($89{,}936$), \decl{Eq.refl} ($69{,}580$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.mpr} ($62{,}942$)---are artifacts of Lean's type system: numeral coercions, equality constructors, function-like coercions. Their prominence is determined by the design of the proof assistant, not by the logical structure of mathematics. These nodes are invisible in $G_{\mathrm{import}}$ (which treats entire modules as atoms) and constitute the first layer of process-trace in the product.
 
-\item \textbf{Mathematical infrastructure.} The highest-cited \emph{inductive types}---\texttt{CategoryTheory.Category}, \texttt{Real}, \texttt{TopologicalSpace}, \texttt{Module}, \texttt{CommRing}---are core mathematical concepts. Their prominence reflects the logical structure of the formalized mathematics itself: category theory, analysis, and algebra are genuinely foundational in the dependency sense. This layer is the product's own structure, free of proof-assistant artifacts.
+\item \textbf{Mathematical infrastructure.} The highest-cited \emph{inductive types}---\decl{CategoryTheory.Category}, \decl{Real}, \decl{TopologicalSpace}, \decl{Module}, \decl{CommRing}---are core mathematical concepts. Their prominence reflects the logical structure of the formalized mathematics itself: category theory, analysis, and algebra are genuinely foundational in the dependency sense. This layer is the product's own structure, free of proof-assistant artifacts.
 \end{enumerate}
 The import graph of \S\ref{sec:import-graph} conflates these two layers (a module contains both language infrastructure and mathematical content). The theorem--premise graph separates them, enabling the analyst to distinguish what belongs to mathematics from what belongs to its medium of expression.
 \end{remark}
@@ -385,7 +384,7 @@ The import graph of \S\ref{sec:import-graph} conflates these two layers (a modul
 
 In Lean~4 source code, developers choose between \texttt{theorem} and \texttt{lemma} to declare propositions. While the kernel treats both identically---\texttt{lemma} is syntactic sugar for \texttt{theorem}---the choice carries cognitive significance: \texttt{theorem} typically marks a major result, while \texttt{lemma} signals an auxiliary stepping stone. Our extraction pipeline records both as kind \texttt{theorem}, erasing this distinction.
 
-To recover it, we parsed the Mathlib source code, tracking \texttt{namespace} blocks to reconstruct fully qualified names, and cross-referenced with~$G_{\mathrm{thm}}$. Of the $251{,}642$ propositions in the graph, $175{,}567$ ($69.8\%$) were matched to a source declaration: $129{,}444$ marked \texttt{theorem} and $46{,}123$ marked \texttt{lemma}.
+To recover it, we parsed the \module{Mathlib} source code, tracking \texttt{namespace} blocks to reconstruct fully qualified names, and cross-referenced with~$G_{\mathrm{thm}}$. Of the $251{,}642$ propositions in the graph, $175{,}567$ ($69.8\%$) were matched to a source declaration: $129{,}444$ marked \texttt{theorem} and $46{,}123$ marked \texttt{lemma}.
 
 \begin{table}[ht]
 \centering
@@ -406,7 +405,7 @@ All three metrics confirm that human importance judgments are validated by the l
 
 \begin{remark}[Misjudged importance]
 \label{rem:misjudged}
-The alignment is imperfect. Among the notable outliers: \texttt{funext} (function extensionality) is marked \texttt{lemma} in source code but has in-degree $15{,}574$, making it one of the most cited propositions in Mathlib. Conversely, $48{,}177$ declarations marked \texttt{theorem}---over a third of all matched theorems---have zero citations. The former represents underestimation of structural importance by the author; the latter represents overestimation, or more precisely, the distinction between importance as a mathematical result (worthy of the name ``theorem'') and importance as a dependency hub (actually reused by other proofs). In the language of our framework, the theorem/lemma distinction is a trace of the process---a record of the author's cognitive judgment at the time of writing---that the product partially but not fully corroborates.
+The alignment is imperfect. Among the notable outliers: \decl{funext} (function extensionality) is marked \texttt{lemma} in source code but has in-degree $15{,}574$, making it one of the most cited propositions in \module{Mathlib}. Conversely, $48{,}177$ declarations marked \texttt{theorem}---over a third of all matched theorems---have zero citations. The former represents underestimation of structural importance by the author; the latter represents overestimation, or more precisely, the distinction between importance as a mathematical result (worthy of the name ``theorem'') and importance as a dependency hub (actually reused by other proofs). In the language of our framework, the theorem/lemma distinction is a trace of the process---a record of the author's cognitive judgment at the time of writing---that the product partially but not fully corroborates.
 \end{remark}
 
 \subsection{Centrality and the Taxonomy of Importance}
@@ -444,17 +443,17 @@ $48{,}295$ & PO.toPreorder     & $.0084$ & LE.mk              & $.000155$ & inst
 
 \medskip
 
-The three columns of Table~\ref{tab:thm-centrality} have almost no overlap, and each tells a different story about the structure of Mathlib.
+The three columns of Table~\ref{tab:thm-centrality} have almost no overlap, and each tells a different story about the structure of \module{Mathlib}.
 
-\emph{In-degree} is dominated by language infrastructure. The top entries---\texttt{OfNat.ofNat}, \texttt{Eq.refl}, \texttt{DFunLike.coe}, \texttt{Membership.mem}, \texttt{Eq.mpr}---are type-class coercions and equality constructors that the elaborator inserts into virtually every proof term. Their prominence reflects the design of Lean~4, not the structure of mathematics. This contrasts with the module-level in-degree ranking (Table~\ref{tab:centrality}), where the top entry (\texttt{Mathlib.Init}) is a file that every module must import; the underlying mechanism---implicit foundational dependency---is analogous, but the theorem level reveals the specific \emph{declarations} responsible.
+\emph{In-degree} is dominated by language infrastructure. The top entries---\decl{OfNat.ofNat}, \decl{Eq.refl}, \decl{DFunLike.coe}, \decl{Membership.mem}, \decl{Eq.mpr}---are type-class coercions and equality constructors that the elaborator inserts into virtually every proof term. Their prominence reflects the design of Lean~4, not the structure of mathematics. This contrasts with the module-level in-degree ranking (Table~\ref{tab:centrality}), where the top entry (\module{Mathlib.Init}) is a file that every module must import; the underlying mechanism---implicit foundational dependency---is analogous, but the theorem level reveals the specific \emph{declarations} responsible.
 
-\emph{PageRank} promotes a different set of nodes: the constructors and types of category theory (\texttt{CategoryTheory.Category.mk}, \texttt{Quiver}, \texttt{Quiver.mk}) and core algebraic infrastructure (\texttt{OfNat}, \texttt{LE}, \texttt{Zero}). The key divergence from in-degree is \texttt{CategoryTheory.Category.mk}: it ranks first in PageRank but does not appear in the in-degree top~$20$. Its PageRank reflects not its direct citation count but the fact that the entire $59{,}724$-node category theory subgraph depends on it transitively. PageRank captures \emph{recursive} importance---it identifies the foundations on which large, internally coherent subgraphs rest.
+\emph{PageRank} promotes a different set of nodes: the constructors and types of category theory (\decl{CategoryTheory.Category.mk}, \decl{Quiver}, \decl{Quiver.mk}) and core algebraic infrastructure (\decl{OfNat}, \decl{LE}, \decl{Zero}). The key divergence from in-degree is \decl{CategoryTheory.Category.mk}: it ranks first in PageRank but does not appear in the in-degree top~$20$. Its PageRank reflects not its direct citation count but the fact that the entire $59{,}724$-node category theory subgraph depends on it transitively. PageRank captures \emph{recursive} importance---it identifies the foundations on which large, internally coherent subgraphs rest.
 
-\emph{Betweenness centrality} reveals a third, entirely disjoint set of structurally critical declarations. The top entries---\texttt{Real}, \texttt{Real.ofCauchy}, \texttt{Rat.linearOrder}, \texttt{Real.pi}, \texttt{Real.exists\_cos\_eq\_zero}---trace the construction chain of the real numbers. These nodes sit at the narrow passage connecting the algebraic world (rational numbers, ordered rings, number fields) to the analytic world (measure theory, complex analysis, probability). \texttt{Real.pi} occupies rank~$4$ because $\pi$'s definition threads through number theory, trigonometry, and analysis, making it a crossroads of multiple mathematical disciplines. Only $34{,}564$ of $308{,}129$ nodes ($11.2\%$) have nonzero betweenness, confirming that shortest paths through $G_{\mathrm{thm}}$ are concentrated through a small number of critical bridges.
+\emph{Betweenness centrality} reveals a third, entirely disjoint set of structurally critical declarations. The top entries---\decl{Real}, \decl{Real.ofCauchy}, \decl{Rat.linearOrder}, \decl{Real.pi}, \decl{Real.exists\_cos\_eq\_zero}---trace the construction chain of the real numbers. These nodes sit at the narrow passage connecting the algebraic world (rational numbers, ordered rings, number fields) to the analytic world (measure theory, complex analysis, probability). \decl{Real.pi} occupies rank~$4$ because $\pi$'s definition threads through number theory, trigonometry, and analysis, making it a crossroads of multiple mathematical disciplines. Only $34{,}564$ of $308{,}129$ nodes ($11.2\%$) have nonzero betweenness, confirming that shortest paths through $G_{\mathrm{thm}}$ are concentrated through a small number of critical bridges.
 
 \begin{remark}
 \label{rem:thm-centrality-vs-module}
-The three-way divergence of centrality measures observed at the module level (\S\ref{sec:centrality}) intensifies at the theorem level: no declaration appears in all three top-$10$ lists of Table~\ref{tab:thm-centrality}. The taxonomy of importance proposed in \S\ref{sec:module_conclusion}---\emph{vocabulary} (in-degree), \emph{axiomatic core} (PageRank), \emph{structural bridges} (betweenness)---receives sharper instantiation here. At the module level, the centrality rankings are partially confounded by file-organization artifacts (e.g., \texttt{Mathlib.Init} ranks high in all three measures simply because it is imported by every file). At the theorem level, these artifacts are stripped away, and the three measures separate cleanly into language infrastructure (in-degree), mathematical foundations (PageRank), and inter-disciplinary bridges (betweenness).
+The three-way divergence of centrality measures observed at the module level (\S\ref{sec:centrality}) intensifies at the theorem level: no declaration appears in all three top-$10$ lists of Table~\ref{tab:thm-centrality}. The taxonomy of importance proposed in \S\ref{sec:module_conclusion}---\emph{vocabulary} (in-degree), \emph{axiomatic core} (PageRank), \emph{structural bridges} (betweenness)---receives sharper instantiation here. At the module level, the centrality rankings are partially confounded by file-organization artifacts (e.g., \module{Mathlib.Init} ranks high in all three measures simply because it is imported by every file). At the theorem level, these artifacts are stripped away, and the three measures separate cleanly into language infrastructure (in-degree), mathematical foundations (PageRank), and inter-disciplinary bridges (betweenness).
 \end{remark}
 
 \subsection{Community Structure and the Autonomy of Mathematical Disciplines}
@@ -485,17 +484,17 @@ The modularity of $0.48$ indicates a moderately strong community structure---sig
 \caption{The seven major communities of $G_{\mathrm{thm}}$ (Louvain, $> 1{,}000$ nodes), with size, dominant mathematical theme, and top representatives by PageRank.}
 \label{tab:thm-communities}
 \small
-\begin{tabular}{rrllp{5.5cm}}
+\begin{tabular}{rrllp{4cm}}
 \toprule
 ID & Size & Theme & Top namespace(s) & Representatives \\
 \midrule
-0  & $63{,}763$ & Order / Sets / Filters & Set, Filter, Matroid & \texttt{LE}, \texttt{Set}, \texttt{Iff.intro}, \texttt{Zero} \\
-5  & $59{,}724$ & Category Theory & CategoryTheory (69\%) & \texttt{CT.Category.mk}, \texttt{Quiver}, \texttt{CT.CategoryStruct} \\
-2  & $54{,}649$ & Algebra & LinearMap, Matrix, Module & \texttt{outParam}, \texttt{Zero.mk}, \texttt{Semiring} \\
-1  & $49{,}739$ & Combinatorics / Discrete & List, Finset, SimpleGraph & \texttt{OfNat.mk}, \texttt{Eq.refl}, \texttt{List.nil} \\
-11 & $38{,}245$ & Number Theory / Polynomials & Nat, Int, Polynomial & \texttt{OfNat}, \texttt{Mul}, \texttt{Semiring.mk} \\
-7  & $37{,}368$ & Analysis / Probability & MeasureTheory, Real & \texttt{Real}, \texttt{MeasurableSpace} \\
-8  & $2{,}773$ & Model Theory / Set Theory & FirstOrder, SetTheory & \texttt{FirstOrder.Language.mk} \\
+0  & $63{,}763$ & Order / Sets / Filters & Set, Filter, Matroid & \decl{LE}, \decl{Set}, \decl{Iff.intro}, \decl{Zero} \\
+5  & $59{,}724$ & Category Theory & CategoryTheory (69\%) & \decl{CT.Category.mk}, \decl{Quiver}, \decl{CT.CategoryStruct} \\
+2  & $54{,}649$ & Algebra & LinearMap, Matrix, Module & \decl{outParam}, \decl{Zero.mk}, \decl{Semiring} \\
+1  & $49{,}739$ & Combinatorics / Discrete & List, Finset, SimpleGraph & \decl{OfNat.mk}, \decl{Eq.refl}, \decl{List.nil} \\
+11 & $38{,}245$ & Number Theory / Polynomials & Nat, Int, Polynomial & \decl{OfNat}, \decl{Mul}, \decl{Semiring.mk} \\
+7  & $37{,}368$ & Analysis / Probability & MeasureTheory, Real & \decl{Real}, \decl{MeasurableSpace} \\
+8  & $2{,}773$ & Model Theory / Set Theory & FirstOrder, SetTheory & \decl{FirstOrder.Language.mk} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -518,13 +517,13 @@ ARI & $0.1817$ & Weak-to-moderate agreement \\
 \end{tabular}
 \end{table}
 
-The moderate NMI and low ARI confirm that dependency topology and namespace organization are \emph{related but far from identical}. The most striking case is \texttt{CategoryTheory}: $97.4\%$ of its $42{,}094$ declarations fall into Community~$5$, and conversely, $68.7\%$ of Community~$5$ belongs to the \texttt{CategoryTheory} namespace. This near-perfect correspondence is unique among the major communities. By contrast, the largest community (Community~$0$, $63{,}763$ nodes) draws its largest namespace contribution from root-level declarations ($17.1\%$), followed by \texttt{Set} ($8.1\%$) and \texttt{MeasureTheory} ($4.6\%$)---no single namespace dominates.
+The moderate NMI and low ARI confirm that dependency topology and namespace organization are \emph{related but far from identical}. The most striking case is \module{CategoryTheory}: $97.4\%$ of its $42{,}094$ declarations fall into Community~$5$, and conversely, $68.7\%$ of Community~$5$ belongs to the \module{CategoryTheory} namespace. This near-perfect correspondence is unique among the major communities. By contrast, the largest community (Community~$0$, $63{,}763$ nodes) draws its largest namespace contribution from root-level declarations ($17.1\%$), followed by \module{Set} ($8.1\%$) and \module{MeasureTheory} ($4.6\%$)---no single namespace dominates.
 
 \begin{remark}
 \label{rem:nmi-tension}
 The NMI of $0.34$ provides a theorem-level metric for the tension between the namespace tree $T$ and the logical dependency graph $G$, extending the cross-namespace analysis of \S\ref{sec:cross-namespace}. At the module level, $37.1\%$ of reduced import edges cross namespace boundaries; at the theorem level, the NMI of $0.34$ quantifies the same phenomenon from a complementary angle---the dependency-based community structure aligns only moderately with the human-imposed namespace hierarchy. These two measures converge on the same conclusion: cognitive classification and logical structure are correlated but distinct, and the gap between them widens as granularity increases.
 
-The exceptional case of category theory deserves emphasis. Its near-complete community--namespace alignment ($97.4\%$) suggests that category theory is not merely a namespace convention but a genuinely \emph{autonomous} mathematical discipline within Mathlib---its internal dependency structure is dense enough to form a self-contained community with minimal need for external foundations beyond the shared core. No other major namespace achieves this degree of self-containment.
+The exceptional case of category theory deserves emphasis. Its near-complete community--namespace alignment ($97.4\%$) suggests that category theory is not merely a namespace convention but a genuinely \emph{autonomous} mathematical discipline within \module{Mathlib}---its internal dependency structure is dense enough to form a self-contained community with minimal need for external foundations beyond the shared core. No other major namespace achieves this degree of self-containment.
 \end{remark}
 
 \subsection{Cross-Namespace Flow}
@@ -548,7 +547,7 @@ Missing module info            & $2{,}522{,}533$ & $29.9\%$ \\
 \end{tabular}
 \end{table}
 
-Only $9.6\%$ of edges remain within the same module file, and another $9.6\%$ cross module boundaries while staying within the same top-level namespace. The majority---$50.9\%$---cross namespace boundaries entirely. The $29.9\%$ ``missing'' category corresponds to declarations in the root namespace (lacking a module prefix), which predominantly involve core Lean infrastructure (\texttt{Eq}, \texttt{Iff}, \texttt{OfNat}, etc.).\footnote{If root-level declarations are treated as their own pseudo-namespace, this category would further increase the cross-namespace fraction, since root infrastructure is cited by declarations across all namespaces.}
+Only $9.6\%$ of edges remain within the same module file, and another $9.6\%$ cross module boundaries while staying within the same top-level namespace. The majority---$50.9\%$---cross namespace boundaries entirely. The $29.9\%$ ``missing'' category corresponds to declarations in the root namespace (lacking a module prefix), which predominantly involve core Lean infrastructure (\decl{Eq}, \decl{Iff}, \decl{OfNat}, etc.).\footnote{If root-level declarations are treated as their own pseudo-namespace, this category would further increase the cross-namespace fraction, since root infrastructure is cited by declarations across all namespaces.}
 
 The comparison with the module-level cross-namespace rate is stark. In $G_{\mathrm{import}}^{-}$, $62.9\%$ of edges stay within the same namespace (\S\ref{sec:cross-namespace}); in $G_{\mathrm{thm}}$, at most $19.2\%$ do ($9.6\% + 9.6\%$). This threefold increase in cross-namespace density arises because module imports package many individual dependencies into a single edge: a module that imports another module within the same namespace may, at the theorem level, depend on hundreds of declarations from \emph{other} namespaces that were transitively imported. The module boundary acts as a cognitive container that conceals the true extent of cross-disciplinary dependency.
 
@@ -575,14 +574,14 @@ ENNReal            & MeasureTheory     & $10{,}302$ \\
 \end{tabular}
 \end{table}
 
-The strongest cross-namespace coupling is \texttt{AlgebraicGeometry} $\leftrightarrow$ \texttt{CategoryTheory} ($38{,}042$ edges), reflecting algebraic geometry's fundamental dependence on categorical language---schemes, sheaves, and functors are inherently categorical constructions. The \texttt{MeasureTheory} $\leftrightarrow$ \texttt{Real} coupling ($15{,}668$ edges) represents the bridge between abstract measure theory and concrete analysis on $\mathbb{R}$. The presence of \texttt{Eq} as a namespace in multiple top pairs confirms the pervasive role of equality reasoning infrastructure across all mathematical domains.
+The strongest cross-namespace coupling is \module{AlgebraicGeometry} $\leftrightarrow$ \module{CategoryTheory} ($38{,}042$ edges), reflecting algebraic geometry's fundamental dependence on categorical language---schemes, sheaves, and functors are inherently categorical constructions. The \module{MeasureTheory} $\leftrightarrow$ \module{Real} coupling ($15{,}668$ edges) represents the bridge between abstract measure theory and concrete analysis on $\mathbb{R}$. The presence of \module{Eq} as a namespace in multiple top pairs confirms the pervasive role of equality reasoning infrastructure across all mathematical domains.
 
 \subsection{Robustness}
 \label{sec:thm-robustness}
 
 We assess the resilience of $G_{\mathrm{thm}}$ under two node-removal strategies: random removal and targeted removal in order of decreasing PageRank.
 
-\paragraph{Single-node removal.} Removing any one of the top-$30$ PageRank nodes has negligible impact on connectivity. The largest effect is the removal of \texttt{Eq.refl}, which disconnects exactly $6$ of $308{,}054$ nodes from the giant component ($0.002\%$). No single declaration is a critical point of failure. This contrasts with the module-level finding (Table~\ref{tab:robustness}), where removing the top-$5$ modules fragments $G_{\mathrm{import}}$ into $29$ components. The difference arises because module-level removal is coarser: removing a module removes all declarations it contains, severing many edges simultaneously. At the theorem level, each declaration is individually expendable.
+\paragraph{Single-node removal.} Removing any one of the top-$30$ PageRank nodes has negligible impact on connectivity. The largest effect is the removal of \decl{Eq.refl}, which disconnects exactly $6$ of $308{,}054$ nodes from the giant component ($0.002\%$). No single declaration is a critical point of failure. This contrasts with the module-level finding (Table~\ref{tab:robustness}), where removing the top-$5$ modules fragments $G_{\mathrm{import}}$ into $29$ components. The difference arises because module-level removal is coarser: removing a module removes all declarations it contains, severing many edges simultaneously. At the theorem level, each declaration is individually expendable.
 
 \paragraph{Progressive removal.} Under progressive node removal, the asymmetry between random and targeted attack becomes apparent.
 
@@ -614,7 +613,7 @@ Under random removal, the giant component shrinks almost linearly---removing $20
 
 \begin{remark}
 \label{rem:thm-robustness-redundancy}
-The extreme resilience to single-node removal at the theorem level---no single declaration is a critical bridge---has a deeper explanation than mere edge density. It reflects the inherent \emph{logical redundancy} of mathematical proof. The same lemma is typically reachable through multiple independent proof paths: \texttt{Eq.refl} can be circumvented via \texttt{rfl}, \texttt{Eq.mpr}, or tactic-generated proof terms; a group-theoretic fact can be accessed through the group axioms or through the ring axioms that subsume them. This redundancy is not engineered (unlike the module-level redundancy of umbrella imports discussed in \S\ref{sec:transitive-reduction}); it is an intrinsic property of mathematical logic. The product carries its own structural insurance.
+The extreme resilience to single-node removal at the theorem level---no single declaration is a critical bridge---has a deeper explanation than mere edge density. It reflects the inherent \emph{logical redundancy} of mathematical proof. The same lemma is typically reachable through multiple independent proof paths: \decl{Eq.refl} can be circumvented via \texttt{rfl}, \decl{Eq.mpr}, or tactic-generated proof terms; a group-theoretic fact can be accessed through the group axioms or through the ring axioms that subsume them. This redundancy is not engineered (unlike the module-level redundancy of umbrella imports discussed in \S\ref{sec:transitive-reduction}); it is an intrinsic property of mathematical logic. The product carries its own structural insurance.
 \end{remark}
 
 \subsection{The Leaf Theorem Phenomenon}
@@ -645,13 +644,13 @@ AddMonoidHom       & $138$  & $108$ & $78.3\%$ & DifferentiableAt   & $113$ & $2
 \end{tabular}
 \end{table}
 
-The namespaces with the highest zero-citation rates---\texttt{AddEquiv} ($92.2\%$), \texttt{EMetric} ($84.9\%$), \texttt{MulEquiv} ($79.8\%$), \texttt{AddSubgroup} ($79.3\%$), \texttt{AddMonoidHom} ($78.3\%$)---share a common pattern: they are generated by the \texttt{@[to\_additive]} attribute, which systematically creates additive counterparts of multiplicative lemmas. These ``mirrored'' theorems exist for API completeness---ensuring that every statement about groups has an analogous statement about additive groups---but are rarely invoked directly in proof terms, because the original multiplicative version or a more general statement is typically preferred.
+The namespaces with the highest zero-citation rates---\module{AddEquiv} ($92.2\%$), \module{EMetric} ($84.9\%$), \module{MulEquiv} ($79.8\%$), \module{AddSubgroup} ($79.3\%$), \module{AddMonoidHom} ($78.3\%$)---share a common pattern: they are generated by the \texttt{@[to\_additive]} attribute, which systematically creates additive counterparts of multiplicative lemmas. These ``mirrored'' theorems exist for API completeness---ensuring that every statement about groups has an analogous statement about additive groups---but are rarely invoked directly in proof terms, because the original multiplicative version or a more general statement is typically preferred.
 
-The namespaces with the lowest zero-citation rates tell a complementary story. \texttt{Primrec} ($12.8\%$), \texttt{AnalyticAt} ($14.7\%$), and the differentiation predicates (\texttt{HasFDerivWithinAt}, \texttt{DifferentiableAt}, \texttt{ContinuousWithinAt}) produce lemmas that are heavily reused as building blocks. These are the workbench tools of analysis and computability theory---nearly every theorem in these namespaces feeds into downstream proofs.
+The namespaces with the lowest zero-citation rates tell a complementary story. \module{Primrec} ($12.8\%$), \module{AnalyticAt} ($14.7\%$), and the differentiation predicates (\module{HasFDerivWithinAt}, \module{DifferentiableAt}, \module{ContinuousWithinAt}) produce lemmas that are heavily reused as building blocks. These are the workbench tools of analysis and computability theory---nearly every theorem in these namespaces feeds into downstream proofs.
 
 \begin{remark}
 \label{rem:leaf-theorems}
-The $44.8\%$ zero-citation rate means that nearly half of all theorems in $G_{\mathrm{thm}}$ are leaves. These leaves constitute the \emph{API surface} of Mathlib---the interface through which the library's knowledge is consumed by external users (mathematicians applying results, AI systems selecting premises, downstream projects building on Mathlib). Their existence is not waste but function: a library that formalized only internally-reused lemmas would be useless to its consumers.
+The $44.8\%$ zero-citation rate means that nearly half of all theorems in $G_{\mathrm{thm}}$ are leaves. These leaves constitute the \emph{API surface} of \module{Mathlib}---the interface through which the library's knowledge is consumed by external users (mathematicians applying results, AI systems selecting premises, downstream projects building on Mathlib). Their existence is not waste but function: a library that formalized only internally-reused lemmas would be useless to its consumers.
 
 The dichotomy between high-zero-rate namespaces (systematically generated mirrored API) and low-zero-rate namespaces (hand-crafted building blocks) reveals a second process-trace in the product. The \texttt{@[to\_additive]} machinery leaves a distinctive structural fingerprint---entire subtrees of leaf theorems that inflate the graph's surface area without deepening its logical content. This automation artifact is invisible at the module level (a module contains both original and mirrored theorems) but becomes visible at the theorem level, where individual declarations can be classified by their provenance.
 \end{remark}
@@ -663,11 +662,11 @@ The theorem--premise graph $G_{\mathrm{thm}}$ is a more faithful record of mathe
 
 \medskip
 \noindent\textit{1. The double infrastructure.}\\
-The hub structure of $G_{\mathrm{thm}}$ decomposes into two layers that the import graph conflates: a \emph{language infrastructure} layer (\texttt{OfNat.ofNat}, \texttt{Eq.refl}, \texttt{DFunLike.coe}) determined by Lean's type system, and a \emph{mathematical infrastructure} layer (\texttt{CategoryTheory.Category}, \texttt{Real}, \texttt{TopologicalSpace}) determined by the logical structure of formalized mathematics (Remark~\ref{rem:two-layers}). This separation is invisible at the module level, where both layers cohabit the same source files. The language layer is a trace of the process---the specific proof assistant chosen---embedded in the product.
+The hub structure of $G_{\mathrm{thm}}$ decomposes into two layers that the import graph conflates: a \emph{language infrastructure} layer (\decl{OfNat.ofNat}, \decl{Eq.refl}, \decl{DFunLike.coe}) determined by Lean's type system, and a \emph{mathematical infrastructure} layer (\decl{CategoryTheory.Category}, \decl{Real}, \decl{TopologicalSpace}) determined by the logical structure of formalized mathematics (Remark~\ref{rem:two-layers}). This separation is invisible at the module level, where both layers cohabit the same source files. The language layer is a trace of the process---the specific proof assistant chosen---embedded in the product.
 
 \medskip
 \noindent\textit{2. Disciplinary autonomy as emergent community structure.}\\
-Louvain community detection recovers seven major mathematical disciplines from the dependency topology alone (Table~\ref{tab:thm-communities}), with a modularity of $0.48$. The alignment with namespace organization, however, is only moderate (NMI $= 0.34$, ARI $= 0.18$; Table~\ref{tab:thm-nmi}). Among the major namespaces, only \texttt{CategoryTheory} achieves near-complete community correspondence ($97.4\%$ concentration in a single community), suggesting that it is a genuinely autonomous mathematical discipline within Mathlib---self-contained in its dependency structure to a degree that no other branch achieves. All other communities are cross-namespace mixtures, confirming that the dependency topology discovers a structure related to, but distinct from, the human-imposed namespace hierarchy.
+Louvain community detection recovers seven major mathematical disciplines from the dependency topology alone (Table~\ref{tab:thm-communities}), with a modularity of $0.48$. The alignment with namespace organization, however, is only moderate (NMI $= 0.34$, ARI $= 0.18$; Table~\ref{tab:thm-nmi}). Among the major namespaces, only \module{CategoryTheory} achieves near-complete community correspondence ($97.4\%$ concentration in a single community), suggesting that it is a genuinely autonomous mathematical discipline within \module{Mathlib}---self-contained in its dependency structure to a degree that no other branch achieves. All other communities are cross-namespace mixtures, confirming that the dependency topology discovers a structure related to, but distinct from, the human-imposed namespace hierarchy.
 
 \medskip
 \noindent\textit{3. The depth of cross-disciplinary entanglement.}\\
@@ -697,3 +696,5 @@ Zero-citation nodes          & $1{,}433$ sources  & $109{,}088$ leaf theorems ($
 \end{table}
 
 We close by connecting these findings to the central tension of the paper. The theorem--premise graph is a more direct projection of the logical product than the import graph: its hubs, communities, and cross-namespace flows are less contaminated by file-organization conventions. Yet even at this finer resolution, the process leaves indelible traces in the product. The language infrastructure layer (Remark~\ref{rem:two-layers}) records the design choices of Lean's type system---a different proof assistant would produce a different in-degree ranking, even for the same mathematics. The $44.8\%$ leaf theorem rate (Remark~\ref{rem:leaf-theorems}) includes a substantial fraction of \texttt{@[to\_additive]} mirrors---a process-level automation that inflates the graph's surface without deepening its logical content. The out-degree distribution's lognormal shape (Remark~\ref{rem:thm-degree-asymmetry}) encodes a cognitive constraint: the bounded complexity of proofs that humans can construct or that tactics can synthesize. Even in the most product-like graph we have analyzed, the process is not erased; it is encoded.
+
+For AI premise selection systems, the two-layer hub structure suggests a practical preprocessing step: filtering language-infrastructure premises (which carry no mathematical content) from training data may improve the signal-to-noise ratio. The theorem/lemma distinction, recoverable from source code (\S\ref{sec:thm-vs-lemma}), provides an additional human-annotated importance signal that could inform premise ranking.

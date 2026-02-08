@@ -1,29 +1,29 @@
 \section{Module-Level Graph Structures}
 
-We begin with the coarsest level of analysis: module-level structures. Two graphs on the same vertex set $\mathcal{M}$ (the set of all Mathlib modules) capture complementary aspects of the library's organization. The \emph{namespace tree} $T$ (\S\ref{sec:module-names}--\S\ref{sec:namespace-tree}) inherits the cognitive classification that mathematicians have long applied to their subject. The \emph{import graph} $G_{\mathrm{import}}$ (\S\ref{sec:import-graph}) records the logical dependencies enforced by the compiler. Throughout this section, $T$ serves as the cognitive baseline against which we measure the structure of $G_{\mathrm{import}}$.
+We begin with the coarsest level of analysis: module-level structures. Two graphs on the same vertex set $\mathcal{M}$ (the set of all \module{Mathlib} modules) capture complementary aspects of the library's organization. The \emph{namespace tree} $T$ (\S\ref{sec:module-names}--\S\ref{sec:namespace-tree}) inherits the cognitive classification that mathematicians have long applied to their subject. The \emph{import graph} $G_{\mathrm{import}}$ (\S\ref{sec:import-graph}) records the logical dependencies enforced by the compiler. Throughout this section, $T$ serves as the cognitive baseline against which we measure the structure of $G_{\mathrm{import}}$.
 
 \subsection{Module Names}
 \label{sec:module-names}
-A \emph{module name} in Mathlib is a dot-separated sequence of identifiers, such as
+A \emph{module name} in \module{Mathlib} is a dot-separated sequence of identifiers, such as
 \[
-  \texttt{Mathlib.Algebra.Group.Defs}.
+  \module{Mathlib.Algebra.Group.Defs}.
 \]
-Each module name corresponds to a \texttt{.lean} source file, with dots replacing path separators. We write $\mathcal{M}$ for the set of all module names in Mathlib:
+Each module name corresponds to a \texttt{.lean} source file, with dots replacing path separators. We write $\mathcal{M}$ for the set of all module names in \module{Mathlib}:
 \begin{align*}
-  \mathcal{M} = \{\; &\texttt{Mathlib.Init},\\
-    &\texttt{Mathlib.Algebra.Group.Defs},\\
-    &\texttt{Mathlib.Analysis.Normed.Group.Basic},\; \ldots\,\}.
+  \mathcal{M} = \{\; &\module{Mathlib.Init},\\
+    &\module{Mathlib.Algebra.Group.Defs},\\
+    &\module{Mathlib.Analysis.Normed.Group.Basic},\; \ldots\,\}.
 \end{align*}
-All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the Mathlib repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. The \emph{depth} of a module is the number of dot-separated components. Formally, if a module name is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
+All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. The \emph{depth} of a module is the number of dot-separated components. Formally, if a module name is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
 
 \begin{example}
 \leavevmode
 \begin{itemize}
-  \item $\texttt{Mathlib}$ has depth~$1$.
-  \item $\texttt{Mathlib.Algebra}$ has depth~$2$.
-  \item $\texttt{Mathlib.Algebra.Group.Defs}$ has depth~$4$.
+  \item $\module{Mathlib}$ has depth~$1$.
+  \item $\module{Mathlib.Algebra}$ has depth~$2$.
+  \item $\module{Mathlib.Algebra.Group.Defs}$ has depth~$4$.
 \end{itemize}
-The maximum depth in Mathlib is~$7$.\footnote{Attained by, e.g., \texttt{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
+The maximum depth in \module{Mathlib} is~$7$.\footnote{Attained by, e.g., \module{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
 \end{example}
 
 We recall the standard graph-theoretic notions used throughout this paper. A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \emph{vertex set}) and $E \subseteq V \times V$ (called the \emph{edge set}). A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \le i < k$. The \emph{length} of the path is~$k$.
@@ -77,9 +77,9 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
 \begin{subfigure}[t]{0.52\textwidth}
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin},
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
 ]
   \node[dot, label=above:{Mathlib}]              (root) at (1.8,0) {};
   \node[dot, label=left:{Algebra}]               (alg)  at (0,-1.3) {};
@@ -88,54 +88,52 @@ Module names are organized hierarchically: each dot-separated name mirrors a pat
   \node[dot, label=right:{Data.Nat}]             (nat)  at (3.6,-2.6) {};
   \node[dot, label=below:{Algebra.Group.Defs}]   (gd)   at (0,-3.9) {};
   \node[dot, label=below:{Data.Nat.Notation}]    (nn)   at (3.6,-3.9) {};
-  \draw (root) -- (alg);
-  \draw (root) -- (dat);
-  \draw (alg)  -- (grp);
-  \draw (dat)  -- (nat);
-  \draw (grp)  -- (gd);
-  \draw (nat)  -- (nn);
+  \draw[dep] (root) -- (alg);
+  \draw[dep] (root) -- (dat);
+  \draw[dep] (alg)  -- (grp);
+  \draw[dep] (dat)  -- (nat);
+  \draw[dep] (grp)  -- (gd);
+  \draw[dep] (nat)  -- (nn);
   \node[font=\scriptsize, text=gray] at (1.8,-1.3) {$\cdots$};
 \end{tikzpicture}
-\caption{Namespace tree $T$: each edge $\in E_T$}
+\caption{Namespace tree $T$: arrows point parent $\to$ child ($\in E_T$)}
 \label{fig:namespace-tree}
 \end{subfigure}
-\caption{A fragment of the Mathlib source tree (commit \texttt{534cf0b}). Left: the directory layout. Right: the corresponding rooted tree~$T$. Each directory path maps to a module name with dots replacing separators, e.g., \texttt{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} $\leftrightarrow$ \texttt{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
+\caption{A fragment of the \module{Mathlib} source tree (commit \texttt{534cf0b}). Left: the directory layout. Right: the corresponding rooted tree~$T$. Each directory path maps to a module name with dots replacing separators, e.g., \module{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} $\leftrightarrow$ \module{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
 \label{fig:prefix-tree}
 \end{figure}
 
-We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, $\texttt{Mathlib.Algebra}$ is a prefix of $\texttt{Mathlib.Algebra.Group.Defs}$.
+We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, \module{Mathlib.Algebra} is a prefix of \module{Mathlib.Algebra.Group.Defs}.
 
-The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\texttt{Mathlib}$, which we call the \emph{namespace tree}, where
+The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\module{Mathlib}$, which we call the \emph{namespace tree}, where
 \[
   E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
 \]
 
-The top-level directories (children of the root) include \texttt{Algebra} (1257 files), \texttt{CategoryTheory} (982 files), \texttt{Analysis} (755 files), etc.
+The top-level directories (children of the root) include \module{Algebra} (1257 files), \module{CategoryTheory} (982 files), \module{Analysis} (755 files), etc.
 
 \subsection{The Import Graph}
 \label{sec:import-graph}
 
-Each Lean source file begins with \texttt{import} statements that declare its dependencies. For example, the file \texttt{Mathlib/Data/Nat/Notation.lean} contains:
+Each Lean source file begins with \texttt{import} statements that declare its dependencies. For example, the file \module{Mathlib/Data/Nat/Notation.lean} contains:
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-module
-
-public import Mathlib.Init
-\end{minted}
+\begin{codebox}
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Init}
+\end{codebox}
 
 \noindent
-This file depends on exactly one other module: \texttt{Mathlib.Init}.
+This file depends on exactly one other module: \module{Mathlib.Init}.
 
-A file with more dependencies is \texttt{Mathlib/Algebra/Group/Defs.lean}, which imports nine modules (shown here in abbreviated form):
+A file with more dependencies is \module{Mathlib/Algebra/Group/Defs.lean}, which imports nine modules (shown here in abbreviated form):
 
-\begin{minted}[frame=single,fontsize=\small,breaklines,bgcolor=gray!5]{lean4}
-module
-
-public import Batteries.Logic
-public import Mathlib.Algebra.Notation.Defs
-public import Mathlib.Algebra.Regular.Defs
-  -- ... 6 more imports
-\end{minted}
+\begin{codebox}
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Batteries.Logic}\\
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Algebra.Notation.Defs}\\
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Algebra.Regular.Defs}\\
+\hspace{1.5em}\textit{\color{gray}-- \ldots\ 6 more imports}
+\end{codebox}
 
 \noindent
 Each file is a \emph{vertex} in the import graph; each \texttt{import} statement is a directed \emph{edge} from the importing module to the imported module.
@@ -145,26 +143,26 @@ Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-e
 For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
 
 \begin{definition}[Import graph]
-The \emph{import graph} of Mathlib is $G_{\mathrm{import}} = (\mathcal{M}, E_{\mathrm{import}})$ where
+The \emph{import graph} of \module{Mathlib} is $G_{\mathrm{import}} = (\mathcal{M}, E_{\mathrm{import}})$ where
 \[
   E_{\mathrm{import}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
 \]
 \end{definition}
 
-Since \texttt{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mathlib.Init}, we have the edge $(\texttt{Data.Nat.Notation},\; \texttt{Init}) \in E_{\mathrm{import}}$:
+Since \module{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mathlib.Init}, we have the edge $(\module{Data.Nat.Notation},\; \module{Init}) \in E_{\mathrm{import}}$:
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\small\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin},
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
 ]
   \node[dot, label=above:{Init}]              (b) at (0,0) {};
   \node[dot, label=above:{Data.Nat.Notation}] (a) at (4,0) {};
-  \draw (a) -- (b);
+  \draw[dep] (a) -- (b);
 \end{tikzpicture}
-\caption{The simplest import edge: \texttt{Data.Nat.Notation} imports \texttt{Init}. All names have the \texttt{Mathlib.}\ prefix removed.}
+\caption{The simplest import edge: \module{Data.Nat.Notation} imports \module{Init}. The arrow points from the importing module to the imported module. All names have the \module{Mathlib.}\ prefix removed.}
 \label{fig:single-import-edge}
 \end{figure}
 
@@ -172,26 +170,26 @@ Since \texttt{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mat
 The namespace tree $T$ and the import graph $G_{\mathrm{import}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its namespace parent; in $G_{\mathrm{import}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the namespace hierarchy.
 \end{remark}
 
-The contrast between these two structures is conceptually significant. The namespace tree $T$ encodes a \emph{cognitive} organization of mathematics: its top-level directories---\texttt{Algebra}, \texttt{Analysis}, \texttt{Topology}---reflect a classification that mathematicians established long before formalization. The import graph $G_{\mathrm{import}}$, by contrast, encodes \emph{logical} dependencies that need not respect this classification. The extent to which $G_{\mathrm{import}}$ deviates from $T$---edges that cross namespace boundaries, dependencies that link distant branches of the tree---reveals the internal structure of mathematics that no human taxonomy fully captures.
+The contrast between these two structures is conceptually significant. The namespace tree $T$ encodes a \emph{cognitive} organization of mathematics: its top-level directories---\module{Algebra}, \module{Analysis}, \module{Topology}---reflect a classification that mathematicians established long before formalization. The import graph $G_{\mathrm{import}}$, by contrast, encodes \emph{logical} dependencies that need not respect this classification. The extent to which $G_{\mathrm{import}}$ deviates from $T$---edges that cross namespace boundaries, dependencies that link distant branches of the tree---reveals the internal structure of mathematics that no human taxonomy fully captures.
 
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\small\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin},
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
 ]
   \node[dot, label=above:{Init}]                (d) at (0,0) {};
   \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.5,-1.5) {};
   \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.5,-1.5) {};
   \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-3) {};
 
-  \draw (a) -- (b);
-  \draw (a) -- (c);
-  \draw (b) -- (d);
-  \draw (c) -- (d);
+  \draw[dep] (a) -- (b);
+  \draw[dep] (a) -- (c);
+  \draw[dep] (b) -- (d);
+  \draw[dep] (c) -- (d);
 \end{tikzpicture}
-\caption{A fragment of $G_{\mathrm{import}}$: \texttt{Algebra.Group.Defs} imports two modules that both depend on \texttt{Init}, forming a diamond. All names have the \texttt{Mathlib.}\ prefix removed.}
+\caption{A fragment of $G_{\mathrm{import}}$: \module{Algebra.Group.Defs} imports two modules that both depend on \module{Init}, forming a diamond. All names have the \module{Mathlib.}\ prefix removed.}
 \label{fig:import-subgraph}
 \end{figure}
 
@@ -215,20 +213,21 @@ The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}
 \centering
 \vspace{0pt}
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=1pt},
-  dot/.style={circle, fill=black, minimum size=3pt, inner sep=0pt},
-  >=Stealth, every edge/.style={draw, ->, thin},
+  every node/.style={font=\scriptsize\ttfamily, inner sep=1pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+  redundant/.style={->, >=Stealth, teal, dashed, thick},
 ]
   \node[dot, label=above:{Init}]                (d) at (0,0) {};
   \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.2,-1.2) {};
   \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.2,-1.2) {};
   \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-2.4) {};
 
-  \draw (a) -- (b);
-  \draw (a) -- (c);
-  \draw (b) -- (d);
-  \draw (c) -- (d);
-  \draw[red, dashed, thick] (a) -- (d);
+  \draw[dep] (a) -- (b);
+  \draw[dep] (a) -- (c);
+  \draw[dep] (b) -- (d);
+  \draw[dep] (c) -- (d);
+  \draw[redundant] (a) -- (d);
 \end{tikzpicture}
 \caption{Subgraph of $G_{\mathrm{import}}$}
 \label{fig:tr-graph}
@@ -238,26 +237,26 @@ The \emph{transitive reduction} of $G_{\mathrm{import}}$ is $G_{\mathrm{import}}
 \vspace{0pt}\raggedleft
 \scriptsize\ttfamily
 \begin{tabular}[t]{@{}l@{}}
-  \textnormal{\sffamily\bfseries Data/Int/Notation.lean} \\[1pt]
-  \hspace{1em}public import Init \\[6pt]
-  \textnormal{\sffamily\bfseries Data/Nat/Notation.lean} \\[1pt]
-  \hspace{1em}public import Init \\[6pt]
-  \textnormal{\sffamily\bfseries Algebra/Group/Defs.lean} \\[1pt]
-  \hspace{1em}public import Data.Int.Notation \\
-  \hspace{1em}public import Data.Nat.Notation \\
-  \hspace{1em}\textcolor{red}{public import Init}
-    \textnormal{\sffamily\color{red} $\leftarrow$ would be redundant} \\
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Data/Int/Notation.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Init} \\[6pt]
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Data/Nat/Notation.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Init} \\[6pt]
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Algebra/Group/Defs.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Data.Int.Notation} \\
+  \hspace{1em}public import \textcolor{blue!60!black}{Data.Nat.Notation} \\
+  \hspace{1em}\textcolor{teal}{public import \textcolor{blue!60!black}{Init}}
+    \textnormal{\sffamily\color{teal} $\leftarrow$ would be redundant} \\
 \end{tabular}
 \caption{Source file headers}
 \label{fig:tr-source}
 \end{subfigure}
-\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \texttt{Algebra.Group.Defs} were to import \texttt{Init} directly (dashed red edge), that edge would be transitively redundant: \texttt{Init} is already reachable via both \texttt{Data.Int.Notation} and \texttt{Data.Nat.Notation}. All names have the \texttt{Mathlib.}\ prefix removed.}
+\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \module{Algebra.Group.Defs} were to import \module{Init} directly (dashed teal edge), that edge would be transitively redundant: \module{Init} is already reachable via both \module{Data.Int.Notation} and \module{Data.Nat.Notation}. All names have the \module{Mathlib.}\ prefix removed.}
 \label{fig:transitive-reduction}
 \end{figure}
 
 The raw import graph has $|E_{\mathrm{import}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{import}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. These redundant edges are not accidents of careless coding. Developers deliberately import umbrella modules---such as importing all of group theory rather than a single lemma---to maintain a navigable mental model of the library. The redundancy reflects a cognitive need: the gap between what the compiler requires and what the human reader requires to understand a file's mathematical context.
 
-The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \texttt{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \texttt{Mathlib} to its direct children.
+The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \module{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \module{Mathlib} to its direct children.
 
 \subsection{Structural Analysis}
 \label{sec:structural-analysis}
@@ -304,7 +303,7 @@ Max    & $167$  & $315$  & $151$  & $70$   \\
 \end{tabular}
 \end{table}
 
-The module with the highest in-degree in both graphs is \texttt{Mathlib.Init} ($\deg^{-} = 167$ in $G_{\mathrm{import}}$, $151$ in $G_{\mathrm{import}}^{-}$), the foundational module that most files depend on. Other high in-degree modules include \texttt{Tactic.Common} ($74$), \texttt{Analysis.Normed.Group.Basic} ($57$), and \texttt{Algebra.Ring.Defs} ($42$). The highest out-degree belongs to \texttt{Mathlib.Tactic} ($315$ in $G_{\mathrm{import}}$), which serves as an umbrella file aggregating tactic imports; transitive reduction reduces this to~$60$.
+The module with the highest in-degree in both graphs is \module{Mathlib.Init} ($\deg^{-} = 167$ in $G_{\mathrm{import}}$, $151$ in $G_{\mathrm{import}}^{-}$), the foundational module that most files depend on. Other high in-degree modules include \module{Tactic.Common} ($74$), \module{Analysis.Normed.Group.Basic} ($57$), and \module{Algebra.Ring.Defs} ($42$). The highest out-degree belongs to \module{Mathlib.Tactic} ($315$ in $G_{\mathrm{import}}$), which serves as an umbrella file aggregating tactic imports; transitive reduction reduces this to~$60$.
 
 We plot the degree distributions on logarithmic axes (log--log scale). Let $P(k)$ denote the fraction of modules whose degree equals~$k$. In many real-world networks, the degree distribution approximately follows a power law $P(k) \propto k^{-\gamma}$ for some exponent $\gamma > 1$, meaning that most nodes have few connections while a small number of hubs have very many. On a log--log plot, a perfect power law appears as a straight line with slope~$-\gamma$; deviations from linearity reveal departures from this idealization. The logarithmic scale compresses the long tail, making it possible to visualize both the bulk of low-degree modules and the rare high-degree hubs in a single plot---on a linear scale, the hubs would be invisible outliers.
 
@@ -327,11 +326,11 @@ The degree distribution identifies which modules serve as hubs, but not where th
 \label{sec:dag-depth}
 Recall that the \emph{depth} of a DAG $G$ is the length of its longest directed path. A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^{+}(m) = 0$. In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
 
-In particular, all sources (modules with no incoming edges) sit at level~$0$, while the unique sink \texttt{Tactic.Linter.DirectoryDependency} sits at level~$153$.
+In particular, all sources (modules with no incoming edges) sit at level~$0$, while the unique sink \module{Tactic.Linter.DirectoryDependency} sits at level~$153$.
 
-The depth of $G_{\mathrm{import}}$ is $153$, attained by a path from \texttt{NumberTheory.LSeries.PrimesInAP} (a leaf-level number theory result) down to \texttt{Tactic.Linter.DirectoryDependency} (a low-level linter utility). This path traverses number theory, special functions, measure theory, topology, order theory, logic, and tactic infrastructure---reflecting the deep dependency chain required to formalize analytic number theory.
+The depth of $G_{\mathrm{import}}$ is $153$, attained by a path from \module{NumberTheory.LSeries.PrimesInAP} (a leaf-level number theory result) down to \module{Tactic.Linter.DirectoryDependency} (a low-level linter utility). This path traverses number theory, special functions, measure theory, topology, order theory, logic, and tactic infrastructure---reflecting the deep dependency chain required to formalize analytic number theory.
 
-$G_{\mathrm{import}}$ has $1{,}433$ source modules (files that no other Mathlib file imports) and exactly $1$~sink (\texttt{Tactic.Linter.DirectoryDependency}, the unique module with no imports within Mathlib). The topological levels partition $\mathcal{M}$ into $154$ layers, with a maximum layer width of $1{,}433$ (the source layer) and a median width of~$25$.
+$G_{\mathrm{import}}$ has $1{,}433$ source modules (files that no other \module{Mathlib} file imports) and exactly $1$~sink (\module{Tactic.Linter.DirectoryDependency}, the unique module with no imports within Mathlib). The topological levels partition $\mathcal{M}$ into $154$ layers, with a maximum layer width of $1{,}433$ (the source layer) and a median width of~$25$.
 
 Notably, the layer-width profiles of $G_{\mathrm{import}}$ and $G_{\mathrm{import}}^{-}$ are nearly identical: the number of layers, the position of the peak, and the overall funnel shape are preserved under transitive reduction. This means that the vertical structure of the dependency chain reflects genuine logical necessity rather than cognitive redundancy---the 17.5\% redundant edges identified in \S\ref{sec:transitive-reduction} add lateral shortcuts within layers but do not alter the depth of the graph.
 
@@ -354,7 +353,7 @@ The funnel topology describes the global shape of $G_{\mathrm{import}}$, but tre
 \label{sec:cross-namespace}
 
 \begin{definition}[Top-level namespace]
-For a module $m = \texttt{Mathlib.}X.Y.\cdots$, the \emph{top-level namespace} is $\mathrm{ns}(m) = X$.
+For a module $m = \module{Mathlib.}X.Y.\cdots$, the \emph{top-level namespace} is $\mathrm{ns}(m) = X$.
 \end{definition}
 
 An edge $(m_1, m_2) \in E_{\mathrm{import}}$ is \emph{intra-namespace} if $\mathrm{ns}(m_1) = \mathrm{ns}(m_2)$ and \emph{inter-namespace} otherwise. In $G_{\mathrm{import}}$, $14{,}464$ edges ($61.4\%$) are intra-namespace and $9{,}106$ ($38.6\%$) are inter-namespace. In $G_{\mathrm{import}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.
@@ -364,11 +363,11 @@ If the import graph perfectly respected the namespace hierarchy---that is, if ev
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{analysis/namespace_heatmap.pdf}
-\caption{Import counts between top-level namespaces (log scale) for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Each cell $(i, j)$ counts edges from namespace~$i$ (row) to namespace~$j$ (column); the diagonal captures intra-namespace imports. Off-diagonal bright cells reveal cross-namespace dependencies that violate the cognitive classification of~$T$. The most prominent off-diagonal entries include \texttt{RingTheory}$\,\to\,$\texttt{Algebra} and the bidirectional coupling between \texttt{Algebra} and \texttt{Data}.}
+\caption{Import counts between top-level namespaces (log scale) for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Each cell $(i, j)$ counts edges from namespace~$i$ (row) to namespace~$j$ (column); the diagonal captures intra-namespace imports. Off-diagonal bright cells reveal cross-namespace dependencies that violate the cognitive classification of~$T$. The most prominent off-diagonal entries include \module{RingTheory}$\,\to\,$\module{Algebra} and the bidirectional coupling between \module{Algebra} and \module{Data}.}
 \label{fig:namespace-heatmap}
 \end{figure}
 
-The strongest inter-namespace dependency is \texttt{RingTheory} $\to$ \texttt{Algebra} ($485$ edges in $G_{\mathrm{import}}$), followed by \texttt{Data} $\to$ \texttt{Algebra} ($377$) and \texttt{Algebra} $\to$ \texttt{Data} ($318$). The bidirectional flow between \texttt{Algebra} and \texttt{Data} reflects their tight coupling: algebraic structures depend on basic data types, while data type lemmas often require algebraic properties. \texttt{Analysis} $\to$ \texttt{Topology} ($289$) confirms the expected mathematical dependency of analysis on topological foundations.
+The strongest inter-namespace dependency is \module{RingTheory} $\to$ \module{Algebra} ($485$ edges in $G_{\mathrm{import}}$), followed by \module{Data} $\to$ \module{Algebra} ($377$) and \module{Algebra} $\to$ \module{Data} ($318$). The bidirectional flow between \module{Algebra} and \module{Data} reflects their tight coupling: algebraic structures depend on basic data types, while data type lemmas often require algebraic properties. \module{Analysis} $\to$ \module{Topology} ($289$) confirms the expected mathematical dependency of analysis on topological foundations.
 
 The cross-namespace analysis reveals that a substantial fraction of dependencies violate the cognitive classification encoded in $T$. Which specific modules are responsible for bridging these distant regions? We address this through centrality analysis.
 
@@ -404,24 +403,24 @@ Intuitively, betweenness answers the question: \emph{if you need to travel from 
 \cmidrule(lr){1-2} \cmidrule(lr){3-4} \cmidrule(lr){5-6}
 $\deg^{-}$ & Module & PR & Module & $c_B$ & Module \\
 \midrule
-167 & Init               & .0435 & Init              & .0113 & Tactic.Common \\
- 74 & Tactic.Common      & .0316 & Tactic.Linter.Header & .0037 & Init \\
- 57 & AN.Group.Basic     & .0285 & Tactic.Linter.DD  & .0032 & LA.Span.Basic \\
- 45 & Util.CompileInd.   & .0058 & Tactic.TypeStar   & .0030 & AN.Module.FD \\
- 42 & Algebra.Ring.Defs  & .0048 & Algebra.Group.Defs & .0024 & Analysis.RCLike \\
- 39 & ABO.Finset.Basic   & .0038 & Tactic.Basic      & .0021 & AS.Limits.Basic \\
- 38 & Algebra.Field.Defs & .0037 & CT.Equivalence    & .0020 & AS.Limits.Normed \\
- 38 & Algebra.Group.Basic& .0033 & Logic.Function    & .0019 & LA.Determinant \\
- 37 & Tactic.Fin.Attr    & .0030 & Logic.Equiv.Defs  & .0019 & CT.Category.Basic \\
- 37 & Tactic.TypeStar    & .0030 & CT.Opposites      & .0017 & Tactic.NormNum \\
+167 & \module{Init}               & .0435 & \module{Init}              & .0113 & \module{Tactic.Common} \\
+ 74 & \module{Tactic.Common}      & .0316 & \module{Tactic.Linter.Header} & .0037 & \module{Init} \\
+ 57 & \module{AN.Group.Basic}     & .0285 & \module{Tactic.Linter.DD}  & .0032 & \module{LA.Span.Basic} \\
+ 45 & \module{Util.CompileInd.}   & .0058 & \module{Tactic.TypeStar}   & .0030 & \module{AN.Module.FD} \\
+ 42 & \module{Algebra.Ring.Defs}  & .0048 & \module{Algebra.Group.Defs} & .0024 & \module{Analysis.RCLike} \\
+ 39 & \module{ABO.Finset.Basic}   & .0038 & \module{Tactic.Basic}      & .0021 & \module{AS.Limits.Basic} \\
+ 38 & \module{Algebra.Field.Defs} & .0037 & \module{CT.Equivalence}    & .0020 & \module{AS.Limits.Normed} \\
+ 38 & \module{Algebra.Group.Basic}& .0033 & \module{Logic.Function}    & .0019 & \module{LA.Determinant} \\
+ 37 & \module{Tactic.Fin.Attr}    & .0030 & \module{Logic.Equiv.Defs}  & .0019 & \module{CT.Category.Basic} \\
+ 37 & \module{Tactic.TypeStar}    & .0030 & \module{CT.Opposites}      & .0017 & \module{Tactic.NormNum} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent
-\textit{Abbreviations:} AN = Analysis.Normed, LA = LinearAlgebra, CT = CategoryTheory,\\
-ABO = Algebra.BigOperators.Group, AS = Analysis.SpecificLimits,\\
-FD = FiniteDimension, DD = DirectoryDependency, CompileInd. = CompileInductive, Fin. = Finiteness.
+\textit{Abbreviations:} AN = \module{Analysis.Normed}, LA = \module{LinearAlgebra}, CT = \module{CategoryTheory},\\
+ABO = \module{Algebra.BigOperators.Group}, AS = \module{Analysis.SpecificLimits},\\
+FD = \module{FiniteDimension}, DD = \module{DirectoryDependency}, CompileInd.\ = \module{CompileInductive}, Fin.\ = \module{Finiteness}.
 
 We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:centrality}. Out-degree is omitted from this comparison because it measures a module's role as an \emph{importer}---how many prerequisites it gathers---rather than its structural position within the network. Moreover, as shown in \S\ref{sec:degree-distribution}, high out-degree values largely reflect redundant umbrella imports and collapse under transitive reduction, making out-degree a poor proxy for structural importance.
 
@@ -432,11 +431,11 @@ We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:cent
 \label{fig:centrality}
 \end{figure}
 
-The three rankings largely differ: the only module appearing in all three top-20 lists is \texttt{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:module_conclusion}.
+The three rankings largely differ: the only module appearing in all three top-20 lists is \module{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:module_conclusion}.
 
 In particular, high-betweenness modules acquire their bridging role precisely by connecting regions of $G_{\mathrm{import}}$ that the namespace tree $T$ separates. The top betweenness modules in Table~\ref{tab:centrality} typically sit at the boundary between top-level namespaces: they are the points where the logical structure of mathematics forces a passage across $T$'s cognitive borders.
 
-In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \texttt{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \texttt{LinearAlgebra.Span.Basic} and \texttt{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
+In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \module{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \module{LinearAlgebra.Span.Basic} and \module{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
 
 Centrality identifies the modules that hold the network together. A natural follow-up question is: what happens if these critical modules are removed? We assess the structural robustness of $G_{\mathrm{import}}$ under targeted removal.
 
@@ -460,7 +459,7 @@ Top-5 by betweenness     & $20$ & $48$ \\
 \end{tabular}
 \end{table}
 
-Removing the five highest in-degree modules (\texttt{Init}, \texttt{Tactic.Common}, \texttt{Analysis.Normed.Group.Basic}, \texttt{Util.CompileInductive}, and \texttt{Algebra.Ring.Defs}) fragments the raw graph into $29$ components, though the largest component still contains $7{,}530$ of the original $7{,}563$ nodes. The effect is more pronounced on $G_{\mathrm{import}}^{-}$ ($56$ components), since transitive reduction removes the alternative paths that would otherwise keep the graph connected.
+Removing the five highest in-degree modules (\module{Init}, \module{Tactic.Common}, \module{Analysis.Normed.Group.Basic}, \module{Util.CompileInductive}, and \module{Algebra.Ring.Defs}) fragments the raw graph into $29$ components, though the largest component still contains $7{,}530$ of the original $7{,}563$ nodes. The effect is more pronounced on $G_{\mathrm{import}}^{-}$ ($56$ components), since transitive reduction removes the alternative paths that would otherwise keep the graph connected.
 
 \begin{remark}
 \label{rem:robustness}
@@ -470,21 +469,21 @@ This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reductio
 
 \subsection{Analysis}
 \label{sec:module_conclusion}
-Our structural analysis of the Mathlib module import graph allows us to characterize the architecture of a large-scale formal library. We find that Mathlib does not resemble a random network or a simple hierarchy; rather, it is a \textit{deep, engineered backbone} supporting a vast, shallow application layer. These findings have three implications for the future of formal mathematical libraries.
+Our structural analysis of the \module{Mathlib} module import graph allows us to characterize the architecture of a large-scale formal library. We find that \module{Mathlib} does not resemble a random network or a simple hierarchy; rather, it is a \textit{deep, engineered backbone} supporting a vast, shallow application layer. These findings have three implications for the future of formal mathematical libraries.
 
 \medskip
 \noindent \textit{1. The tension between logical precision and cognitive management.} \\
 The divergence between the raw import graph $G_{\mathrm{import}}$ and its transitive reduction $G_{\mathrm{import}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy (\S\ref{sec:transitive-reduction}) is not merely inefficiency; it represents the \textit{cognitive API} of the library. Developers import entire theories (umbrella modules) to maintain mental models of the library, sacrificing logical minimality for usability. This suggests that future tools must distinguish between \textit{dependency for compilation} (minimality) and \textit{dependency for discovery} (redundancy).
 
-Dependency for compilation follows the strict logical requirements of the type checker, ensuring that the build system avoids cycles and minimizes checking time. In contrast, dependency for discovery serves the human prover and the automation: it brings tactics, notation, and type class instances into scope, populating the context for search and elaboration. We argue that the 17.5\% redundancy observed in Mathlib is not an inefficiency but a structural feature that creates robustness against refactoring and simplifies the user interface. Optimizing solely for the transitive reduction would likely degrade the interactive experience, suggesting that future proof assistants should explicitly model these two layers separately: a minimal graph for the build system and a rich, redundant graph for the user.
+Dependency for compilation follows the strict logical requirements of the type checker, ensuring that the build system avoids cycles and minimizes checking time. In contrast, dependency for discovery serves the human prover and the automation: it brings tactics, notation, and type class instances into scope, populating the context for search and elaboration. We argue that the 17.5\% redundancy observed in \module{Mathlib} is not an inefficiency but a structural feature that creates robustness against refactoring and simplifies the user interface. Optimizing solely for the transitive reduction would likely degrade the interactive experience, suggesting that future proof assistants should explicitly model these two layers separately: a minimal graph for the build system and a rich, redundant graph for the user.
 
 \medskip
 \noindent \textit{2. The architectural source of compilation bottlenecks.} \\
 The layer-width profile (\S\ref{sec:dag-depth}) reveals a distinct \textit{funnel topology}: a massive leaf layer ($>1,400$ modules) resting on a deep, narrow foundation. This extreme verticality (153 layers) contrasts sharply with the flatter citation graphs of informal mathematics. While this depth ensures rigorous consistency, it creates significant structural fragility: changes in the narrow ``waist'' of the funnel (high-betweenness modules) trigger massive recompilation cascades. This identifies a critical scalability challenge: as libraries grow, the depth of the dependency chain becomes a liability that may require aggressive modularization or distinct compilation units.
 
-Moreover, this topology imposes a distinct evolutionary pressure on the library's development. Unlike informal mathematics, where foundational texts are static references, the modules in Mathlib's ``theoretical waist'' remain mutable code. The depth of 153 layers implies that the maintenance cost of a lemma is strictly a function of its topological depth: a change in the narrow waist invalidates the verification of thousands of downstream results. Consequently, we predict that monolithic libraries will eventually hit a \textit{critical depth threshold} where the cost of coherence checks exceeds the capacity for rapid iteration. Future architectures will likely need to break this funnel into \textit{federated tiers}---effectively freezing the foundational layers into pre-compiled artifacts---to decouple the logical necessity of depth from the operational necessity of build speed.
+Moreover, this topology imposes a distinct evolutionary pressure on the library's development. Unlike informal mathematics, where foundational texts are static references, the modules in \module{Mathlib}'s ``theoretical waist'' remain mutable code. The depth of 153 layers implies that the maintenance cost of a lemma is strictly a function of its topological depth: a change in the narrow waist invalidates the verification of thousands of downstream results. Consequently, we predict that monolithic libraries will eventually hit a \textit{critical depth threshold} where the cost of coherence checks exceeds the capacity for rapid iteration. Future architectures will likely need to break this funnel into \textit{federated tiers}---effectively freezing the foundational layers into pre-compiled artifacts---to decouple the logical necessity of depth from the operational necessity of build speed.
 
-Our analysis captures a single snapshot (commit \texttt{534cf0b}). Whether these structural properties are stable or evolving---and whether the 17.5\% redundancy rate and 153-layer depth are increasing, stable, or approaching a critical threshold---remains an open question that longitudinal analysis across Mathlib versions must address.
+Our analysis captures a single snapshot (commit \texttt{534cf0b}). Whether these structural properties are stable or evolving---and whether the 17.5\% redundancy rate and 153-layer depth are increasing, stable, or approaching a critical threshold---remains an open question that longitudinal analysis across \module{Mathlib} versions must address.
 
 \medskip
 \noindent \textit{3. Centrality as a proxy for maintenance roles.} \\
@@ -496,17 +495,17 @@ We propose that the centrality measures computed in \S\ref{sec:centrality} shoul
 \end{itemize}
 Refactoring a high-betweenness module is riskier than refactoring a high in-degree module, as the former disrupts the connective tissue between theories.
 
-This taxonomy offers a blueprint for automated maintenance. Currently, continuous integration systems treat all modifications with uniform computational cost, yet the \textit{structural cost} of breaking a bridge module is disproportionately higher. By embedding these centrality metrics into the review pipeline, maintainers can implement \textit{adaptive stability guarantees}: enforcing strict backward compatibility for the axiomatic core (high PageRank) and the connective bridges (high betweenness), while permitting rapid, experimental iteration on the vocabulary (high in-degree) and the leaves. This evolution toward metric-driven governance is essential to sustain the collaborative growth of a unified mathematical library, preventing it from collapsing under the maintenance burden of its own interconnected weight.
+This taxonomy offers a blueprint for automated maintenance. Currently, continuous integration systems treat all modifications with uniform computational cost, yet the \textit{structural cost} of breaking a bridge module is disproportionately higher. By embedding these centrality metrics into the review pipeline, maintainers can implement \textit{adaptive stability guarantees}: enforcing strict backward compatibility for the axiomatic core (high PageRank) and the connective bridges (high betweenness), while permitting rapid, experimental iteration on the vocabulary (high in-degree) and the leaves. This evolution toward metric-driven governance is essential to sustain the collaborative growth of a unified mathematical library, preventing it from collapsing under the maintenance burden of its own interconnected weight. From an engineering perspective, the PageRank and betweenness rankings (Table~\ref{tab:centrality}) offer a principled priority ordering for compilation optimization and CI resource allocation: modifications to high-centrality modules warrant broader downstream testing.
 
 \medskip
 These three observations---the cognitive redundancy layer, the deep funnel architecture, and the divergence of centrality roles---taken together, suggest a hypothesis about the growth mechanism of formal libraries.
 
 \medskip
 \noindent \textit{Hypothesis: The Curated Small-World.} \\
-Finally, we hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, Mathlib grows via \textit{semantic attachment}: new modules cluster tightly within namespaces (high local clustering), while deliberately placed bridge modules (high betweenness) maintain global connectivity. This structure likely represents an optimal evolutionary state for collaborative formalization, balancing the isolation needed for parallel development with the connectivity needed for a unified mathematical universe.
+Finally, we hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, \module{Mathlib} grows via \textit{semantic attachment}: new modules cluster tightly within namespaces (high local clustering), while deliberately placed bridge modules (high betweenness) maintain global connectivity. This structure likely represents an optimal evolutionary state for collaborative formalization, balancing the isolation needed for parallel development with the connectivity needed for a unified mathematical universe.
 
-The fact that 100\% of modules belong to a single weakly connected component provides empirical evidence for the structural unification of mathematical theories within Mathlib. While the namespace tree partitions the library into distinct hierarchies, the density of inter-namespace edges (37.1\%, \S\ref{sec:cross-namespace}) functions as a system of high-betweenness shortcuts that prevent the library from fracturing into isolated ``theory islands.'' Our analysis of targeted node removal (Table~\ref{tab:robustness}) demonstrates that this connectivity is remarkably resilient; as noted in Remark~\ref{rem:robustness}, over 99\% of modules remain in the giant component even after the removal of the five most central hubs. We conclude that Mathlib’s curated small-world topology is what enables foundational improvements in one domain (e.g., Algebra) to propagate efficiently to distant ones (e.g., Analysis), ensuring that the library remains a globally coherent, rather than merely modular, corpus of knowledge.
+The fact that 100\% of modules belong to a single weakly connected component provides empirical evidence for the structural unification of mathematical theories within \module{Mathlib}. While the namespace tree partitions the library into distinct hierarchies, the density of inter-namespace edges (37.1\%, \S\ref{sec:cross-namespace}) functions as a system of high-betweenness shortcuts that prevent the library from fracturing into isolated ``theory islands.'' Our analysis of targeted node removal (Table~\ref{tab:robustness}) demonstrates that this connectivity is remarkably resilient; as noted in Remark~\ref{rem:robustness}, over 99\% of modules remain in the giant component even after the removal of the five most central hubs. We conclude that \module{Mathlib}'s curated small-world topology is what enables foundational improvements in one domain (e.g., Algebra) to propagate efficiently to distant ones (e.g., Analysis), ensuring that the library remains a globally coherent, rather than merely modular, corpus of knowledge.
 
-The curated small-world is the form in which the tension between $T$ and $G_{\mathrm{import}}$ reaches dynamic equilibrium---but this equilibrium is not static. The namespace tree $T$ actively shapes $G_{\mathrm{import}}$: developers import along the cognitive contours of $T$, producing the 62.9\% intra-namespace concentration and the directional redundancy identified in \S\ref{sec:transitive-reduction}. Simultaneously, $G_{\mathrm{import}}$ reshapes $T$: the 37.1\% of edges that cross namespace boundaries exert pressure on the cognitive classification, and Mathlib's ongoing namespace reorganizations---such as the gradual absorption of \texttt{RingTheory} into \texttt{Algebra}---are precisely the points where logical necessity forces cognitive categories to yield. Neither $T$ alone nor $G_{\mathrm{import}}$ alone determines the architecture; each continuously remakes the other.
+The curated small-world is the form in which the tension between $T$ and $G_{\mathrm{import}}$ reaches dynamic equilibrium---but this equilibrium is not static. The namespace tree $T$ actively shapes $G_{\mathrm{import}}$: developers import along the cognitive contours of $T$, producing the 62.9\% intra-namespace concentration and the directional redundancy identified in \S\ref{sec:transitive-reduction}. Simultaneously, $G_{\mathrm{import}}$ reshapes $T$: the 37.1\% of edges that cross namespace boundaries exert pressure on the cognitive classification, and \module{Mathlib}'s ongoing namespace reorganizations---such as the gradual absorption of \module{RingTheory} into \module{Algebra}---are precisely the points where logical necessity forces cognitive categories to yield. Neither $T$ alone nor $G_{\mathrm{import}}$ alone determines the architecture; each continuously remakes the other.
 
 This mutual determination also governs the library's evolution. The accumulation of depth (153 layers), cross-namespace density (37.1\%), and hub concentration represents the quantitative growth of the contradiction between logical structure and cognitive organization. Our prediction of a critical depth threshold (\S\ref{sec:dag-depth}) is not merely an engineering forecast; it is the point at which this quantitative accumulation forces a qualitative transformation---the restructuring of the library into federated tiers. In this sense, formalization does not dissolve the human organization of mathematics, nor does it simply reveal where that organization must yield. It initiates a dialectical process: the formal product reshapes the cognitive framework that produced it, which in turn reshapes the next generation of formal products.
