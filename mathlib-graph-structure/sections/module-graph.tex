@@ -265,10 +265,46 @@ The raw import graph has $|E_{\mathrm{import}}| = 23{,}570$ edges. After transit
 
 The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \module{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{import}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \module{Mathlib} to its direct children.
 
+\subsection{Module-Name Containment Decay}
+\label{sec:module-containment}
+
+The import graph's relationship to the module-name hierarchy $T$ can be quantified at every depth of the hierarchy, not only at the top level. At each depth~$k$, we truncate both endpoints of every import edge to their first~$k$ dot-separated components and measure the proportion of edges whose truncated endpoints match.
+
+\begin{definition}[Module containment at depth~$k$]
+\label{def:module-containment}
+For each depth $k \ge 1$, let $\mathrm{trunc}_k(m)$ denote the first~$k$ components of the module name~$m$. The \emph{module containment ratio at depth~$k$} is
+\[
+  \mathrm{contain}_{\mathrm{mod}}(k) \;=\; \frac{|\{(m_1,m_2) \in E_{\mathrm{import}} \mid \mathrm{trunc}_k(m_1) = \mathrm{trunc}_k(m_2)\}|}{|E_{\mathrm{import}}|}.
+\]
+\end{definition}
+
+Module-name depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$ and a maximum of~$7$. Table~\ref{tab:module-containment} reports containment at each depth.
+
+\begin{table}[ht]
+\centering
+\caption{Module-level containment decay by module-name depth. At depth~$1$ ($13$ top-level packages), $97.5\%$ of import edges stay within the same package; by depth~$4$, containment has fallen to~$8.8\%$.}
+\label{tab:module-containment}
+\begin{tabular}{crrr}
+\toprule
+Depth $k$ & Groups & Containment & $\Delta$ (pp) \\
+\midrule
+$1$ & $13$      & $97.5\%$  & ---     \\
+$2$ & $99$      & $60.2\%$  & $-37.3$ \\
+$3$ & $1{,}481$ & $34.1\%$  & $-26.1$ \\
+$4$ & $5{,}641$ & $8.8\%$   & $-25.3$ \\
+$5$ & $7{,}434$ & $0.8\%$   & $-8.0$  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At depth~$1$, the $13$ top-level packages (\module{Mathlib}, \module{Batteries}, \module{Init}, etc.) contain $97.5\%$ of all import edges---nearly all imports stay within \module{Mathlib}. The steepest single drop occurs at depth~$1 \to 2$ ($-37.3$ pp), when packages split into their subdirectories: \module{Mathlib} divides into \module{Mathlib.Algebra}, \module{Mathlib.Analysis}, \module{Mathlib.CategoryTheory}, etc. The $60.2\%$ containment at depth~$2$ is consistent with the $61.4\%$ intra-namespace rate reported below (\S\ref{sec:cross-namespace}), since depth-$2$ groups correspond precisely to the top-level directories under \module{Mathlib/}.\footnote{The small discrepancy ($60.2\%$ vs.\ $61.4\%$) reflects a difference in edge counts between our import parser and the \texttt{importGraph} tool.} By depth~$4$---the modal depth of module names---containment has fallen to $8.8\%$, and by depth~$5$ it is negligible.
+
+The steep collapse reveals that, within a discipline, dependencies routinely cross subdirectory boundaries. A file in \module{Mathlib.Algebra.Group} may import from \module{Mathlib.Algebra.Ring} or \module{Mathlib.Algebra.Order}---directories that the hierarchy treats as siblings but that are tightly coupled mathematically. The containment curve for declaration-level dependencies, measured in \S\ref{sec:containment-decay}, starts from a much lower baseline ($48.9\%$ at the top-level directory) but exhibits the same qualitative pattern of steep initial decline and rapid saturation. The gap between the two baselines quantifies how effectively the import graph compresses cross-cutting declaration-level dependencies into within-discipline edges.
+
 \subsection{Structural Analysis}
 \label{sec:structural-analysis}
 
-Having defined the module-name tree $T$ and the import graph $G_{\mathrm{import}}$, and identified the 17.5\% redundancy gap between $G_{\mathrm{import}}$ and its transitive reduction (\S\ref{sec:transitive-reduction}), we now ask: \emph{what kind of network does formalization produce, and how does it relate to the cognitive classification encoded in $T$?}
+Having defined the module-name tree $T$ and the import graph $G_{\mathrm{import}}$, identified the 17.5\% redundancy gap (\S\ref{sec:transitive-reduction}), and measured the containment decay of the module-name hierarchy (\S\ref{sec:module-containment}), we now ask: \emph{what kind of network does formalization produce, and how does it relate to the cognitive classification encoded in $T$?}
 
 To answer this, we need to understand four things about $G_{\mathrm{import}}$:
 
