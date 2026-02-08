@@ -41,80 +41,84 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
 
 \begin{figure}[ht]
 \centering
-\begin{subfigure}[t]{0.46\textwidth}
-\centering
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
   dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
   dep/.style={->, >=Stealth, red!70!black, semithick},
   depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
-  nsbox/.style={draw=blue!50!black, fill=blue!8, rounded corners=2pt,
-                inner sep=6pt, semithick},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt,
+                 inner sep=8pt, semithick, dashed},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=2pt,
+                inner sep=5pt, semithick, dashed},
 ]
-  % Nat box
-  \node[nsbox, minimum width=3.7cm, minimum height=1.8cm] (natbox) at (0,0) {};
-  \node[font=\scriptsize\sffamily, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]natbox.north west) {Nat};
+  % ── Module 1: Data.Nat.Basic (left, large) ──
+  \node[modbox, minimum width=4.5cm, minimum height=3.4cm]
+    (mod1) at (0,0) {};
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at ([xshift=2pt, yshift=-2pt]mod1.north west)
+    {\textnormal{\module{Data.Nat.Basic}}};
+
+  % Namespace Nat (green, inside mod1, top portion)
+  \node[nsbox, minimum width=3.6cm, minimum height=1.2cm]
+    (ns_nat1) at (0,0.55) {};
+  \node[font=\tiny\sffamily, green!40!black, anchor=north west]
+    at ([xshift=2pt, yshift=-1pt]ns_nat1.north west) {ns: Nat};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (ac) at (-0.4,-0.1) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Prime.dvd\_mul}]
-    (pm) at (-0.4,-0.7) {};
-  % Int box
-  \node[nsbox, minimum width=2.4cm, minimum height=1.2cm] (intbox) at (3.8,-0.25) {};
-  \node[font=\scriptsize\sffamily, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]intbox.north west) {Int};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (iac) at (3.5,-0.25) {};
-  % Arrows
-  \draw[dep] (pm) -- (ac);  % intra (solid)
-  \draw[depx] (ac) -- (iac);  % cross (dashed)
-  \draw[depx] (pm.east) to[out=0,in=200] (iac);  % cross (dashed)
+    (ac) at (-0.5,0.55) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_left\_comm}]
+    (alc) at (-0.5,0.1) {};
+
+  % Namespace Nat.Primrec (green, inside mod1, bottom portion)
+  \node[nsbox, minimum width=3.6cm, minimum height=0.8cm]
+    (ns_pr) at (0,-1.0) {};
+  \node[font=\tiny\sffamily, green!40!black, anchor=north west]
+    at ([xshift=2pt, yshift=-1pt]ns_pr.north west) {ns: Nat.Primrec};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero}]
+    (prz) at (-0.5,-1.0) {};
+
+  % ── Module 2: Data.Nat.Defs (right) ──
+  \node[modbox, minimum width=3.8cm, minimum height=2.0cm]
+    (mod2) at (5.8,0.1) {};
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at ([xshift=2pt, yshift=-2pt]mod2.north west)
+    {\textnormal{\module{Data.Nat.Defs}}};
+
+  % Namespace Nat (green, inside mod2 -- same ns as in mod1!)
+  \node[nsbox, minimum width=2.9cm, minimum height=1.2cm]
+    (ns_nat2) at (5.8,0.1) {};
+  \node[font=\tiny\sffamily, green!40!black, anchor=north west]
+    at ([xshift=2pt, yshift=-1pt]ns_nat2.north west) {ns: Nat};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (5.1,0.1) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (5.1,-0.35) {};
+
+  % ── Dependency arrows (red) ──
+  % Intra-module, intra-namespace
+  \draw[dep] (alc) -- (ac);
+  % Cross-module, intra-namespace (Nat spans both files)
+  \draw[dep] (sea) to[out=175,in=5] (ac);
+  \draw[dep] (za) to[out=175,in=-5] (ac);
+  % Cross-namespace (Primrec → Nat)
+  \draw[depx] (prz) to[out=60,in=-100] (ac);
+
+  % ── Legend ──
+  \node[anchor=north west, font=\tiny\sffamily] at (-2.3,-2.1) {%
+    \textcolor{blue!60!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}
+    \textcolor{blue!60!black}{module (file)}
+    \qquad
+    \textcolor{green!40!black}{\rule[0.3ex]{8pt}{0.7pt}\,\rule[0.3ex]{2pt}{0.7pt}\,\rule[0.3ex]{8pt}{0.7pt}}
+    \textcolor{green!40!black}{namespace}
+    \qquad
+    \textcolor{red!70!black}{$\longrightarrow$}
+    \textcolor{red!70!black}{dependency}
+  };
 \end{tikzpicture}
-\caption{Depth $k = 1$: two namespaces. The edge \decl{Prime.dvd\_mul} $\to$ \decl{add\_comm} is \emph{intra}-namespace (solid).}
-\label{fig:ns-depth1}
-\end{subfigure}%
-\hfill
-\begin{subfigure}[t]{0.46\textwidth}
-\centering
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
-  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
-  dep/.style={->, >=Stealth, red!70!black, semithick},
-  depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
-  nsbox/.style={draw=blue!50!black, fill=blue!8, rounded corners=2pt,
-                inner sep=6pt, semithick},
-]
-  % Nat box (smaller, just add_comm)
-  \node[nsbox, minimum width=2.6cm, minimum height=1.0cm] (natbox2) at (-0.3,0.15) {};
-  \node[font=\scriptsize\sffamily, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]natbox2.north west) {Nat};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (ac2) at (-0.4,0.15) {};
-  % Nat.Prime box
-  \node[nsbox, minimum width=2.6cm, minimum height=1.0cm] (npbox) at (-0.3,-1.2) {};
-  \node[font=\scriptsize\sffamily, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]npbox.north west) {Nat.Prime};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:dvd\_mul}]
-    (pm2) at (-0.4,-1.2) {};
-  % Int box
-  \node[nsbox, minimum width=2.4cm, minimum height=1.0cm] (intbox2) at (3.8,-0.55) {};
-  \node[font=\scriptsize\sffamily, blue!60!black, anchor=north west]
-    at ([xshift=2pt, yshift=-1pt]intbox2.north west) {Int};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:add\_comm}]
-    (iac2) at (3.5,-0.55) {};
-  % All arrows now cross (dashed)
-  \draw[depx] (pm2) -- (ac2);  % was intra, now cross!
-  \draw[depx] (ac2) -- (iac2);
-  \draw[depx] (pm2.east) to[out=0,in=200] (iac2);
-\end{tikzpicture}
-\caption{Depth $k = 2$: three namespaces. The same edge becomes \emph{cross}-namespace (dashed).}
-\label{fig:ns-depth2}
-\end{subfigure}
-\caption{The same declarations and dependency edges under two groupings. At depth~$1$ (a), \decl{Nat.add\_comm} and \decl{Nat.Prime.dvd\_mul} share the namespace \texttt{Nat}; the solid red arrow is intra-namespace. At depth~$2$ (b), they are separated into \texttt{Nat} and \texttt{Nat.Prime}; the same arrow becomes cross-namespace (dashed). \textcolor{blue!60!black}{Blue boxes} represent namespace boundaries (human naming decisions); \textcolor{red!70!black}{red arrows} represent dependencies (mathematical logic). Increasing $k$ fractures namespace boundaries without changing the dependency structure, driving containment downward.}
+\caption{Three organizational layers. \textcolor{blue!60!black}{Blue dashed boxes}: module (file) boundaries. \textcolor{green!40!black}{Green dashed boxes}: namespace boundaries. \textcolor{red!70!black}{Red arrows}: mathematical dependencies (solid = intra-namespace; dashed = cross-namespace). The namespace \texttt{Nat} spans both files; the file \module{Data.Nat.Basic} contains two namespaces. This many-to-many overlap is the norm (NMI~$= 0.71$; \S\ref{sec:ns-module-alignment}).}
 \label{fig:ns-depth-grouping}
 \end{figure}
 
-Figure~\ref{fig:ns-depth-grouping} illustrates the mechanism. At depth~$1$, the declarations \decl{Nat.add\_comm} and \decl{Nat.Prime.dvd\_mul} share the namespace \texttt{Nat}, so the dependency between them is intra-namespace. At depth~$2$, they are separated into \texttt{Nat} and \texttt{Nat.Prime}; the same dependency becomes cross-namespace. The dependency structure is fixed by mathematical logic; only the human-imposed namespace boundary moves.
+Figure~\ref{fig:ns-depth-grouping} illustrates the three-layer structure. The namespace \texttt{Nat} spans two files: declarations \decl{add\_comm} and \decl{add\_left\_comm} reside in \module{Data.Nat.Basic}, while \decl{succ\_eq\_one} and \decl{zero\_add} reside in \module{Data.Nat.Defs}. Meanwhile, \module{Data.Nat.Basic} itself hosts a second namespace, \texttt{Nat.Primrec}. The dependency arrows---fixed by mathematical logic---cross both kinds of boundary. The blue and green boxes partially overlap but are not identical: this is the many-to-many relationship quantified in \S\ref{sec:ns-module-alignment}.
 
 \subsection{Containment Decay}
 \label{sec:containment-decay}
