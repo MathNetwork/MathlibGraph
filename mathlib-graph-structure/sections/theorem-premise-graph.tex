@@ -234,7 +234,7 @@ A closely related theorem, \texttt{Nat.add\_right\_comm} ($a + b + c = a + c + b
 \end{figure}
 
 \begin{remark}
-The module \texttt{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{import}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{import}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{import}}|$ by a factor of $360$.
+The module \texttt{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{import}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{import}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{import}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
 \end{remark}
 
 At the commit analyzed, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. In comparison with the module-level import graph of \S\ref{sec:import-graph} ($|\mathcal{M}| = 7{,}563$ nodes, $|E_{\mathrm{import}}| = 23{,}570$ edges), the theorem--premise graph has roughly $40\times$ more nodes and $360\times$ more edges. The enormous increase in edge count reflects the fact that a single module import implicitly carries hundreds of individual premise dependencies; $G_{\mathrm{thm}}$ makes each of these dependencies explicit.
@@ -478,7 +478,7 @@ Communities with ${>}100$ nodes & $11$ \\
 \end{tabular}
 \end{table}
 
-The modularity of $0.48$ indicates a moderately strong community structure---significantly above random ($0$) but below perfectly modular ($1$). The $22$ communities are highly unequal: seven communities of more than $1{,}000$ nodes account for $99.1\%$ of the graph; the remaining fifteen communities contain fewer than $700$ nodes each.
+The modularity of $0.48$ indicates a moderately strong community structure---significantly above random ($0$) but below perfectly modular ($1$). If logical dependency alone determined community structure (pure product), modularity would be higher; if cognitive organization were independent of logic (pure process), it would approach zero. The intermediate value quantifies the partial---but incomplete---alignment between mathematical necessity and human practice. The $22$ communities are highly unequal: seven communities of more than $1{,}000$ nodes account for $99.1\%$ of the graph; the remaining fifteen communities contain fewer than $700$ nodes each.
 
 \begin{table}[ht]
 \centering

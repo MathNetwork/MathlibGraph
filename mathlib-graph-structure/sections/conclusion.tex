@@ -1,0 +1,85 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Summary of Findings}
+\label{sec:summary}
+
+We have analyzed the network structure of Mathlib at three levels of granularity. Table~\ref{tab:summary} collects the key quantitative findings across all three levels, extending the two-level comparison of Table~\ref{tab:thm-vs-module} with the module--declaration interaction data of \S\ref{sec:module-declaration}.
+
+\begin{table}[ht]
+\centering
+\caption{Cross-level summary of structural findings.}
+\label{tab:summary}
+\small
+\begin{tabular}{lrrr}
+\toprule
+Metric & \S\ref{sec:import-graph} Module & \S\ref{sec:theorem-premise} Theorem & \S\ref{sec:module-declaration} Interaction \\
+\midrule
+Nodes                      & $7{,}563$        & $308{,}129$     & --- \\
+Edges                      & $23{,}570$       & $8{,}436{,}366$ & --- \\
+Cross-namespace edges       & $37.1\%$         & $50.9\%$        & --- \\
+Intra-module edges          & ---              & $9.6\%$         & --- \\
+Centrality separation       & partial          & complete        & --- \\
+Community--namespace NMI   & ---              & $0.34$          & --- \\
+Single-node removal impact & $29$ components  & $\le 6$ nodes   & --- \\
+Theorem/lemma in-degree ratio & ---            & $1.47\times$    & --- \\
+Module cohesion (mean)     & ---              & ---             & $0.025$ \\
+Zero-cohesion modules      & ---              & ---             & $56.1\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The three levels of analysis tell a convergent story from different vantage points.
+
+At the module level (\S\ref{sec:import-graph}), the namespace tree~$T$ and the import graph~$G_{\mathrm{import}}$ exhibit a systematic divergence: $37.1\%$ of reduced import edges cross namespace boundaries, and $17.5\%$ of all import edges are transitively redundant---deliberately added by developers for cognitive convenience rather than logical necessity (\S\ref{sec:transitive-reduction}). The deep funnel topology ($153$ layers; \S\ref{sec:dag-depth}) and the three-way divergence of centrality measures (\S\ref{sec:centrality}) reveal a library whose architecture is shaped by both logical constraint and human organizational practice. We proposed that Mathlib has evolved into a \emph{curated small-world}: high local clustering within namespaces, short global paths through deliberate bridge modules, and a maintenance ecology that stabilizes this structure against both accidental fragmentation and unchecked growth (\S\ref{sec:module_conclusion}).
+
+At the theorem level (\S\ref{sec:theorem-premise}), finer resolution exposes structure that module-level analysis conceals. The hub structure decomposes into two qualitatively distinct layers---a \emph{language infrastructure} layer (\texttt{OfNat.ofNat}, \texttt{Eq.refl}, \texttt{DFunLike.coe}) determined by Lean's type system, and a \emph{mathematical infrastructure} layer (\texttt{CategoryTheory.Category}, \texttt{Real}, \texttt{TopologicalSpace}) determined by the logical structure of mathematics itself (Remark~\ref{rem:two-layers}). Cross-namespace density rises from~$37.1\%$ to~$50.9\%$ (\S\ref{sec:thm-cross-namespace}), revealing that module boundaries create an illusion of disciplinary containment that dissolves at finer granularity. Community detection recovers seven recognizable mathematical disciplines from the dependency topology alone (Table~\ref{tab:thm-communities}), with modularity~$0.48$, but their alignment with the namespace hierarchy is only moderate (NMI~$= 0.34$; Table~\ref{tab:thm-nmi}). Among major namespaces, only \texttt{CategoryTheory} achieves near-complete community correspondence ($97.4\%$), suggesting genuine disciplinary autonomy. The $44.8\%$ leaf theorem rate (\S\ref{sec:thm-leaves}) marks the boundary between the library's internal reasoning structure and its external API surface, with the \texttt{@[to\_additive]} machinery leaving a distinctive structural fingerprint of systematically generated content.
+
+At the interaction level (\S\ref{sec:module-declaration}), the overlay of modules onto the declaration graph yields the starkest result: mean module cohesion of~$0.025$, with $56.1\%$ of modules having zero internal edges (Table~\ref{tab:cohesion-global}). The module is a cognitive container, not a logical unit---its boundaries serve human navigation but are nearly orthogonal to the dependency structure they contain. This finding closes the loop between the two preceding levels: the moderate organizing force of the namespace tree at the module level ($62.9\%$ intra-namespace edges) almost entirely disappears when measured at the declaration level (cohesion~$0.025$), confirming that the module boundary is a human artifact, not a mathematical one.
+
+\subsection{The Dialectic of Product and Process}
+\label{sec:dialectic}
+
+The central claim of this paper is that the network structure of a formal mathematical library records not only the logical dependencies of mathematics (the product), but also the cognitive habits and organizational decisions of mathematical practice (the process). Our data substantiate this claim with five specific process-traces embedded in the product:
+
+\begin{enumerate}
+\item \textbf{Cognitive redundancy.} The $17.5\%$ transitive redundancy in $G_{\mathrm{import}}$ (\S\ref{sec:transitive-reduction}) records the gap between what the compiler requires and what the human developer requires. These edges follow the contours of the namespace tree---developers import along cognitive categories, not along minimal dependency paths. The redundancy is directional: it inflates out-degree (the ``I depend on others'' direction) without affecting in-degree, confirming that it originates in the importer's cognitive needs rather than in the logical structure of the imported module.
+
+\item \textbf{Organizational convention.} The module cohesion of~$0.025$ (\S\ref{sec:cohesion}) records the fact that humans organize declarations by conceptual topic rather than by logical interdependence. Over half of all modules are pure lemma collections with zero internal dependency (Remark~\ref{rem:zero-cohesion}). This is not a defect but a design choice: modules group ``all lemmas about $X$'' for discoverability, even when these lemmas depend on definitions scattered across the entire library.
+
+\item \textbf{Cognitive complexity bound.} The out-degree distribution of $G_{\mathrm{thm}}$ follows a lognormal rather than a power law (Table~\ref{tab:thm-powerlaw}), with a maximum of~$522$ (Remark~\ref{rem:thm-degree-asymmetry}). This bounded distribution encodes a constraint on the process: no single proof, whether human-written or tactic-synthesized, invokes an unbounded number of premises. The in-degree distribution, by contrast, is heavy-tailed ($\alpha \approx 1.78$), reflecting the open-ended accumulation of citations in the product.
+
+\item \textbf{API completeness norms.} The $44.8\%$ zero-citation rate among theorems (\S\ref{sec:thm-leaves}) includes a substantial fraction of \texttt{@[to\_additive]} mirrors---systematically generated counterparts that exist for API completeness rather than logical necessity (Remark~\ref{rem:leaf-theorems}). This community norm inflates the graph's surface area without deepening its logical content, leaving a distinctive structural fingerprint that is invisible at the module level but prominent at the theorem level.
+
+\item \textbf{Proof assistant design.} The language infrastructure layer---\texttt{OfNat.ofNat} ($89{,}936$ citations), \texttt{Eq.refl} ($69{,}580$), \texttt{DFunLike.coe} ($65{,}437$)---dominates the in-degree ranking of $G_{\mathrm{thm}}$ (Remark~\ref{rem:two-layers}). These nodes record the design of Lean~4's type system; a different proof assistant formalizing the same mathematics would produce a different in-degree profile. The mathematical infrastructure layer---\texttt{CategoryTheory.Category}, \texttt{Real}, \texttt{TopologicalSpace}---is the product's own structure, potentially invariant across proof assistants.
+
+\item \textbf{Human importance labeling.} Lean~4 developers choose between the keywords \texttt{theorem} and \texttt{lemma} to signal their cognitive judgment of a result's importance, yet the compiler erases this distinction. By recovering it from source code (\S\ref{sec:thm-vs-lemma}), we find that declarations marked \texttt{theorem} have $1.47\times$ the mean in-degree and lower zero-citation rates than those marked \texttt{lemma} (Table~\ref{tab:thm-vs-lemma})---the logical structure partially validates the human judgment. The alignment is imperfect: \texttt{funext}, marked \texttt{lemma}, has in-degree $15{,}574$, while over a third of declarations marked \texttt{theorem} are never cited (Remark~\ref{rem:misjudged}). The theorem/lemma boundary is a noisy cognitive signal---a trace of the author's importance judgment at the time of writing---that the product corroborates in aggregate but contradicts in many individual cases.
+\end{enumerate}
+
+But the relationship between product and process is not unidirectional. The product reshapes the process in return, through at least two mechanisms. First, the $37.1\%$ cross-namespace edge rate in $G_{\mathrm{import}}^{-}$ (\S\ref{sec:cross-namespace}) exerts reorganization pressure on the namespace hierarchy: when modules in one namespace systematically depend on another, developers eventually redraw the cognitive categories---as witnessed by Mathlib's ongoing absorption of \texttt{RingTheory} into \texttt{Algebra}. The logical structure of the product forces the cognitive classification to yield. Second, the deep dependency chain ($153$ layers; \S\ref{sec:dag-depth}) constrains the development process directly: modifications to high-PageRank modules trigger recompilation cascades that shape contributor behavior, incentivizing stability at the core and experimentation at the periphery. The product's architecture becomes a selection pressure on the process.
+
+Formalization thus initiates a dialectical cycle rather than a one-way transformation. The deterministic product---verified, immutable, logically precise---accumulates traces of the uncertain process that created it. These traces, once embedded, become structural constraints on the next round of development. The namespace tree shapes the import graph; the import graph reshapes the namespace tree. The cognitive habits of proof writing shape the degree distribution; the degree distribution, through compilation costs and maintenance burden, shapes the next generation of cognitive habits. Network analysis, as developed in this paper, provides the quantitative vocabulary for tracing this cycle.
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+Several limitations constrain the scope of our conclusions.
+
+\emph{Static snapshot.} All statistics are computed from a single commit (\texttt{534cf0b}, February 2026). We cannot determine whether the structural properties we observe---the $17.5\%$ redundancy rate, the $153$-layer depth, the $0.025$ cohesion---are stable, growing, or approaching critical thresholds. The evolutionary hypotheses advanced in \S\ref{sec:module_conclusion} and \S\ref{sec:ai-implications} remain untested predictions.
+
+\emph{Social process unobserved.} The ``process'' side of our analysis is inferred from structural traces in the product, not observed directly. We do not analyze PR review workflows, contributor patterns, commit history, or the social dynamics of the Mathlib community. The curation mechanisms that maintain the library's small-world topology (\S\ref{sec:module_conclusion}) are posited on structural evidence but not empirically verified through process data.
+
+\emph{Premise co-occurrence unexploited.} The introduction promised a three-graph spectrum from product to process, with the premise co-occurrence graph at the process end. In the event, \S\ref{sec:module-declaration} focused on the module--declaration interaction rather than on co-occurrence patterns. The co-occurrence data we computed ($14.2$M unique pairs; weight distribution dominated by language infrastructure pairs such as \texttt{Eq.trans}--\texttt{of\_eq\_true} at weight~$41{,}365$) requires careful filtering of infrastructure noise before it can reveal the proof-practice patterns that motivated its construction. This remains future work.
+
+\emph{Correlation, not causation.} We measure the divergence between the namespace tree~$T$ and the dependency graphs~$G_{\mathrm{import}}$ and~$G_{\mathrm{thm}}$, but we cannot disentangle the causal direction. Does~$T$ shape~$G$ (developers import along cognitive categories), or does~$G$ shape~$T$ (logical dependencies force namespace reorganization)? Our data are consistent with bidirectional influence (\S\ref{sec:dialectic}), but a causal account would require longitudinal or experimental evidence that this study does not provide.
+
+\subsection{Future Directions}
+\label{sec:future}
+
+\emph{Longitudinal evolution.} Repeating this analysis across Mathlib versions---particularly across the Lean~3 to Lean~4 migration---would test whether structural indicators (redundancy rate, DAG depth, cohesion, cross-namespace density) are stable invariants of mathematical content or contingent features of a particular proof assistant and community. If the $17.5\%$ redundancy rate and $0.025$ cohesion are increasing over time, this would provide evidence for the critical-depth hypothesis of \S\ref{sec:module_conclusion}; if they are stable, it would suggest that the library has reached a structural equilibrium.
+
+\emph{AI-induced structural drift.} As AI systems contribute an increasing fraction of Mathlib's proofs---through tactic automation, premise selection, or end-to-end proof generation---the process-traces identified in \S\ref{sec:dialectic} may shift systematically. AI-generated proofs are not subject to the same cognitive complexity bound that shapes the out-degree distribution (item~3 above); they may not follow the namespace-aligned import patterns that produce the $17.5\%$ redundancy (item~1). The current data provide a human-authored baseline against which AI-induced structural drift can be measured.
+
+\emph{Premise co-occurrence analysis.} After filtering high-frequency infrastructure pairs, the co-occurrence graph may reveal clusters of premises that are cognitively associated---``proof toolkits'' that practitioners reach for together, independent of logical necessity. Such clusters would constitute the most direct trace of proof-search heuristics in the product, complementing the structural traces analyzed in this paper. Comparing these clusters with the communities detected in $G_{\mathrm{thm}}$ (\S\ref{sec:thm-community}) would test whether co-usage patterns align with dependency-based communities or reveal an orthogonal organizational dimension.
+
+\emph{Cross-library comparison.} Applying the same analysis to other formal libraries---Isabelle/AFP, Coq/MathComp, Mizar/MML---would distinguish structural features intrinsic to mathematics from those contingent on a particular proof assistant or community culture. If the funnel topology, the two-layer hub structure, and the near-zero module cohesion appear across libraries built on different type theories and maintained by different communities, they are properties of formalized mathematics itself; if they diverge, they are artifacts of the medium.

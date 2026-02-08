@@ -9,10 +9,15 @@
 
 \maketitle
 
+\begin{abstract}
+We analyze the network structure of Mathlib, the largest unified library of formalized mathematics ($308{,}129$ declarations, $8.4$ million dependency edges, $7{,}563$ modules), from three complementary graph-theoretic perspectives: the module-level import graph, the theorem-level premise graph, and a cross-level module--declaration interaction analysis. At the module level, the cognitive classification encoded in the namespace tree and the logical dependency structure systematically diverge: $17.5\%$ of import edges are transitive redundancies added for cognitive navigation rather than compilation, and $37.1\%$ of dependencies cross namespace boundaries. At the theorem level, the hub structure decomposes into a language infrastructure layer (determined by the proof assistant's type system) and a mathematical infrastructure layer (determined by the logical structure of mathematics itself); three centrality measures reveal an irreducibly multidimensional notion of importance; and Louvain community detection recovers recognizable mathematical disciplines with only moderate alignment to the namespace hierarchy (NMI~$= 0.34$). Overlaying the two levels, we find that module cohesion averages just $0.025$, with $56.1\%$ of modules containing no internal dependency edges at all---the module is a cognitive container, not a logical unit. These findings demonstrate that formalization does not erase the traces of human practice: cognitive habits, organizational conventions, and complexity constraints leave quantifiable structural signatures in the deterministic product. The metrics established here provide a human-authored baseline against which AI-induced structural drift in future formal libraries can be measured.
+\end{abstract}
+
 \input{sections/introduction}
 \input{sections/module-import-graph}
 \input{sections/theorem-premise-graph}
 \input{sections/premise-co-occurrence-graph}
+\input{sections/conclusion}
 \bibliographystyle{plain}
 \bibliography{references}
 
