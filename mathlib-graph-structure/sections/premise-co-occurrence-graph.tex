@@ -156,6 +156,59 @@ For each module~$m \in \mathcal{M}$, let $\mathcal{D}_m \subseteq \mathcal{D}$ d
 \end{align*}
 where $\oplus$ denotes exclusive or: an edge is external if exactly one endpoint belongs to~$m$.
 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small},
+  dot/.style={circle, fill=black, minimum size=4pt, inner sep=0pt},
+  int/.style={->, >=Stealth, red!70!black, semithick},
+  ext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+]
+  % ── Module boundary ──
+  \draw[blue!50!black, thick, dashed, rounded corners=4pt]
+    (-0.5,-1.2) rectangle (3.1,1.6);
+  \node[font=\small\sffamily, blue!60!black, anchor=north west] at (-0.4,1.5) {module $m$};
+
+  % ── Internal nodes ──
+  \node[dot, label={[font=\scriptsize]above:$d_1$}] (d1) at (0.3,0.8) {};
+  \node[dot, label={[font=\scriptsize]above:$d_2$}] (d2) at (2.3,0.8) {};
+  \node[dot, label={[font=\scriptsize]below:$d_3$}] (d3) at (1.3,-0.6) {};
+
+  % ── External nodes ──
+  \node[dot, label={[font=\scriptsize]above:$d_4$}] (d4) at (5.0,0.8) {};
+  \node[dot, label={[font=\scriptsize]below:$d_5$}] (d5) at (5.0,-0.6) {};
+  \node[font=\scriptsize, gray!70!black, anchor=west] at (5.4,0.1) {other modules};
+
+  % ── Internal edges (solid) ──
+  \draw[int] (d1) -- (d2);
+  \draw[int] (d3) -- (d1);
+  \node[font=\tiny, red!70!black, anchor=south] at (1.3,0.85) {$E_{\mathrm{int}}$};
+
+  % ── External edges (dashed) ──
+  \draw[ext] (d1) -- (d4);
+  \draw[ext] (d2) -- (d5);
+  \draw[ext] (d3) -- (d4);
+  \draw[ext] (d3) -- (d5);
+  \node[font=\tiny, red!70!black, anchor=south] at (3.9,0.85) {$E_{\mathrm{ext}}$};
+
+  % ── Cohesion calculation (right side) ──
+  \node[anchor=north west, font=\small, align=left, text width=5.2cm]
+    at (7.0,1.6) {%
+      \textbf{Cohesion calculation}\\[3pt]
+      {\footnotesize
+      $|E_{\mathrm{int}}(m)| = 2$ \quad (solid arrows)\\[1pt]
+      $|E_{\mathrm{ext}}(m)| = 4$ \quad (dashed arrows)\\[3pt]
+      $\displaystyle\mathrm{coh}(m) = \frac{2}{2+4} = \frac{1}{3} \approx 0.33$}%
+    };
+\end{tikzpicture}
+
+\smallskip
+{\small One-third of the dependency traffic involving module~$m$ stays internal. In Mathlib, the median module has $\mathrm{coh}(m) = 0$: \emph{no} internal traffic at all.}
+
+\caption{Computing module cohesion. Internal edges (\textcolor{red!70!black}{solid red}) connect declarations within the same module; external edges (\textcolor{red!70!black}{dashed red}) cross the module boundary. Cohesion is the fraction of traffic that stays internal.}
+\label{fig:cohesion-schematic}
+\end{figure}
+
 \begin{definition}[Module cohesion]
 \label{def:cohesion}
 The \emph{cohesion} of a module~$m$ is
