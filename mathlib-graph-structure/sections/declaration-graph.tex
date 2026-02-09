@@ -58,7 +58,7 @@ axiom       & Accepted without proof; irreducible           & $3$       & ${<}0.
 \end{table}
 
 \paragraph{Theorems as edge producers; axioms as pure sinks.}
-Theorems constitute $79.1\%$ of all declarations. Lean also accepts the keyword \texttt{lemma}, which is stored identically as a \texttt{theorem} in the compiled environment; our dataset does not distinguish the two. In~$G_{\mathrm{thm}}$, a theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it:
+In $G_{\mathrm{thm}}$, a declaration is an \emph{edge producer} if it has high out-degree (its proof invokes many premises) and a \emph{pure sink} if it has zero or near-zero out-degree but is cited by many others (high in-degree). Theorems constitute $79.1\%$ of all declarations and are the primary edge producers. Lean also accepts the keyword \texttt{lemma}, which is stored identically as a \texttt{theorem} in the compiled environment; our dataset does not distinguish the two. A theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it:
 
 \begin{codebox}
 \textbf{theorem} \textcolor{red!70!black}{Nat.add\_comm} (a b : Nat) : a + b = b + a := \ldots
