@@ -12,7 +12,7 @@ We take \module{Mathlib} as our object of study and develop our analysis at four
 
 \medskip
 \noindent\textbf{The Module Graph (\S\ref{sec:module-import}).}
-The coarsest granularity. Each module (source file) is a node; \texttt{import} statements form edges. We analyze two graphs simultaneously---the module-name tree~$T$, derived from the dot-separated hierarchy of module names (\S\ref{sec:namespace-tree}), which encodes the human cognitive classification of mathematics, and the import graph~$G_{\mathrm{module}}$, which encodes the compiler-verified logical dependencies---together with the systematic divergence between them. This granularity captures the \emph{architecture} of the library: its overall shape, organizational principles, and structural vulnerabilities.
+The coarsest granularity. Each module (source file) is a node; \texttt{import} statements form edges. We analyze two graphs simultaneously---the module-name tree~$T$, derived from the dot-separated hierarchy of module names (\S\ref{sec:namespace-tree}), which encodes the human cognitive classification of mathematics, and the module graph~$G_{\mathrm{module}}$, which encodes the compiler-verified logical dependencies---together with the systematic divergence between them. This granularity captures the \emph{architecture} of the library: its overall shape, organizational principles, and structural vulnerabilities.
 
 \medskip
 \noindent\textbf{The Declaration Graph (\S\ref{sec:theorem-premise}).}

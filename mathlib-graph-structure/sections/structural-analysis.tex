@@ -3,7 +3,7 @@
 
 The preceding sections defined each graph and reported its basic statistics: node and edge counts, edge classifications, and containment measurements. We now apply four network-analytic tools---degree distribution (\S\ref{sec:sa-degree}), DAG depth (\S\ref{sec:dag-depth}), centrality (\S\ref{sec:sa-centrality}), community detection (\S\ref{sec:sa-community}), and robustness (\S\ref{sec:sa-robustness})---uniformly across all three graph levels. Organizing the analyses by method rather than by graph makes cross-level patterns immediately visible. We also include two declaration-level analyses that have no module or namespace counterpart: the theorem/lemma importance validation (\S\ref{sec:thm-vs-lemma}).
 
-Unless stated otherwise, module-level statistics are reported for both the raw import graph $G_{\mathrm{module}}$ and its transitive reduction $G_{\mathrm{module}}^{-}$, to distinguish genuine logical necessity from cognitive redundancy (\S\ref{sec:transitive-reduction}).
+Unless stated otherwise, module-level statistics are reported for both the raw module graph $G_{\mathrm{module}}$ and its transitive reduction $G_{\mathrm{module}}^{-}$, to distinguish genuine logical necessity from cognitive redundancy (\S\ref{sec:transitive-reduction}).
 
 %% ====================================================================
 \subsection{Degree Distributions}
@@ -117,7 +117,7 @@ This asymmetry has a structural explanation that connects directly to the centra
 
 \begin{remark}[Transitive reduction at the theorem level]
 \label{rem:thm-transitive-reduction}
-In contrast to the module import graph, where transitive reduction removes $17.5\%$ of edges (\S\ref{sec:transitive-reduction}), the theorem--premise graph does not admit a meaningful transitive reduction. In $G_{\mathrm{module}}$, redundant edges arise from deliberate human choices---developers importing umbrella modules for cognitive convenience. In $G_{\mathrm{thm}}$, every edge is extracted mechanically from the proof term by the kernel: if a premise appears in the proof, the edge exists, regardless of whether that premise could be reached indirectly through other premises. The distinction is significant: module-level redundancy measures the gap between what the compiler requires and what the human chooses; at the theorem level, this gap vanishes, because the data already records exactly what the compiler sees.
+In contrast to the module graph, where transitive reduction removes $17.5\%$ of edges (\S\ref{sec:transitive-reduction}), the theorem--premise graph does not admit a meaningful transitive reduction. In $G_{\mathrm{module}}$, redundant edges arise from deliberate human choices---developers importing umbrella modules for cognitive convenience. In $G_{\mathrm{thm}}$, every edge is extracted mechanically from the proof term by the kernel: if a premise appears in the proof, the edge exists, regardless of whether that premise could be reached indirectly through other premises. The distinction is significant: module-level redundancy measures the gap between what the compiler requires and what the human chooses; at the theorem level, this gap vanishes, because the data already records exactly what the compiler sees.
 \end{remark}
 
 \subsubsection{Namespace Level}
@@ -178,7 +178,7 @@ The layer-width profile has a characteristic ``funnel'' shape: very wide at the 
 
 \begin{remark}[Module-name depth and import symmetry]
 \label{rem:import-depth-symmetry}
-The DAG depth of~$153$ layers describes the topological extent of the dependency chain. A different notion of depth---the \emph{module-name depth}, i.e., the number of dot-separated components of a module's fully qualified name---describes how deeply a module sits in the naming hierarchy~$T$. Module-name depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$. Import edges exhibit near-perfect depth symmetry: $55.4\%$ connect modules at the same naming depth, $23.3\%$ point from deeper to shallower, and $21.3\%$ from shallower to deeper (mean difference~$+0.03$). Only~$1.3\%$ of imports target modules at depth~$\le 2$. Developers import \emph{laterally}---peer to peer within the same naming stratum---rather than vertically across naming layers. As we shall see in \S\ref{sec:cross_level}, this symmetry contrasts sharply with the declaration-level dependency graph, where $37.6\%$ of edges flow from deeper to shallower namespaces and the mean depth difference rises to~$+0.36$: the import graph compresses and hides the strong infrastructure pull that the declaration graph reveals.
+The DAG depth of~$153$ layers describes the topological extent of the dependency chain. A different notion of depth---the \emph{module-name depth}, i.e., the number of dot-separated components of a module's fully qualified name---describes how deeply a module sits in the naming hierarchy~$T$. Module-name depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$. Import edges exhibit near-perfect depth symmetry: $55.4\%$ connect modules at the same naming depth, $23.3\%$ point from deeper to shallower, and $21.3\%$ from shallower to deeper (mean difference~$+0.03$). Only~$1.3\%$ of imports target modules at depth~$\le 2$. Developers import \emph{laterally}---peer to peer within the same naming stratum---rather than vertically across naming layers. As we shall see in \S\ref{sec:cross_level}, this symmetry contrasts sharply with the declaration-level dependency graph, where $37.6\%$ of edges flow from deeper to shallower namespaces and the mean depth difference rises to~$+0.36$: the module graph compresses and hides the strong infrastructure pull that the declaration graph reveals.
 \end{remark}
 
 %% ====================================================================
@@ -445,7 +445,7 @@ Removing the five highest in-degree modules (\module{Init}, \module{Tactic.Commo
 
 \begin{remark}
 \label{rem:robustness}
-The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the import graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
+The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the module graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
 This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reduction}: the edges that developers add for navigability---guided by the categories of~$T$---simultaneously serve as structural insurance, providing alternative paths that keep the network connected when bridges fail.
 \end{remark}
 
