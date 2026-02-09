@@ -70,22 +70,47 @@ The two phases alternate until modularity converges. The result is a hierarchica
 
 To compare two partitions of the same vertex set---for example, a community assignment and a namespace labeling---we use two standard measures.
 
+\begin{definition}[Shannon Entropy]
+\label{def:shannon-entropy}
+Given a partition $\mathcal{A} = \{A_1, \ldots, A_k\}$ of a finite set~$V$, the \emph{Shannon entropy} is
+\[
+  H(\mathcal{A}) = -\sum_{i=1}^{k} \frac{|A_i|}{|V|} \log \frac{|A_i|}{|V|}.
+\]
+It measures the uncertainty in a randomly chosen element's cluster assignment: $H = 0$ when all elements belong to a single cluster, and $H = \log k$ when elements are uniformly distributed.
+\end{definition}
+
+\begin{definition}[Mutual Information]
+\label{def:mutual-information}
+Given two partitions $\mathcal{A} = \{A_1, \ldots, A_k\}$ and $\mathcal{B} = \{B_1, \ldots, B_l\}$ of~$V$, the \emph{mutual information} is
+\[
+  I(\mathcal{A}; \mathcal{B}) = \sum_{i=1}^{k} \sum_{j=1}^{l} \frac{|A_i \cap B_j|}{|V|} \log \frac{|V| \cdot |A_i \cap B_j|}{|A_i| \cdot |B_j|},
+\]
+with the convention $0 \log 0 = 0$. It quantifies how much knowing one partition reduces uncertainty about the other.
+\end{definition}
+
 \begin{definition}[Normalized Mutual Information (NMI)]
 \label{def:nmi}
 Given two partitions $\mathcal{A}$ and $\mathcal{B}$ of a set~$V$, the \emph{normalized mutual information} is
 \[
   \mathrm{NMI}(\mathcal{A}, \mathcal{B}) = \frac{2\, I(\mathcal{A}; \mathcal{B})}{H(\mathcal{A}) + H(\mathcal{B})},
 \]
-where $I(\mathcal{A}; \mathcal{B})$ is the mutual information between the two partitions and $H(\cdot)$ is the Shannon entropy of a partition's label distribution. NMI ranges from~$0$ (independent) to~$1$ (identical partitions).
+where $I$ and $H$ are defined above. NMI ranges from~$0$ (independent) to~$1$ (identical partitions).
 \end{definition}
 
 \begin{definition}[Adjusted Rand Index (ARI)]
 \label{def:ari}
-The \emph{Adjusted Rand Index} measures the agreement between two partitions, corrected for chance:
+Given two partitions $\mathcal{A}$ and $\mathcal{B}$ of~$V$, consider all $\binom{|V|}{2}$ pairs of elements. Each pair is classified as:
+\begin{itemize}
+\item $a$: same cluster in both $\mathcal{A}$ and $\mathcal{B}$ (concordant---together),
+\item $b$: same in $\mathcal{A}$, different in $\mathcal{B}$ (discordant),
+\item $c$: different in $\mathcal{A}$, same in $\mathcal{B}$ (discordant),
+\item $d$: different in both (concordant---apart).
+\end{itemize}
+The \emph{Rand Index} is $\mathrm{RI} = (a + d) / \binom{|V|}{2}$. Since even random partitions yield $\mathrm{RI} > 0$, the \emph{Adjusted Rand Index} corrects for chance:
 \[
-  \mathrm{ARI}(\mathcal{A}, \mathcal{B}) = \frac{\text{Rand Index} - \text{Expected Rand Index}}{\text{Max Rand Index} - \text{Expected Rand Index}}.
+  \mathrm{ARI}(\mathcal{A}, \mathcal{B}) = \frac{\mathrm{RI} - \mathbb{E}[\mathrm{RI}]}{\max(\mathrm{RI}) - \mathbb{E}[\mathrm{RI}]},
 \]
-ARI equals~$1$ for identical partitions, $0$ for agreement at the level expected by chance, and can be negative for agreement worse than random.
+where the expectation is over random partitions with the same cluster-size distributions as $\mathcal{A}$ and $\mathcal{B}$. ARI equals~$1$ for identical partitions, $0$ for agreement at the level expected by chance, and can be negative for agreement worse than random.
 \end{definition}
 
 \subsection{Heavy-Tailed Distributions}
