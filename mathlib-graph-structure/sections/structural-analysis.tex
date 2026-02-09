@@ -275,7 +275,7 @@ $\deg^{-}$ & Module & PR & Module & $c_B$ & Module \\
 \textit{Abbreviations:} AN = \module{Analysis.Normed}, LA = \module{LinearAlgebra}, CT = \module{CategoryTheory},\\
 ABO = \module{Algebra.BigOperators.Group}, AS = \module{Analysis.SpecificLimits},\\
 FD = \module{FiniteDimension}, DD = \module{DirectoryDependency}, CompileInd.\ = \module{CompileInductive}, Fin.\ = \module{Finiteness}.
-
+\textcolor{red}{these graph especially captions are too small}
 We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:centrality}. Out-degree is omitted from this comparison because it measures a module's role as an \emph{importer}---how many prerequisites it gathers---rather than its structural position within the network. Moreover, as shown in \S\ref{sec:degree-distribution}, high out-degree values largely reflect redundant umbrella imports and collapse under transitive reduction, making out-degree a poor proxy for structural importance.
 
 \begin{figure}[H]
@@ -441,7 +441,7 @@ ID & Size & Dominant directories \\
 \end{table}
 
 The communities map recognizably onto mathematical domains. \module{CategoryTheory} again dominates a single community ($64\%$ of Community~$7$), mirroring the exceptional autonomy observed at the declaration level (\S\ref{sec:thm-community}). The NMI between Louvain communities and top-level directories is $0.42$ (ARI~$= 0.28$)---higher than the declaration-level NMI of $0.34$ (\S\ref{sec:thm-community}). The stronger alignment reflects the fact that modules, unlike declarations, are explicitly organized into a directory tree; the import graph inherits much of that tree structure.
-
+\textcolor{red}{these are tooooo small as well. Unify all the figure's font....style}
 \begin{figure}[ht]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
