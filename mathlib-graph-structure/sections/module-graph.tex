@@ -268,7 +268,11 @@ The module graph's relationship to the module hierarchy $T$ can be quantified at
 
 \begin{definition}[Module containment at depth~$k$]
 \label{def:module-containment}
-For each depth $k \ge 1$, let $\mathrm{trunc}_k(m)$ denote the first~$k$ components of module~$m$. The \emph{module containment ratio at depth~$k$} is
+For each depth $k \ge 1$, let $\mathrm{trunc}_k(m)$ denote the first~$k$ components of module~$m$. For example,
+\[
+  \mathrm{trunc}_2(\module{Mathlib.Algebra.Group.Defs}) = \module{Mathlib.Algebra}.
+\]
+The \emph{module containment ratio at depth~$k$} is
 \[
   \mathrm{contain}_{\mathrm{mod}}(k) \;=\; \frac{|\{(m_1,m_2) \in E_{\mathrm{module}} \mid \mathrm{trunc}_k(m_1) = \mathrm{trunc}_k(m_2)\}|}{|E_{\mathrm{module}}|}.
 \]
@@ -304,7 +308,20 @@ The steep collapse reveals that, within a discipline, dependencies routinely cro
 For a module $m = \module{Mathlib.}X.Y.\cdots$, the \emph{top-level directory} is $\mathrm{dir}(m) = X$, the first directory component under the \module{Mathlib/} root.
 \end{definition}
 
-An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{intra-directory} if $\mathrm{dir}(m_1) = \mathrm{dir}(m_2)$ and \emph{inter-directory} otherwise. In $G_{\mathrm{module}}$, $14{,}464$ edges ($61.4\%$) are intra-directory and $9{,}106$ ($38.6\%$) are inter-directory. In $G_{\mathrm{module}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.
+\begin{definition}[Intra-/inter-directory edge]
+An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{intra-directory} if $\mathrm{dir}(m_1) = \mathrm{dir}(m_2)$ and \emph{inter-directory} otherwise. For example, the edge
+\[
+  (\module{Mathlib.Algebra.Group.Defs},\;\; \module{Mathlib.Algebra.Notation.Defs})
+\]
+is intra-directory (both have $\mathrm{dir} = \module{Algebra}$), while
+\[
+  (\module{Mathlib.Algebra.Group.Defs},\;\; \module{Mathlib.Order.Defs})
+\]
+is inter-directory.
+\end{definition}
+
+\noindent
+In $G_{\mathrm{module}}$, $14{,}464$ edges ($61.4\%$) are intra-directory and $9{,}106$ ($38.6\%$) are inter-directory. In $G_{\mathrm{module}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.
 
 If the module graph perfectly respected the directory hierarchy---that is, if every module only depended on modules within its own top-level directory---the heatmap below would be purely diagonal. Each off-diagonal bright cell therefore represents a point where the logical structure of proofs departs from the cognitive classification of~$T$.
 
