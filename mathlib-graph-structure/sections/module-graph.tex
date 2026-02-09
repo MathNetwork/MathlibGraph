@@ -337,6 +337,8 @@ The strongest inter-directory dependency is \module{RingTheory} $\to$ \module{Al
 
 Degree distribution, DAG depth, centrality, and robustness analyses for the module graph are reported in \S\ref{sec:structural-analysis}.
 
+\textcolor{blue}{XXX WE SHOULD NOT USE REMARKS XXX}
+\textcolor{blue}{SAY NOTE THAT}
 \begin{remark}[Language contingency]
 \label{rem:language-contingency}
 The module graph's topology is shaped not only by mathematical dependencies but by Lean~4's specific compilation model: its prohibition of cyclic imports, its transitive visibility semantics, and the \texttt{public import} mechanism that allows selective re-export. Design choices such as fine-grained incremental compilation, selective re-export at the declaration level, or explicit interface files would alter the structure of $G_{\mathrm{module}}$ even for identical mathematical content. The structural statistics reported in this section---$17.5\%$ redundancy, $153$-layer depth, mean out-degree~$3.1$---should be understood as properties of formalized mathematics \emph{in Lean~4}, not of formalized mathematics in general.
