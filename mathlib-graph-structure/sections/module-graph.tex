@@ -141,7 +141,9 @@ Each file is a \emph{vertex} in the module graph; each \texttt{import} statement
 
 Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-exports the imported module to downstream dependents. For the purposes of the module graph, both forms create an edge---they differ only in visibility, not in the dependency relationship.
 
+\begin{definition}[Import set]
 For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
+\end{definition}
 
 \begin{definition}[Module graph]
 The \emph{module graph} of \module{Mathlib} is $G_{\mathrm{module}} = (\mathcal{M}, E_{\mathrm{module}})$ where
