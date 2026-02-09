@@ -13,5 +13,8 @@
 # minted cache
 _minted/
 
+# Backups
+sections_backup/
+
 # OS
 .DS_Store
