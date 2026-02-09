@@ -10,10 +10,14 @@
 \maketitle
 
 \begin{abstract}
-Formal mathematics libraries are strictly deterministic artifacts, yet they are built by humans through an uncertain process of exploration, organization, and judgment. We analyze the network structure of \module{Mathlib}—the largest unified library of formalized mathematics—and show that the deterministic product preserves measurable traces of the cognitive process that created it. We capture this snapshot at a pivotal moment \textcolor{red}{should be longer and should say what we do in the paper. This sounds self-celerbrating. As factural as possible. Study mathlib...doing the following thing....hypothesis....and result}: human contributors remain primary, but AI-assisted formalization is rapidly emerging. The structural patterns we document are the shape of mathematics under its current mode of production. 
-\textcolor{red}{do not include the third level in the table of content}
+We study the dependency structure of \module{Mathlib}, the largest unified library of formalized mathematics, comprising $7{,}563$ modules and $308{,}129$ declarations connected by $8.4$ million dependency edges. We construct and analyze dependency graphs at three granularities---modules (source files), declarations (theorems, definitions, and axioms), and namespaces (hierarchical name prefixes)---and measure how these levels interact.
+
+We find that the two human organizational systems---file structure and namespace naming---are highly consistent with each other (NMI $= 0.71$), but both diverge significantly from the logical dependency structure: module cohesion averages $0.107$, meaning only $10.7\%$ of a module's dependency traffic stays internal, and Louvain community detection recovers mathematical disciplines with limited alignment to human-defined namespaces (NMI $= 0.34$). The declaration-level graph exhibits a two-layer hub structure: a language infrastructure layer determined by Lean's type system (equality reasoning, numeral coercions) and a mathematical infrastructure layer determined by mathematical content (categories, real numbers, modules). Of all cross-file dependencies at the declaration level, $92.2\%$ are indirect---they do not correspond to any explicit import statement. A containment decay analysis across namespace depths shows that human cognitive classification retains organizing power only at the coarsest granularity ($48.9\%$ at the top-level directory) and drops to ${\sim}13\%$ at finer levels.
+
+These structural metrics provide quantitative baselines for library maintenance, language design evaluation, and AI-assisted formalization.
 \end{abstract}
 
+\setcounter{tocdepth}{2}
 \tableofcontents
 \newpage
 
