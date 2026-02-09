@@ -602,26 +602,28 @@ At one extreme, if each declaration occupied its own namespace (flat naming: \ns
   nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
   nsinr/.style={draw=green!50!black, fill=green!3, rounded corners=2pt, thin, dashed},
 ]
-  % Outer namespace: Nat (contains d1, d2, d4)
-  \node[nsbox, minimum width=3.8cm, minimum height=2.0cm] at (1.4,0.6) {};
-  \node[font=\tiny\sffamily, text=green!50!black] at (1.4,1.85) {\ns{Nat}};
-  % Inner namespace: Nat.Prime (contains d3, d5)
-  \node[nsinr, minimum width=1.4cm, minimum height=1.4cm] at (2.4,0.5) {};
-  \node[font=\tiny\sffamily, text=green!50!black] at (2.4,1.45) {\ns{Prime}};
+  % Namespace Nat (contains d1, d2, d4)
+  \node[nsbox, minimum width=1.6cm, minimum height=1.6cm] at (0,0.6) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (0,1.65) {\ns{Nat}};
+  % Namespace Nat.Prime (contains d3, d5)
+  \node[nsbox, minimum width=1.6cm, minimum height=1.6cm] at (2.8,0.6) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.8,1.65) {\ns{Nat.Prime}};
   % Intra Nat edges (solid)
-  \draw[dep] (0.1,0.0) -- (-0.2,0.95);
-  \draw[dep] (0.1,0.0) -- (0.5,0.95);
-  \draw[dep] (-0.2,0.95) -- (0.5,0.95);
+  \draw[dep] (0,0.05) -- (-0.35,1.0);
+  \draw[dep] (0,0.05) -- (0.35,1.0);
+  \draw[dep] (-0.35,1.0) -- (0.35,1.0);
   % Intra Nat.Prime edge (solid)
-  \draw[dep] (2.1,0.1) -- (2.6,0.85);
+  \draw[dep] (2.45,0.2) -- (2.8,1.0);
   % Cross-namespace edge (dashed)
-  \draw[depx] (2.1,0.1) -- (0.5,0.95);
+  \draw[depx] (2.45,0.2) -- (0.35,1.0);
+  % Green namespace-level arrow
+  \draw[->, >=Stealth, green!50!black, thick] (2.0,0.6) -- (0.8,0.6);
   % Dots on top
-  \node[dot] (d1) at (-0.2,0.95) {};
-  \node[dot] (d2) at (0.5,0.95) {};
-  \node[dot] (d3) at (2.6,0.85) {};
-  \node[dot] (d4) at (0.1,0.0) {};
-  \node[dot] (d5) at (2.1,0.1) {};
+  \node[dot] (d1) at (-0.35,1.0) {};
+  \node[dot] (d2) at (0.35,1.0) {};
+  \node[dot] (d3) at (2.8,1.0) {};
+  \node[dot] (d4) at (0,0.05) {};
+  \node[dot] (d5) at (2.45,0.2) {};
 \end{tikzpicture}
 \caption{Hierarchical (\module{Mathlib})}
 \label{fig:ns-gran-current}
