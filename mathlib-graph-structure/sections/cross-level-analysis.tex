@@ -265,6 +265,39 @@ From the import side, $72.1\%$ of import edges are \emph{active}---the importing
 Section~\ref{sec:transitive-reduction} found $17.5\%$ of import edges transitively redundant; here, $27.9\%$ are unused. The gap ($27.9\% > 17.5\%$) has a precise interpretation: $78.4\%$ of unused imports are graph-theoretically essential---the sole path for transitive visibility---while $21.6\%$ are both unused and redundant.
 \end{remark}
 
+\paragraph{Import depth vs.\ usage depth.}
+
+The preceding edge-count comparison treats all cross-module dependencies uniformly. We now refine the analysis by comparing the \emph{depth} of modules that a file directly imports in $G_{\mathrm{module}}$ with the depth of modules whose declarations it actually cites in $G_{\mathrm{thm}}$. For each module~$A$, let $\overline{d}_{\mathrm{imp}}(A)$ be the mean module depth of $A$'s direct imports and $\overline{d}_{\mathrm{use}}(A)$ the mean depth of the modules containing declarations cited by $A$'s own declarations. The \emph{depth difference} is $\Delta(A) = \overline{d}_{\mathrm{use}}(A) - \overline{d}_{\mathrm{imp}}(A)$.
+
+Across the $6{,}861$ modules for which both quantities are defined, the mean depth difference is $\overline{\Delta} = -0.098$ (median $-0.069$, $\sigma = 0.445$). The distribution is roughly symmetric but slightly left-skewed: $54.2\%$ of modules have $\Delta < 0$ (usage shallower than imports), $40.3\%$ have $\Delta > 0$ (usage deeper), and $5.5\%$ have $\Delta = 0$. Actual usage thus reaches, on average, \emph{shallower} modules than those directly imported: through deep import chains, declarations access shallow algebraic and order-theoretic infrastructure.
+
+\begin{table}[ht]
+\centering
+\caption{Mean depth difference $\overline{\Delta}$ by top-level directory (five most negative and five most positive among directories with ${\geq}30$ modules).}
+\label{tab:depth-diff-by-dir}
+\begin{tabular}{lrrrrr}
+\toprule
+Directory & $N$ & $\overline{d}_{\mathrm{imp}}$ & $\overline{d}_{\mathrm{use}}$ & $\overline{\Delta}$ & Median~$\Delta$ \\
+\midrule
+\multicolumn{6}{l}{\emph{Usage shallower than imports ($\Delta < 0$):}} \\
+\module{CategoryTheory}      & 919 & 4.339 & 3.979 & $-0.360$ & $-0.333$ \\
+\module{Geometry}             & 119 & 4.658 & 4.319 & $-0.339$ & $-0.364$ \\
+\module{Algebra}              & 1210 & 4.487 & 4.309 & $-0.178$ & $-0.151$ \\
+\module{Analysis}             & 702 & 4.522 & 4.358 & $-0.164$ & $-0.141$ \\
+\module{MeasureTheory}        & 284 & 4.380 & 4.218 & $-0.162$ & $-0.141$ \\
+\midrule
+\multicolumn{6}{l}{\emph{Usage deeper than imports ($\Delta > 0$):}} \\
+\module{LinearAlgebra}        & 324 & 4.054 & 4.234 & $+0.180$ & $+0.193$ \\
+\module{NumberTheory}         & 207 & 4.233 & 4.375 & $+0.142$ & $+0.179$ \\
+\module{RingTheory}           & 621 & 4.103 & 4.247 & $+0.145$ & $+0.177$ \\
+\module{FieldTheory}          &  73 & 3.917 & 4.231 & $+0.314$ & $+0.307$ \\
+\module{RepresentationTheory} &  32 & 3.949 & 4.262 & $+0.313$ & $+0.195$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:depth-diff-by-dir} reveals a clear split. \module{CategoryTheory} ($\overline{\Delta} = -0.360$) stands out: its files import other category-theoretic modules at depth~${\sim}4.3$ but actually use declarations from modules at depth~${\sim}4.0$. This reflects the highly layered, self-contained nature of categorical formalization---deep categorical imports serve as portals to shallow definitional infrastructure. At the opposite extreme, \module{FieldTheory} ($\overline{\Delta} = +0.314$) imports modules at depth~${\sim}3.9$ but uses declarations at depth~${\sim}4.2$: its imports serve as cognitive shortcuts to deeper algebraic and ring-theoretic foundations. The positive-$\Delta$ directories (\module{RingTheory}, \module{NumberTheory}, \module{LinearAlgebra}, \module{FieldTheory}) are precisely those that build on deep algebraic infrastructure, confirming that the module graph functions as a sparse gateway to deeper dependency chains.
+
 \subsection{Namespace--Declaration Interaction}
 \label{sec:ns-decl-interaction}
 
