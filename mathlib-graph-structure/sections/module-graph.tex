@@ -5,17 +5,17 @@ We begin with the coarsest level of analysis: module-level structures. Two graph
 
 \subsection{Modules}
 \label{sec:module-names}
-A \emph{module} in \module{Mathlib} is identified by a dot-separated sequence of identifiers, such as
-\[
-  \module{Mathlib.Algebra.Group.Defs}.
-\]
-Each module corresponds to a \texttt{.lean} source file, with dots replacing path separators. We write $\mathcal{M}$ for the set of all modules in \module{Mathlib}:
+\begin{definition}[Module]\label{def:module}
+A \emph{module} in \module{Mathlib} is identified by a dot-separated sequence of identifiers, such as $\module{Mathlib.Algebra.Group.Defs}$. Each module corresponds to a \texttt{.lean} source file, with dots replacing path separators. We write $\mathcal{M}$ for the set of all modules in \module{Mathlib}:
 \begin{align*}
   \mathcal{M} = \{\; &\module{Mathlib.Init},\\
     &\module{Mathlib.Algebra.Group.Defs},\\
     &\module{Mathlib.Analysis.Normed.Group.Basic},\; \ldots\,\}.
 \end{align*}
-All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. The \emph{depth} of a module is the number of dot-separated components. Formally, if a module is $c_1.c_2.\cdots.c_k$, then its depth is $k$.
+The \emph{depth} of a module $c_1.c_2.\cdots.c_k$ is~$k$, the number of dot-separated components.
+\end{definition}
+
+All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section.
 
 \begin{example}
 \leavevmode
