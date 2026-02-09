@@ -3,6 +3,30 @@
 
 The module-level analysis of \S\ref{sec:module-import} treats each source file as a single vertex. At the opposite extreme, the declaration-level analysis of \S\ref{sec:theorem-premise} treats every theorem and definition as its own vertex. Between these extremes lies a natural intermediate structure: the \emph{namespace}. In Lean~4, every declaration~$d$ carries a fully qualified name---e.g., \decl{Nat.Prime.dvd\_mul}---whose dot-separated components encode a hierarchical naming convention. By truncating names to different depths, we obtain a continuously parameterized family of dependency graphs that interpolates between the coarse module level and the fine declaration level. This section constructs these graphs and measures how \emph{containment}---the proportion of edges that stay within namespace boundaries---decays as granularity increases.
 
+The following example illustrates how Lean's naming mechanisms determine fully qualified names:
+
+\begin{codebox}
+\textit{\color{gray}-- \textbf{Namespace blocks} determine the declaration's qualified name:}\\
+\textbf{namespace} \textcolor{green!50!black}{Nat}\\
+\hspace{1.5em}\textbf{theorem} \textcolor{red!70!black}{add\_comm} (a b : Nat) : a + b = b + a := \ldots\\
+\hspace{1.5em}\textit{\color{gray}-- fully qualified name: \textcolor{red!70!black}{Nat.add\_comm} \quad(depth 1)}\\[3pt]
+\hspace{1.5em}\textbf{namespace} \textcolor{green!50!black}{Prime}\\
+\hspace{3em}\textbf{theorem} \textcolor{red!70!black}{dvd\_mul} (hp : Prime p) : p | a * b $\to$ \ldots\ := \ldots\\
+\hspace{3em}\textit{\color{gray}-- fully qualified name: \textcolor{red!70!black}{Nat.Prime.dvd\_mul} \quad(depth 2)}\\
+\hspace{1.5em}\textbf{end} \textcolor{green!50!black}{Prime}\\
+\textbf{end} \textcolor{green!50!black}{Nat}\\[6pt]
+\textit{\color{gray}-- \textbf{File path} determines the module name (a separate hierarchy):}\\
+\textit{\color{gray}-- File:}\quad \textcolor{blue!60!black}{Mathlib/Data/Nat/Prime/Basic.lean}\\
+\textit{\color{gray}-- Module:}\quad \textcolor{blue!60!black}{Mathlib.Data.Nat.Prime.Basic}\\[3pt]
+\textbf{namespace} \textcolor{green!50!black}{Nat.Prime}\\
+\hspace{1.5em}\textbf{theorem} \textcolor{red!70!black}{eq\_one\_or\_self\_of\_dvd} \ldots\ := \ldots\\
+\hspace{1.5em}\textit{\color{gray}-- qualified name: \textcolor{red!70!black}{Nat.Prime.eq\_one\_or\_self\_of\_dvd}}\\
+\textbf{end} \textcolor{green!50!black}{Nat.Prime}
+\end{codebox}
+
+\noindent
+Each declaration's fully qualified name is a dot-separated sequence determined by its enclosing \texttt{namespace} blocks (\textcolor{green!50!black}{green}), not by the file path. The file path determines the \emph{module} name (\textcolor{blue!60!black}{blue}), which governs \texttt{import} visibility but does not affect qualified names. In practice, \module{Mathlib} conventions strongly correlate the two hierarchies---declarations in \ns{Nat.Prime} typically live in modules under \module{Mathlib.Data.Nat.Prime}---but the correlation is a social convention, not a language rule. A single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}). The truncation $\mathrm{ns}_k(d)$ used in Definition~\ref{def:ns-graph} below extracts the first~$k$ components of the qualified name: at depth~$1$, both \decl{Nat.add\_comm} and \decl{Nat.Prime.dvd\_mul} belong to~\ns{Nat}; at depth~$2$, they separate into~\ns{Nat} and~\ns{Nat.Prime}.
+
 The $308{,}129$ declarations in \module{Mathlib} span six depth levels. Table~\ref{tab:ns-depth-count} shows how the number of distinct namespaces grows with truncation depth.
 
 \begin{table}[ht]

@@ -34,86 +34,48 @@ The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D
 Each node carries two attributes: its \emph{kind} (one of eight declaration types) and its \emph{module} (the source file in which it is defined).
 \end{definition}
 
-The eight declaration kinds listed above are Lean~4's fundamental building blocks. Since they occupy distinct structural roles in $G_{\mathrm{thm}}$ (analyzed quantitatively in \S\ref{sec:thm-types}), we briefly describe each.
+The eight declaration kinds listed above are Lean~4's fundamental building blocks. Table~\ref{tab:kind-overview} summarizes each kind's role and prevalence in $G_{\mathrm{thm}}$; we highlight two structural extremes below. The distinct roles these kinds play in the dependency structure are analyzed quantitatively in \S\ref{sec:thm-types}.
 
-\paragraph{Theorem.}
-A proved mathematical statement. The kernel stores the proof term for verification but erases it at runtime. Lean also accepts the keyword \texttt{lemma}, which is stored identically as a \texttt{theorem} in the compiled environment; our dataset does not distinguish the two.
+\begin{table}[ht]
+\centering
+\caption{Declaration kinds in $G_{\mathrm{thm}}$: role, prevalence, and representative example.}
+\label{tab:kind-overview}
+\small
+\begin{tabular}{lp{5.2cm}rrl}
+\toprule
+Kind & Role & Count & \% & Example \\
+\midrule
+theorem     & Proved proposition; proof erased at runtime   & $243{,}725$ & $79.1$ & \decl{Nat.add\_comm} \\
+definition  & Computable function; body retained            & $48{,}664$  & $15.8$ & \decl{List.length} \\
+abbrev      & Transparent shorthand; always unfolded        & $6{,}667$   & $2.2$  & \decl{OfNat.ofNat} \\
+constructor & Introduction rule of an \texttt{inductive}    & $4{,}755$   & $1.5$  & \decl{Nat.succ} \\
+inductive   & New type with introduction rules              & $3{,}813$   & $1.2$  & \decl{Nat} \\
+opaque      & Sealed body; cannot be unfolded               & $499$       & $0.2$  & \decl{Float.add} \\
+quotient    & Kernel primitives for quotient types          & $3$       & ${<}0.1$ & \decl{Quot.mk} \\
+axiom       & Accepted without proof; irreducible           & $3$       & ${<}0.1$ & \decl{propext} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Theorems as edge producers; axioms as pure sinks.}
+Theorems constitute $79.1\%$ of all declarations. Lean also accepts the keyword \texttt{lemma}, which is stored identically as a \texttt{theorem} in the compiled environment; our dataset does not distinguish the two. In~$G_{\mathrm{thm}}$, a theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it:
 
 \begin{codebox}
 \textbf{theorem} \textcolor{red!70!black}{Nat.add\_comm} (a b : Nat) : a + b = b + a := \ldots
 \end{codebox}
 
 \noindent
-In~$G_{\mathrm{thm}}$, a theorem's \emph{out-edges} point to the premises invoked in its proof, while its \emph{in-edges} come from later theorems that cite it. Theorems constitute $79.1\%$ of all declarations.
+At the opposite extreme, \module{Mathlib} rests on exactly three axioms---\decl{propext} (propositional extensionality), \decl{Classical.choice} (the axiom of choice), and \decl{Quot.sound}---which have near-zero out-degree but are transitively required by all $308{,}129$ declarations. Among the three, \decl{propext} alone accounts for $23{,}226$ incoming edges.
 
-\paragraph{Definition.}
-A computable function or constant whose body is retained at runtime. Definitions provide the computational content that theorems reason about.
-
-\begin{codebox}
-\textbf{def} \textcolor{red!70!black}{List.length} : List a -> Nat\\
-\hspace{1.5em}| [] => 0 | \_ :: l => length l + 1
-\end{codebox}
-
-\noindent
-Because many theorems invoke the same core operations (e.g., \decl{Set}, \decl{Eq.mpr}), definitions tend to accumulate high in-degree.
-
-\paragraph{Abbreviation.}
-A definitionally transparent shorthand, declared with \texttt{abbrev}. The elaborator always unfolds abbreviations, so they act as notational glue---typically wrapping typeclass projections or operator notation.
+\paragraph{Abbreviations as invisible hubs.}
+Abbreviations (\texttt{abbrev}) are definitionally transparent shorthands that the elaborator always unfolds, acting as notational glue---typically wrapping typeclass projections or operator notation:
 
 \begin{codebox}
 \textbf{abbrev} \textcolor{red!70!black}{OfNat.ofNat} (n : Nat) [inst : OfNat a n] : a := inst.ofNat
 \end{codebox}
 
 \noindent
-The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it.
-
-\paragraph{Inductive.}
-The \texttt{inductive} keyword declares a new type by listing its introduction rules. The declaration itself becomes one node in $G_{\mathrm{thm}}$; each introduction rule becomes a separate \textbf{constructor} node (see below).
-
-\begin{codebox}
-\textbf{inductive} \textcolor{red!70!black}{Nat} \textbf{where}\\
-\hspace{1.5em}| \textcolor{red!70!black}{zero} : Nat\\
-\hspace{1.5em}| \textcolor{red!70!black}{succ} (n : Nat) : Nat
-\end{codebox}
-
-\noindent
-Prominent inductive types in $G_{\mathrm{thm}}$ include \decl{CategoryTheory.Category} (in-degree $44{,}487$), \decl{Real} ($26{,}637$), and \decl{Module} ($23{,}404$).
-
-\paragraph{Constructor.}
-The introduction rules of an inductive type, auto-generated by the \texttt{inductive} declaration above. They are the \emph{only} way to build a value of the inductive type. For example, the declaration \texttt{inductive} \decl{Nat} above produces two constructor declarations:
-
-\begin{codebox}
-\textcolor{red!70!black}{Nat.zero} : Nat\hfill\textit{\color{gray}-- build zero}\\
-\textcolor{red!70!black}{Nat.succ} : Nat -> Nat\hfill\textit{\color{gray}-- build a successor}
-\end{codebox}
-
-\noindent
-Similarly, the inductive type \decl{Eq} (propositional equality) has a single constructor \decl{Eq.refl}, which is the sole way to introduce an equality proof. With in-degree $69{,}580$, it is the most-cited constructor in $G_{\mathrm{thm}}$.
-
-\paragraph{Opaque.}
-A definition whose body is sealed from the kernel: downstream proofs cannot unfold it. Opaques appear mainly in low-level system code such as floating-point arithmetic.
-
-\begin{codebox}
-\textbf{opaque} \textcolor{red!70!black}{Float.add} : Float -> Float -> Float
-\end{codebox}
-
-\paragraph{Quotient.}
-Three kernel primitives that support quotient type constructions. Unlike all other declaration kinds, quotients are built into the Lean kernel rather than defined in library code:
-
-\begin{codebox}
-\textcolor{red!70!black}{Quot.mk}\hspace{1.1em}: (r : a -> a -> Prop) -> a -> Quot r\\
-\textcolor{red!70!black}{Quot.lift}\hspace{0.3em}: (f : a -> b) -> \ldots\ -> Quot r -> b\\
-\textcolor{red!70!black}{Quot.ind}\hspace{0.6em}: (p : Quot r -> Prop) -> \ldots\ -> (q : Quot r) -> p q
-\end{codebox}
-
-\paragraph{Axiom.}
-A constant accepted without proof---the irreducible foundation. \module{Mathlib} uses exactly three axioms, on which all $308{,}129$ declarations ultimately rest:
-
-\begin{codebox}
-\textbf{axiom} \textcolor{red!70!black}{propext} : (a <-> b) -> a = b\hfill\textit{\color{gray}-- propositional extensionality}\\
-\textbf{axiom} \textcolor{red!70!black}{Classical.choice} : Nonempty a -> a\hfill\textit{\color{gray}-- the axiom of choice}\\
-\textbf{axiom} \textcolor{red!70!black}{Quot.sound} : r a b -> Quot.mk r a = Quot.mk r b
-\end{codebox}
+The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it. Because the elaborator inserts these references automatically, abbreviations have the most extreme in-degree distribution among non-axiom types---their citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning. By contrast, the most-cited \emph{inductive types}---\decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{Module} ($23{,}404$)---form a layer of mathematical infrastructure whose centrality reflects genuine mathematical importance. The most-cited \emph{constructor}, \decl{Eq.refl} ($69{,}580$), straddles both layers: it is the sole way to introduce an equality proof, making it simultaneously a language primitive and a mathematical necessity.
 
 \paragraph{Edge directionality.}
 Not all declaration kinds participate equally in $G_{\mathrm{thm}}$. An edge $(d_1, d_2)$ means that $d_1$'s proof or body \emph{cites} $d_2$; it does not imply an edge in the reverse direction. For example, the theorem \decl{Nat.lt\_irrefl} proves the irreflexivity of strict ordering on natural numbers: no $n$ satisfies $n < n$.
@@ -237,28 +199,6 @@ The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\
 \end{remark}
 
 At the commit analyzed, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. In comparison with the module-level module graph of \S\ref{sec:import-graph} ($|\mathcal{M}| = 7{,}563$ nodes, $|E_{\mathrm{module}}| = 23{,}570$ edges), the theorem--premise graph has roughly $40\times$ more nodes and $360\times$ more edges. The enormous increase in edge count reflects the fact that a single module import implicitly carries hundreds of individual premise dependencies; $G_{\mathrm{thm}}$ makes each of these dependencies explicit.
-
-\begin{table}[ht]
-\centering
-\caption{Declaration type distribution in $G_{\mathrm{thm}}$.}
-\label{tab:thm-kinds}
-\begin{tabular}{lrr}
-\toprule
-Kind & Count & Percentage \\
-\midrule
-theorem     & $243{,}725$ & $79.1\%$ \\
-definition  & $48{,}664$  & $15.8\%$ \\
-abbrev      & $6{,}667$   & $2.2\%$ \\
-constructor & $4{,}755$   & $1.5\%$ \\
-inductive   & $3{,}813$   & $1.2\%$ \\
-opaque      & $499$       & $0.2\%$ \\
-quotient    & $3$         & ${<}0.1\%$ \\
-axiom       & $3$         & ${<}0.1\%$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Theorems constitute nearly four-fifths of all declarations, with definitions accounting for the bulk of the remainder. The six axiom and quotient declarations at the bottom of the table---described in the paragraphs above---are few in number but structurally distinguished as the only pure sinks in $G_{\mathrm{thm}}$.
 
 The graph is almost entirely connected: $308{,}054$ of $308{,}129$ nodes ($99.98\%$) belong to a single weakly connected component. The remaining $75$ nodes distribute across $71$ tiny components, of which $69$ are singletons. This near-perfect connectivity---stronger even than the module-level graph, which is exactly connected---reflects the deep logical interdependence of mathematical declarations.
 

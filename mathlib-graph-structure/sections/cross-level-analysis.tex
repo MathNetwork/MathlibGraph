@@ -366,6 +366,192 @@ Three findings emerge.
 \paragraph{The granularity equilibrium.}
 The cross-level analysis implicitly rests on a design parameter that is itself a process-trace: the granularity of modules. \module{Mathlib}'s $6{,}993$ modules contain $308{,}129$ declarations, yielding a mean of approximately $44$ declarations per module. This ratio is not determined by mathematics---it is determined by the cognitive capacity of human developers to manage a coherent unit of code in a single file. Two thought experiments illuminate the point.
 
-At one extreme, if each declaration occupied its own module, the module graph would coincide with the declaration graph: $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$. Module cohesion would be trivially~$1.0$ (every module has no internal edges to lose), but the graph would have $308{,}129$ nodes and be unnavigable by humans. At the other extreme, if all declarations were placed in a single module, the module graph would collapse to a single vertex: no import structure, no compilation parallelism, no organizational signal. The current equilibrium---approximately $44$ declarations per module, cohesion~$0.107$, $9.1\times$ edge amplification---represents a compromise shaped by human cognitive constraints: the largest unit a developer can hold in working memory while writing and reviewing proofs.
+At one extreme, if each declaration occupied its own module, the module graph would coincide with the declaration graph: $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$. Module cohesion would be trivially~$1.0$ (every module has no internal edges to lose), but the graph would have $308{,}129$ nodes and be unnavigable by humans. At the other extreme, if all declarations were placed in a single module, the module graph would collapse to a single vertex: no import structure, no compilation parallelism, no organizational signal. The current equilibrium---approximately $44$ declarations per module, cohesion~$0.107$, $9.1\times$ edge amplification---represents a compromise shaped by human cognitive constraints: the largest unit a developer can hold in working memory while writing and reviewing proofs. Figure~\ref{fig:granularity-spectrum} illustrates the three regimes.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.30\textwidth}
+\centering
+\begin{tikzpicture}[
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, thin},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=2pt, semithick,
+                 minimum size=0.6cm},
+]
+  \node[modbox] (m1) at (0,1.2) {};
+  \node[modbox] (m2) at (1.1,1.2) {};
+  \node[modbox] (m3) at (2.2,1.2) {};
+  \node[modbox] (m4) at (0.55,0) {};
+  \node[modbox] (m5) at (1.65,0) {};
+  \node[dot] at (0,1.2) {};
+  \node[dot] (d2) at (1.1,1.2) {};
+  \node[dot] at (2.2,1.2) {};
+  \node[dot] (d4) at (0.55,0) {};
+  \node[dot] (d5) at (1.65,0) {};
+  \draw[dep] (d4) -- (m1);
+  \draw[dep] (d4) -- (d2);
+  \draw[dep] (d5) -- (d2);
+  \draw[dep] (d5) -- (m3);
+  \draw[dep] (m1) -- (d2);
+  \node[font=\scriptsize, text=gray] at (2.85,0.6) {$\cdots$};
+\end{tikzpicture}
+\caption{1 decl/module}
+\label{fig:gran-fine}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.36\textwidth}
+\centering
+\begin{tikzpicture}[
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, thin},
+  depx/.style={->, >=Stealth, red!70!black, thin, dashed},
+  modimp/.style={->, >=Stealth, blue!60!black, thick},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt, semithick},
+]
+  % Module A
+  \node[modbox, minimum width=1.6cm, minimum height=1.4cm] at (0,0.6) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (0,1.55) {module $A$};
+  \node[dot] (a1) at (-0.35,0.95) {};
+  \node[dot] (a2) at (0.35,0.95) {};
+  \node[dot] (a3) at (0,0.3) {};
+  \draw[dep] (a3) -- (a1);
+  \draw[dep] (a3) -- (a2);
+  % Module B
+  \node[modbox, minimum width=1.6cm, minimum height=1.0cm] at (2.8,0.6) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.8,1.35) {module $B$};
+  \node[dot] (b1) at (2.45,0.6) {};
+  \node[dot] (b2) at (3.15,0.6) {};
+  \draw[dep] (b2) -- (b1);
+  % Cross-module declaration edges
+  \draw[depx] (a2) -- (b1);
+  \draw[depx] (b2) to[out=-155,in=-25] (a3);
+  % Blue import arrow
+  \draw[modimp] (2.0,0.6) -- (0.8,0.6);
+\end{tikzpicture}
+\caption{${\sim}44$ decl/module (\module{Mathlib})}
+\label{fig:gran-current}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.30\textwidth}
+\centering
+\begin{tikzpicture}[
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, thin},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt, semithick},
+]
+  \node[modbox, minimum width=2.4cm, minimum height=1.6cm] at (1.1,0.6) {};
+  \node[dot] (d1) at (0.35,1.0) {};
+  \node[dot] (d2) at (1.1,1.0) {};
+  \node[dot] (d3) at (1.85,1.0) {};
+  \node[dot] (d4) at (0.7,0.25) {};
+  \node[dot] (d5) at (1.5,0.25) {};
+  \draw[dep] (d4) -- (d1);
+  \draw[dep] (d4) -- (d2);
+  \draw[dep] (d5) -- (d2);
+  \draw[dep] (d5) -- (d3);
+  \draw[dep] (d1) -- (d2);
+\end{tikzpicture}
+\caption{All decl/1 module}
+\label{fig:gran-coarse}
+\end{subfigure}
+\caption{The granularity spectrum. \textcolor{blue!60!black}{Blue boxes} are modules; \textcolor{red!70!black}{red dots} are declarations; \textcolor{red!70!black}{solid red arrows} are intra-module dependencies; \textcolor{red!70!black}{dashed red arrows} are cross-module dependencies. (a)~One declaration per module: $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$ ($308$K modules, unnavigable). (b)~Current \module{Mathlib}: multiple cross-module declaration edges collapse into a single \textcolor{blue!60!black}{blue import} arrow; internal edges are invisible at the module level. (c)~All declarations in one module: $G_{\mathrm{module}}$ collapses to a single vertex with no edges.}
+\label{fig:granularity-spectrum}
+\end{figure}
 
 As AI systems become primary contributors to formal libraries, this equilibrium may shift. An AI author is not subject to the same working-memory constraint; it could operate productively with finer-grained modules optimized for compilation parallelism, or with coarser modules optimized for logical coherence. The direction of the shift---toward machine-optimal granularity rather than human-optimal granularity---would alter every cross-level metric reported in this section: cohesion, containment, edge amplification, and depth compression would all change, not because the mathematics changed, but because the production process changed. Tracking these metrics longitudinally as AI contributions grow will distinguish intrinsic mathematical structure from artifacts of the human production mode.
+
+\paragraph{The namespace granularity spectrum.}
+A parallel thought experiment applies to the \emph{namespace} axis. \module{Mathlib}'s $15{,}456$ leaf namespaces contain $308{,}129$ declarations, yielding a mean of approximately $20$ declarations per namespace. Again, this ratio is a product of human naming conventions, not of mathematical necessity.
+
+At one extreme, if each declaration occupied its own namespace (flat naming: \ns{add\_comm}, \ns{dvd\_mul}, \ldots), containment at depth~$1$ would be trivially $0\%$---no two declarations could share a namespace boundary---and the naming hierarchy would carry no organizational information. At the other extreme, if all declarations shared a single namespace, containment would be trivially $100\%$ but the hierarchy would provide no finer-than-global grouping. The current Mathlib equilibrium---$6$ depth levels, $22.2\%$ containment at depth~$1$, rising to $86.9\%$ at depth~$3$---reflects a naming convention that balances logical grouping against navigational convenience. Figure~\ref{fig:ns-granularity-spectrum} illustrates these three regimes.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.30\textwidth}
+\centering
+\begin{tikzpicture}[
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, thin},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=2pt, semithick,
+                minimum size=0.6cm},
+]
+  \node[nsbox] (n1) at (0,1.2) {};
+  \node[nsbox] (n2) at (1.1,1.2) {};
+  \node[nsbox] (n3) at (2.2,1.2) {};
+  \node[nsbox] (n4) at (0.55,0) {};
+  \node[nsbox] (n5) at (1.65,0) {};
+  \node[dot] at (0,1.2) {};
+  \node[dot] (d2) at (1.1,1.2) {};
+  \node[dot] at (2.2,1.2) {};
+  \node[dot] (d4) at (0.55,0) {};
+  \node[dot] (d5) at (1.65,0) {};
+  \draw[dep] (d4) -- (n1);
+  \draw[dep] (d4) -- (d2);
+  \draw[dep] (d5) -- (d2);
+  \draw[dep] (d5) -- (n3);
+  \draw[dep] (n1) -- (d2);
+  \node[font=\scriptsize, text=gray] at (2.85,0.6) {$\cdots$};
+\end{tikzpicture}
+\caption{1 decl/namespace}
+\label{fig:ns-gran-flat}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.36\textwidth}
+\centering
+\begin{tikzpicture}[
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, thin},
+  depx/.style={->, >=Stealth, red!70!black, thin, dashed},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
+  nsinr/.style={draw=green!50!black, fill=green!3, rounded corners=2pt, thin, dashed},
+]
+  % Outer namespace
+  \node[nsbox, minimum width=3.2cm, minimum height=1.8cm] at (1.4,0.65) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (1.4,1.8) {\ns{Nat}};
+  % Inner namespace
+  \node[nsinr, minimum width=1.3cm, minimum height=1.0cm] at (2.3,0.55) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.3,1.25) {\ns{Prime}};
+  % Declarations in Nat
+  \node[dot] (a1) at (0.3,0.9) {};
+  \node[dot] (a2) at (0.3,0.35) {};
+  % Declarations in Nat.Prime
+  \node[dot] (b1) at (1.9,0.55) {};
+  \node[dot] (b2) at (2.7,0.55) {};
+  % Intra-namespace edges
+  \draw[dep] (a2) -- (a1);
+  \draw[dep] (b2) -- (b1);
+  % Cross-namespace edges
+  \draw[depx] (b1) -- (a1);
+  \draw[depx] (b2) to[out=170,in=-30] (a2);
+\end{tikzpicture}
+\caption{Hierarchical (\module{Mathlib})}
+\label{fig:ns-gran-current}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.30\textwidth}
+\centering
+\begin{tikzpicture}[
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, thin},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
+]
+  \node[nsbox, minimum width=2.4cm, minimum height=1.6cm] at (1.1,0.6) {};
+  \node[dot] (d1) at (0.35,1.0) {};
+  \node[dot] (d2) at (1.1,1.0) {};
+  \node[dot] (d3) at (1.85,1.0) {};
+  \node[dot] (d4) at (0.7,0.25) {};
+  \node[dot] (d5) at (1.5,0.25) {};
+  \draw[dep] (d4) -- (d1);
+  \draw[dep] (d4) -- (d2);
+  \draw[dep] (d5) -- (d2);
+  \draw[dep] (d5) -- (d3);
+  \draw[dep] (d1) -- (d2);
+\end{tikzpicture}
+\caption{All decl/1 namespace}
+\label{fig:ns-gran-single}
+\end{subfigure}
+\caption{The namespace granularity spectrum. \textcolor{green!50!black}{Green boxes} are namespaces; \textcolor{red!70!black}{red dots} are declarations; \textcolor{red!70!black}{solid red arrows} are intra-namespace dependencies; \textcolor{red!70!black}{dashed red arrows} cross namespace boundaries. (a)~One declaration per namespace: every edge crosses a boundary (containment~$= 0\%$). (b)~Current \module{Mathlib}: nested namespaces with partial containment. (c)~All declarations in one namespace: every edge is internal (containment~$= 100\%$, no organizational signal).}
+\label{fig:ns-granularity-spectrum}
+\end{figure}
+
+Figures~\ref{fig:granularity-spectrum} and~\ref{fig:ns-granularity-spectrum} together reveal that library organization is a \emph{two-dimensional} design choice: module granularity (how many declarations per file) and namespace granularity (how many declarations per naming group) are independently adjustable parameters. \module{Mathlib} currently occupies one point in this design space---${\sim}44$ declarations per module, ${\sim}20$ per leaf namespace---but alternative design points are entirely feasible, and each would produce different cross-level statistics. The product (mathematical dependency) constrains neither axis; only the process (human or machine authorship) does.
