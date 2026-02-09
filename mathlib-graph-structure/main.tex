@@ -1,7 +1,9 @@
 \documentclass[11pt]{article}
 \usepackage{preamble}
 
-\title{The network structure of \module{Mathlib}}
+\title{Formalization Encodes Human Organization: 
+
+A Network Analysis of \module{Mathlib}}
 \author{Xinze Li \and Simone Severini}
 \date{\today}
 
@@ -10,7 +12,7 @@
 \maketitle
 
 \begin{abstract}
-We study the dependency structure of \module{Mathlib}, the largest unified library of formalized mathematics, comprising $7{,}563$ modules and $308{,}129$ declarations connected by $8.4$ million dependency edges. We construct dependency graphs at three granularities---modules (source files), declarations (theorems, definitions, and axioms), and namespaces (hierarchical name prefixes)---and examine how these levels relate to one another.
+We study the dependency structure of \module{Mathlib}, a library of formalized mathematics, comprising $7{,}563$ modules and $308{,}129$ declarations connected by $8.4$ million dependency edges XXX include which version XXX. We construct dependency graphs at three granularities---modules (source files), declarations (theorems, definitions, and axioms), and namespaces (hierarchical name prefixes)---and examine how these levels relate to one another.
 
 The two human-facing organizational systems---file layout and namespace naming---largely agree with each other (NMI $= 0.71$) but diverge from the underlying logical dependencies. Module cohesion averages just $0.107$: roughly $90\%$ of a module's dependency traffic points outward. Louvain community detection recovers recognizable mathematical disciplines, yet their alignment with human-defined namespaces is limited (NMI $= 0.34$).
 
