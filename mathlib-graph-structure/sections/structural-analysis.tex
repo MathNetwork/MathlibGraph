@@ -129,7 +129,7 @@ In contrast to the module graph, where transitive reduction removes $17.5\%$ of 
 \subsubsection{Namespace Level}
 \label{sec:ns-degree}
 
-We examine the degree distribution of $G_{\mathrm{ns}}^{(2)}$, the namespace graph at depth~$2$. The graph has $10{,}097$ nodes and $332{,}081$ edges (unique namespace pairs), carrying a total weight of $7{,}234{,}844$ declaration-level dependencies.
+We examine the degree distribution of $G_{\mathrm{ns}}^{(2)}$, the namespace graph at depth~$2$. We choose $k = 2$ because it occupies the sweet spot of the containment decay curve (Table~\ref{tab:containment-decay}): depth~$1$ is too coarse ($3{,}184$ namespaces, comparable to the top-level directory partition), while depth~$3$ and beyond add almost no new cross-boundary structure (containment saturates at ${\sim}13\%$). At depth~$2$, the $10{,}097$ namespaces correspond to familiar mathematical groupings---\ns{Nat.Prime}, \ns{CategoryTheory.Functor}, \ns{MeasureTheory.Measure}---and provide enough nodes for meaningful network analysis. The graph has $332{,}081$ edges (unique namespace pairs), carrying a total weight of $7{,}234{,}844$ declaration-level dependencies.
 
 \begin{table}[ht]
 \centering
