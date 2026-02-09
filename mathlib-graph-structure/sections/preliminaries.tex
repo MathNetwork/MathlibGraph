@@ -25,7 +25,11 @@ We use three centrality measures, each capturing a different notion of structura
 
 \begin{definition}[PageRank~\cite{brin1998}]
 \label{def:pagerank}
-The \emph{PageRank} of a vertex~$v$ in a directed graph is the stationary probability of~$v$ under a random walk that, at each step, follows an outgoing edge uniformly at random with probability~$\alpha$ (the \emph{damping factor}, typically $\alpha = 0.85$) and jumps to a uniformly random vertex with probability $1 - \alpha$.
+The \emph{PageRank} of a vertex~$v$ in a directed graph is the stationary probability of~$v$ under a random walk that, at each step, follows an outgoing edge uniformly at random with probability~$\alpha$ (the \emph{damping factor}, typically $\alpha = 0.85$) and jumps to a uniformly random vertex with probability $1 - \alpha$.  Equivalently, PageRank is the unique solution to
+\[
+  \mathrm{PR}(v) \;=\; \frac{1-\alpha}{N} \;+\; \alpha \sum_{u \to v} \frac{\mathrm{PR}(u)}{\deg^{+}(u)},
+\]
+where $N$ is the number of vertices and $\deg^{+}(u)$ is the out-degree of~$u$.
 \end{definition}
 
 PageRank measures \emph{recursive} importance: a vertex ranks high not merely because many others point to it, but because \emph{important} others point to it. It identifies the deep foundations on which large subgraphs transitively rest.
