@@ -27,9 +27,6 @@ All statistics in this paper are computed from commit \texttt{534cf0b} (2 Februa
 The maximum depth in \module{Mathlib} is~$7$.\footnote{Attained by, e.g., \module{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
 \end{example}
 
-We recall the standard graph-theoretic notions used throughout this paper. A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (called the \emph{vertex set}) and $E \subseteq V \times V$ (called the \emph{edge set}). A \emph{path} in a directed graph $G = (V, E)$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \le i < k$. The \emph{length} of the path is~$k$.
-A \emph{cycle} is a path $(v_0, v_1, \ldots, v_k)$ with $k \ge 1$ and $v_k = v_0$. A directed graph $G = (V, E)$ is a \emph{directed acyclic graph (DAG)} if $G$ contains no cycle. A \emph{rooted tree} is a DAG $T = (V, E)$ with a distinguished vertex $r \in V$ (the \emph{root}) such that for every $v \in V$ there is a unique directed path from $r$ to $v$.
-
 \subsection{The Module-Name Hierarchy}
 \label{sec:namespace-tree}
 
@@ -296,103 +293,7 @@ At depth~$1$, the $13$ top-level packages (\module{Mathlib}, \module{Batteries},
 
 The steep collapse reveals that, within a discipline, dependencies routinely cross subdirectory boundaries. A file in \module{Mathlib.Algebra.Group} may import from \module{Mathlib.Algebra.Ring} or \module{Mathlib.Algebra.Order}---directories that the hierarchy treats as siblings but that are tightly coupled mathematically. The containment curve for declaration-level dependencies, measured in \S\ref{sec:containment-decay}, starts from a much lower baseline ($48.9\%$ at the top-level directory) but exhibits the same qualitative pattern of steep initial decline and rapid saturation. The gap between the two baselines quantifies how effectively the import graph compresses cross-cutting declaration-level dependencies into within-discipline edges.
 
-\subsection{Structural Analysis}
-\label{sec:structural-analysis}
-
-Having defined the module-name tree $T$ and the import graph $G_{\mathrm{import}}$, identified the 17.5\% redundancy gap (\S\ref{sec:transitive-reduction}), and measured the containment decay of the module-name hierarchy (\S\ref{sec:module-containment}), we now ask: \emph{what kind of network does formalization produce, and how does it relate to the cognitive classification encoded in $T$?}
-
-To answer this, we need to understand four things about $G_{\mathrm{import}}$:
-
-\begin{enumerate}
-\item \textbf{Shape.} What is the macroscopic geometry of the dependency network---is it flat or deep, uniform or concentrated? We address this through degree distribution (\S\ref{sec:degree-distribution}), which reveals whether dependencies cluster around a few hubs, and DAG depth (\S\ref{sec:dag-depth}), which reveals the vertical extent of the dependency chain. Together, these determine the basic geometry of $G_{\mathrm{import}}$.
-
-\item \textbf{Deviation from cognitive classification.} To what extent does $G_{\mathrm{import}}$ respect the boundaries drawn by the tree $T$? We measure this directly through cross-directory dependency analysis (\S\ref{sec:cross-namespace}), which quantifies the gap between how mathematicians organize their subject and how formal proofs actually depend on one another.
-
-\item \textbf{Critical nodes.} Which modules hold the network together, and in what sense? We address this through centrality analysis (\S\ref{sec:centrality}), computing three complementary measures---in-degree, PageRank, and betweenness---each capturing a different structural role.
-
-\item \textbf{Resilience.} How fragile is the network when critical modules are removed? Robustness analysis (\S\ref{sec:robustness}) answers this, and connects directly to the redundancy question: do the 17.5\% ``unnecessary'' edges serve a structural purpose?
-\end{enumerate}
-
-Unless stated otherwise, statistics are reported for both the raw import graph $G_{\mathrm{import}}$ and its transitive reduction $G_{\mathrm{import}}^{-}$. Comparing the two throughout reveals which structural features reflect genuine logical necessity and which arise from the cognitive redundancy identified in \S\ref{sec:transitive-reduction}.
-
-\subsubsection{Degree Distribution}
-\label{sec:degree-distribution}
-
-Recall that for a vertex $m$ in a directed graph $G = (V, E)$, the \emph{in-degree} is $\deg^{-}(m) = |\{m' \in V : (m', m) \in E\}|$ and the \emph{out-degree} is $\deg^{+}(m) = |\{m' \in V : (m, m') \in E\}|$.
-
-In $G_{\mathrm{import}}$, the out-degree $\deg^{+}(m) = |\mathrm{imports}(m)|$: it counts the number of modules that $m$ directly imports. The in-degree $\deg^{-}(m)$ counts how many other modules depend on~$m$.
-Structurally, in-degree measures how foundational a module is---how many others build upon it---while out-degree measures how much of the library a module assembles. A high in-degree module is \emph{infrastructure}; a high out-degree module is an \emph{integrator}.
-
-\begin{table}[H]
-\centering
-\caption{Degree statistics for $G_{\mathrm{import}}$ and its transitive reduction~$G_{\mathrm{import}}^{-}$.}
-\label{tab:degree-stats}
-\begin{tabular}{lrrrr}
-\toprule
-& \multicolumn{2}{c}{$G_{\mathrm{import}}$} & \multicolumn{2}{c}{$G_{\mathrm{import}}^{-}$} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5}
-& In-degree & Out-degree & In-degree & Out-degree \\
-\midrule
-Mean   & $3.12$ & $3.12$ & $2.57$ & $2.57$ \\
-Median & $2$    & $3$    & $1$    & $2$    \\
-Std    & $4.69$ & $4.12$ & $3.91$ & $1.83$ \\
-Max    & $167$  & $315$  & $151$  & $70$   \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The module with the highest in-degree in both graphs is \module{Mathlib.Init} ($\deg^{-} = 167$ in $G_{\mathrm{import}}$, $151$ in $G_{\mathrm{import}}^{-}$), the foundational module that most files depend on. Other high in-degree modules include \module{Tactic.Common} ($74$), \module{Analysis.Normed.Group.Basic} ($57$), and \module{Algebra.Ring.Defs} ($42$). The highest out-degree belongs to \module{Mathlib.Tactic} ($315$ in $G_{\mathrm{import}}$), which serves as an umbrella file aggregating tactic imports; transitive reduction reduces this to~$60$.
-
-We plot the degree distributions on logarithmic axes (log--log scale). Let $P(k)$ denote the fraction of modules whose degree equals~$k$. In many real-world networks, the degree distribution approximately follows a power law $P(k) \propto k^{-\gamma}$ for some exponent $\gamma > 1$, meaning that most nodes have few connections while a small number of hubs have very many. On a log--log plot, a perfect power law appears as a straight line with slope~$-\gamma$; deviations from linearity reveal departures from this idealization. The logarithmic scale compresses the long tail, making it possible to visualize both the bulk of low-degree modules and the rare high-degree hubs in a single plot---on a linear scale, the hubs would be invisible outliers.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{analysis/degree_distribution.pdf}
-\caption{In-degree (blue) and out-degree (orange) distributions on log--log axes for $G_{\mathrm{import}}$ (left) and $G_{\mathrm{import}}^{-}$ (right). Dashed lines show power-law references $k^{-\gamma}$. Two features are visually salient: (i)~the in-degree distributions are nearly identical across the two panels, confirming that transitive reduction barely affects how many modules depend on a given file; (ii)~the out-degree tail contracts sharply under transitive reduction (maximum dropping from $315$ to $70$), reflecting the removal of redundant umbrella imports.}
-\label{fig:degree-distribution}
-\end{figure}
-
-\begin{remark}
-Both degree distributions are heavy-tailed but do not cleanly fit a power law. The out-degree distribution, in particular, becomes much more concentrated after transitive reduction (maximum dropping from $315$ to $70$, standard deviation from $4.12$ to $1.83$), indicating that many high-out-degree imports are transitively redundant.
-In contrast, the in-degree distribution is barely affected by transitive reduction (maximum: $167 \to 151$; standard deviation: $4.69 \to 3.91$). This asymmetry has a structural explanation: redundant edges arise primarily from developers importing umbrella modules---an act that inflates the importer's out-degree without changing the importee's in-degree. The cognitive redundancy identified in \S\ref{sec:transitive-reduction} is \emph{directional}: it lives in the ``I depend on others'' direction, not the ``others depend on me'' direction.
-This directional asymmetry connects to the tree $T$: developers inflate their out-degree by importing umbrella modules that aggregate entire sub-hierarchies---effectively borrowing $T$'s cognitive categories as navigational shortcuts. The redundancy is not random; it follows the contours of~$T$.
-\end{remark}
-
-The degree distribution identifies which modules serve as hubs, but not where these hubs sit in the dependency chain. We turn next to the vertical structure of the DAG.
-
-\subsubsection{Depth and Layered Structure}
-\label{sec:dag-depth}
-Recall that the \emph{depth} of a DAG $G$ is the length of its longest directed path. A vertex $m$ is a \emph{source} if $\deg^{-}(m) = 0$ and a \emph{sink} if $\deg^{+}(m) = 0$. In a DAG $G$, the \emph{topological level} $\ell(m)$ of a vertex $m$ is the length of the longest directed path ending at~$m$.
-
-In particular, all sources (modules with no incoming edges) sit at level~$0$, while the unique sink \module{Tactic.Linter.DirectoryDependency} sits at level~$153$.
-
-The depth of $G_{\mathrm{import}}$ is $153$, attained by a path from \module{NumberTheory.LSeries.PrimesInAP} (a leaf-level number theory result) down to \module{Tactic.Linter.DirectoryDependency} (a low-level linter utility). This path traverses number theory, special functions, measure theory, topology, order theory, logic, and tactic infrastructure---reflecting the deep dependency chain required to formalize analytic number theory.
-
-$G_{\mathrm{import}}$ has $1{,}433$ source modules (files that no other \module{Mathlib} file imports) and exactly $1$~sink (\module{Tactic.Linter.DirectoryDependency}, the unique module with no imports within Mathlib). The topological levels partition $\mathcal{M}$ into $154$ layers, with a maximum layer width of $1{,}433$ (the source layer) and a median width of~$25$.
-
-Notably, the layer-width profiles of $G_{\mathrm{import}}$ and $G_{\mathrm{import}}^{-}$ are nearly identical: the number of layers, the position of the peak, and the overall funnel shape are preserved under transitive reduction. This means that the vertical structure of the dependency chain reflects genuine logical necessity rather than cognitive redundancy---the 17.5\% redundant edges identified in \S\ref{sec:transitive-reduction} add lateral shortcuts within layers but do not alter the depth of the graph.
-
-A secondary peak is visible near level~$126$, where approximately $59$ modules concentrate---roughly $6$ to $15$ times the width of surrounding layers. This anomaly warrants further investigation; it may reflect a layer of tactic infrastructure or a mathematical theory that branches into many parallel lemmas at a specific depth.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{analysis/dag_structure.pdf}
-\caption{DAG width by topological layer for $G_{\mathrm{import}}$ (top) and $G_{\mathrm{import}}^{-}$ (bottom). The distributions share a characteristic funnel shape: a sharp peak at level~$0$ (over $1{,}400$ leaf modules), a rapid decay through the first $20$ layers, a long tail extending to level~$153$, and a secondary peak near level~$126$. The near-identical profiles confirm that the funnel topology arises from logical necessity, not from redundant imports.}
-\label{fig:dag-structure}
-\end{figure}
-
-\begin{remark}
-The layer-width profile has a characteristic ``funnel'' shape: very wide at the top (many independent leaf files), narrowing through the middle layers (where mathematical theories converge), and tapering to a single sink at the bottom. This shape reflects the fact that advanced mathematics is built on a narrow foundation of shared definitions and tactics. This narrow waist also has engineering consequences: any change to a module in the bottleneck layers propagates upward through a large fraction of the library, creating recompilation cascades whose cost grows with the depth of the funnel.
-\end{remark}
-
-\begin{remark}[Module-name depth and import symmetry]
-\label{rem:import-depth-symmetry}
-The DAG depth of~$153$ layers describes the topological extent of the dependency chain. A different notion of depth---the \emph{module-name depth}, i.e., the number of dot-separated components of a module's fully qualified name---describes how deeply a module sits in the naming hierarchy~$T$. Module-name depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$. Import edges exhibit near-perfect depth symmetry: $55.4\%$ connect modules at the same naming depth, $23.3\%$ point from deeper to shallower, and $21.3\%$ from shallower to deeper (mean difference~$+0.03$). Only~$1.3\%$ of imports target modules at depth~$\le 2$. Developers import \emph{laterally}---peer to peer within the same naming stratum---rather than vertically across naming layers. As we shall see in \S\ref{sec:cross_level}, this symmetry contrasts sharply with the declaration-level dependency graph, where $37.6\%$ of edges flow from deeper to shallower namespaces and the mean depth difference rises to~$+0.36$: the import graph compresses and hides the strong infrastructure pull that the declaration graph reveals.
-\end{remark}
-
-The funnel topology describes the global shape of $G_{\mathrm{import}}$, but treats all edges equally. We now ask how these edges relate to the tree $T$: do imports stay within the boundaries that mathematicians have drawn, or do they routinely cross them?
-
-\subsubsection{Cross-Directory Dependencies}
+\subsection{Cross-Directory Dependencies}
 \label{sec:cross-namespace}
 
 \begin{definition}[Top-level directory]
@@ -412,103 +313,7 @@ If the import graph perfectly respected the directory hierarchy---that is, if ev
 
 The strongest inter-directory dependency is \module{RingTheory} $\to$ \module{Algebra} ($485$ edges in $G_{\mathrm{import}}$), followed by \module{Data} $\to$ \module{Algebra} ($377$) and \module{Algebra} $\to$ \module{Data} ($318$). The bidirectional flow between \module{Algebra} and \module{Data} reflects their tight coupling: algebraic structures depend on basic data types, while data type lemmas often require algebraic properties. \module{Analysis} $\to$ \module{Topology} ($289$) confirms the expected mathematical dependency of analysis on topological foundations.
 
-The cross-directory analysis reveals that a substantial fraction of dependencies violate the cognitive classification encoded in $T$. Which specific modules are responsible for bridging these distant regions? We address this through centrality analysis.
-
-\subsubsection{Centrality}
-\label{sec:centrality}
-
-We compare three centrality measures to identify the most structurally important modules.
-
-\begin{definition}[PageRank~\cite{brin1998}]
-The \emph{PageRank} of a vertex $m$ in a directed graph is the stationary probability of $m$ under a random walk that, at each step, follows an outgoing edge uniformly at random with probability $\alpha$ (the damping factor, typically $\alpha = 0.85$) and jumps to a uniformly random vertex with probability $1 - \alpha$.
-\end{definition}
-
-Intuitively, PageRank answers the question: \emph{if you start at a random module and repeatedly follow dependency edges, where do you end up most often?} Modules with high PageRank sit at the bottom of many dependency chains---they are the deep foundations on which the library ultimately rests, even if few files import them directly.
-
-\begin{definition}[Betweenness centrality~\cite{freeman1977}]
-The \emph{betweenness centrality} of a vertex $m$ is
-\[
-  c_B(m) = \sum_{\substack{s, t \in V \\ s \ne m \ne t}} \frac{\sigma_{st}(m)}{\sigma_{st}},
-\]
-where $\sigma_{st}$ is the number of shortest paths from $s$ to $t$, and $\sigma_{st}(m)$ is the number of those paths passing through~$m$.
-\end{definition}
-
-Intuitively, betweenness answers the question: \emph{if you need to travel from any module~$A$ to any module~$B$ along the shortest dependency path, which modules do you pass through most often?} High-betweenness modules are the bridges between otherwise distant mathematical theories; removing them would force dependency paths to take long detours.
-
-\begin{table}[H]
-\centering
-\caption{Top~10 modules by in-degree, PageRank, and betweenness centrality in $G_{\mathrm{import}}$.}
-\label{tab:centrality}
-\small
-\begin{tabular}{rlrlrl}
-\toprule
-\multicolumn{2}{c}{In-degree} & \multicolumn{2}{c}{PageRank} & \multicolumn{2}{c}{Betweenness} \\
-\cmidrule(lr){1-2} \cmidrule(lr){3-4} \cmidrule(lr){5-6}
-$\deg^{-}$ & Module & PR & Module & $c_B$ & Module \\
-\midrule
-167 & \module{Init}               & .0435 & \module{Init}              & .0113 & \module{Tactic.Common} \\
- 74 & \module{Tactic.Common}      & .0316 & \module{Tactic.Linter.Header} & .0037 & \module{Init} \\
- 57 & \module{AN.Group.Basic}     & .0285 & \module{Tactic.Linter.DD}  & .0032 & \module{LA.Span.Basic} \\
- 45 & \module{Util.CompileInd.}   & .0058 & \module{Tactic.TypeStar}   & .0030 & \module{AN.Module.FD} \\
- 42 & \module{Algebra.Ring.Defs}  & .0048 & \module{Algebra.Group.Defs} & .0024 & \module{Analysis.RCLike} \\
- 39 & \module{ABO.Finset.Basic}   & .0038 & \module{Tactic.Basic}      & .0021 & \module{AS.Limits.Basic} \\
- 38 & \module{Algebra.Field.Defs} & .0037 & \module{CT.Equivalence}    & .0020 & \module{AS.Limits.Normed} \\
- 38 & \module{Algebra.Group.Basic}& .0033 & \module{Logic.Function}    & .0019 & \module{LA.Determinant} \\
- 37 & \module{Tactic.Fin.Attr}    & .0030 & \module{Logic.Equiv.Defs}  & .0019 & \module{CT.Category.Basic} \\
- 37 & \module{Tactic.TypeStar}    & .0030 & \module{CT.Opposites}      & .0017 & \module{Tactic.NormNum} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\noindent
-\textit{Abbreviations:} AN = \module{Analysis.Normed}, LA = \module{LinearAlgebra}, CT = \module{CategoryTheory},\\
-ABO = \module{Algebra.BigOperators.Group}, AS = \module{Analysis.SpecificLimits},\\
-FD = \module{FiniteDimension}, DD = \module{DirectoryDependency}, CompileInd.\ = \module{CompileInductive}, Fin.\ = \module{Finiteness}.
-
-We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:centrality}. Out-degree is omitted from this comparison because it measures a module's role as an \emph{importer}---how many prerequisites it gathers---rather than its structural position within the network. Moreover, as shown in \S\ref{sec:degree-distribution}, high out-degree values largely reflect redundant umbrella imports and collapse under transitive reduction, making out-degree a poor proxy for structural importance.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{analysis/centrality_analysis.pdf}
-\caption{Scatter plots of centrality measures in $G_{\mathrm{import}}$; each point represents one module. Left and center: in-degree vs.\ PageRank (raw and TR). Right: betweenness vs.\ PageRank (raw). If any two measures were equivalent, points would cluster along a diagonal line; the wide scatter in each panel confirms that the three centrality measures capture distinct structural roles. Notable outliers are labeled.}
-\label{fig:centrality}
-\end{figure}
-
-The three rankings largely differ: the only module appearing in all three top-20 lists is \module{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:module_conclusion}.
-
-In particular, high-betweenness modules acquire their bridging role precisely by connecting regions of $G_{\mathrm{import}}$ that the tree $T$ separates. The top betweenness modules in Table~\ref{tab:centrality} typically sit at the boundary between top-level directories: they are the points where the logical structure of mathematics forces a passage across $T$'s cognitive borders.
-
-In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \module{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \module{LinearAlgebra.Span.Basic} and \module{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
-
-Centrality identifies the modules that hold the network together. A natural follow-up question is: what happens if these critical modules are removed? We assess the structural robustness of $G_{\mathrm{import}}$ under targeted removal.
-
-\subsubsection{Robustness}
-\label{sec:robustness}
-
-$G_{\mathrm{import}}$ is weakly connected: all $7{,}563$ modules belong to a single weakly connected component. We assess robustness by measuring the impact of targeted node removal.
-
-\begin{table}[H]
-\centering
-\caption{Effect of removing the top-5 modules (by in-degree or betweenness) on the number of weakly connected components.}
-\label{tab:robustness}
-\begin{tabular}{lrr}
-\toprule
-Removal strategy & \multicolumn{1}{c}{$G_{\mathrm{import}}$} & \multicolumn{1}{c}{$G_{\mathrm{import}}^{-}$} \\
-\midrule
-None (baseline)          & $1$  & $1$  \\
-Top-5 by in-degree       & $29$ & $56$ \\
-Top-5 by betweenness     & $20$ & $48$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Removing the five highest in-degree modules (\module{Init}, \module{Tactic.Common}, \module{Analysis.Normed.Group.Basic}, \module{Util.CompileInductive}, and \module{Algebra.Ring.Defs}) fragments the raw graph into $29$ components, though the largest component still contains $7{,}530$ of the original $7{,}563$ nodes. The effect is more pronounced on $G_{\mathrm{import}}^{-}$ ($56$ components), since transitive reduction removes the alternative paths that would otherwise keep the graph connected.
-
-\begin{remark}
-\label{rem:robustness}
-The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the import graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
-This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reduction}: the edges that developers add for navigability---guided by the categories of~$T$---simultaneously serve as structural insurance, providing alternative paths that keep the network connected when bridges fail.
-\end{remark}
+Degree distribution, DAG depth, centrality, and robustness analyses for the module graph are reported in \S\ref{sec:structural-analysis}.
 
 \subsection{Analysis}
 \label{sec:module_conclusion}

@@ -1,0 +1,75 @@
+\section{Preliminaries}
+\label{sec:preliminaries}
+
+We collect the standard graph-theoretic and network-analytic tools used throughout the paper. Readers familiar with these notions may skip to \S\ref{sec:module-import}.
+
+\subsection{Graph-Theoretic Notation}
+\label{sec:prelim-graph}
+
+A \emph{directed graph} is a pair $G = (V, E)$ where $V$ is a set (the \emph{vertex set}) and $E \subseteq V \times V$ (the \emph{edge set}). A \emph{path} in~$G$ is a sequence of vertices $(v_0, v_1, \ldots, v_k)$ such that $(v_i, v_{i+1}) \in E$ for all $0 \le i < k$; its \emph{length} is~$k$. A \emph{cycle} is a path with $k \ge 1$ and $v_k = v_0$. A directed graph is a \emph{directed acyclic graph (DAG)} if it contains no cycle. A \emph{rooted tree} is a DAG $T = (V, E)$ with a distinguished vertex $r \in V$ (the \emph{root}) such that for every $v \in V$ there is a unique directed path from~$r$ to~$v$.
+
+For a vertex~$v$ in a directed graph $G = (V, E)$, the \emph{in-degree} is $\deg^{-}(v) = |\{u \in V : (u, v) \in E\}|$ and the \emph{out-degree} is $\deg^{+}(v) = |\{w \in V : (v, w) \in E\}|$. A vertex~$v$ is a \emph{source} if $\deg^{-}(v) = 0$ and a \emph{sink} if $\deg^{+}(v) = 0$.
+
+The \emph{depth} of a DAG is the length of its longest directed path. The \emph{topological level} $\ell(v)$ of a vertex~$v$ is the length of the longest directed path ending at~$v$; in particular, all sources sit at level~$0$.
+
+A directed graph~$G$ is \emph{weakly connected} if the underlying undirected graph (obtained by ignoring edge orientations) is connected. A \emph{weakly connected component (WCC)} is a maximal weakly connected subgraph.
+
+\subsection{Centrality Measures}
+\label{sec:prelim-centrality}
+
+We use three centrality measures, each capturing a different notion of structural importance.
+
+\emph{In-degree} $\deg^{-}(v)$ counts how many other vertices point to~$v$. It is the simplest measure of direct importance.
+
+\begin{definition}[PageRank~\cite{brin1998}]
+\label{def:pagerank}
+The \emph{PageRank} of a vertex~$v$ in a directed graph is the stationary probability of~$v$ under a random walk that, at each step, follows an outgoing edge uniformly at random with probability~$\alpha$ (the \emph{damping factor}, typically $\alpha = 0.85$) and jumps to a uniformly random vertex with probability $1 - \alpha$.
+\end{definition}
+
+PageRank measures \emph{recursive} importance: a vertex ranks high not merely because many others point to it, but because \emph{important} others point to it. It identifies the deep foundations on which large subgraphs transitively rest.
+
+\begin{definition}[Betweenness centrality~\cite{freeman1977}]
+\label{def:betweenness}
+The \emph{betweenness centrality} of a vertex~$v$ is
+\[
+  c_B(v) = \sum_{\substack{s, t \in V \\ s \ne v \ne t}} \frac{\sigma_{st}(v)}{\sigma_{st}},
+\]
+where $\sigma_{st}$ is the number of shortest paths from~$s$ to~$t$, and $\sigma_{st}(v)$ is the number of those paths passing through~$v$.
+\end{definition}
+
+Betweenness identifies \emph{bridge} vertices: those that sit on many shortest paths between other pairs. Removing a high-betweenness vertex forces information flow to take long detours.
+
+\subsection{Community Detection and Partition Comparison}
+\label{sec:prelim-community}
+
+\begin{definition}[Modularity~\cite{newman2004}]
+\label{def:modularity}
+Given a partition of a graph's vertices into communities, the \emph{modularity}~$Q$ measures the fraction of edges that fall within communities, minus the expected fraction under a random null model with the same degree sequence. Modularity ranges from $-1/2$ to $1$; values above ${\sim}0.3$ indicate significant community structure.
+\end{definition}
+
+The \emph{Louvain algorithm}~\cite{blondel2008} is a greedy, hierarchical method that iteratively merges vertices to maximize modularity. It is widely used for large graphs due to its near-linear time complexity.
+
+To compare two partitions of the same vertex set---for example, a community assignment and a namespace labeling---we use two standard measures.
+
+\begin{definition}[Normalized Mutual Information (NMI)]
+\label{def:nmi}
+Given two partitions $\mathcal{A}$ and $\mathcal{B}$ of a set~$V$, the \emph{normalized mutual information} is
+\[
+  \mathrm{NMI}(\mathcal{A}, \mathcal{B}) = \frac{2\, I(\mathcal{A}; \mathcal{B})}{H(\mathcal{A}) + H(\mathcal{B})},
+\]
+where $I(\mathcal{A}; \mathcal{B})$ is the mutual information between the two partitions and $H(\cdot)$ is the Shannon entropy of a partition's label distribution. NMI ranges from~$0$ (independent) to~$1$ (identical partitions).
+\end{definition}
+
+\begin{definition}[Adjusted Rand Index (ARI)]
+\label{def:ari}
+The \emph{Adjusted Rand Index} measures the agreement between two partitions, corrected for chance:
+\[
+  \mathrm{ARI}(\mathcal{A}, \mathcal{B}) = \frac{\text{Rand Index} - \text{Expected Rand Index}}{\text{Max Rand Index} - \text{Expected Rand Index}}.
+\]
+ARI equals~$1$ for identical partitions, $0$ for agreement at the level expected by chance, and can be negative for agreement worse than random.
+\end{definition}
+
+\subsection{Heavy-Tailed Distributions}
+\label{sec:prelim-powerlaw}
+
+A distribution follows a \emph{power law} if $P(k) \propto k^{-\alpha}$ for some exponent $\alpha > 1$. On a log--log plot, a power law appears as a straight line with slope~$-\alpha$. We apply the Clauset--Shalizi--Newman method~\cite{clauset2009} to test power-law hypotheses: it fits a discrete power law $P(k) \propto k^{-\alpha}$ for $k \ge x_{\min}$ and compares the fit against alternatives (lognormal, exponential, truncated power law, stretched exponential) using likelihood ratio tests.

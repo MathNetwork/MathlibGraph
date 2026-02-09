@@ -13,11 +13,16 @@
 Formal mathematics libraries are strictly deterministic artifacts: every dependency is machine-verified, and the compiled artifact contains no ambiguity. Yet these libraries are built by humans through an uncertain process of exploration, organization, and judgment. We analyze the network structure of \module{Mathlib}---the largest unified library of formalized mathematics---to demonstrate that the deterministic product preserves measurable traces of the cognitive process that created it. At the declaration level, dependency-driven community detection recovers recognizable mathematical disciplines, human importance judgments encoded in theorem-versus-lemma annotations are partially validated by the network topology, and a two-layer hub structure separates language infrastructure from mathematical infrastructure. Our analysis reveals four specific signatures of this human influence: a deep ``funnel'' topology (153 layers), a 17.5\% rate of transitively redundant imports, a low module cohesion (mean 0.107), and a $9\times$ gap between human-written import edges and declaration-level cross-file dependencies---with 92\% of actual dependencies reached only through transitive import chains. These metrics indicate that developers align dependencies with human-readable ``cognitive containers'' rather than minimal logical requirements, and that the import graph functions as a sparse cognitive summary that the compiler expands into the vast space of logical dependencies. We conclude that formalization does not dissolve human organization; instead, the ``cognitive habits'' of contributors are encoded in the dependency topology, structurally reshaping the logical product.
 \end{abstract}
 
+\tableofcontents
+\newpage
+
 \input{sections/introduction}
 \input{sections/previous-works}
+\input{sections/preliminaries}
 \input{sections/module-graph}
 \input{sections/declaration-graph}
 \input{sections/namespace-graph}
+\input{sections/structural-analysis}
 \input{sections/cross-level-analysis}
 \input{sections/conclusion}
 \bibliographystyle{plain}
