@@ -173,7 +173,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
   \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
     at (-0.75,3.73) {namespace \textnormal{\ns{Data.Nat}}};
 
-  % ── Module import dots & arrows (blue = $G_{\mathrm{import}}$) ──
+  % ── Module import dots & arrows (blue = $G_{\mathrm{module}}$) ──
   \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (md) at (9.8, 4.88) {};
   \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (mb) at (10.0, 2.68) {};
   \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (mo) at (7.2, 0.3) {};
@@ -193,7 +193,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
   \draw[depext] (za)  to[out=-85,in=45] (er);
 
 \end{tikzpicture}
-\caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; \textcolor{red!70!black}{red nodes} are declarations. Solid \textcolor{red!70!black}{red arrows} show intra-module edges ($E_{\mathrm{int}}$); dashed \textcolor{red!70!black}{red arrows} show external edges ($E_{\mathrm{ext}}$) that pierce module boundaries. \textcolor{blue!60!black}{Blue arrows} on the right show the corresponding module-level imports from $G_{\mathrm{import}}$.}
+\caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; \textcolor{red!70!black}{red nodes} are declarations. Solid \textcolor{red!70!black}{red arrows} show intra-module edges ($E_{\mathrm{int}}$); dashed \textcolor{red!70!black}{red arrows} show external edges ($E_{\mathrm{ext}}$) that pierce module boundaries. \textcolor{blue!60!black}{Blue arrows} on the right show the corresponding module-level imports from $G_{\mathrm{module}}$.}
 \label{fig:dep-view}
 \end{subfigure}
 \caption{Three views of the same declarations. (a)~The file-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ layered by module; of six dependency edges, only one stays within its module, visualizing the low cohesion of~$0.107$ (\S\ref{sec:cohesion}). The \textcolor{blue!60!black}{blue} boundaries represent source files, in contrast to the \textcolor{green!40!black}{green} namespace boundaries of Figure~\ref{fig:ns-aggregation}; the two layers partially overlap (NMI~$\approx 0.71$; \S\ref{sec:ns-mod-cross}). All names have the \texttt{Nat.}\ prefix removed.}
@@ -236,19 +236,19 @@ Among the $584$ modules ($8.4\%$) with zero cohesion, most are \emph{lemma colle
 \paragraph{Import edges vs.\ declaration-level dependencies.}
 \label{sec:import_vs_declaration}
 
-\noindent Aggregating $G_{\mathrm{thm}}$ to the module level yields the \emph{file-aggregated graph}~$G_{\mathrm{file}}$, in which an edge $m_1 \to m_2$ exists whenever some declaration in~$m_1$ cites one in~$m_2$ ($m_1 \neq m_2$). The gap is striking: $G_{\mathrm{file}}$ has $215{,}211$ edges versus $23{,}235$ in~$G_{\mathrm{import}}$---a $9.1\times$ amplification.
+\noindent Aggregating $G_{\mathrm{thm}}$ to the module level yields the \emph{file-aggregated graph}~$G_{\mathrm{file}}$, in which an edge $m_1 \to m_2$ exists whenever some declaration in~$m_1$ cites one in~$m_2$ ($m_1 \neq m_2$). The gap is striking: $G_{\mathrm{file}}$ has $215{,}211$ edges versus $23{,}235$ in~$G_{\mathrm{module}}$---a $9.1\times$ amplification.
 
 \begin{table}[ht]
 \centering
-\caption{Edge-level comparison of $G_{\mathrm{import}}$ (human-written imports) and $G_{\mathrm{file}}$ (declaration-aggregated dependencies).}
+\caption{Edge-level comparison of $G_{\mathrm{module}}$ (human-written imports) and $G_{\mathrm{file}}$ (declaration-aggregated dependencies).}
 \label{tab:import-vs-file}
 \begin{tabular}{lrr}
 \toprule
 Category & Edges & Percentage \\
 \midrule
-\multicolumn{3}{l}{\emph{$G_{\mathrm{import}}$ breakdown ($23{,}235$ edges):}} \\
-\quad Active imports (in both $G_{\mathrm{import}}$ and $G_{\mathrm{file}}$) & $16{,}742$ & $72.1\%$ \\
-\quad Unused imports ($G_{\mathrm{import}}$ only) & $6{,}493$ & $27.9\%$ \\
+\multicolumn{3}{l}{\emph{$G_{\mathrm{module}}$ breakdown ($23{,}235$ edges):}} \\
+\quad Active imports (in both $G_{\mathrm{module}}$ and $G_{\mathrm{file}}$) & $16{,}742$ & $72.1\%$ \\
+\quad Unused imports ($G_{\mathrm{module}}$ only) & $6{,}493$ & $27.9\%$ \\
 \midrule
 \multicolumn{3}{l}{\emph{$G_{\mathrm{file}}$ breakdown ($215{,}211$ edges):}} \\
 \quad Direct import exists & $16{,}742$ & $7.8\%$ \\
@@ -258,7 +258,7 @@ Category & Edges & Percentage \\
 \end{tabular}
 \end{table}
 
-From the import side, $72.1\%$ of import edges are \emph{active}---the importing file's declarations actually cite the imported module (Table~\ref{tab:import-vs-file}). The remaining $27.9\%$ provide transitive visibility only. From the declaration side, only $7.8\%$ of cross-file dependencies correspond to a direct import; the remaining $92.2\%$ are reached through transitive chains. The import graph functions as a sparse gateway: each file declares a handful of direct imports (mean out-degree $3.1$ in $G_{\mathrm{import}}$), but through transitivity these few edges open access to a vast dependency space (mean out-degree $30.8$ in $G_{\mathrm{file}}$).
+From the import side, $72.1\%$ of import edges are \emph{active}---the importing file's declarations actually cite the imported module (Table~\ref{tab:import-vs-file}). The remaining $27.9\%$ provide transitive visibility only. From the declaration side, only $7.8\%$ of cross-file dependencies correspond to a direct import; the remaining $92.2\%$ are reached through transitive chains. The import graph functions as a sparse gateway: each file declares a handful of direct imports (mean out-degree $3.1$ in $G_{\mathrm{module}}$), but through transitivity these few edges open access to a vast dependency space (mean out-degree $30.8$ in $G_{\mathrm{file}}$).
 
 \begin{remark}[Relationship to transitive redundancy]
 \label{rem:unused-vs-redundant}
@@ -277,7 +277,7 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
 \paragraph{Depth asymmetry.}
 \label{sec:depth-asymmetry}
 
-\noindent The $9.1\times$ edge amplification measures the \emph{quantitative} gap between $G_{\mathrm{import}}$ and declaration-level dependencies. A complementary analysis of naming depth reveals a \emph{directional} gap. For each module in $G_{\mathrm{import}}$, the \emph{module-name depth} is the number of dot-separated components (e.g., \module{Mathlib.Data.Nat.Basic} has depth~$4$). For each declaration in $G_{\mathrm{thm}}$, the \emph{declaration depth} is the number of namespace components (e.g., \decl{Nat.add\_comm} has depth~$1$). Table~\ref{tab:depth-asymmetry} compares the depth patterns of edges in the two graphs.
+\noindent The $9.1\times$ edge amplification measures the \emph{quantitative} gap between $G_{\mathrm{module}}$ and declaration-level dependencies. A complementary analysis of naming depth reveals a \emph{directional} gap. For each module in $G_{\mathrm{module}}$, the \emph{module-name depth} is the number of dot-separated components (e.g., \module{Mathlib.Data.Nat.Basic} has depth~$4$). For each declaration in $G_{\mathrm{thm}}$, the \emph{declaration depth} is the number of namespace components (e.g., \decl{Nat.add\_comm} has depth~$1$). Table~\ref{tab:depth-asymmetry} compares the depth patterns of edges in the two graphs.
 
 \begin{table}[ht]
 \centering
@@ -285,7 +285,7 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
 \label{tab:depth-asymmetry}
 \begin{tabular}{lrr}
 \toprule
-& $G_{\mathrm{import}}$ & $G_{\mathrm{thm}}$ \\
+& $G_{\mathrm{module}}$ & $G_{\mathrm{thm}}$ \\
 \midrule
 Same depth                         & $55.4\%$ & $51.4\%$ \\
 Source deeper (deep $\to$ shallow) & $23.3\%$ & $37.6\%$ \\

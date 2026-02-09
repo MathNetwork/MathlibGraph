@@ -1,7 +1,7 @@
 \section{The Declaration Graph}
 \label{sec:theorem-premise}
 
-We now descend from modules to individual declarations. The import graph $G_{\mathrm{import}}$ of \S\ref{sec:import-graph} records which modules depend on which, treating each source file as an atomic unit; it cannot distinguish a module that contains one foundational definition from one that contains fifty routine lemmas. The \emph{declaration dependency graph} defined in this section resolves this limitation by recording the dependency of each individual declaration on its premises. At this finer granularity, the nodes are not files but theorems, definitions, and type constructors---the elementary units of mathematical content. Where the import graph captures the \emph{architecture} of the library, the declaration dependency graph captures the \emph{reasoning structure} of mathematics itself. In the next section (\S\ref{sec:namespace-graph}), we derive an intermediate family of graphs by aggregating declarations into namespaces; the declaration-level graph analyzed here is the ground truth from which those aggregations are computed.
+We now descend from modules to individual declarations. The import graph $G_{\mathrm{module}}$ of \S\ref{sec:import-graph} records which modules depend on which, treating each source file as an atomic unit; it cannot distinguish a module that contains one foundational definition from one that contains fifty routine lemmas. The \emph{declaration dependency graph} defined in this section resolves this limitation by recording the dependency of each individual declaration on its premises. At this finer granularity, the nodes are not files but theorems, definitions, and type constructors---the elementary units of mathematical content. Where the import graph captures the \emph{architecture} of the library, the declaration dependency graph captures the \emph{reasoning structure} of mathematics itself. In the next section (\S\ref{sec:namespace-graph}), we derive an intermediate family of graphs by aggregating declarations into namespaces; the declaration-level graph analyzed here is the ground truth from which those aggregations are computed.
 
 The main findings of this section are threefold. First, the hub structure of the theorem--premise graph separates into two strata---a \emph{language infrastructure} layer (equality reasoning, numeral coercions) determined by the design of Lean's type system, and a \emph{mathematical infrastructure} layer (categories, real numbers, modules) determined by the logical structure of mathematics itself (\S\ref{sec:thm-types}--\S\ref{sec:thm-centrality}). Second, Louvain community detection recovers recognizable mathematical disciplines with moderate but imperfect alignment to the namespace hierarchy (NMI $= 0.34$), and only category theory achieves near-complete community--namespace correspondence (\S\ref{sec:thm-community}). Third, the cross-namespace density at the theorem level (50.9\%) far exceeds the module-level figure (37.1\%), revealing that mathematical reasoning violates cognitive classification more deeply than file organization alone suggests (\S\ref{sec:thm-cross-namespace}).
 
@@ -233,10 +233,10 @@ A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$)
 \end{figure}
 
 \begin{remark}
-The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{import}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{import}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{import}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
+The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
 \end{remark}
 
-At the commit analyzed, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. In comparison with the module-level import graph of \S\ref{sec:import-graph} ($|\mathcal{M}| = 7{,}563$ nodes, $|E_{\mathrm{import}}| = 23{,}570$ edges), the theorem--premise graph has roughly $40\times$ more nodes and $360\times$ more edges. The enormous increase in edge count reflects the fact that a single module import implicitly carries hundreds of individual premise dependencies; $G_{\mathrm{thm}}$ makes each of these dependencies explicit.
+At the commit analyzed, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. In comparison with the module-level import graph of \S\ref{sec:import-graph} ($|\mathcal{M}| = 7{,}563$ nodes, $|E_{\mathrm{module}}| = 23{,}570$ edges), the theorem--premise graph has roughly $40\times$ more nodes and $360\times$ more edges. The enormous increase in edge count reflects the fact that a single module import implicitly carries hundreds of individual premise dependencies; $G_{\mathrm{thm}}$ makes each of these dependencies explicit.
 
 \begin{table}[ht]
 \centering
@@ -302,7 +302,7 @@ Abbreviations (\texttt{abbrev}) have the most extreme in-degree distribution amo
 \label{rem:two-layers}
 The degree-by-kind analysis reveals that the hub structure of $G_{\mathrm{thm}}$ decomposes into two distinct infrastructure layers:
 \begin{enumerate}
-\item \textbf{Language infrastructure.} The highest-cited declarations---\decl{OfNat.ofNat} ($89{,}936$), \decl{Eq.refl} ($69{,}580$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.mpr} ($62{,}942$)---are artifacts of Lean's type system: numeral coercions, equality constructors, function-like coercions. Their prominence is determined by the design of the proof assistant, not by the logical structure of mathematics. These nodes are invisible in $G_{\mathrm{import}}$ (which treats entire modules as atoms) and constitute the first layer of process-trace in the product.
+\item \textbf{Language infrastructure.} The highest-cited declarations---\decl{OfNat.ofNat} ($89{,}936$), \decl{Eq.refl} ($69{,}580$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.mpr} ($62{,}942$)---are artifacts of Lean's type system: numeral coercions, equality constructors, function-like coercions. Their prominence is determined by the design of the proof assistant, not by the logical structure of mathematics. These nodes are invisible in $G_{\mathrm{module}}$ (which treats entire modules as atoms) and constitute the first layer of process-trace in the product.
 
 \item \textbf{Mathematical infrastructure.} The highest-cited \emph{inductive types}---\decl{CategoryTheory.Category}, \decl{Real}, \decl{TopologicalSpace}, \decl{Module}, \decl{CommRing}---are core mathematical concepts. Their prominence reflects the logical structure of the formalized mathematics itself: category theory, analysis, and algebra are genuinely foundational in the dependency sense. This layer is the product's own structure, free of proof-assistant artifacts.
 \end{enumerate}
@@ -371,7 +371,7 @@ Missing module info            & $2{,}522{,}533$ & $29.9\%$ \\
 
 Only $9.6\%$ of edges remain within the same module file, and another $9.6\%$ cross module boundaries while staying within the same top-level namespace. The majority---$50.9\%$---cross namespace boundaries entirely. The $29.9\%$ ``missing'' category corresponds to declarations in the root namespace (lacking a module prefix), which predominantly involve core Lean infrastructure (\decl{Eq}, \decl{Iff}, \decl{OfNat}, etc.).\footnote{If root-level declarations are treated as their own pseudo-namespace, this category would further increase the cross-namespace fraction, since root infrastructure is cited by declarations across all namespaces.}
 
-The comparison with the module-level cross-namespace rate is stark. In $G_{\mathrm{import}}^{-}$, $62.9\%$ of edges stay within the same namespace (\S\ref{sec:cross-namespace}); in $G_{\mathrm{thm}}$, at most $19.2\%$ do ($9.6\% + 9.6\%$). This threefold increase in cross-namespace density arises because module imports package many individual dependencies into a single edge: a module that imports another module within the same namespace may, at the theorem level, depend on hundreds of declarations from \emph{other} namespaces that were transitively imported. The module boundary acts as a cognitive container that conceals the true extent of cross-disciplinary dependency.
+The comparison with the module-level cross-namespace rate is stark. In $G_{\mathrm{module}}^{-}$, $62.9\%$ of edges stay within the same namespace (\S\ref{sec:cross-namespace}); in $G_{\mathrm{thm}}$, at most $19.2\%$ do ($9.6\% + 9.6\%$). This threefold increase in cross-namespace density arises because module imports package many individual dependencies into a single edge: a module that imports another module within the same namespace may, at the theorem level, depend on hundreds of declarations from \emph{other} namespaces that were transitively imported. The module boundary acts as a cognitive container that conceals the true extent of cross-disciplinary dependency.
 
 \begin{table}[ht]
 \centering
@@ -401,7 +401,7 @@ The strongest cross-namespace coupling is \ns{AlgebraicGeometry} $\leftrightarro
 \subsection{Analysis}
 \label{sec:thm-conclusion}
 
-The theorem--premise graph $G_{\mathrm{thm}}$ is a more faithful record of mathematical reasoning than the import graph $G_{\mathrm{import}}$. It dissolves the module boundary, exposing the individual logical dependencies that file-level analysis aggregates away. Our analysis of $G_{\mathrm{thm}}$ yields three central findings.
+The theorem--premise graph $G_{\mathrm{thm}}$ is a more faithful record of mathematical reasoning than the import graph $G_{\mathrm{module}}$. It dissolves the module boundary, exposing the individual logical dependencies that file-level analysis aggregates away. Our analysis of $G_{\mathrm{thm}}$ yields three central findings.
 
 \medskip
 \noindent\textit{1. The double infrastructure.}\\
@@ -413,7 +413,7 @@ Louvain community detection recovers seven major mathematical disciplines from t
 
 \medskip
 \noindent\textit{3. The depth of cross-disciplinary entanglement.}\\
-The cross-namespace edge density of $G_{\mathrm{thm}}$ ($50.9\%$; Table~\ref{tab:thm-edge-breakdown}) far exceeds that of $G_{\mathrm{import}}^{-}$ ($37.1\%$; \S\ref{sec:cross-namespace}). This gap reveals that module-level analysis \emph{underestimates} the true extent of mathematical interdependence. Module boundaries bundle cross-namespace theorem dependencies into single intra-directory import edges, creating an illusion of disciplinary containment that dissolves at finer granularity.
+The cross-namespace edge density of $G_{\mathrm{thm}}$ ($50.9\%$; Table~\ref{tab:thm-edge-breakdown}) far exceeds that of $G_{\mathrm{module}}^{-}$ ($37.1\%$; \S\ref{sec:cross-namespace}). This gap reveals that module-level analysis \emph{underestimates} the true extent of mathematical interdependence. Module boundaries bundle cross-namespace theorem dependencies into single intra-directory import edges, creating an illusion of disciplinary containment that dissolves at finer granularity.
 
 \medskip
 
@@ -421,11 +421,11 @@ Table~\ref{tab:thm-vs-module} summarizes the key quantitative contrasts between 
 
 \begin{table}[ht]
 \centering
-\caption{Module-level ($G_{\mathrm{import}}$) vs.\ theorem-level ($G_{\mathrm{thm}}$) comparison.}
+\caption{Module-level ($G_{\mathrm{module}}$) vs.\ theorem-level ($G_{\mathrm{thm}}$) comparison.}
 \label{tab:thm-vs-module}
 \begin{tabular}{lrr}
 \toprule
-Metric & $G_{\mathrm{import}}$ / $G_{\mathrm{import}}^{-}$ & $G_{\mathrm{thm}}$ \\
+Metric & $G_{\mathrm{module}}$ / $G_{\mathrm{module}}^{-}$ & $G_{\mathrm{thm}}$ \\
 \midrule
 Nodes                        & $7{,}563$          & $308{,}129$ \\
 Edges                        & $23{,}570$ / $19{,}448$ & $8{,}436{,}366$ \\
