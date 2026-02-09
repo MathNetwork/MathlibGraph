@@ -103,11 +103,13 @@ Modules are organized hierarchically: each dot-separated name mirrors a path in 
 
 We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, \module{Mathlib.Algebra} is a prefix of \module{Mathlib.Algebra.Group.Defs}.
 
+\begin{definition}[Module tree]\label{def:module-tree}
 The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\module{Mathlib}$, which we call the \emph{module tree}, where
 \[
   E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
 \]
-Its leaves are modules (source files); its internal nodes are shared prefixes of modules, corresponding to directories in the source repository. This hierarchy is distinct from Lean~4's \texttt{namespace} mechanism: in Lean~4, the \texttt{namespace} keyword creates a naming scope that need not align with file boundaries---a single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}). The two often coincide in practice, since \module{Mathlib}'s top-level directories (\module{Algebra}, \module{Analysis}, \module{CategoryTheory}, etc.) serve as both directory names and the primary organizational categories.
+Its leaves are modules (source files); its internal nodes are shared prefixes of modules, corresponding to directories in the source repository.
+\end{definition} This hierarchy is distinct from Lean~4's \texttt{namespace} mechanism: in Lean~4, the \texttt{namespace} keyword creates a naming scope that need not align with file boundaries---a single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}). The two often coincide in practice, since \module{Mathlib}'s top-level directories (\module{Algebra}, \module{Analysis}, \module{CategoryTheory}, etc.) serve as both directory names and the primary organizational categories.
 
 The top-level directories (children of the root) include \module{Algebra} (1257 files), \module{CategoryTheory} (982 files), \module{Analysis} (755 files), etc.
 
