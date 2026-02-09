@@ -116,4 +116,13 @@ where the expectation is over random partitions with the same cluster-size distr
 \subsection{Heavy-Tailed Distributions}
 \label{sec:prelim-powerlaw}
 
+\begin{definition}[Degree Distribution]
+\label{def:degree-distribution}
+The \emph{degree distribution} of a graph $G = (V, E)$ is the function
+\[
+  P(k) = \frac{|\{v \in V : \deg(v) = k\}|}{|V|},
+\]
+giving the fraction of nodes with degree exactly~$k$. For directed graphs, one defines $P^{+}(k)$ and $P^{-}(k)$ separately for out-degree and in-degree.
+\end{definition}
+
 A distribution follows a \emph{power law} if $P(k) \propto k^{-\alpha}$ for some exponent $\alpha > 1$. On a log--log plot, a power law appears as a straight line with slope~$-\alpha$. We apply the Clauset--Shalizi--Newman method~\cite{clauset2009} to test power-law hypotheses: it fits a discrete power law $P(k) \propto k^{-\alpha}$ for $k \ge x_{\min}$ and compares the fit against alternatives (lognormal, exponential, truncated power law, stretched exponential) using likelihood ratio tests.
