@@ -168,6 +168,86 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
 
 As depth~$k$ increases, namespace boundaries split while module boundaries remain fixed, converting intra-namespace edges into cross-namespace edges and driving containment downward.
 
+\begin{remark}[Cycles in the namespace graph]
+\label{rem:ns-cycles}
+Unlike $G_{\mathrm{module}}$ and $G_{\mathrm{thm}}$, which are directed acyclic graphs---the compiler and the type-checker respectively forbid circular dependencies---the namespace graph $G_{\mathrm{ns}}^{(k)}$ can contain directed cycles. Two namespaces may depend on each other: namespace~$A$ contains a declaration that cites a declaration in namespace~$B$, while $B$ contains a different declaration that cites one in~$A$. The underlying declaration-level graph remains acyclic, but the aggregation into namespaces collapses the strict topological ordering.
+
+At depth~$2$, $G_{\mathrm{ns}}^{(2)}$ contains $38$ strongly connected components with more than one node, the largest comprising $5{,}899$ namespaces---$58\%$ of all depth-$2$ namespaces. This giant component reflects the deeply interconnected core of Mathlib: most mathematical sub-disciplines at this granularity depend mutually on one another. The remaining $37$ non-trivial components are small (at most $25$ nodes each). This structural difference---DAGs at the module and declaration levels, cyclic graphs at the namespace level---reflects the fact that namespace boundaries, unlike file boundaries, are not constrained by a compiler-enforced import ordering.
+\end{remark}
+
+Figure~\ref{fig:ns-cycle-example} illustrates how a cycle arises from acyclic declaration-level dependencies.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10,
+                minimum width=2.8cm, minimum height=1.6cm},
+  agg/.style={->, >=Stealth, gray!50, very thick, dashed,
+              shorten <=2pt, shorten >=2pt},
+]
+  % ============ Panel (a): Declaration level ============
+  \node[font=\small\sffamily, anchor=south] at (2.0,2.5) {(a) $G_{\mathrm{thm}}$ (acyclic)};
+  % Namespace boxes
+  \fill[green!8, rounded corners=3pt] (-0.3,-0.3) rectangle (2.0,2.2);
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-0.3) rectangle (2.0,2.2);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (-0.2,2.15) {\ns{Nat}};
+
+  \fill[green!8, rounded corners=3pt] (2.5,-0.3) rectangle (4.8,2.2);
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (2.5,-0.3) rectangle (4.8,2.2);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (2.6,2.15) {\ns{Int}};
+
+  % Declarations
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black, align=center]below:prime\_iff\_\\[-1pt]prime\_int}]
+    (npip) at (1.0,1.4) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:lcm}]
+    (nlcm) at (1.0,0.3) {};
+
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:dvd\_natAbs}]
+    (idna) at (3.5,1.4) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:lcm\_neg}]
+    (ilcm) at (3.5,0.3) {};
+
+  % Declaration-level edges (no cycle!)
+  \draw[dep] (npip) -- (idna);
+  \draw[dep] (ilcm) -- (nlcm);
+
+  % ============ Arrow a → b ============
+  \draw[agg] (5.3,0.95) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    (7.0,0.95);
+
+  % ============ Panel (b): Namespace level ============
+  \node[font=\small\sffamily, anchor=south] at (9.5,2.5) {(b) $G_{\mathrm{ns}}^{(2)}$ (cyclic)};
+  \node[nsbox, minimum width=1.6cm, minimum height=1.3cm] (ns_nat) at (8.0,0.95) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.0,1.1) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (8.0,0.7) {2 decls};
+
+  \node[nsbox, minimum width=1.6cm, minimum height=1.3cm] (ns_int) at (11.0,0.95) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (11.0,1.1) {\ns{Int}};
+  \node[font=\tiny\sffamily, text=gray] at (11.0,0.7) {2 decls};
+
+  % Namespace-level edges: cycle!
+  % Top arrow: Nat top-right → Int top-left
+  \draw[->, >=Stealth, green!50!black, thick]
+    ([yshift=2pt]ns_nat.north east) to[out=30,in=150]
+    node[above, font=\tiny, text=green!40!black] {$w\!=\!1$}
+    ([yshift=2pt]ns_int.north west);
+  % Bottom arrow: Int bottom-left → Nat bottom-right
+  \draw[->, >=Stealth, green!50!black, thick]
+    ([yshift=-2pt]ns_int.south west) to[out=210,in=330]
+    node[below, font=\tiny, text=green!40!black] {$w\!=\!1$}
+    ([yshift=-2pt]ns_nat.south east);
+\end{tikzpicture}
+\caption{How aggregation creates cycles. (a)~At the declaration level, two edges cross the \ns{Nat}--\ns{Int} boundary in opposite directions: \decl{Nat.prime\_iff\_prime\_int} cites \decl{Int.dvd\_natAbs}, and \decl{Int.lcm\_neg} cites \decl{Nat.lcm}. No cycle exists among these four declarations. (b)~After aggregation to depth-$2$ namespaces, both edges collapse to namespace-level edges, creating a directed cycle \ns{Nat} $\to$ \ns{Int} $\to$ \ns{Nat}. The declaration-level DAG property is lost.}
+\label{fig:ns-cycle-example}
+\end{figure}
+
 \subsection{Containment Decay}
 \label{sec:containment-decay}
 

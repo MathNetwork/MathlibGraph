@@ -14,6 +14,8 @@ The \emph{depth} of a DAG is the length of its longest directed path. The \emph{
 
 A directed graph~$G$ is \emph{weakly connected} if the underlying undirected graph (obtained by ignoring edge orientations) is connected. A \emph{weakly connected component (WCC)} is a maximal weakly connected subgraph.
 
+A directed graph~$G$ is \emph{strongly connected} if for every pair of vertices~$u, v$ there exists a directed path from~$u$ to~$v$ and a directed path from~$v$ to~$u$. A \emph{strongly connected component (SCC)} is a maximal strongly connected subgraph. Every DAG has only trivial SCCs (single vertices). The \emph{condensation} of a directed graph replaces each SCC by a single super-node and each inter-SCC edge by an edge between the corresponding super-nodes; the resulting graph is always a DAG.
+
 \subsection{Centrality Measures}
 \label{sec:prelim-centrality}
 

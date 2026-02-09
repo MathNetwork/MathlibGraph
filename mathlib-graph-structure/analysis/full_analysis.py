@@ -134,8 +134,8 @@ results["degree_distribution"] = {"raw": raw_deg_stats, "transitive_reduction": 
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
 for col, (in_vals, out_vals, label) in enumerate([
-    (raw_in, raw_out, "Raw"),
-    (tr_in, tr_out, "Transitive Reduction"),
+    (raw_in, raw_out, r"$G_{\mathrm{module}}$"),
+    (tr_in, tr_out, r"$G_{\mathrm{module}}^{-}$"),
 ]):
     # In-degree (log-log)
     ax = axes[0][col]
@@ -245,13 +245,13 @@ fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
 ax1.bar(range(len(raw_layers)), raw_layers, color="seagreen", edgecolor="none", width=1.0)
 ax1.set_xlabel("Topological layer")
 ax1.set_ylabel("Number of modules")
-ax1.set_title(f"DAG width by topological layer (Raw, {len(raw_layers)} layers)")
+ax1.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)")
 ax1.set_xlim(-1, len(raw_layers))
 
 ax2.bar(range(len(tr_layers)), tr_layers, color="darkorange", edgecolor="none", width=1.0)
 ax2.set_xlabel("Topological layer")
 ax2.set_ylabel("Number of modules")
-ax2.set_title(f"DAG width by topological layer (Transitive Reduction, {len(tr_layers)} layers)")
+ax2.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)")
 ax2.set_xlim(-1, len(tr_layers))
 
 plt.tight_layout()
