@@ -28,7 +28,6 @@ The preceding three levels treat modules, namespaces, and declarations as separa
 Together, the four levels form a progression from coarse architecture (\S\ref{sec:module-import}) through fine-grained logical structure (\S\ref{sec:theorem-premise}) and its namespace-level aggregation (\S\ref{sec:namespace-graph}) to the tension between human organization and mathematical necessity (\S\ref{sec:module-declaration}). Beyond characterizing the network, we identify structural metrics---module cohesion, centrality rankings, zero-citation rates, containment curves---that can serve as quantitative signals for library maintenance, compilation optimization, and AI training data curation.
 
 \subsection{Previous works}
-\textcolor{blue}{make previous work a subsection of introduction}
 \paragraph{Software dependency networks.}
 Dependency graphs arise naturally in software ecosystems: package managers such as npm, PyPI, and Maven define directed acyclic graphs in which each package declares its requirements~\cite{decan2019,labelle2004}. Studies of these ecosystems have revealed heavy-tailed degree distributions, small-world connectivity, and fragility under targeted removal of hub packages. Our analysis applies a similar methodology to a formal mathematics library---a setting in which every edge carries a stronger guarantee than ``package~$A$ requires package~$B$ at build time.'' In a type-checked library, every dependency has been verified by the kernel to be logically necessary; the graph records not merely a build requirement but a semantic relationship.
 
