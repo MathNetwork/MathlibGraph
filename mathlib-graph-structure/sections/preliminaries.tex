@@ -44,10 +44,23 @@ Betweenness identifies \emph{bridge} vertices: those that sit on many shortest p
 
 \begin{definition}[Modularity~\cite{newman2004}]
 \label{def:modularity}
-Given a partition of a graph's vertices into communities, the \emph{modularity}~$Q$ measures the fraction of edges that fall within communities, minus the expected fraction under a random null model with the same degree sequence. Modularity ranges from $-1/2$ to $1$; values above ${\sim}0.3$ indicate significant community structure.
+Given an undirected graph with adjacency matrix~$A$, total edge weight $m = \frac{1}{2}\sum_{ij} A_{ij}$, and a partition assigning each vertex~$i$ to community~$c_i$, the \emph{modularity} is
+\[
+  Q = \frac{1}{2m} \sum_{ij} \left[ A_{ij} - \frac{k_i k_j}{2m} \right] \delta(c_i, c_j),
+\]
+where $k_i = \sum_j A_{ij}$ is the degree (or weighted degree) of vertex~$i$ and $\delta(c_i, c_j) = 1$ if $i$ and $j$ belong to the same community. The term $k_i k_j / 2m$ is the expected number of edges between $i$ and $j$ under a random null model preserving the degree sequence. Modularity ranges from $-1/2$ to $1$; values above ${\sim}0.3$ indicate significant community structure.
 \end{definition}
 
-The \emph{Louvain algorithm}~\cite{blondel2008} is a greedy, hierarchical method that iteratively merges vertices to maximize modularity. It is widely used for large graphs due to its near-linear time complexity.
+The \emph{Louvain algorithm}~\cite{blondel2008} is a greedy, hierarchical method that maximizes modularity through two alternating phases:
+
+\begin{enumerate}
+\item \textbf{Local move phase.} Each vertex is initially placed in its own community. The algorithm then iterates over all vertices in random order: for each vertex~$v$, it computes the change in modularity $\Delta Q$ that would result from moving $v$ to each of its neighbors' communities, and moves $v$ to the community yielding the largest positive $\Delta Q$. This sweep repeats until no move produces a positive gain.
+
+\item \textbf{Aggregation phase.} The communities found in Phase~1 are contracted into single super-nodes, with edge weights between super-nodes equal to the sum of edge weights between their constituent vertices (self-loops encode intra-community edges). The algorithm then returns to Phase~1 on this coarsened graph.
+\end{enumerate}
+
+\noindent
+The two phases alternate until modularity converges. The result is a hierarchical dendrogram of community merges; in practice, we use the partition at the level that maximizes~$Q$. The algorithm runs in $O(n \log n)$ time on sparse graphs, making it tractable for our largest graph ($308{,}054$ nodes, $8.4$M edges).
 
 To compare two partitions of the same vertex set---for example, a community assignment and a namespace labeling---we use two standard measures.
 
