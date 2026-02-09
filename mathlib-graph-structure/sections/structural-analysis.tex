@@ -11,6 +11,10 @@ Unless stated otherwise, module-level statistics are reported for both the raw m
 \subsection{Degree Distributions}
 \label{sec:sa-degree}
 
+The degree distribution is the most basic statistical fingerprint of a network. Its shape encodes information about the network's growth mechanism: a power-law tail suggests preferential attachment, where a small number of hubs continually attract new connections; a lognormal tail suggests multiplicative processes with many independent contributing factors; an exponential decay suggests uniform random connectivity. For our purposes, comparing degree distributions across the three graphs answers a pointed question: do human organization (module level) and mathematical logic (declaration level) produce the same distributional shape? Agreement would point to a shared generative mechanism; disagreement would implicate level-specific organizational forces.
+
+We focus on three dimensions of comparison: (i)~the \emph{symmetry} between in-degree and out-degree---reflecting the directional structure of dependency; (ii)~\emph{tail behavior}---the severity of the heavy tail and the best-fitting distributional model; and (iii)~the \emph{effect of transitive reduction}---separating explicit human choices from logically necessary dependencies.
+
 \subsubsection{Module Level}
 \label{sec:degree-distribution}
 
@@ -148,10 +152,26 @@ The degree distribution is extremely skewed (Table~\ref{tab:ns-degree-stats}). T
 
 Power-law fitting (\S\ref{sec:prelim-powerlaw}) yields $\alpha = 1.60$ ($x_{\min} = 4$) for in-degree and $\alpha = 1.90$ ($x_{\min} = 13$) for out-degree. In both cases, a lognormal distribution provides a significantly better fit than a pure power law (likelihood ratio $R = -10.6$ and $R = -289.7$, respectively; $p < 0.01$). This mirrors the pattern observed for $G_{\mathrm{module}}$ (\S\ref{sec:degree-distribution}): heavy-tailed distributions that are not cleanly power-law.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{analysis/ns_degree_distribution.pdf}
+\caption{Degree distributions of $G_{\mathrm{ns}}^{(2)}$ on log--log axes. Left: in-degree (\textcolor{blue!60!black}{blue}), with power-law reference (gold dashed, $\alpha = 1.60$, $x_{\min} = 4$). Right: out-degree (\textcolor{red!60!black}{coral}), with power-law reference ($\alpha = 1.90$, $x_{\min} = 13$). Both tails are heavy but better fit by a lognormal than a pure power law. The extreme outlier in the in-degree panel is \ns{\_root\_} ($\deg^{-} = 9{,}846$; see Remark~\ref{rem:root-artifact}).}
+\label{fig:ns-degree}
+\end{figure}
+
 \begin{remark}[The \ns{\_root\_} artifact]
 \label{rem:root-artifact}
 The namespace \ns{\_root\_} dominates both in-degree and out-degree at depth~$2$. This is an artifact of the truncation rule in Definition~\ref{def:ns-graph}: declarations whose fully qualified names have fewer than three components---including foundational definitions such as \decl{Eq.refl}, \decl{Nat.succ}, and \decl{OfNat.ofNat}---are assigned to \ns{\_root\_}. This namespace is not a coherent conceptual domain; it is a catch-all for the shallow infrastructure of the Lean type system. Its extreme centrality reflects naming-depth convention rather than mathematical importance: the most foundational constructs carry the shortest names. In the analysis that follows, we note where \ns{\_root\_} distorts aggregate statistics.
 \end{remark}
+
+\paragraph{Cross-level comparison.}
+All three levels share heavy-tailed degree distributions in which lognormal fits outperform pure power laws, confirming that the ``few hubs, many low-degree nodes'' pattern is a universal structural feature of the formalized library, independent of analysis granularity. But the differences are equally informative.
+
+\emph{In-degree skewness intensifies with granularity.} At the module level, the in-degree distribution is moderately skewed (median~$2$, mean~$3.1$, max~$167$). At the declaration level, the skewness becomes extreme (median~$1$, mean~$27$, max~$89{,}936$): a handful of language-infrastructure declarations are cited by nearly every proof, while the majority are referenced at most once. The namespace level (median~$1$, mean~$33$, max~$9{,}846$) mirrors this pattern but is distorted by the \ns{\_root\_} artifact (Remark~\ref{rem:root-artifact}).
+
+\emph{Out-degree reveals process constraints.} At the declaration level, out-degree is bounded by the cognitive and logical complexity of a single proof (mean~$27$, max~$522$)---a hard ceiling that no human-written proof exceeds. At the module level, out-degree reflects developer import choices; transitive reduction compresses the maximum from~$315$ to~$70$ and the standard deviation from~$4.12$ to~$1.83$, exposing the cognitive redundancy of umbrella imports (\S\ref{sec:transitive-reduction}). At the declaration level, by contrast, transitive reduction is not meaningful: every premise edge is mechanically extracted from the proof term (Remark~\ref{rem:thm-transitive-reduction}).
+
+This pattern---shared distributional shape but divergent parameters and mechanisms---will recur in the centrality (\S\ref{sec:sa-centrality}) and community (\S\ref{sec:sa-community}) analyses that follow.
 
 %% ====================================================================
 \subsection{DAG Depth and Layered Structure}
