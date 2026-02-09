@@ -315,6 +315,11 @@ The strongest inter-directory dependency is \module{RingTheory} $\to$ \module{Al
 
 Degree distribution, DAG depth, centrality, and robustness analyses for the module graph are reported in \S\ref{sec:structural-analysis}.
 
+\begin{remark}[Language contingency]
+\label{rem:language-contingency}
+The module graph's topology is shaped not only by mathematical dependencies but by Lean~4's specific compilation model: its prohibition of cyclic imports, its transitive visibility semantics, and the \texttt{public import} mechanism that allows selective re-export. Design choices such as fine-grained incremental compilation, selective re-export at the declaration level, or explicit interface files would alter the structure of $G_{\mathrm{module}}$ even for identical mathematical content. The structural statistics reported in this section---$17.5\%$ redundancy, $153$-layer depth, mean out-degree~$3.1$---should be understood as properties of formalized mathematics \emph{in Lean~4}, not of formalized mathematics in general.
+\end{remark}
+
 \subsection{Analysis}
 \label{sec:module_conclusion}
 Our structural analysis of the \module{Mathlib} module graph allows us to characterize the architecture of a large-scale formal library. We find that \module{Mathlib} does not resemble a random network or a simple hierarchy; rather, it is a \textit{deep, engineered backbone} supporting a vast, shallow application layer. These findings have three implications for the future of formal mathematical libraries.
