@@ -307,6 +307,101 @@ At depth~$1$, namespace containment is $22.2\%$: roughly one in five edges stays
 
 The comparison reveals a consistent ordering: namespace containment at depth~$1$ ($22.2\%$) exceeds file-level containment ($15.6\%$), which in turn exceeds module cohesion ($10.7\%$). Namespaces, as conceptual categories, retain slightly more dependency traffic than files---a naming domain like \ns{Nat} captures more intra-group dependencies than the file \module{Data.Nat.Basic}, because the namespace spans multiple files and encloses a larger set of related declarations. But all three figures are far below~$50\%$: regardless of which human boundary one draws---naming hierarchy or file system---the majority of mathematical dependencies cross it.
 
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt, semithick},
+]
+  % Module: Data.Nat.Defs (top)
+  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (defs) at (2.1,3.0) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,3.7) {\module{Data.Nat.Defs}};
+  \node[dot] (sea) at (1.0,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.2,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+
+  % Module: Data.Nat.Basic (middle)
+  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (basic) at (2.1,1.2) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,1.9) {\module{Data.Nat.Basic}};
+  \node[dot] (ac) at (1.0,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.2,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+
+  % Module: Init.Prelude (bottom)
+  \node[modbox, minimum width=2.4cm, minimum height=0.8cm] (init) at (2.1,-0.6) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,0.0) {\module{Init.Prelude}};
+  \node[dot] (er) at (2.1,-0.6) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+
+  % Intra-module edge (solid)
+  \draw[dep] (alc) -- (ac);
+
+  % Cross-module edges (dashed)
+  \draw[depext] (sea) -- (ac);
+  \draw[depext] (ac) -- (er);
+  \draw[depext] (alc) to[out=-60,in=30] (er);
+  \draw[depext] (sea) to[out=-120,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=45] (er);
+\end{tikzpicture}
+\caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
+\label{fig:ns-vs-mod-module}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
+]
+  % Namespace: Nat (large box spanning both sets)
+  \node[nsbox, minimum width=4.6cm, minimum height=3.2cm] (nat) at (2.1,2.1) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,3.9) {\ns{Nat}};
+
+  % Top row: formerly in Defs
+  \node[dot] (sea) at (1.0,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.2,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+
+  % Bottom row: formerly in Basic
+  \node[dot] (ac) at (1.0,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.2,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+
+  % Namespace: Eq (bottom)
+  \node[nsbox, minimum width=2.4cm, minimum height=0.8cm] (eq) at (2.1,-0.6) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,0.0) {\ns{Eq}};
+  \node[dot] (er) at (2.1,-0.6) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+
+  % Intra-namespace edges (solid) — now includes cross-module edge!
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (sea) -- (ac);
+
+  % Cross-namespace edges (dashed)
+  \draw[depext] (ac) -- (er);
+  \draw[depext] (alc) to[out=-60,in=30] (er);
+  \draw[depext] (sea) to[out=-120,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=45] (er);
+\end{tikzpicture}
+\caption{Grouped by \textcolor{green!50!black}{namespace}. $2$ of $6$ edges are intra-namespace (solid); $4$ are cross-namespace (dashed). Containment~$\approx 22.2\%$.}
+\label{fig:ns-vs-mod-namespace}
+\end{subfigure}
+\caption{The same five declarations and six dependency edges, grouped by module (a) vs.\ namespace~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries, spanning multiple files, capture more intra-group dependencies than file boundaries---explaining why containment ($22.2\%$) exceeds cohesion ($10.7\%$).}
+\label{fig:ns-vs-mod}
+\end{figure}
+
 \paragraph{Depth asymmetry.}
 \label{sec:depth-asymmetry}
 

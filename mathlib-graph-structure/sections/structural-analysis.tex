@@ -334,6 +334,15 @@ The three columns of Table~\ref{tab:thm-centrality} have almost no overlap, and 
 
 \emph{Betweenness centrality} reveals a third, entirely disjoint set of structurally critical declarations. The top entries---\decl{Real}, \decl{Real.ofCauchy}, \decl{Rat.linearOrder}, \decl{Real.pi}, \decl{Real.exists\_cos\_eq\_zero}---trace the construction chain of the real numbers. These nodes sit at the narrow passage connecting the algebraic world (rational numbers, ordered rings, number fields) to the analytic world (measure theory, complex analysis, probability). \decl{Real.pi} occupies rank~$4$ because $\pi$'s definition threads through number theory, trigonometry, and analysis, making it a crossroads of multiple mathematical disciplines. Only $34{,}564$ of $308{,}129$ nodes ($11.2\%$) have nonzero betweenness, confirming that shortest paths through $G_{\mathrm{thm}}$ are concentrated through a small number of critical bridges.
 
+Figure~\ref{fig:thm-centrality-scatter} visualizes the pairwise relationships between the three centrality measures.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{analysis/thm_centrality_scatter.pdf}
+\caption{Pairwise scatter plots of centrality measures in $G_{\mathrm{thm}}$; each point represents one declaration. Left: in-degree vs.\ PageRank. Center: in-degree vs.\ betweenness. Right: betweenness vs.\ PageRank. The wide scatter in all three panels confirms that no two measures are redundant: the three-way divergence visible in Table~\ref{tab:thm-centrality} is not confined to the top-$10$ extremes but pervades the entire distribution.}
+\label{fig:thm-centrality-scatter}
+\end{figure}
+
 \begin{remark}
 \label{rem:thm-centrality-vs-module}
 The three-way divergence of centrality measures observed at the module level (\S\ref{sec:centrality}) intensifies at the theorem level: no declaration appears in all three top-$10$ lists of Table~\ref{tab:thm-centrality}. The taxonomy of importance proposed in \S\ref{sec:module_conclusion}---\emph{vocabulary} (in-degree), \emph{axiomatic core} (PageRank), \emph{structural bridges} (betweenness)---receives sharper instantiation here. At the module level, the centrality rankings are partially confounded by file-organization artifacts (e.g., \module{Mathlib.Init} ranks high in all three measures simply because it is imported by every file). At the theorem level, these artifacts are stripped away, and the three measures separate cleanly into language infrastructure (in-degree), mathematical foundations (PageRank), and inter-disciplinary bridges (betweenness).
@@ -371,13 +380,86 @@ PR & Namespace & $c_B$ & Namespace \\
 
 Excluding the \ns{\_root\_} artifact (Remark~\ref{rem:root-artifact}), the two rankings reveal a clear separation (Table~\ref{tab:ns-centrality}). PageRank is dominated by mathematical infrastructure: \ns{Eq}, \ns{Set}, \ns{OfNat}, \ns{Real}, and \ns{Preorder}---the foundational types and structures on which proofs ultimately rest. Betweenness centrality, by contrast, promotes logical connectives and bridging concepts: \ns{And}, \ns{Exists}, and \ns{Function} occupy positions~$2$--$5$ by betweenness but do not appear in the PageRank top~$10$. These namespaces serve as structural bridges: proofs in distant mathematical theories must pass through logical connectives to compose their arguments.
 
-This separation echoes the module-level finding of \S\ref{sec:centrality}, where no single module dominates all three centrality measures, and the declaration-level finding of \S\ref{sec:thm-centrality}, where in-degree, PageRank, and betweenness identify disjoint categories of importance. At the namespace level, the two available measures already diverge sharply, confirming that the multidimensionality of structural importance persists across all three granularities.
+This separation echoes the module-level finding of \S\ref{sec:centrality}, where no single module dominates all three centrality measures, and the declaration-level finding of \S\ref{sec:thm-centrality}, where in-degree, PageRank, and betweenness identify disjoint categories of importance. At the namespace level, the two available measures already diverge sharply, confirming that the multidimensionality of structural importance persists across all three granularities. Figure~\ref{fig:ns-centrality-scatter} shows the pairwise scatter plots.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{analysis/ns_centrality_scatter.pdf}
+\caption{Pairwise scatter plots of centrality measures in $G_{\mathrm{ns}}^{(2)}$; each point represents one namespace. Left: in-degree vs.\ PageRank. Center: in-degree vs.\ betweenness. Right: betweenness vs.\ PageRank. The extreme outlier in all panels is \ns{\_root\_} (Remark~\ref{rem:root-artifact}). Excluding it, the scatter confirms that PageRank and betweenness capture distinct structural roles at the namespace level.}
+\label{fig:ns-centrality-scatter}
+\end{figure}
 
 %% ====================================================================
 \subsection{Community Structure}
 \label{sec:sa-community}
 
 Does the dependency graph naturally partition into communities that correspond to traditional mathematical disciplines? Louvain community detection (\S\ref{sec:prelim-community}) finds densely connected subgraphs without any prior knowledge of mathematical content; comparing these data-driven communities to the human-imposed namespace hierarchy---via NMI and ARI---measures how well cognitive classification aligns with logical dependency. A high NMI would mean that mathematicians' naming decisions faithfully mirror the dependency topology; a low NMI would mean the two structures encode fundamentally different information.
+
+\subsubsection{Module Level}
+\label{sec:module-community}
+
+We apply Louvain community detection (\S\ref{sec:prelim-community}) to the undirected projection of $G_{\mathrm{module}}$ ($7{,}563$ nodes, $23{,}570$ edges).
+
+\begin{table}[ht]
+\centering
+\caption{Community detection summary for $G_{\mathrm{module}}$.}
+\label{tab:module-community-summary}
+\begin{tabular}{lr}
+\toprule
+Metric & Value \\
+\midrule
+Number of communities & $16$ \\
+Modularity & $0.6395$ \\
+Communities with ${>}1{,}000$ nodes & $3$ \\
+Communities with ${>}100$ nodes & $9$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The modularity of $0.64$ is the highest among the three levels---substantially above the declaration level ($0.48$) and the namespace level ($0.28$). This reflects the fact that modules are the unit at which human organization is most direct: developers place related files in the same directory, creating dense within-directory import clusters that Louvain readily detects.
+
+\begin{table}[ht]
+\centering
+\caption{The nine major communities of $G_{\mathrm{module}}$ (Louvain, ${>}100$ nodes), with dominant top-level directories.}
+\label{tab:module-communities}
+\small
+\begin{tabular}{rrl}
+\toprule
+ID & Size & Dominant directories \\
+\midrule
+2  & $1{,}445$ & \module{RingTheory} (531), \module{Algebra} (377), \module{LinearAlgebra} (253) \\
+7  & $1{,}398$ & \module{CategoryTheory} (893), \module{Algebra} (147), \module{Topology} (92) \\
+3  & $1{,}366$ & \module{Algebra} (382), \module{Data} (297), \module{Tactic} (295) \\
+1  & $948$     & \module{Analysis} (533), \module{Topology} (124), \module{Geometry} (97) \\
+5  & $668$     & \module{Data} (184), \module{Order} (181), \module{Topology} (58) \\
+6  & $504$     & \module{MeasureTheory} (232), \module{Probability} (112), \module{Analysis} (88) \\
+4  & $455$     & \module{Topology} (233), \module{Analysis} (78), \module{Data} (41) \\
+0  & $343$     & \module{Algebra} (111), \module{GroupTheory} (99), \module{Combinatorics} (52) \\
+8  & $207$     & \module{Algebra} (102), \module{CategoryTheory} (38) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The communities map recognizably onto mathematical domains. \module{CategoryTheory} again dominates a single community ($64\%$ of Community~$7$), mirroring the exceptional autonomy observed at the declaration level (\S\ref{sec:thm-community}). The NMI between Louvain communities and top-level directories is $0.42$ (ARI~$= 0.28$)---higher than the declaration-level NMI of $0.34$ (\S\ref{sec:thm-community}). The stronger alignment reflects the fact that modules, unlike declarations, are explicitly organized into a directory tree; the import graph inherits much of that tree structure.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/community_module_graph.png}
+  \caption{Community aggregation graph.}
+  \label{fig:community-module-graph}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.50\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/community_module_heatmap.png}
+  \caption{Communities vs.\ top-level directories.}
+  \label{fig:community-module-heatmap}
+\end{subfigure}
+\caption{Louvain community structure of $G_{\mathrm{module}}$ (modularity~$= 0.64$, NMI~$= 0.42$). (a)~Each node is a community; size $\propto \sqrt{\text{members}}$; labels show the dominant directory and count. (b)~Heatmap of community$\,\times\,$directory membership (log scale). \module{CategoryTheory} (C7) concentrates sharply in one column; \module{Algebra} fragments across three communities (C3, C0, C8).}
+\label{fig:community-module}
+\end{figure}
 
 \subsubsection{Declaration Level}
 \label{sec:thm-community}
@@ -449,6 +531,25 @@ The NMI of $0.34$ provides a theorem-level metric for the tension between the mo
 The exceptional case of category theory deserves emphasis. Its near-complete community--namespace alignment ($97.4\%$) suggests that category theory is not merely a namespace convention but a genuinely \emph{autonomous} mathematical discipline within \module{Mathlib}---its internal dependency structure is dense enough to form a self-contained community with minimal need for external foundations beyond the shared core. No other major namespace achieves this degree of self-containment.
 \end{remark}
 
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/community_decl_graph.png}
+  \caption{Community aggregation graph.}
+  \label{fig:community-decl-graph}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.50\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/community_decl_heatmap.png}
+  \caption{Communities vs.\ depth-$1$ namespaces.}
+  \label{fig:community-decl-heatmap}
+\end{subfigure}
+\caption{Louvain community structure of $G_{\mathrm{thm}}$ (modularity~$= 0.48$, NMI~$= 0.35$). (a)~Communities below $1\%$ of nodes are merged into ``Other''. \ns{CategoryTheory} and \ns{MeasureTheory} form the two largest communities. (b)~\ns{CategoryTheory} (C32) concentrates sharply in one cell; by contrast, the largest community is spread across every column, functioning as a ``catch-all'' with no dominant namespace.}
+\label{fig:community-decl}
+\end{figure}
+
 \subsubsection{Namespace Level}
 \label{sec:ns-community}
 
@@ -474,6 +575,25 @@ ID & Size & Representative namespaces \\
 The namespace-level community structure differs markedly from the declaration-level structure (\S\ref{sec:thm-community}). At the declaration level, Louvain detection produces $22$ communities with modularity $0.48$ and NMI~$= 0.34$ against the top-level namespace hierarchy. At the namespace level, the number of communities is smaller ($10$ vs.\ $22$), the modularity is lower ($0.283$ vs.\ $0.48$), and the NMI with the top-level directory falls to~$0.253$ (Table~\ref{tab:ns-communities}).
 
 The lower modularity reflects the coarsening inherent in namespace aggregation. When thousands of declarations are collapsed into a single namespace node, the fine-grained community boundaries that Louvain detects at the declaration level are blurred. Edges between namespaces are weighted sums of many declaration-level edges, and the averaging effect smooths out the modular structure that exists at finer granularity. The largest community (ID~$3$, $5{,}096$ nodes) spans half the graph and lacks a coherent mathematical identity: its dominant members (\ns{\_root\_}, \ns{Set}, \ns{Nat}) are foundational constructs used across all disciplines. This contrasts with the declaration-level communities, where the largest communities map onto recognizable mathematical disciplines (\S\ref{sec:thm-community}).
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/community_ns_graph.png}
+  \caption{Community aggregation graph.}
+  \label{fig:community-ns-graph}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.50\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/community_ns_heatmap.png}
+  \caption{Communities vs.\ depth-$1$ prefixes.}
+  \label{fig:community-ns-heatmap}
+\end{subfigure}
+\caption{Louvain community structure of $G_{\mathrm{ns}}^{(2)}$ (modularity~$= 0.28$, NMI~$= 0.24$). (a)~Only four communities exceed $0.5\%$ of nodes; the rest are merged into ``Other''. The \ns{List} community absorbs more than half the graph. (b)~Most rows are nearly empty; only three communities show substantive internal structure, confirming that Louvain can barely separate the namespace graph.}
+\label{fig:community-ns}
+\end{figure}
 
 %% ====================================================================
 \subsection{Robustness}
@@ -508,6 +628,15 @@ Removing the five highest in-degree modules (\module{Init}, \module{Tactic.Commo
 The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the module graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
 This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reduction}: the edges that developers add for navigability---guided by the categories of~$T$---simultaneously serve as structural insurance, providing alternative paths that keep the network connected when bridges fail.
 \end{remark}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{analysis/module_robustness_curve.pdf}
+\caption{Robustness curves for $G_{\mathrm{module}}$: fraction of nodes in the largest WCC as a function of the fraction removed, under random removal (blue) and targeted removal by PageRank (coral).}
+\label{fig:module-robustness}
+\end{figure}
+
+Figure~\ref{fig:module-robustness} shows the progressive removal curves. Under random removal, the giant component degrades gracefully---removing $20\%$ of modules leaves $80\%$ connected. Under targeted attack on the highest-PageRank modules, the same $20\%$ removal reduces the giant component to $58\%$, a $22$-percentage-point gap that grows with the removal fraction. The curve confirms the scale-free vulnerability signature: the module graph's resilience depends on a small number of high-centrality hubs whose removal fragments the network far more effectively than chance would predict.
 
 \subsubsection{Declaration Level}
 \label{sec:thm-robustness}
@@ -571,7 +700,14 @@ $50\%$ & $0.477$ & $0.000$ & $0.477$ \\
 \end{tabular}
 \end{table}
 
-The pattern matches the classic scale-free vulnerability signature observed at both the module level (\S\ref{sec:robustness}) and the declaration level (\S\ref{sec:thm-robustness}): high resilience under random failure, extreme fragility under targeted attack (Table~\ref{tab:ns-robustness}). At $20\%$ targeted removal, the GCC collapses to $20.8\%$ of its original size---more severe than the declaration-level graph, where the same removal fraction leaves $46.1\%$ (\S\ref{sec:thm-robustness}). The namespace graph's greater fragility reflects the concentration of connectivity in the \ns{\_root\_} super-node and a small number of infrastructure namespaces (Remark~\ref{rem:root-artifact}); once these are removed, the remaining mathematical namespaces fragment into isolated clusters with no shared foundation.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{analysis/ns_robustness_curve.pdf}
+\caption{Robustness curves for $G_{\mathrm{ns}}^{(2)}$: fraction of nodes in the largest WCC as a function of the fraction removed, under random removal (blue) and targeted removal by PageRank (coral).}
+\label{fig:ns-robustness}
+\end{figure}
+
+The pattern matches the classic scale-free vulnerability signature observed at both the module level (\S\ref{sec:robustness}) and the declaration level (\S\ref{sec:thm-robustness}): high resilience under random failure, extreme fragility under targeted attack (Table~\ref{tab:ns-robustness}, Figure~\ref{fig:ns-robustness}). At $20\%$ targeted removal, the GCC collapses to $20.8\%$ of its original size---more severe than the declaration-level graph, where the same removal fraction leaves $46.1\%$ (\S\ref{sec:thm-robustness}). The namespace graph's greater fragility reflects the concentration of connectivity in the \ns{\_root\_} super-node and a small number of infrastructure namespaces (Remark~\ref{rem:root-artifact}); once these are removed, the remaining mathematical namespaces fragment into isolated clusters with no shared foundation.
 
 %% ====================================================================
 \subsection{Theorem vs.\ Lemma: Validating Human Importance Judgments}
