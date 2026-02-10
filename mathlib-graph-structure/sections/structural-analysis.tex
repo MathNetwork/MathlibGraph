@@ -274,9 +274,23 @@ We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:cent
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/centrality_analysis.pdf}
-\caption{Scatter plots of centrality measures in $G_{\mathrm{module}}$; each point represents one module. Left and center: in-degree vs.\ PageRank (raw and TR). Right: betweenness vs.\ PageRank (raw). If any two measures were equivalent, points would cluster along a diagonal line; the wide scatter in each panel confirms that the three centrality measures capture distinct structural roles. Notable outliers are labeled.}
-\label{fig:centrality}
+\includegraphics[width=\textwidth]{analysis/module_centrality_indeg_pr.pdf}
+\caption{In-degree vs.\ PageRank in $G_{\mathrm{module}}$. Each point is one module. If the two measures were equivalent, points would cluster along a diagonal; the wide scatter confirms they capture distinct structural roles.}
+\label{fig:centrality-indeg-pr}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analysis/module_centrality_indeg_betw.pdf}
+\caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{module}}$. Modules with high betweenness but moderate in-degree serve as structural bridges between otherwise disconnected regions of the import graph.}
+\label{fig:centrality-indeg-betw}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analysis/module_centrality_betw_pr.pdf}
+\caption{Betweenness vs.\ PageRank in $G_{\mathrm{module}}$. The three-way divergence visible in Tables~\ref{tab:centrality} is not confined to the top extremes but pervades the entire distribution.}
+\label{fig:centrality-betw-pr}
 \end{figure}
 
 The three rankings largely differ: the only module appearing in all three top-20 lists is \module{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:module_conclusion}.
@@ -330,11 +344,25 @@ The three columns of Table~\ref{tab:thm-centrality} have almost no overlap, and 
 
 Figure~\ref{fig:thm-centrality-scatter} visualizes the pairwise relationships between the three centrality measures.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/thm_centrality_scatter.pdf}
-\caption{Pairwise scatter plots of centrality measures in $G_{\mathrm{thm}}$; each point represents one declaration. Left: in-degree vs.\ PageRank. Center: in-degree vs.\ betweenness. Right: betweenness vs.\ PageRank. The wide scatter in all three panels confirms that no two measures are redundant: the three-way divergence visible in Table~\ref{tab:thm-centrality} is not confined to the top-$10$ extremes but pervades the entire distribution.}
-\label{fig:thm-centrality-scatter}
+\includegraphics[width=\textwidth]{analysis/thm_centrality_indeg_pr.pdf}
+\caption{In-degree vs.\ PageRank in $G_{\mathrm{thm}}$. Each point is one declaration. The wide scatter confirms that popularity (in-degree) and influence (PageRank) measure different structural properties at the declaration level.}
+\label{fig:thm-centrality-indeg-pr}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analysis/thm_centrality_indeg_betw.pdf}
+\caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{thm}}$. Declarations with high betweenness but moderate in-degree act as bottleneck connectors between proof clusters.}
+\label{fig:thm-centrality-indeg-betw}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analysis/thm_centrality_betw_pr.pdf}
+\caption{Betweenness vs.\ PageRank in $G_{\mathrm{thm}}$. The three-way divergence is not confined to the top-$10$ extremes but pervades the entire distribution, confirming that no two centrality measures are redundant.}
+\label{fig:thm-centrality-betw-pr}
 \end{figure}
 
 \noindent\textbf{Note.}
@@ -375,11 +403,25 @@ Excluding the \ns{\_root\_} artifact (Remark~\ref{rem:root-artifact}), the two r
 
 This separation echoes the module-level finding of \S\ref{sec:centrality}, where no single module dominates all three centrality measures, and the declaration-level finding of \S\ref{sec:thm-centrality}, where in-degree, PageRank, and betweenness identify disjoint categories of importance. At the namespace level, the two available measures already diverge sharply, confirming that the multidimensionality of structural importance persists across all three granularities. Figure~\ref{fig:ns-centrality-scatter} shows the pairwise scatter plots.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/ns_centrality_scatter.pdf}
-\caption{Pairwise scatter plots of centrality measures in $G_{\mathrm{ns}}^{(2)}$; each point represents one namespace. Left: in-degree vs.\ PageRank. Center: in-degree vs.\ betweenness. Right: betweenness vs.\ PageRank. The extreme outlier in all panels is \ns{\_root\_} (Remark~\ref{rem:root-artifact}). Excluding it, the scatter confirms that PageRank and betweenness capture distinct structural roles at the namespace level.}
-\label{fig:ns-centrality-scatter}
+\includegraphics[width=\textwidth]{analysis/ns_centrality_indeg_pr.pdf}
+\caption{In-degree vs.\ PageRank in $G_{\mathrm{ns}}^{(2)}$. Each point is one namespace. The extreme outlier is \ns{\_root\_} (Remark~\ref{rem:root-artifact}).}
+\label{fig:ns-centrality-indeg-pr}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analysis/ns_centrality_indeg_betw.pdf}
+\caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{ns}}^{(2)}$. Namespaces with disproportionately high betweenness serve as inter-domain bridges in the namespace dependency graph.}
+\label{fig:ns-centrality-indeg-betw}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analysis/ns_centrality_betw_pr.pdf}
+\caption{Betweenness vs.\ PageRank in $G_{\mathrm{ns}}^{(2)}$. Excluding \ns{\_root\_}, the scatter confirms that PageRank and betweenness capture distinct structural roles at the namespace level.}
+\label{fig:ns-centrality-betw-pr}
 \end{figure}
 
 %% ====================================================================
@@ -434,24 +476,18 @@ ID & Size & Dominant directories \\
 \end{table}
 
 The communities map recognizably onto mathematical domains. \module{CategoryTheory} again dominates a single community ($64\%$ of Community~$7$), mirroring the exceptional autonomy observed at the declaration level (\S\ref{sec:thm-community}). The NMI between Louvain communities and top-level directories is $0.42$ (ARI~$= 0.28$)---higher than the declaration-level NMI of $0.34$ (\S\ref{sec:thm-community}). The stronger alignment reflects the fact that modules, unlike declarations, are explicitly organized into a directory tree; the import graph inherits much of that tree structure.
-\textcolor{red}{these are tooooo small as well. Unify all the figure's font....style}
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/community_module_graph.png}
-  \caption{Community aggregation graph.}
-  \label{fig:community-module-graph}
-\end{subfigure}%
-\hfill
-\begin{subfigure}[b]{0.50\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/community_module_heatmap.png}
-  \caption{Communities vs.\ top-level directories.}
-  \label{fig:community-module-heatmap}
-\end{subfigure}
-\caption{Louvain community structure of $G_{\mathrm{module}}$ (modularity~$= 0.64$, NMI~$= 0.42$). (a)~Each node is a community; size $\propto \sqrt{\text{members}}$; labels show the dominant directory and count. (b)~Heatmap of community$\,\times\,$directory membership (log scale). \module{CategoryTheory} (C7) concentrates sharply in one column; \module{Algebra} fragments across three communities (C3, C0, C8).}
-\label{fig:community-module}
+\includegraphics[width=\textwidth]{figures/community_module_graph.pdf}
+\caption{Louvain community aggregation graph of $G_{\mathrm{module}}$ (modularity~$= 0.64$). Each node is a community; size $\propto \sqrt{\text{members}}$; labels show the dominant directory and count.}
+\label{fig:community-module-graph}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/community_module_heatmap.pdf}
+\caption{Community$\,\times\,$directory membership heatmap for $G_{\mathrm{module}}$ (NMI~$= 0.42$, log scale). \module{CategoryTheory} (C7) concentrates sharply in one column; \module{Algebra} fragments across three communities (C3, C0, C8).}
+\label{fig:community-module-heatmap}
 \end{figure}
 
 \subsubsection{Declaration Level}
@@ -523,23 +559,18 @@ The NMI of $0.34$ provides a theorem-level metric for the tension between the mo
 
 The exceptional case of category theory deserves emphasis. Its near-complete community--namespace alignment ($97.4\%$) suggests that category theory is not merely a namespace convention but a genuinely \emph{autonomous} mathematical discipline within \module{Mathlib}---its internal dependency structure is dense enough to form a self-contained community with minimal need for external foundations beyond the shared core. No other major namespace achieves this degree of self-containment.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/community_decl_graph.png}
-  \caption{Community aggregation graph.}
-  \label{fig:community-decl-graph}
-\end{subfigure}%
-\hfill
-\begin{subfigure}[b]{0.50\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/community_decl_heatmap.png}
-  \caption{Communities vs.\ depth-$1$ namespaces.}
-  \label{fig:community-decl-heatmap}
-\end{subfigure}
-\caption{Louvain community structure of $G_{\mathrm{thm}}$ (modularity~$= 0.48$, NMI~$= 0.35$). (a)~Communities below $1\%$ of nodes are merged into ``Other''. \ns{CategoryTheory} and \ns{MeasureTheory} form the two largest communities. (b)~\ns{CategoryTheory} (C32) concentrates sharply in one cell; by contrast, the largest community is spread across every column, functioning as a ``catch-all'' with no dominant namespace.}
-\label{fig:community-decl}
+\includegraphics[width=\textwidth]{figures/community_decl_graph.pdf}
+\caption{Louvain community aggregation graph of $G_{\mathrm{thm}}$ (modularity~$= 0.48$). Communities below $1\%$ of nodes are merged into ``Other''. \ns{CategoryTheory} and \ns{MeasureTheory} form the two largest communities.}
+\label{fig:community-decl-graph}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/community_decl_heatmap.pdf}
+\caption{Community$\,\times\,$namespace membership heatmap for $G_{\mathrm{thm}}$ (NMI~$= 0.35$, log scale). \ns{CategoryTheory} (C32) concentrates sharply in one cell; the largest community is spread across every column, functioning as a ``catch-all'' with no dominant namespace.}
+\label{fig:community-decl-heatmap}
 \end{figure}
 
 \subsubsection{Namespace Level}
@@ -568,23 +599,18 @@ The namespace-level community structure differs markedly from the declaration-le
 
 The lower modularity reflects the coarsening inherent in namespace aggregation. When thousands of declarations are collapsed into a single namespace node, the fine-grained community boundaries that Louvain detects at the declaration level are blurred. Edges between namespaces are weighted sums of many declaration-level edges, and the averaging effect smooths out the modular structure that exists at finer granularity. The largest community (ID~$3$, $5{,}096$ nodes) spans half the graph and lacks a coherent mathematical identity: its dominant members (\ns{\_root\_}, \ns{Set}, \ns{Nat}) are foundational constructs used across all disciplines. This contrasts with the declaration-level communities, where the largest communities map onto recognizable mathematical disciplines (\S\ref{sec:thm-community}).
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/community_ns_graph.png}
-  \caption{Community aggregation graph.}
-  \label{fig:community-ns-graph}
-\end{subfigure}%
-\hfill
-\begin{subfigure}[b]{0.50\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/community_ns_heatmap.png}
-  \caption{Communities vs.\ depth-$1$ prefixes.}
-  \label{fig:community-ns-heatmap}
-\end{subfigure}
-\caption{Louvain community structure of $G_{\mathrm{ns}}^{(2)}$ (modularity~$= 0.28$, NMI~$= 0.24$). (a)~Only four communities exceed $0.5\%$ of nodes; the rest are merged into ``Other''. The \ns{List} community absorbs more than half the graph. (b)~Most rows are nearly empty; only three communities show substantive internal structure, confirming that Louvain can barely separate the namespace graph.}
-\label{fig:community-ns}
+\includegraphics[width=\textwidth]{figures/community_ns_graph.pdf}
+\caption{Louvain community aggregation graph of $G_{\mathrm{ns}}^{(2)}$ (modularity~$= 0.28$). Only four communities exceed $0.5\%$ of nodes; the rest are merged into ``Other''. The \ns{List} community absorbs more than half the graph.}
+\label{fig:community-ns-graph}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/community_ns_heatmap.pdf}
+\caption{Community$\,\times\,$prefix membership heatmap for $G_{\mathrm{ns}}^{(2)}$ (NMI~$= 0.24$, log scale). Most rows are nearly empty; only three communities show substantive internal structure, confirming that Louvain can barely separate the namespace graph.}
+\label{fig:community-ns-heatmap}
 \end{figure}
 
 %% ====================================================================

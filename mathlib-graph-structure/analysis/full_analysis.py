@@ -3,11 +3,15 @@
 
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent / "scripts"))
+from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE, FIGSIZE_HEATMAP, FIGSIZE_HEATMAP_WIDE
+
+COLORS = setup_style()
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import networkx as nx
@@ -132,18 +136,19 @@ results["degree_distribution"] = {"raw": raw_deg_stats, "transitive_reduction": 
 
 # Degree distribution plots (log-log)
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+title_fs, label_fs, tick_fs, legend_fs = 13, 11, 10, 10
 
 for col, (in_vals, out_vals, label) in enumerate([
     (raw_in, raw_out, r"$G_{\mathrm{module}}$"),
     (tr_in, tr_out, r"$G_{\mathrm{module}}^{-}$"),
 ]):
-    # In-degree (log-log)
+    # In-degree (log-log) — blue for module level
     ax = axes[0][col]
     in_counter = Counter(in_vals)
     degs = sorted(in_counter.keys())
     degs = [d for d in degs if d > 0]
     counts = [in_counter[d] for d in degs]
-    ax.scatter(degs, counts, s=12, color="steelblue", alpha=0.7)
+    ax.scatter(degs, counts, s=12, color=COLORS["primary"], alpha=0.7)
     # Power-law reference line: fit gamma via MLE on in-degree >= k_min
     in_arr = np.array([v for v in in_vals if v >= 2])
     if len(in_arr) > 0:
@@ -152,23 +157,25 @@ for col, (in_vals, out_vals, label) in enumerate([
         # scale so the line passes through the empirical count at k=2
         c0 = in_counter.get(2, in_counter.get(3, 1))
         ref_line = c0 * (k_ref / 2) ** (-gamma)
-        ax.plot(k_ref, ref_line, "k--", linewidth=1, alpha=0.6,
+        ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linestyle="--",
+                linewidth=1, alpha=0.6,
                 label=rf"$k^{{-{gamma:.2f}}}$")
-        ax.legend(fontsize=8, loc="upper right")
+        ax.legend(loc="upper right", fontsize=legend_fs)
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("In-degree")
-    ax.set_ylabel("Count")
-    ax.set_title(f"In-degree distribution ({label})")
+    ax.set_xlabel("In-degree", fontsize=label_fs)
+    ax.set_ylabel("Count", fontsize=label_fs)
+    ax.set_title(f"In-degree distribution ({label})", fontsize=title_fs)
+    ax.tick_params(labelsize=tick_fs)
     ax.grid(True, alpha=0.3, which="both")
 
-    # Out-degree (log-log)
+    # Out-degree (log-log) — blue for module level (darker shade)
     ax = axes[1][col]
     out_counter = Counter(out_vals)
     degs = sorted(out_counter.keys())
     degs = [d for d in degs if d > 0]
     counts = [out_counter[d] for d in degs]
-    ax.scatter(degs, counts, s=12, color="coral", alpha=0.7)
+    ax.scatter(degs, counts, s=12, color=COLORS["primary"], alpha=0.5)
     # Power-law reference line for out-degree
     out_arr = np.array([v for v in out_vals if v >= 2])
     if len(out_arr) > 0:
@@ -176,14 +183,16 @@ for col, (in_vals, out_vals, label) in enumerate([
         k_ref = np.logspace(np.log10(2), np.log10(max(degs)), 50)
         c0 = out_counter.get(2, out_counter.get(3, 1))
         ref_line = c0 * (k_ref / 2) ** (-gamma_out)
-        ax.plot(k_ref, ref_line, "k--", linewidth=1, alpha=0.6,
+        ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linestyle="--",
+                linewidth=1, alpha=0.6,
                 label=rf"$k^{{-{gamma_out:.2f}}}$")
-        ax.legend(fontsize=8, loc="upper right")
+        ax.legend(loc="upper right", fontsize=legend_fs)
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Out-degree")
-    ax.set_ylabel("Count")
-    ax.set_title(f"Out-degree distribution ({label})")
+    ax.set_xlabel("Out-degree", fontsize=label_fs)
+    ax.set_ylabel("Count", fontsize=label_fs)
+    ax.set_title(f"Out-degree distribution ({label})", fontsize=title_fs)
+    ax.tick_params(labelsize=tick_fs)
     ax.grid(True, alpha=0.3, which="both")
 
 plt.tight_layout()
@@ -239,20 +248,23 @@ tr_dag_stats, tr_layers = dag_analysis(G_tr, "TR")
 
 results["dag_structure"] = {"raw": raw_dag_stats, "transitive_reduction": tr_dag_stats}
 
-# DAG layer width plots
+# DAG layer width plots — blue for module level
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+dag_title_fs, dag_label_fs, dag_tick_fs = 14, 12, 11
 
-ax1.bar(range(len(raw_layers)), raw_layers, color="seagreen", edgecolor="none", width=1.0)
-ax1.set_xlabel("Topological layer")
-ax1.set_ylabel("Number of modules")
-ax1.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)")
+ax1.bar(range(len(raw_layers)), raw_layers, color=COLORS["primary"], edgecolor="none", width=1.0)
+ax1.set_xlabel("Topological layer", fontsize=dag_label_fs)
+ax1.set_ylabel("Number of modules", fontsize=dag_label_fs)
+ax1.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)", fontsize=dag_title_fs)
 ax1.set_xlim(-1, len(raw_layers))
+ax1.tick_params(labelsize=dag_tick_fs)
 
-ax2.bar(range(len(tr_layers)), tr_layers, color="darkorange", edgecolor="none", width=1.0)
-ax2.set_xlabel("Topological layer")
-ax2.set_ylabel("Number of modules")
-ax2.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)")
+ax2.bar(range(len(tr_layers)), tr_layers, color=COLORS["primary"], edgecolor="none", width=1.0, alpha=0.7)
+ax2.set_xlabel("Topological layer", fontsize=dag_label_fs)
+ax2.set_ylabel("Number of modules", fontsize=dag_label_fs)
+ax2.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)", fontsize=dag_title_fs)
 ax2.set_xlim(-1, len(tr_layers))
+ax2.tick_params(labelsize=dag_tick_fs)
 
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "dag_structure.pdf", bbox_inches="tight")
@@ -315,32 +327,31 @@ results["namespace_analysis"] = {"raw": raw_ns_stats, "transitive_reduction": tr
 all_ns = sorted(set(top_level_ns(n) for n in G_raw.nodes()))
 ns_to_idx = {ns: i for i, ns in enumerate(all_ns)}
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 11))
-
-for ax, ns_matrix, label in [
-    (ax1, raw_ns_matrix, "Raw"),
-    (ax2, tr_ns_matrix, "Transitive Reduction"),
+for ns_matrix, label, fname in [
+    (raw_ns_matrix, "Raw", "namespace_heatmap_raw.pdf"),
+    (tr_ns_matrix, "Transitive Reduction", "namespace_heatmap_tr.pdf"),
 ]:
+    fig, ax = plt.subplots(figsize=(11, 9))
     matrix = np.zeros((len(all_ns), len(all_ns)), dtype=int)
     for ns_u, targets in ns_matrix.items():
         for ns_v, count in targets.items():
             if ns_u in ns_to_idx and ns_v in ns_to_idx:
                 matrix[ns_to_idx[ns_u], ns_to_idx[ns_v]] = count
 
-    im = ax.imshow(np.log1p(matrix), cmap="YlOrRd", aspect="auto")
+    im = ax.imshow(np.log1p(matrix), cmap="Blues", aspect="auto")
     ax.set_xticks(range(len(all_ns)))
     ax.set_yticks(range(len(all_ns)))
-    ax.set_xticklabels(all_ns, rotation=90, fontsize=5)
-    ax.set_yticklabels(all_ns, fontsize=5)
-    ax.set_xlabel("Imported namespace")
-    ax.set_ylabel("Importing namespace")
-    ax.set_title(f"Namespace import counts ({label}, log scale)")
+    ax.set_xticklabels(all_ns, rotation=90, fontsize=11)
+    ax.set_yticklabels(all_ns, fontsize=11)
+    ax.set_xlabel("Imported namespace", fontsize=14)
+    ax.set_ylabel("Importing namespace", fontsize=14)
+    ax.set_title(f"Namespace import counts ({label}, log scale)", fontsize=15)
     plt.colorbar(im, ax=ax, label="log(1 + count)", shrink=0.8)
-
-plt.tight_layout()
-plt.savefig(OUTPUT_DIR / "namespace_heatmap.pdf", bbox_inches="tight")
-plt.close()
-print("  Saved namespace_heatmap.pdf")
+    plt.tight_layout()
+    fig.savefig(OUTPUT_DIR / fname, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved {fname}")
+print("  (namespace_heatmap split into two files)")
 
 # ===================================================================
 # 4. Centrality analysis
@@ -387,43 +398,57 @@ tr_cent_stats, tr_pr, tr_bc, tr_in_deg = centrality_analysis(G_tr, "TR")
 
 results["centrality"] = {"raw": raw_cent_stats, "transitive_reduction": tr_cent_stats}
 
-# Centrality scatter plots
-fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+# Centrality scatter plots — all blue, 3 separate full-width files
+cent_title_fs, cent_label_fs, cent_tick_fs = 14, 12, 11
 
-for ax_idx, (pr, bc, in_deg, label) in enumerate([
-    (raw_pr, raw_bc, raw_in_deg, "Raw"),
-    (tr_pr, tr_bc, tr_in_deg, "TR"),
-]):
-    if ax_idx < 2:
-        ax = axes[ax_idx]
-        nodes = list(pr.keys())
-        x = [in_deg[n] for n in nodes]
-        y = [pr[n] for n in nodes]
-        ax.scatter(x, y, s=3, alpha=0.3, color="steelblue")
-        ax.set_xlabel("In-degree")
-        ax.set_ylabel("PageRank")
-        ax.set_title(f"In-degree vs PageRank ({label})")
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-        ax.grid(True, alpha=0.3, which="both")
-
-# Betweenness vs PageRank (raw)
-ax = axes[2]
+# 1. In-degree vs PageRank (Raw)
+fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
 nodes = list(raw_pr.keys())
+x = [raw_in_deg[n] for n in nodes]
+y = [raw_pr[n] for n in nodes]
+ax.scatter(x, y, s=3, alpha=0.3, color=COLORS["primary"])
+ax.set_xlabel("In-degree", fontsize=cent_label_fs)
+ax.set_ylabel("PageRank", fontsize=cent_label_fs)
+ax.set_title(r"In-degree vs PageRank ($G_{\mathrm{module}}$)", fontsize=cent_title_fs)
+ax.tick_params(labelsize=cent_tick_fs)
+ax.set_xscale("log"); ax.set_yscale("log")
+ax.grid(True, alpha=0.3, which="both")
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "module_centrality_indeg_pr.pdf", bbox_inches="tight")
+plt.close()
+print("  Saved module_centrality_indeg_pr.pdf")
+
+# 2. In-degree vs Betweenness (Raw)
+fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+x = [raw_in_deg[n] for n in nodes]
+y = [raw_bc[n] for n in nodes]
+ax.scatter(x, y, s=3, alpha=0.3, color=COLORS["primary"])
+ax.set_xlabel("In-degree", fontsize=cent_label_fs)
+ax.set_ylabel("Betweenness", fontsize=cent_label_fs)
+ax.set_title(r"In-degree vs Betweenness ($G_{\mathrm{module}}$)", fontsize=cent_title_fs)
+ax.tick_params(labelsize=cent_tick_fs)
+ax.set_xscale("log"); ax.set_yscale("symlog", linthresh=1e-5)
+ax.grid(True, alpha=0.3, which="both")
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "module_centrality_indeg_betw.pdf", bbox_inches="tight")
+plt.close()
+print("  Saved module_centrality_indeg_betw.pdf")
+
+# 3. Betweenness vs PageRank (Raw)
+fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
 x = [raw_bc[n] for n in nodes]
 y = [raw_pr[n] for n in nodes]
-ax.scatter(x, y, s=3, alpha=0.3, color="coral")
-ax.set_xlabel("Betweenness centrality")
-ax.set_ylabel("PageRank")
-ax.set_title("Betweenness vs PageRank (Raw)")
-ax.set_xscale("symlog", linthresh=1e-5)
-ax.set_yscale("log")
+ax.scatter(x, y, s=3, alpha=0.3, color=COLORS["primary"])
+ax.set_xlabel("Betweenness", fontsize=cent_label_fs)
+ax.set_ylabel("PageRank", fontsize=cent_label_fs)
+ax.set_title(r"Betweenness vs PageRank ($G_{\mathrm{module}}$)", fontsize=cent_title_fs)
+ax.tick_params(labelsize=cent_tick_fs)
+ax.set_xscale("symlog", linthresh=1e-5); ax.set_yscale("log")
 ax.grid(True, alpha=0.3, which="both")
-
 plt.tight_layout()
-plt.savefig(OUTPUT_DIR / "centrality_analysis.pdf", bbox_inches="tight")
+plt.savefig(OUTPUT_DIR / "module_centrality_betw_pr.pdf", bbox_inches="tight")
 plt.close()
-print("  Saved centrality_analysis.pdf")
+print("  Saved module_centrality_betw_pr.pdf")
 
 # ===================================================================
 # 5. Connectivity analysis
