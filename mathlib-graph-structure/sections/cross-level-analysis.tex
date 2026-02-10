@@ -36,10 +36,9 @@ At depth~$1$, half of all namespaces appear in exactly one file---for these, nam
 
 The two directions of misalignment reflect distinct engineering pressures. When a namespace spans many files (namespace~$>$~module), a single conceptual domain has been partitioned into multiple compilation units---typically to manage build times. When a file contains many namespaces (module~$>$~namespace), related concepts from different naming domains have been gathered in one place for cognitive convenience. Both patterns are rational organizational decisions; they produce NMI~$\approx 0.7$ rather than~$1.0$ because the two pressures---compilation efficiency and cognitive proximity---do not always agree.
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:two-pressures}
 The NMI of~$0.71$ between namespaces and modules is \emph{twice} the NMI of~$0.34$ between namespaces and dependency-based Louvain communities (\S\ref{sec:thm-community}). Human organizational decisions---naming and filing---agree with each other far more than either agrees with the logical structure of the dependency graph. This is unsurprising: both naming and filing are human decisions, often made by the same contributor, while the dependency structure is determined by mathematical necessity.
-\end{remark}
 
 \subsection{Module--Declaration Interaction}
 \label{sec:cohesion}
@@ -228,10 +227,9 @@ Modules with $\mathrm{coh} = 0$ & $584$ / $6{,}993$ ($8.4\%$) \\
 
 Module cohesion is low throughout: the mean is~$0.107$ and the median is~$0.074$ (Table~\ref{tab:cohesion-global}). Internal edges constitute only about $10\%$ of a typical module's total connectivity. If module boundaries reflected logical structure, cohesion would cluster near~$1$; the observed value indicates that file boundaries and dependency structure are only weakly aligned.
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:zero-cohesion}
 Among the $584$ modules ($8.4\%$) with zero cohesion, most are \emph{lemma collections}: declarations grouped by concept rather than by logical interdependence. Developers place ``all lemmas about~$X$'' in one file for discoverability, even when these lemmas depend on definitions across the library. Zero cohesion is not a defect but the structural signature of cognitive organization.
-\end{remark}
 
 \paragraph{Import edges vs.\ declaration-level dependencies.}
 \label{sec:import_vs_declaration}
@@ -260,10 +258,9 @@ Category & Edges & Percentage \\
 
 From the import side, $72.1\%$ of import edges are \emph{active}---the importing file's declarations actually cite the imported module (Table~\ref{tab:import-vs-file}). The remaining $27.9\%$ provide transitive visibility only. From the declaration side, only $7.8\%$ of cross-file dependencies correspond to a direct import; the remaining $92.2\%$ are reached through transitive chains. The module graph functions as a sparse gateway: each file declares a handful of direct imports (mean out-degree $3.1$ in $G_{\mathrm{module}}$), but through transitivity these few edges open access to a vast dependency space (mean out-degree $30.8$ in $G_{\mathrm{file}}$).
 
-\begin{remark}[Relationship to transitive redundancy]
+\noindent\textbf{Relationship to transitive redundancy.}
 \label{rem:unused-vs-redundant}
 Section~\ref{sec:transitive-reduction} found $17.5\%$ of import edges transitively redundant; here, $27.9\%$ are unused. The gap ($27.9\% > 17.5\%$) has a precise interpretation: $78.4\%$ of unused imports are graph-theoretically essential---the sole path for transitive visibility---while $21.6\%$ are both unused and redundant.
-\end{remark}
 
 \paragraph{Import depth vs.\ usage depth.}
 

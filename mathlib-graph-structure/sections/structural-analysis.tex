@@ -50,11 +50,10 @@ We plot the degree distributions on log--log axes (Figure~\ref{fig:degree-distri
 \label{fig:degree-distribution}
 \end{figure}
 
-\begin{remark}
+\noindent\textbf{Note.}
 Both degree distributions are heavy-tailed but do not cleanly fit a power law. The out-degree distribution, in particular, becomes much more concentrated after transitive reduction (maximum dropping from $315$ to $70$, standard deviation from $4.12$ to $1.83$), indicating that many high-out-degree imports are transitively redundant.
 In contrast, the in-degree distribution is barely affected by transitive reduction (maximum: $167 \to 151$; standard deviation: $4.69 \to 3.91$). This asymmetry has a structural explanation: redundant edges arise primarily from developers importing umbrella modules---an act that inflates the importer's out-degree without changing the importee's in-degree. The cognitive redundancy identified in \S\ref{sec:transitive-reduction} is \emph{directional}: it lives in the ``I depend on others'' direction, not the ``others depend on me'' direction.
 This directional asymmetry connects to the tree $T$: developers inflate their out-degree by importing umbrella modules that aggregate entire sub-hierarchies---effectively borrowing $T$'s cognitive categories as navigational shortcuts. The redundancy is not random; it follows the contours of~$T$.
-\end{remark}
 
 \subsubsection{Declaration Level}
 \label{sec:thm-degree}
@@ -109,10 +108,9 @@ For in-degree, the tail ($k \ge 20$, comprising $11.1\%$ of non-zero values) is 
 
 For out-degree, the picture is categorically different: \emph{every} alternative distribution significantly outperforms pure power law. The best fits are lognormal and truncated power law, both with overwhelmingly negative likelihood ratios.
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:thm-degree-asymmetry}
 This asymmetry has a structural explanation that connects directly to the central tension of the paper. In-degree measures how often a declaration is \emph{cited}---a cumulative, open-ended quantity determined by the logical structure of the completed library (the product). There is no upper bound: \decl{OfNat.ofNat} can be cited by any proof that involves a numeral, and its in-degree ($89{,}936$) reflects a form of preferential attachment in which foundational declarations attract ever more dependents. Out-degree, by contrast, measures how many premises a single proof \emph{invokes}---a quantity bounded by the cognitive and logical complexity of that proof (the process). No human-written proof cites $90{,}000$ lemmas; the maximum out-degree of~$522$ reflects the practical ceiling of proof complexity. The in-degree distribution records the product; the out-degree distribution records the process.
-\end{remark}
 
 \begin{figure}[ht]
 \centering
@@ -121,10 +119,9 @@ This asymmetry has a structural explanation that connects directly to the centra
 \label{fig:thm-degree}
 \end{figure}
 
-\begin{remark}[Transitive reduction at the theorem level]
+\noindent\textbf{Transitive reduction at the theorem level.}
 \label{rem:thm-transitive-reduction}
 In contrast to the module graph, where transitive reduction removes $17.5\%$ of edges (\S\ref{sec:transitive-reduction}), the theorem--premise graph does not admit a meaningful transitive reduction. In $G_{\mathrm{module}}$, redundant edges arise from deliberate human choices---developers importing umbrella modules for cognitive convenience. In $G_{\mathrm{thm}}$, every edge is extracted mechanically from the proof term by the kernel: if a premise appears in the proof, the edge exists, regardless of whether that premise could be reached indirectly through other premises. The distinction is significant: module-level redundancy measures the gap between what the compiler requires and what the human chooses; at the theorem level, this gap vanishes, because the data already records exactly what the compiler sees.
-\end{remark}
 
 \subsubsection{Namespace Level}
 \label{sec:ns-degree}
@@ -159,10 +156,9 @@ Power-law fitting (\S\ref{sec:prelim-powerlaw}) yields $\alpha = 1.60$ ($x_{\min
 \label{fig:ns-degree}
 \end{figure}
 
-\begin{remark}[The \ns{\_root\_} artifact]
+\noindent\textbf{The \ns{\_root\_} artifact.}
 \label{rem:root-artifact}
 The namespace \ns{\_root\_} dominates both in-degree and out-degree at depth~$2$. This is an artifact of the truncation rule in Definition~\ref{def:ns-graph}: declarations whose fully qualified names have fewer than three components---including foundational definitions such as \decl{Eq.refl}, \decl{Nat.succ}, and \decl{OfNat.ofNat}---are assigned to \ns{\_root\_}. This namespace is not a coherent conceptual domain; it is a catch-all for the shallow infrastructure of the Lean type system. Its extreme centrality reflects naming-depth convention rather than mathematical importance: the most foundational constructs carry the shortest names. In the analysis that follows, we note where \ns{\_root\_} distorts aggregate statistics.
-\end{remark}
 
 \paragraph{Cross-level comparison.}
 All three levels share heavy-tailed degree distributions in which lognormal fits outperform pure power laws, confirming that the ``few hubs, many low-degree nodes'' pattern is a universal structural feature of the formalized library, independent of analysis granularity. But the differences are equally informative.
@@ -198,14 +194,12 @@ A secondary peak is visible near level~$126$, where approximately $59$ modules c
 \label{fig:dag-structure}
 \end{figure}
 
-\begin{remark}
+\noindent\textbf{Note.}
 The layer-width profile has a characteristic ``funnel'' shape: very wide at the top (many independent leaf files), narrowing through the middle layers (where mathematical theories converge), and tapering to a single sink at the bottom. This shape reflects the fact that advanced mathematics is built on a narrow foundation of shared definitions and tactics. This narrow waist also has engineering consequences: any change to a module in the bottleneck layers propagates upward through a large fraction of the library, creating recompilation cascades whose cost grows with the depth of the funnel.
-\end{remark}
 
-\begin{remark}[Module depth and import symmetry]
+\noindent\textbf{Module depth and import symmetry.}
 \label{rem:import-depth-symmetry}
 The DAG depth of~$153$ layers describes the topological extent of the dependency chain. A different notion of depth---the \emph{module depth}, i.e., the number of dot-separated components of a module's fully qualified name---describes how deeply a module sits in the naming hierarchy~$T$. Module depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$. Import edges exhibit near-perfect depth symmetry: $55.4\%$ connect modules at the same naming depth, $23.3\%$ point from deeper to shallower, and $21.3\%$ from shallower to deeper (mean difference~$+0.03$). Only~$1.3\%$ of imports target modules at depth~$\le 2$. Developers import \emph{laterally}---peer to peer within the same naming stratum---rather than vertically across naming layers. As we shall see in \S\ref{sec:cross_level}, this symmetry contrasts sharply with the declaration-level dependency graph, where $37.6\%$ of edges flow from deeper to shallower namespaces and the mean depth difference rises to~$+0.36$: the module graph compresses and hides the strong infrastructure pull that the declaration graph reveals.
-\end{remark}
 
 \subsubsection{Declaration Level}
 \label{sec:thm-dag-depth}
@@ -343,10 +337,9 @@ Figure~\ref{fig:thm-centrality-scatter} visualizes the pairwise relationships be
 \label{fig:thm-centrality-scatter}
 \end{figure}
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:thm-centrality-vs-module}
 The three-way divergence of centrality measures observed at the module level (\S\ref{sec:centrality}) intensifies at the theorem level: no declaration appears in all three top-$10$ lists of Table~\ref{tab:thm-centrality}. The taxonomy of importance proposed in \S\ref{sec:module_conclusion}---\emph{vocabulary} (in-degree), \emph{axiomatic core} (PageRank), \emph{structural bridges} (betweenness)---receives sharper instantiation here. At the module level, the centrality rankings are partially confounded by file-organization artifacts (e.g., \module{Mathlib.Init} ranks high in all three measures simply because it is imported by every file). At the theorem level, these artifacts are stripped away, and the three measures separate cleanly into language infrastructure (in-degree), mathematical foundations (PageRank), and inter-disciplinary bridges (betweenness).
-\end{remark}
 
 \subsubsection{Namespace Level}
 \label{sec:ns-centrality}
@@ -524,12 +517,11 @@ ARI & $0.1817$ & Weak-to-moderate agreement \\
 
 The moderate NMI and low ARI confirm that dependency topology and namespace organization are \emph{related but far from identical}. The most striking case is \ns{CategoryTheory}: $97.4\%$ of its $42{,}094$ declarations fall into Community~$5$, and conversely, $68.7\%$ of Community~$5$ belongs to the \ns{CategoryTheory} namespace. This near-perfect correspondence is unique among the major communities. By contrast, the largest community (Community~$0$, $63{,}763$ nodes) draws its largest namespace contribution from root-level declarations ($17.1\%$), followed by \ns{Set} ($8.1\%$) and \ns{MeasureTheory} ($4.6\%$)---no single namespace dominates.
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:nmi-tension}
 The NMI of $0.34$ provides a theorem-level metric for the tension between the module tree $T$ and the logical dependency graph $G$, extending the cross-namespace analysis of \S\ref{sec:cross-namespace}. At the module level, $37.1\%$ of reduced import edges cross namespace boundaries; at the theorem level, the NMI of $0.34$ quantifies the same phenomenon from a complementary angle---the dependency-based community structure aligns only moderately with the human-imposed namespace hierarchy. These two measures converge on the same conclusion: cognitive classification and logical structure are correlated but distinct, and the gap between them widens as granularity increases.
 
 The exceptional case of category theory deserves emphasis. Its near-complete community--namespace alignment ($97.4\%$) suggests that category theory is not merely a namespace convention but a genuinely \emph{autonomous} mathematical discipline within \module{Mathlib}---its internal dependency structure is dense enough to form a self-contained community with minimal need for external foundations beyond the shared core. No other major namespace achieves this degree of self-containment.
-\end{remark}
 
 \begin{figure}[ht]
 \centering
@@ -623,11 +615,10 @@ Top-5 by betweenness     & $20$ & $48$ \\
 
 Removing the five highest in-degree modules (\module{Init}, \module{Tactic.Common}, \module{Analysis.Normed.Group.Basic}, \module{Util.CompileInductive}, and \module{Algebra.Ring.Defs}) fragments the raw graph into $29$ components, though the largest component still contains $7{,}530$ of the original $7{,}563$ nodes. The effect is more pronounced on $G_{\mathrm{module}}^{-}$ ($56$ components), since transitive reduction removes the alternative paths that would otherwise keep the graph connected.
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:robustness}
 The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the module graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
 This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reduction}: the edges that developers add for navigability---guided by the categories of~$T$---simultaneously serve as structural insurance, providing alternative paths that keep the network connected when bridges fail.
-\end{remark}
 
 \begin{figure}[ht]
 \centering
@@ -673,10 +664,9 @@ $20\%$ & $0.799$ & $0.461$ & $0.338$ \\
 
 Under random removal, the giant component shrinks almost linearly---removing $20\%$ of nodes leaves $80\%$ connected. Under targeted attack (removing the highest-PageRank nodes first), $20\%$ removal reduces connectivity to $46\%$---a $34$-percentage-point gap. This is the classic signature of a scale-free network~\cite{albert2000,barabasi1999}: resilient to random failure, vulnerable to targeted attack on hubs.
 
-\begin{remark}
+\noindent\textbf{Note.}
 \label{rem:thm-robustness-redundancy}
 The extreme resilience to single-node removal at the theorem level---no single declaration is a critical bridge---has a deeper explanation than mere edge density. It reflects the inherent \emph{logical redundancy} of mathematical proof. The same lemma is typically reachable through multiple independent proof paths: \decl{Eq.refl} can be circumvented via \texttt{rfl}, \decl{Eq.mpr}, or tactic-generated proof terms; a group-theoretic fact can be accessed through the group axioms or through the ring axioms that subsume them. This redundancy is not engineered (unlike the module-level redundancy of umbrella imports discussed in \S\ref{sec:transitive-reduction}); it is an intrinsic property of mathematical logic. The product carries its own structural insurance.
-\end{remark}
 
 \subsubsection{Namespace Level}
 \label{sec:ns-robustness}
@@ -734,7 +724,6 @@ Mean PageRank         & $7.52 \times 10^{-7}$ & $6.83 \times 10^{-7}$ & $1.10\ti
 
 All three metrics confirm that human importance judgments are validated by the logical structure: declarations that developers considered major results do occupy more prominent positions in the dependency network. The effect is moderate---a $1.47\times$ ratio in citation count, not an order-of-magnitude difference---suggesting that the theorem/lemma boundary is a noisy but genuine signal of structural importance.
 
-\begin{remark}[Misjudged importance]
+\noindent\textbf{Misjudged importance.}
 \label{rem:misjudged}
 The alignment is imperfect. Among the notable outliers: \decl{funext} (function extensionality) is marked \texttt{lemma} in source code but has in-degree $15{,}574$, making it one of the most cited propositions in \module{Mathlib}. Conversely, $48{,}177$ declarations marked \texttt{theorem}---over a third of all matched theorems---have zero citations. The former represents underestimation of structural importance by the author; the latter represents overestimation, or more precisely, the distinction between importance as a mathematical result (worthy of the name ``theorem'') and importance as a dependency hub (actually reused by other proofs). In the language of our framework, the theorem/lemma distinction is a trace of the process---a record of the author's cognitive judgment at the time of writing---that the product partially but not fully corroborates.
-\end{remark}

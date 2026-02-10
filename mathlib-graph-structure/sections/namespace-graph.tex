@@ -168,12 +168,11 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
 
 As depth~$k$ increases, namespace boundaries split while module boundaries remain fixed, converting intra-namespace edges into cross-namespace edges and driving containment downward.
 
-\begin{remark}[Cycles in the namespace graph]
+\noindent\textbf{Cycles in the namespace graph.}
 \label{rem:ns-cycles}
 Unlike $G_{\mathrm{module}}$ and $G_{\mathrm{thm}}$, which are directed acyclic graphs---the compiler and the type-checker respectively forbid circular dependencies---the namespace graph $G_{\mathrm{ns}}^{(k)}$ can contain directed cycles. Two namespaces may depend on each other: namespace~$A$ contains a declaration that cites a declaration in namespace~$B$, while $B$ contains a different declaration that cites one in~$A$. The underlying declaration-level graph remains acyclic, but the aggregation into namespaces collapses the strict topological ordering.
 
 At depth~$2$, $G_{\mathrm{ns}}^{(2)}$ contains $38$ strongly connected components with more than one node, the largest comprising $5{,}899$ namespaces---$58\%$ of all depth-$2$ namespaces. This giant component reflects the deeply interconnected core of Mathlib: most mathematical sub-disciplines at this granularity depend mutually on one another. The remaining $37$ non-trivial components are small (at most $25$ nodes each). This structural difference---DAGs at the module and declaration levels, cyclic graphs at the namespace level---reflects the fact that namespace boundaries, unlike file boundaries, are not constrained by a compiler-enforced import ordering.
-\end{remark}
 
 Figure~\ref{fig:ns-cycle-example} illustrates how a cycle arises from acyclic declaration-level dependencies.
 
@@ -319,7 +318,6 @@ Centrality analysis confirms the multidimensional taxonomy of importance identif
 
 \paragraph{The infrastructure bottleneck.} The namespace graph is more vulnerable to targeted attack than the declaration graph: $20\%$ targeted removal reduces the GCC to $20.8\%$, versus $46.1\%$ at the declaration level. This heightened fragility is a consequence of the \ns{\_root\_} super-node (Remark~\ref{rem:root-artifact}), which concentrates a disproportionate share of connectivity. The namespace graph reveals, more starkly than the declaration graph, the structural dependence of formalized mathematics on a narrow foundation of shallow infrastructure.
 
-\begin{remark}
+\noindent\textbf{Import vs.\ declaration cross-boundary rates.}
 \label{rem:import-vs-decl-cross}
 At the top-level directory level, $51.1\%$ of declaration-level dependencies cross directory boundaries. The module-level module graph, by contrast, shows only $37.1\%$ cross-directory edges (\S\ref{sec:cross-namespace}). The $14$-percentage-point gap arises because each import edge implicitly bundles many declaration-level dependencies: a single \texttt{import} from \module{Algebra} to \module{Data} may serve dozens of individual theorem citations that cross the same boundary. The module graph, as a human-authored summary of dependencies, is more ``inward-looking'' than the actual dependency structure it enables. This aligns with the import sparsity finding of \S\ref{sec:import_vs_declaration}: the module graph is a sparse cognitive proxy for the vastly denser declaration-level dependency network.
-\end{remark}

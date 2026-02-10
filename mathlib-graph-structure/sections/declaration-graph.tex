@@ -194,9 +194,8 @@ A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$)
 \label{fig:thm-fragment}
 \end{figure}
 
-\begin{remark}
+\noindent\textbf{Note.}
 The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
-\end{remark}
 
 At the commit analyzed, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. In comparison with the module-level module graph of \S\ref{sec:import-graph} ($|\mathcal{M}| = 7{,}563$ nodes, $|E_{\mathrm{module}}| = 23{,}570$ edges), the theorem--premise graph has roughly $40\times$ more nodes and $360\times$ more edges. The enormous increase in edge count reflects the fact that a single module import implicitly carries hundreds of individual premise dependencies; $G_{\mathrm{thm}}$ makes each of these dependencies explicit.
 
@@ -238,7 +237,7 @@ Theorems occupy the opposite pole: low in-degree (mean~$5.5$, median~$1$) and th
 
 Abbreviations (\texttt{abbrev}) have the most extreme in-degree distribution among non-axiom types: mean~$438$, maximum~$89{,}936$ (\decl{OfNat.ofNat}). These are type-class coercion paths that the elaborator inserts automatically during type-checking. Their high citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning.
 
-\begin{remark}
+\noindent\textbf{Two infrastructure layers.}
 \label{rem:two-layers}
 The degree-by-kind analysis reveals that the hub structure of $G_{\mathrm{thm}}$ decomposes into two distinct infrastructure layers:
 \begin{enumerate}
@@ -247,7 +246,6 @@ The degree-by-kind analysis reveals that the hub structure of $G_{\mathrm{thm}}$
 \item \textbf{Mathematical infrastructure.} The highest-cited \emph{inductive types}---\decl{CategoryTheory.Category}, \decl{Real}, \decl{TopologicalSpace}, \decl{Module}, \decl{CommRing}---are core mathematical concepts. Their prominence reflects the logical structure of the formalized mathematics itself: category theory, analysis, and algebra are genuinely foundational in the dependency sense. This layer is the product's own structure, free of proof-assistant artifacts.
 \end{enumerate}
 The module graph of \S\ref{sec:import-graph} conflates these two layers (a module contains both language infrastructure and mathematical content). The theorem--premise graph separates them, enabling the analyst to distinguish what belongs to mathematics from what belongs to its medium of expression.
-\end{remark}
 
 \subsection{The Leaf Theorem Phenomenon}
 \label{sec:thm-leaves}
@@ -281,12 +279,11 @@ The namespaces with the highest zero-citation rates---\ns{AddEquiv} ($92.2\%$), 
 
 The namespaces with the lowest zero-citation rates tell a complementary story. \ns{Primrec} ($12.8\%$), \ns{AnalyticAt} ($14.7\%$), and the differentiation predicates (\ns{HasFDerivWithinAt}, \ns{DifferentiableAt}, \ns{ContinuousWithinAt}) produce lemmas that are heavily reused as building blocks. These are the workbench tools of analysis and computability theory---nearly every theorem in these namespaces feeds into downstream proofs.
 
-\begin{remark}
+\noindent\textbf{Leaf theorems as API surface.}
 \label{rem:leaf-theorems}
 The $44.8\%$ zero-citation rate means that nearly half of all theorems in $G_{\mathrm{thm}}$ are leaves. These leaves constitute the \emph{API surface} of \module{Mathlib}---the interface through which the library's knowledge is consumed by external users (mathematicians applying results, AI systems selecting premises, downstream projects building on Mathlib). Their existence is not waste but function: a library that formalized only internally-reused lemmas would be useless to its consumers.
 
 The dichotomy between high-zero-rate namespaces (systematically generated mirrored API) and low-zero-rate namespaces (hand-crafted building blocks) reveals a second process-trace in the product. The \texttt{@[to\_additive]} machinery leaves a distinctive structural fingerprint---entire subtrees of leaf theorems that inflate the graph's surface area without deepening its logical content. This automation artifact is invisible at the module level (a module contains both original and mirrored theorems) but becomes visible at the theorem level, where individual declarations can be classified by their provenance.
-\end{remark}
 
 \subsection{Cross-Namespace Flow}
 \label{sec:thm-cross-namespace}
