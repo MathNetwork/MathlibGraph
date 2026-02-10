@@ -43,41 +43,40 @@ The graph structure of \module{Mathlib} has been exploited in machine learning, 
 The analytical tools we employ are basic and standard in network science. Scale-free network theory~\cite{barabasi1999}, small-world analysis~\cite{watts1998}, and modularity-based community detection~\cite{newman2004,blondel2008} have been applied to biological, social, and technological networks, but not, to our knowledge, systematically to a large-scale formal mathematics library. In a related setting, Barbosa et al.~\cite{barbosa2013} studied the network structure of three online mathematical libraries---Wikipedia (restricted to mathematics), MathWorld, and DLMF---finding large strongly connected components, the absence of clear power laws, and the effectiveness of stress centrality for navigating mathematical content. Their objects of study, however, are hyperlinked encyclopedias with informal content; ours is a machine-verified library in which every dependency is logically certified.
 
 \subsection{Our Contribution}
+We analyze \module{Mathlib} as a multi-layer dependency network comprising three graphs:
+\begin{itemize}
+    \item the module import graph~$G_{\mathrm{module}}$;
+    \item the declaration dependency graph~$G_{\mathrm{thm}}$;
+    \item the namespace graphs~$G_{\mathrm{ns}}^{(k)}$ by aggregating declaration-level edges at varying namespace depths;
+\end{itemize}
+together with the module tree~$T$ derived from the dot-separated file hierarchy. 
 
-We analyze \module{Mathlib} as a multi-layer dependency network comprising three graphs---the module import graph~$G_{\mathrm{module}}$, the declaration dependency graph~$G_{\mathrm{thm}}$, and a family of namespace graphs~$G_{\mathrm{ns}}^{(k)}$ obtained by aggregating declaration-level edges at varying namespace depths---together with the module tree~$T$ derived from the dot-separated file hierarchy. This work makes four contributions.
+This formalization separates module imports and namespace classification from declaration-level dependencies. The former two reflects tooling and collaboration constraints; the latter records the complete logical network of traditional mathematics. This separation enables controlled comparison between tool-mediated organization and inherited dependency structure.
 
-\emph{First}, it formalizes \module{Mathlib} as a multi-layer dependency system that separates declared imports (organizational intent) from declaration-level dependencies (semantic constraint), and introduces controlled namespace coarsening to probe the alignment between human classification and logical structure.
+We provide a quantitative characterization of Mathlib's dependency structure across all three layers—degree distributions, DAG depth profiles, transitive redundancy, containment curves, centrality rankings, community structure, and robustness under node removal—establishing an empirical baseline for the largest extant formal mathematics library. Through this analysis, we identify key mismatches between tool-mediated organization and inherited dependency structure, and derive actionable implications for library maintenance, AI-driven formalization, and tooling.
 
-\emph{Second}, it provides a quantitative characterization of \module{Mathlib}'s dependency structure across all three layers---degree distributions, DAG depth profiles, transitive redundancy, containment curves, centrality rankings, community structure, and robustness under node removal---establishing an empirical baseline for the largest extant formal mathematics library.
-
-\emph{Third}, it identifies and operationalizes key mismatches between the curatorial structure imposed by contributors and the dependency structure emerging from logical necessity: namespace containment decays rapidly at fine granularity; semantic dependencies densify substantially when aggregated to the file level; and the module layer simultaneously inflates redundancy and flattens hierarchy relative to the declaration graph.
-
-\emph{Fourth}, it derives actionable implications for library maintenance, AI-driven formalization, and tooling: centrality rankings identify structural bottlenecks, community detection reveals cross-cutting dependencies invisible to the file hierarchy, and the mismatch metrics provide quantitative targets for refactoring.
-
-\medskip
-\noindent The key observations are:
-
+This analysis yields five key observations:
 \begin{finding}
-    \textbf{Observation 1: Human organization and logical structure systematically diverge.}
-    Human organization (naming and filing) aligns strongly with itself (NMI\,$=$\,0.71) but poorly with logical dependency (NMI\,$=$\,0.34). This organizational layer serves collaboration and navigation, existing independently of the logical correctness enforced by the compiler.
+    \textbf{Observation 1: Organization diverges from dependency.}
+    The organizational layers (module imports, namespace classification) align strongly with each other (NMI = 0.71) but poorly with the declaration-level dependency structure (NMI = 0.34). This divergence reflects the distinct origins of the two layers: tooling constraints versus inherited mathematical logic.
 \end{finding}
 
 \begin{finding}
-    \textbf{Observation 2: The module layer functions as a cognitive API.}
-    The file-based module structure acts as a ``Cognitive API,'' compressing the complex declaration graph by $9\times$ to fit human working memory. This layer is shaped by physical constraints---screens, file systems, and IDEs---rather than mathematical necessity.
+    \textbf{Observation 2: All three layers encode cognitive structure—from different sources.}
+    The module and namespace layers act as "Cognitive APIs" shaped by current tooling (screens, file systems, IDEs), compressing the dependency graph by 9× to fit human working memory. The declaration layer encodes a different kind of cognition: the organizational habits of traditional mathematics—naming conventions, theorem/lemma distinctions, proof decomposition—now recorded under the constraint of logical consistency.
 \end{finding}
 
 \begin{finding}
     \textbf{Observation 3: Apparent redundancy serves structural functions.}
-    17.5\% of module imports are logically redundant but structurally essential. Developers deliberately insert these ``umbrella'' links to maintain mental models and ensure ``transitive visibility'' for future extensions, protecting the library from fragility.
+    17.5\% of module imports are logically redundant but structurally essential. These "umbrella" links serve to maintain mental models and ensure "transitive visibility" for future extensions, protecting the library from fragility.
 \end{finding}
 
 \begin{finding}
-    \textbf{Observation 4: The dependency graph exhibits a deep funnel topology.}
-    \module{Mathlib} exhibits a ``deep funnel'' topology: a massive layer of 1{,}400+ leaf modules resting on a narrow foundation 153 layers deep. This creates a structural bottleneck where changes to the ``waist'' (core infrastructure) trigger massive recompilation cascades.
+    \textbf{Observation 4: The three layers exhibit different topologies.}
+    The module graph forms a deep funnel: 1,400+ leaf modules narrowing over 153 layers to a single sink. The declaration graph is shallow and top-heavy: 119,633 source declarations (38.8\%) at layer 0, spanning only 84 layers. The namespace graph is nearly flat: after SCC condensation, only 8 layers remain, with a giant SCC of 5,899 namespaces at layer 5. This inversion—human-organized structure being deepest, logical structure being shallowest—reflects the distinct constraints shaping each layer.
 \end{finding}
 
 \begin{finding}
     \textbf{Observation 5: Formalization flattens traditional semantic distinctions.}
-    Digital formalization preserves traditional labels like ``theorem'' and ``lemma'' but flattens their semantic meaning. While ``theorems'' are cited 1.47$\times$ more often, automation tools (like \texttt{@[to\_additive]}) artificially inflate the library's surface area with ``mirrored'' results that lack logical depth.
+    Formalization preserves traditional labels like "theorem" and "lemma" but flattens their semantic meaning. While "theorems" are cited 1.47× more often, automation tools (like \texttt{@[to\_additive]}) inflate the library's surface area with "mirrored" results that share identical logical structure.
 \end{finding}
