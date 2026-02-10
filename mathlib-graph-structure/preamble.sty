@@ -79,6 +79,22 @@
 \usetikzlibrary{arrows.meta,positioning}
 \RequirePackage[edges]{forest}
 
+% ---------- finding boxes ----------
+\newsavebox{\findingbox}
+\newenvironment{finding}[1][]{%
+  \begin{lrbox}{\findingbox}%
+  \begin{minipage}{\dimexpr\linewidth-12pt}%
+  \ifx&#1&\else{\bfseries #1}\par\smallskip\fi
+}{%
+  \end{minipage}%
+  \end{lrbox}%
+  \par\medskip\noindent
+  \fcolorbox{blue!75!black}{blue!5!white}{%
+    \usebox{\findingbox}%
+  }%
+  \par\medskip
+}
+
 % ---------- author comments ----------
 \newcommand{\xinze}[1]{\textcolor{blue}{(\textbf{Xinze}: #1)}}
 

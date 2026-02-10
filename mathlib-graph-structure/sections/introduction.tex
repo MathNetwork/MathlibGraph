@@ -40,12 +40,51 @@ The graph structure of \module{Mathlib} has been exploited in machine learning, 
 \paragraph{Complex network methodology.}
 The analytical tools we employ are basic and standard in network science. Scale-free network theory~\cite{barabasi1999}, small-world analysis~\cite{watts1998}, and modularity-based community detection~\cite{newman2004,blondel2008} have been applied to biological, social, and technological networks, but not, to our knowledge, systematically to a large-scale formal mathematics library. In a related setting, Barbosa et al.~\cite{barbosa2013} studied the network structure of three online mathematical libraries---Wikipedia (restricted to mathematics), MathWorld, and DLMF---finding large strongly connected components, the absence of clear power laws, and the effectiveness of stress centrality for navigating mathematical content. Their objects of study, however, are hyperlinked encyclopedias with informal content; ours is a machine-verified library in which every dependency is logically certified.
 
-\subsection{Our Contribution/What we do}
-\textcolor{blue}{Make This a subsection in introduction}
-Prior work uses the dependency graph instrumentally---as training data for machine learning, as a compilation dependency for build systems, or as a navigational aid for human developers. No study has analyzed the graph itself as a structural object encoding both mathematical logic and human organizational practice. This paper takes a first step toward filling that gap. \textcolor{blue}{study ..... graph.....our finding, summary of our finding, extract the main result/analysis that are very sharp from 3.7}
+\subsection{Our Contribution}
 
-\textcolor{blue}{EX::We quantify a 17.5\% redundancy in import edges as the library's "cognitive API," revealing that developers sacrifice logical minimality to maintain robust mental models and facilitate discovery. This distinction suggests that future proof assistants should architecturally separate the minimal dependency graph required for compilation from the rich, redundant graph needed for interactive user support.}
+The products of mathematical practice---theorems, proofs, definitions---must always rest on some medium: knotted cords, counting rods, clay tablets, paper, printed journals, preprints. The medium reflects the tools and character of its era, and constrains what can be recorded, transmitted, and accumulated.
 
-The 17.5\% import redundancy constitutes a "cognitive API," prioritizing human discoverability over logical minimality. Future proof assistants should architecturally decouple the minimal compilation graph from the redundant graph required for interactive development.
+But between the finitude of the medium and the infinity of mathematical thought, there lies a tension.
 
-\textcolor{blue}{also have some colorful boxes highlight are MAIN RESULTS in a compact way. Important for journal!}
+In mathematicians' minds, theorems have never been isolated---they form a network, each result depending on others, depended upon by others. This network is real; mathematicians navigate it by intuition. Yet traditional media could only record results themselves: a theorem, a proof, a publication date. The dependencies between results---which theorem invokes which lemma, through how many intermediate steps, how much it shares with neighboring results---could not be precisely externalized. The network existed, but the medium could not hold it.
+
+Formal mathematics libraries change this. They are a new kind of medium---one that, for the first time, records organization itself as data.
+
+\module{Mathlib} weaves scattered results into a single compilable whole: 308,129 declarations, 8,436,366 precise dependency edges, 7,563 modules, 153 layers deep. Every naming decision, every import statement, every namespace boundary is recorded. This produces a new kind of data: \emph{the complete trace of mathematical organization}---not what mathematicians claim to do, but what they actually did.
+
+We measured these traces.
+
+\begin{finding}[Finding 1: Human--Logic Divergence]
+Two independent human classification systems---the namespace hierarchy and the file structure---align strongly with each other (NMI $= 0.71$). But neither aligns well with the community structure emerging from the dependency graph (NMI $= 0.34$--$0.42$). Human consensus is twice human-logic alignment.
+\end{finding}
+
+Cross-namespace edges account for $50.9\%$ of all dependencies; even at the most cohesive level, naming boundaries contain only $48.9\%$ of dependencies, decaying to $12.6\%$ by depth~4.
+
+\begin{finding}[Finding 2: Directional Asymmetry]
+At the module level, imports flow symmetrically between peers (mean depth difference $+0.03$). At the declaration level, dependencies flow sharply downward (mean depth difference $+0.36$), with $69.3\%$ of deep theorems citing shallow infrastructure. Human organization is egalitarian; logical structure is hierarchical.
+\end{finding}
+
+In-degree follows a power law ($\alpha = 1.78$), with the top 10 declarations contributing over 500,000 citations; out-degree follows a log-normal---consumption is wildly unequal, production is bounded.
+
+\begin{finding}[Finding 3: Functional Redundancy]
+$27.9\%$ of imports appear unused---no declaration in the importing file directly references them. Yet $78.4\%$ of these are graph-essential: removing them would disconnect the library. What looks like waste is load-bearing.
+\end{finding}
+
+$17.5\%$ of module-level imports are transitively redundant, but this redundancy purchases robustness: after $20\%$ targeted removal, the module graph retains $58\%$ of its giant component, while the namespace graph retains only $20.8\%$.
+
+\begin{finding}[Finding 4: Organizational Compression]
+The module graph has 23,235 edges; the corresponding declaration graph has 215,211 edges. Each human-written import covers 9.1 declaration-level dependencies on average. Community modularity declines from 0.64 (module) to 0.48 (declaration) to 0.28 (namespace).
+\end{finding}
+
+The coarser the granularity, the stronger the human imprint. Human intuition shapes the large scale; logical necessity dominates the fine grain.
+
+\begin{finding}[Finding 5: Weak Formal Labels]
+Theorems average 5.16 citations versus 3.52 for lemmas---a ratio of $1.47\times$---but zero-citation rates are nearly identical ($37.2\%$ vs $39.4\%$). \decl{funext}, labeled a \texttt{lemma}, has 15,574 citations, outranking $99.9\%$ of theorems.
+\end{finding}
+
+Zero-citation rates vary by 80 percentage points across namespaces (\ns{AddEquiv} $92.2\%$ vs \ns{Primrec} $12.8\%$). $44.8\%$ of theorems are never cited within the library. The formal distinction between ``important'' and ``auxiliary'' does not survive contact with the dependency graph.
+
+\medskip
+What these measurements reveal is not a peculiarity of \module{Mathlib}, but \emph{the general structure of human mathematical organization}: internally consistent (NMI $= 0.71$), systematically divergent from logical structure (NMI $= 0.34$), compressive by design ($9{:}1$), and quietly load-bearing in ways that resist naive optimization ($78.4\%$ graph-essential).
+
+These structural signatures are new data made possible by a new medium. They can be measured without reading any proof---they describe how humans organize mathematics, not what the mathematics says. As formal mathematics scales beyond human readability, these signals may shift from descriptive to navigational---tools not for understanding what mathematics says, but for deciding what is worth understanding.
