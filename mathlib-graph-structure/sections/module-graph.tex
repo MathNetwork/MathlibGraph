@@ -15,7 +15,7 @@ A \emph{module} in \module{Mathlib} is identified by a dot-separated sequence of
 The \emph{depth} of a module $c_1.c_2.\cdots.c_k$ is~$k$, the number of dot-separated components.
 \end{definition}
 
-All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section.\xinze{Clarify scope: does $\mathcal{M}$ include only \module{Mathlib.*} modules, or the full dependency closure including Std/Batteries/Init?}
+All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. $\mathcal{M}$ contains only \module{Mathlib.*} modules; external dependencies (\texttt{Std}, \texttt{Batteries}, \texttt{Init}) are excluded, so the graphs capture \module{Mathlib}'s internal structure rather than the full dependency closure.
 
 \begin{example}
 \leavevmode
@@ -145,7 +145,7 @@ Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-e
 For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
 \end{definition}
 
-\begin{definition}[Module graph]
+\begin{definition}[Module graph]\label{def:module-graph}
 The \emph{module graph} of \module{Mathlib} is $G_{\mathrm{module}} = (\mathcal{M}, E_{\mathrm{module}})$ where
 \[
   E_{\mathrm{module}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
@@ -256,7 +256,7 @@ The \emph{transitive reduction} of $G_{\mathrm{module}}$ is $G_{\mathrm{module}}
 \label{fig:transitive-reduction}
 \end{figure}
 
-The raw module graph has $|E_{\mathrm{module}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{module}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. These redundant edges are not accidents of careless coding. Developers deliberately import umbrella modules---such as importing all of group theory rather than a single lemma---to maintain a navigable mental model of the library. The redundancy reflects a cognitive need: the gap between what the compiler requires and what the human reader requires to understand a file's mathematical context.
+The raw module graph has $|E_{\mathrm{module}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{module}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. These redundant edges are not accidents of careless coding. Developers commonly import umbrella modules---such as importing all of group theory rather than a single lemma---to maintain a navigable mental model of the library. The redundancy reflects a cognitive need: the gap between what the compiler requires and what the human reader requires to understand a file's mathematical context.
 
 The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \module{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{module}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \module{Mathlib} to its direct children.
 
@@ -344,7 +344,7 @@ Degree distribution, DAG depth, centrality, and robustness analyses for the modu
 
 \noindent\textbf{Language contingency.}
 \label{rem:language-contingency}
-Note that the module graph's topology is shaped not only by mathematical dependencies but by Lean~4's specific compilation model: its prohibition of cyclic imports, its transitive visibility semantics, and the \texttt{public import} mechanism that allows selective re-export. Design choices such as fine-grained incremental compilation, selective re-export at the declaration level, or explicit interface files would alter the structure of $G_{\mathrm{module}}$ even for identical mathematical content. The structural statistics reported in this section---$17.5\%$ redundancy, $153$-layer depth, mean out-degree~$3.1$---should be understood as properties of formalized mathematics \emph{in Lean~4}, not of formalized mathematics in general. \xinze{Revised: remark $\to$ paragraph.}
+Note that the module graph's topology is shaped not only by mathematical dependencies but by Lean~4's specific compilation model: its prohibition of cyclic imports, its transitive visibility semantics, and the \texttt{public import} mechanism that allows selective re-export. Design choices such as fine-grained incremental compilation, selective re-export at the declaration level, or explicit interface files would alter the structure of $G_{\mathrm{module}}$ even for identical mathematical content. The structural statistics reported in this section---$17.5\%$ redundancy, $153$-layer depth, mean out-degree~$3.1$---should be understood as properties of formalized mathematics \emph{in Lean~4}, not of formalized mathematics in general.
 
 \subsection{Analysis}
 \label{sec:module_conclusion}
@@ -381,7 +381,7 @@ These three observations---the cognitive redundancy layer, the deep funnel archi
 
 \medskip
 \noindent \textit{Hypothesis: The Curated Small-World.} \\
-Finally, we hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, \module{Mathlib} grows via \textit{semantic attachment}: new modules cluster tightly within top-level directories (high local clustering), while deliberately placed bridge modules (high betweenness) maintain global connectivity. This structure likely represents an optimal evolutionary state for collaborative formalization, balancing the isolation needed for parallel development with the connectivity needed for a unified mathematical universe.
+Finally, we hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, \module{Mathlib} grows via \textit{semantic attachment}: new modules cluster tightly within top-level directories (high local clustering), while bridge modules with high betweenness maintain global connectivity. This structure likely represents an optimal evolutionary state for collaborative formalization, balancing the isolation needed for parallel development with the connectivity needed for a unified mathematical universe.
 
 The fact that 100\% of modules belong to a single weakly connected component provides empirical evidence for the structural unification of mathematical theories within \module{Mathlib}. While the module tree partitions the library into distinct hierarchies, the density of inter-directory edges (37.1\%, \S\ref{sec:cross-namespace}) functions as a system of high-betweenness shortcuts that prevent the library from fracturing into isolated ``theory islands.'' Our analysis of targeted node removal (Table~\ref{tab:robustness}) demonstrates that this connectivity is remarkably resilient; as noted in Remark~\ref{rem:robustness}, over 99\% of modules remain in the giant component even after the removal of the five most central hubs. We conclude that \module{Mathlib}'s curated small-world topology is what enables foundational improvements in one domain (e.g., Algebra) to propagate efficiently to distant ones (e.g., Analysis), ensuring that the library remains a globally coherent, rather than merely modular, corpus of knowledge.
 

@@ -1,7 +1,7 @@
 \section{Structural Analysis}
 \label{sec:structural-analysis}
 
-Do the three graphs share common statistical signatures, or does each level have its own structural character? The answer bears directly on the central tension of this paper: universal patterns---such as heavy-tailed degree distributions or scale-free\xinze{Replace ``scale-free'' with ``heavy-tailed / hub-dominated''---scale-free is contested and our data shows lognormal fits better} vulnerability---point to intrinsic features of mathematical dependency (product), while level-specific features---such as the bounded out-degree of proofs or the depth compression of the module graph---reveal cognitive and linguistic constraints imposed by the production process.
+Do the three graphs share common statistical signatures, or does each level have its own structural character? The answer bears directly on the central tension of this paper: universal patterns---such as heavy-tailed degree distributions or hub-dominated vulnerability---point to intrinsic features of mathematical dependency (product), while level-specific features---such as the bounded out-degree of proofs or the depth compression of the module graph---reveal cognitive and linguistic constraints imposed by the production process.
 
 The preceding sections defined each graph and reported its basic statistics: node and edge counts, edge classifications, and containment measurements. We now apply five network-analytic tools---degree distribution (\S\ref{sec:sa-degree}), DAG depth (\S\ref{sec:dag-depth}), centrality (\S\ref{sec:sa-centrality}), community detection (\S\ref{sec:sa-community}), and robustness (\S\ref{sec:sa-robustness})---uniformly across all three graph levels. Organizing the analyses by method rather than by graph makes cross-level patterns immediately visible. We also include a declaration-level analysis that has no module or namespace counterpart: the theorem/lemma importance validation (\S\ref{sec:thm-vs-lemma}).
 
@@ -617,7 +617,7 @@ The lower modularity reflects the coarsening inherent in namespace aggregation. 
 \subsection{Robustness}
 \label{sec:sa-robustness}
 
-How resilient is each graph to the loss of its most important nodes? We compare two removal strategies: random removal (simulating accidental damage) and targeted removal in order of decreasing centrality (simulating deliberate attack on hubs). Networks with heavy-tailed degree distributions---as all three of ours possess---typically exhibit the classic scale-free\xinze{Same: replace ``scale-free'' throughout robustness section with ``hub-dominated'' or ``heavy-tailed''} signature: high resilience under random failure, extreme fragility under targeted attack. The severity of this asymmetry, and how it varies across levels, reveals where the structural bottlenecks of formalized mathematics lie.
+How resilient is each graph to the loss of its most important nodes? We compare two removal strategies: random removal (simulating accidental damage) and targeted removal in order of decreasing centrality (simulating deliberate attack on hubs). Networks with heavy-tailed degree distributions---as all three of ours possess---typically exhibit the classic hub-dominated signature: high resilience under random failure, extreme fragility under targeted attack. The severity of this asymmetry, and how it varies across levels, reveals where the structural bottlenecks of formalized mathematics lie.
 
 \subsubsection{Module Level}
 \label{sec:robustness}
@@ -653,7 +653,7 @@ This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reductio
 \label{fig:module-robustness}
 \end{figure}
 
-Figure~\ref{fig:module-robustness} shows the progressive removal curves. Under random removal, the giant component degrades gracefully---removing $20\%$ of modules leaves $80\%$ connected. Under targeted attack on the highest-PageRank modules, the same $20\%$ removal reduces the giant component to $58\%$, a $22$-percentage-point gap that grows with the removal fraction. The curve confirms the scale-free\xinze{Same: ``scale-free'' $\to$ ``hub-dominated''} vulnerability signature: the module graph's resilience depends on a small number of high-centrality hubs whose removal fragments the network far more effectively than chance would predict.
+Figure~\ref{fig:module-robustness} shows the progressive removal curves. Under random removal, the giant component degrades gracefully---removing $20\%$ of modules leaves $80\%$ connected. Under targeted attack on the highest-PageRank modules, the same $20\%$ removal reduces the giant component to $58\%$, a $22$-percentage-point gap that grows with the removal fraction. The curve confirms the hub-dominated vulnerability signature: the module graph's resilience depends on a small number of high-centrality hubs whose removal fragments the network far more effectively than chance would predict.
 
 \subsubsection{Declaration Level}
 \label{sec:thm-robustness}
@@ -688,7 +688,7 @@ $20\%$ & $0.799$ & $0.461$ & $0.338$ \\
 \label{fig:thm-robustness}
 \end{figure}
 
-Under random removal, the giant component shrinks almost linearly---removing $20\%$ of nodes leaves $80\%$ connected. Under targeted attack (removing the highest-PageRank nodes first), $20\%$ removal reduces connectivity to $46\%$---a $34$-percentage-point gap. This is the classic signature of a scale-free\xinze{Same: ``scale-free'' $\to$ ``hub-dominated''} network~\cite{albert2000,barabasi1999}: resilient to random failure, vulnerable to targeted attack on hubs.
+Under random removal, the giant component shrinks almost linearly---removing $20\%$ of nodes leaves $80\%$ connected. Under targeted attack (removing the highest-PageRank nodes first), $20\%$ removal reduces connectivity to $46\%$---a $34$-percentage-point gap. This is the classic signature of a hub-dominated network~\cite{albert2000,barabasi1999}: resilient to random failure, vulnerable to targeted attack on hubs.
 
 \noindent\textbf{Note.}
 \label{rem:thm-robustness-redundancy}
@@ -723,7 +723,7 @@ $50\%$ & $0.477$ & $0.000$ & $0.477$ \\
 \label{fig:ns-robustness}
 \end{figure}
 
-The pattern matches the classic scale-free\xinze{Same: ``scale-free'' $\to$ ``hub-dominated''} vulnerability signature observed at both the module level (\S\ref{sec:robustness}) and the declaration level (\S\ref{sec:thm-robustness}): high resilience under random failure, extreme fragility under targeted attack (Table~\ref{tab:ns-robustness}, Figure~\ref{fig:ns-robustness}). At $20\%$ targeted removal, the GCC collapses to $20.8\%$ of its original size---more severe than the declaration-level graph, where the same removal fraction leaves $46.1\%$ (\S\ref{sec:thm-robustness}). The namespace graph's greater fragility reflects the concentration of connectivity in the \ns{\_root\_} super-node and a small number of infrastructure namespaces (Remark~\ref{rem:root-artifact}); once these are removed, the remaining mathematical namespaces fragment into isolated clusters with no shared foundation.
+The pattern matches the classic hub-dominated vulnerability signature observed at both the module level (\S\ref{sec:robustness}) and the declaration level (\S\ref{sec:thm-robustness}): high resilience under random failure, extreme fragility under targeted attack (Table~\ref{tab:ns-robustness}, Figure~\ref{fig:ns-robustness}). At $20\%$ targeted removal, the GCC collapses to $20.8\%$ of its original size---more severe than the declaration-level graph, where the same removal fraction leaves $46.1\%$ (\S\ref{sec:thm-robustness}). The namespace graph's greater fragility reflects the concentration of connectivity in the \ns{\_root\_} super-node and a small number of infrastructure namespaces (Remark~\ref{rem:root-artifact}); once these are removed, the remaining mathematical namespaces fragment into isolated clusters with no shared foundation.
 
 %% ====================================================================
 \subsection{Theorem vs.\ Lemma: Validating Human Importance Judgments}
