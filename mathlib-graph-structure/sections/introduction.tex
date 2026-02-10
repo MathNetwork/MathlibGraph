@@ -1,5 +1,45 @@
 \section{Introduction}
+Mathematics has always been a network. Every theorem depends on lemmas, every proof invokes prior results, every definition builds on other definitions. This is obvious. Mathematicians have navigated this network by intuition for thousands of years.
 
+What is less obvious is that this network has never been recorded at scale. Every medium in history — knotted strings, counting rods, clay tablets, paper, printed journals, preprints — preserves only results, and incompletely\xinze{result and incomplete dependency}: mathematicians omit "obvious" steps, cite "well-known" lemmas, write "by a similar argument" and "details left to the reader." The dependencies between results live in mathematicians' minds: implicit, distributed, uncomputable. For example, one know that a theorem uses Zorn's lemma, but not which form, through how many intermediate steps, or how many premises it shares with neighboring results. 
+
+The network is real, but no medium has been able to contain it. Mathematicians must navigate by experience, intuition, and talent, constructing new results while orienting themselves within a landscape they can only partially see.
+
+Formal mathematics libraries changed this. As early as 1967, de Bruijn's Automath began formalizing mathematics; Mizar (1973), Coq (1984), and Isabelle (1986) followed. But these libraries remained small. Only when a single library grows large enough can statistical structure emerge. But only recently has a single library grown large enough to reveal statistical structure.
+Mathlib crosses that threshold. 308,129 declarations, 8,436,366 dependency edges, 7,563 modules, 153 levels of depth. Every naming decision, every import, every namespace boundary is recorded. This produces a new kind of data: a complete trace of how mathematics is organized within a defined scope — roughly covering undergraduate through early graduate mathematics under current educational conventions.
+\xinze{We need references for the above formal libraries}
+
+\xinze{We need to point out why these full network data are so important....}
+
+
+\subsection{What These Traces Are}
+\xinze{The following \textcolor{red}{RED} content can be summarized in a picture.}
+\textcolor{red}{Mathematics is a social practice, situated in a particular era and a particular environment.}\xinze{do not include this}. Thurston observed \xinze{references?} \textcolor{red}{that mathematical progress is not merely the accumulation of theorems but the transmission of understanding among people. Mathematicians of different eras bring different intuitions, different backgrounds, different goals, each extending their own cognition. But intuition is not automatically reliable: the role of logic is precisely to filter and constrain intuition — to discard what is not rigorous, and to let intuition extend on a rigorous foundation. Mathematicians either build upward from axioms through step-by-step deduction, or work backward from conjectures in search of a proof path, but in either direction, every step must withstand logical scrutiny.}\\
+Yet all extensions point toward the same constraint: \textbf{logical consistency}.\xinze{>??????}\\
+Starting from axioms, every step of reasoning must be correct. This constraint is the same whether one works in set theory or type theory\xinze{are we sure about that?}. \textcolor{red}{Peer review, journal editors, academic reputation — these are the social mechanisms by which traditional mathematics enforces consistency. They shape every individual's output within their era, as well as the modes of reading (which differ across the ages of print, typewriters, and the computer-internet era). But they are not the constraint itself. The constraint is logic; the mechanisms are how humans implement logical verification — and all verification takes place inside human minds.}\\
+In traditional mathematics, consistency is checked by human judgment. But humans make errors, and the record is incomplete: papers present results and some of the dependency relations, but the complete web of dependencies remains in the mind, navigated by the mathematician's experience and intuition.\xinze{seems we have already mentioned that in the beginning}\\
+Formal mathematics mechanizes and externalizes the checking. The compiler replaces human judgment; the type system enforces consistency. More importantly, the record becomes complete: every dependency is precisely tracked. This differs from algebraic mechanization approaches such as Wu's method — Wu's method translates geometric problems into systems of polynomial equations and uses elimination algorithms to automatically generate proofs.\xinze{Should we give a reference or remove this?} The core of a formal mathematics library, by contrast, is not the automatic generation of proofs but the complete recording of dependency relations. \textcolor{red}{Humans (or AI) write the proofs; the compiler checks each one and records every premise that each declaration invokes.}
+
+\subsection{What is pursued has not changed; what has changed is verification and recording.}
+\module{Mathlib} is the product of a collision between old results and a new environment. \textcolor{red}{Behind every declaration is a person (or a group of people) extending their intuition within a particular historical setting and background — shaped by the existing mathematical work they have absorbed, the communication media of their era, and the navigational ability and habits of rigorous checking they have developed. }
+
+These intuitions also contain, and are even predominantly composed of, the products of earlier collisions between mathematical intuition and logical consistency. \textcolor{red}{The declarations currently in Mathlib are largely formalizations of results that humans produced in a previous era, rather than mathematics generated natively within the formalization environment and carrying the characteristics of a new era (the mainstream output of current mathematical work takes place in an environment of pen and paper, computers, email, the internet, and seminars; in the future it may be AI, formal verification, GitHub collaboration, the internet, and social media).} But for any intuition to be realized, it must pass the compiler's check — verification has been externalized. Different people's intuitions, constrained by a shared logical standard, collide, negotiate, and ultimately solidify into individual declarations. This makes Mathlib a transitional artifact: it contains information from two eras, bearing both the traces of traditional mathematical practice and the new constraints of the formalization environment. 
+
+Formal recording is admittedly a practice different from the traditional one — for instance, Lean requires engineering compromises, and much that is "obvious" to a mathematician demands substantial work in formalization. But even under these constraints, the content integrated into Mathlib still reflects the completeness of dependency relations. It is precisely this completeness of recording that allows us, for the first time, to measure the traces of these collisions.
+
+\subsection{The Three Layers of Trace in Mathlib}
+
+Mathlib did not emerge from nothing. It carries three layers of history:
+
+The continuation of traditional mathematical practice. Thousands of years of accumulated naming conventions, disciplinary divisions, the semantic distinction between theorem and lemma — all of these are inherited in formalization. Mathematicians brought their existing cognitive structures into a new medium. 
+
+The new environment of formalized practice. Compiler checking, the type system, import mechanisms, GitHub collaboration — these changed how collisions take place. Dependencies are precisely tracked, redundancy becomes measurable, and organizational structure is fully externalized for the first time. It is worth noting that, as of now, there is almost no new mathematics produced natively within the formalization environment. The vast majority of Mathlib's content consists of formalized translations of existing results. The closest cases appeared in late 2025: Harmonic's AI system Aristotle, given only a formal statement, autonomously solved a version of Erdős Problem \#124 and completed the proof in Lean; subsequently, GPT-5.2 in collaboration with Aristotle claimed to have solved Erdős Problem \#728. But as Terence Tao\xinze{On twitter.....} observed, these remain "the lowest-hanging fruit" — problems solvable with standard techniques, not profound mathematical breakthroughs. Genuinely original mathematical work native to the formalization environment, carrying the characteristics of a new era, remains extremely rare. This means that the structure we observe in Mathlib primarily reflects the shape that mathematics from a previous era takes when recorded through a new medium, rather than the product of an entirely new mathematical practice.\\
+
+A transformation now underway. AI is beginning to participate in mathematical production, bringing a different source of "intuition." Humans and AI will jointly serve as participants, extending, colliding, and sedimenting within a new environment
+The structure we observe is the superposition of these three layers of trace — the collision between the unbounded extension of intuition and the constraint of logical consistency, fossilized at a particular historical moment, within a particular recording environment.
+
+\subsection{Old Beginning....}
+\xinze{we will fix this old beginning and combine it with our new content}
 Mathematical formalization is undergoing a transformation from artisanal craft to industrial-scale engineering. Central to this new paradigm is the development of a unified foundational infrastructure capable of supporting complexity by facilitating large-scale collaboration and the efficient management and retrieval of existing knowledge. In the current Lean ecosystem, this role is exemplified by \module{Mathlib}, the mathematical library for the Lean proof assistant~\cite{mathlib2020,lean4}. While the validity of any single theorem in \module{Mathlib} is enforced by a deterministic type checker, the library's macroscopic structure emerges from an uncertain, human-driven process. We posit that the network properties of the library record measurable traces of this production mode, encoding distinct signatures of cognitive constraints, community workflows, and language design. 
 
 The present paper analyzes these structural patterns to quantify the divergence between the logical dependency graph (the product) and the organizational hierarchy imposed by contributors (the process). This analysis also contributes to establish a baseline for human-authored formal mathematics as AI-driven formalization and problem solving accelerate with techniques ranging from reinforcement learning to agentic search~\cite{hubert2025alphaproof,achim2025aristotle,chen2025seedprover,xin2025deepseekprover}. \xinze{Revised: consolidated AI references into a single citation bracket.}
@@ -41,50 +81,54 @@ The graph structure of \module{Mathlib} has been exploited in machine learning, 
 The analytical tools we employ are basic and standard in network science. Scale-free network theory~\cite{barabasi1999}, small-world analysis~\cite{watts1998}, and modularity-based community detection~\cite{newman2004,blondel2008} have been applied to biological, social, and technological networks, but not, to our knowledge, systematically to a large-scale formal mathematics library. In a related setting, Barbosa et al.~\cite{barbosa2013} studied the network structure of three online mathematical libraries---Wikipedia (restricted to mathematics), MathWorld, and DLMF---finding large strongly connected components, the absence of clear power laws, and the effectiveness of stress centrality for navigating mathematical content. Their objects of study, however, are hyperlinked encyclopedias with informal content; ours is a machine-verified library in which every dependency is logically certified.
 
 \subsection{Our Contribution}
+\xinze{Before the following findings, we need to be specific about our three levels of graph}
+\begin{finding}
+    \textbf{Finding One: Human Organization Forms a Layer Independent of Logic}
+    
+    Different people's intuitions must be coordinated, requiring shared organizational schemes — knowing where things are placed, what they are called, how to find them.
+\end{finding}
+Mathlib provides two such schemes: the namespace hierarchy and the file structure. These two artificial classification systems are highly consistent with each other (NMI = 0.71), yet both align poorly with the community structure emerging from the dependency graph (NMI = 0.34). Cross-namespace edges account for 50.9\%, and namespace boundary containment decays from 48.9\% to 12.6\%.
 
-The products of mathematical practice---theorems, proofs, definitions---must always rest on some medium: knotted cords, counting rods, clay tablets, paper, printed journals, preprints. The medium reflects the tools and character of its era, and constrains what can be recorded, transmitted, and accumulated.
+The gap is telling. Artificial organizational schemes agree with each other far more than with logical structure \xinze{Math product, decl level.....}. Organization serves collaboration and navigation, not logic. Logic constrains correctness; it does not constrain how people organize. People organize by cognitive habit, forming a layer that runs independently of the logical one.
 
-But between the finitude of the medium and the infinity of mathematical thought, there lies a tension.
+This observation comes with a caveat on scope. Mathlib is not a complete mirror of existing mathematics — some fields remain absent due to formalization difficulty, and community size \xinze{Zulip..for example} and interest introduce selection bias. The organizational layer itself is shaped by the tools of its era — file systems, VSCode, GitHub, the internet — tools that are themselves products of prior mathematical and engineering accumulation. What we observe reflects both the structure of mathematics and the social process of which mathematics gets formalized, by whom, with what instruments.
 
-In mathematicians' minds, theorems have never been isolated---they form a network, each result depending on others, depended upon by others. This network is real; mathematicians navigate it by intuition. Yet traditional media could only record results themselves: a theorem, a proof, a publication date. The dependencies between results---which theorem invokes which lemma, through how many intermediate steps, how much it shares with neighboring results---could not be precisely externalized. The network existed, but the medium could not hold it.
-
-Formal mathematics libraries change this. They are a new kind of medium---one that, for the first time, records organization itself as data.
-
-\module{Mathlib} weaves scattered results into a single compilable whole: 308,129 declarations, 8,436,366 precise dependency edges, 7,563 modules, 153 layers deep. Every naming decision, every import statement, every namespace boundary is recorded. This produces a new kind of data: \emph{the complete trace of mathematical organization}---not what mathematicians claim to do, but what they actually did.
-
-We measured these traces.
-
-\begin{finding}[Finding 1: Human--Logic Divergence]
-Two independent human classification systems---the namespace hierarchy and the file structure---align strongly with each other (NMI $= 0.71$). But neither aligns well with the community structure emerging from the dependency graph (NMI $= 0.34$--$0.42$). Human consensus is twice human-logic alignment.
+\begin{finding}
+    \textbf{Finding Two: The Module Layer as Cognitive Interface}
+    
+    8.4 million dependency edges \xinze{on decl level} is too many. Humans need compression — constrained by the tools through which they view, navigate, and communicate: screens, web pages, leanblueprint, IDE interfaces, but also the textbooks they consult, the references they search for, the conversations they have with collaborators. Humans cannot directly operate at the granularity of declaration-level dependencies.
 \end{finding}
 
-Cross-namespace edges account for $50.9\%$ of all dependencies; even at the most cohesive level, naming boundaries contain only $48.9\%$ of dependencies, decaying to $12.6\%$ by depth~4.
+The module graph has 23,235 edges; the declaration graph has 215,211 corresponding edges. Each import covers an average of 9.1 declaration-level dependencies.
 
-\begin{finding}[Finding 2: Directional Asymmetry]
-At the module level, imports flow symmetrically between peers (mean depth difference $+0.03$). At the declaration level, dependencies flow sharply downward (mean depth difference $+0.36$), with $69.3\%$ of deep theorems citing shallow infrastructure. Human organization is egalitarian; logical structure is hierarchical.
+The module layer provides a roughly 9× compression. This is the cognitive interface that humans construct — what Simone calls the cognitive API. Logic does not require this compression (the compiler can handle 8.4 million edges), but humans do — because humans work within concrete physical and social settings: the size of a screen, the hierarchy of a file system, the interface of an IDE, the structure of a textbook, the norms of a community. This is the edifice of mathematics that humans build under the joint influence of constraints and intentions.
+
+Community modularity declines from 0.64 at the module level to 0.48 at the declaration level and further to 0.28 at the namespace level. The coarser the granularity, the more the structure bears the characteristics of the scene constrained by our current tools — folder hierarchies, module partitions, namespace boundaries. These are all organizational forms shaped by instruments.
+
+\begin{finding}
+    \textbf{Finding Three: The Module Layer Both Adds and Conceals}
+    
+    The module layer is not a faithful projection of the logical graph. It systematically distorts in two directions.
+\end{finding}
+It adds what logic does not require. 27.9\% of imports are not directly referenced by any declaration in the importing file. Yet 78.4\% of these are graph-essential: removing them would disconnect the module graph. These imports provide transitive visibility — they do not contribute declarations directly, but make other things reachable. Logic does not need this redundancy (one could import only direct dependencies), but the formalization environment does: an import is not just a declaration dependency but a visibility guarantee. 
+
+More importantly, this redundancy serves a protective function. If a file's imports covered only what it directly uses, future developers extending that file might discover that deep dependencies are unreachable — only to trace the breakage back to an early import that was too shallow. Retaining "unused" imports preserves reachability for future extension. 17.5\% of imports are transitively redundant. After removing the top 20\% of hub nodes, the module graph retains 58\% of its edges, while the namespace graph retains only 20.8\%.
+
+It conceals what logic possesses. Module imports have a depth difference of +0.03 — nearly symmetric, making modules appear as peers. Declaration dependencies have a depth difference of +0.36 — consistently downward. 69.3\% of deep declarations depend on shallow foundational infrastructure. The logical structure is hierarchical: almost everything points toward a small number of foundational definitions. The in-degree follows a power law ($\alpha = 1.78$); the top 10 declarations account for over 500,000 citations. Out-degree is log-normal with a mean around 30. The symmetry of the module layer is an artifact of human organizational conventions, masking the true shape of logic.
+The module layer, in short, is an interface designed for human use. It introduces redundancy that logic does not demand and flattens hierarchy that logic clearly exhibits. Both distortions serve the same purpose: making the library navigable and extensible for human contributors working within the constraints of screens, file systems, and collaborative workflows
+
+\begin{finding}
+    \textbf{Finding Four: Traditional Conventions Survive but Deform}
+
+    Formalization inherits naming conventions from traditional mathematics, but the new medium reshapes their meaning.
 \end{finding}
 
-In-degree follows a power law ($\alpha = 1.78$), with the top 10 declarations contributing over 500,000 citations; out-degree follows a log-normal---consumption is wildly unequal, production is bounded.
+Theorems are cited on average 5.16 times; lemmas 3.52 times — a ratio of 1.47×. Their zero-citation rates are nearly identical: 37.2\% vs 39.4\%. In traditional papers, the distinction between theorem, lemma, and corollary carries semantic weight — it signals to the reader where a result sits in the narrative hierarchy. In Lean, they compile to the same thing. Formalization preserves the names but flattens the semantics. Other traditional markers undergo similar compression: proposition and corollary appear in Lean source code as docstring annotations or naming conventions, but carry no formal distinction at the type level. The case of `funext`, labeled a lemma yet cited 15,574 times with a cross-namespace reach of 80 percentile points, illustrates the gap between inherited labels and actual structural role.
 
-\begin{finding}[Finding 3: Functional Redundancy]
-$27.9\%$ of imports appear unused---no declaration in the importing file directly references them. Yet $78.4\%$ of these are graph-essential: removing them would disconnect the library. What looks like waste is load-bearing.
-\end{finding}
+This deformation is not uniform across the library. If Mathlib were a mature, stable artifact, we would expect different mathematical domains to exhibit similar structural characteristics. Instead, the variation is enormous. Zero-citation rates range from 12.8\% (Primrec) to 92.2\% (AddEquiv). Cross-namespace reach varies by 80 percentage points. 44.8\% of theorems have never been cited. CategoryTheory concentrates 97.4\% of its content within a single community. Different domains were formalized at different times, by different people, with different strategies and different degrees of completeness. Some are tightly built — containing only what is needed — while others are stockpiled — accumulating results that await future use. This heterogeneity is a signature of the current stage of formalization, not of mathematics itself.
 
-$17.5\%$ of module-level imports are transitively redundant, but this redundancy purchases robustness: after $20\%$ targeted removal, the module graph retains $58\%$ of its giant component, while the namespace graph retains only $20.8\%$.
-
-\begin{finding}[Finding 4: Organizational Compression]
-The module graph has 23,235 edges; the corresponding declaration graph has 215,211 edges. Each human-written import covers 9.1 declaration-level dependencies on average. Community modularity declines from 0.64 (module) to 0.48 (declaration) to 0.28 (namespace).
-\end{finding}
-
-The coarser the granularity, the stronger the human imprint. Human intuition shapes the large scale; logical necessity dominates the fine grain.
-
-\begin{finding}[Finding 5: Weak Formal Labels]
-Theorems average 5.16 citations versus 3.52 for lemmas---a ratio of $1.47\times$---but zero-citation rates are nearly identical ($37.2\%$ vs $39.4\%$). \decl{funext}, labeled a \texttt{lemma}, has 15,574 citations, outranking $99.9\%$ of theorems.
-\end{finding}
-
-Zero-citation rates vary by 80 percentage points across namespaces (\ns{AddEquiv} $92.2\%$ vs \ns{Primrec} $12.8\%$). $44.8\%$ of theorems are never cited within the library. The formal distinction between ``important'' and ``auxiliary'' does not survive contact with the dependency graph.
-
-\medskip
-What these measurements reveal is not a peculiarity of \module{Mathlib}, but \emph{the general structure of human mathematical organization}: internally consistent (NMI $= 0.71$), systematically divergent from logical structure (NMI $= 0.34$), compressive by design ($9{:}1$), and quietly load-bearing in ways that resist naive optimization ($78.4\%$ graph-essential).
-
-These structural signatures are new data made possible by a new medium. They can be measured without reading any proof---they describe how humans organize mathematics, not what the mathematics says. As formal mathematics scales beyond human readability, these signals may shift from descriptive to navigational---tools not for understanding what mathematics says, but for deciding what is worth understanding.
+\xinze{discussion......:}
+Throughout the preceding analysis, a consistent pattern emerges: the organizational structure of Mathlib is shaped not only by logical necessity but also by the cognitive and instrumental constraints under which human contributors operate. This structure now faces a shift in all three of its determining factors: verification has moved from human judgment to compilers; recording has moved from incomplete to complete; and the participants themselves are changing, as AI systems begin to contribute.
+Our analysis captures a snapshot of this transition. Humans remain the primary contributors, traces of traditional mathematical practice are clearly legible in the data, yet the constraints of the formalization environment have already begun to reshape organizational patterns.
+Notably, the structural signatures we identify — the divergence between human classification and logical community structure, the compression ratio of the module layer, the redundancy and flattening of the import graph, the deformation of traditional naming conventions — are all measurable without reading a single proof. They are properties of the graph alone. As AI systems participate more deeply in mathematical production, they will operate under different cognitive constraints, may not require the same compression interfaces, and need not inherit the same organizational conventions. The structural patterns deposited by a predominantly AI-driven library may differ substantially from what we observe today.
+In this sense, our measurements establish a baseline: the structural signature of a formal mathematics library in which human cognition is still the dominant organizing force.
