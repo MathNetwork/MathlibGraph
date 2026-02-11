@@ -334,14 +334,14 @@ If the module graph perfectly respected the directory hierarchy---that is, if ev
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/namespace_heatmap_raw.pdf}
+\includegraphics[width=\textwidth]{figures/namespace_heatmap_raw.pdf}
 \caption{Import counts between top-level directories (log scale) for $G_{\mathrm{module}}$. Each cell $(i, j)$ counts edges from directory~$i$ (row) to directory~$j$ (column); the diagonal captures intra-directory imports. Off-diagonal bright cells reveal cross-directory dependencies that violate the cognitive classification of~$T$.}
 \label{fig:namespace-heatmap-raw}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/namespace_heatmap_tr.pdf}
+\includegraphics[width=\textwidth]{figures/namespace_heatmap_tr.pdf}
 \caption{Import counts between top-level directories (log scale) for $G_{\mathrm{module}}^{-}$ (transitive reduction). Compared to the raw graph (Figure~\ref{fig:namespace-heatmap-raw}), the transitive reduction removes redundant edges while preserving the essential dependency skeleton. The most prominent off-diagonal entries include \module{RingTheory}$\,\to\,$\module{Algebra} and the bidirectional coupling between \module{Algebra} and \module{Data}.}
 \label{fig:namespace-heatmap-tr}
 \end{figure}

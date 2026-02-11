@@ -43,6 +43,7 @@ The graph structure of \module{Mathlib} has been exploited in machine learning, 
 The analytical tools we employ are basic and standard in network science. Heavy-tailed network theory~\cite{barabasi1999}, small-world analysis~\cite{watts1998}, and modularity-based community detection~\cite{newman2004,blondel2008} have been applied to biological, social, and technological networks, but not, to our knowledge, systematically to a large-scale formal mathematics library. In a related setting, Barbosa et al.~\cite{barbosa2013} studied the network structure of three online mathematical libraries---Wikipedia (restricted to mathematics), MathWorld, and DLMF---finding large strongly connected components, the absence of clear power laws, and the effectiveness of stress centrality for navigating mathematical content. Their objects of study, however, are hyperlinked encyclopedias with informal content; ours is a machine-verified library in which every dependency is logically certified.
 
 \subsection{Our Contribution}
+\label{sec:contribution}
 We analyze \module{Mathlib} as a multi-layer dependency network comprising three graphs:
 \begin{itemize}
     \item the module import graph~$G_{\mathrm{module}}$ (Definition~\ref{def:module-graph});

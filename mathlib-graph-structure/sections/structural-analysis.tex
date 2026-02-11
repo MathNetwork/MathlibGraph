@@ -45,7 +45,7 @@ We plot the degree distributions on log--log axes (Figure~\ref{fig:degree-distri
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/degree_distribution.pdf}
+\includegraphics[width=\textwidth]{figures/degree_distribution.pdf}
 \caption{In-degree (blue) and out-degree (orange) distributions on log--log axes for $G_{\mathrm{module}}$ (left) and $G_{\mathrm{module}}^{-}$ (right). Dashed lines show power-law references $k^{-\gamma}$. Two features are visually salient: (i)~the in-degree distributions are nearly identical across the two panels, confirming that transitive reduction barely affects how many modules depend on a given file; (ii)~the out-degree tail contracts sharply under transitive reduction (maximum dropping from $315$ to $70$), reflecting the removal of redundant umbrella imports.}
 \label{fig:degree-distribution}
 \end{figure}
@@ -114,7 +114,7 @@ This asymmetry has a structural explanation that connects directly to the centra
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\textwidth]{analysis/thm_degree_distribution.pdf}
+\includegraphics[width=\textwidth]{figures/thm_degree_distribution.pdf}
 \caption{Degree distributions of $G_{\mathrm{thm}}$ on log--log axes. Left: in-degree, with power law fit (gold line, $\alpha = 1.78$, $x_{\min} = 20$). Right: out-degree. The in-degree tail extends over four orders of magnitude; the out-degree distribution is sharply bounded.}
 \label{fig:thm-degree}
 \end{figure}
@@ -151,7 +151,7 @@ Power-law fitting (\S\ref{sec:prelim-powerlaw}) yields $\alpha = 1.60$ ($x_{\min
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\textwidth]{analysis/ns_degree_distribution.pdf}
+\includegraphics[width=\textwidth]{figures/ns_degree_distribution.pdf}
 \caption{Degree distributions of $G_{\mathrm{ns}}^{(2)}$ on log--log axes. Left: in-degree (\textcolor{blue!60!black}{blue}), with power-law reference (gold dashed, $\alpha = 1.60$, $x_{\min} = 4$). Right: out-degree (\textcolor{red!60!black}{coral}), with power-law reference ($\alpha = 1.90$, $x_{\min} = 13$). Both tails are heavy but better fit by a lognormal than a pure power law. The extreme outlier in the in-degree panel is \ns{\_root\_} ($\deg^{-} = 9{,}846$; see Remark~\ref{rem:root-artifact}).}
 \label{fig:ns-degree}
 \end{figure}
@@ -189,7 +189,7 @@ A secondary peak is visible near level~$126$, where approximately $59$ modules c
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/dag_structure.pdf}
+\includegraphics[width=\textwidth]{figures/dag_structure.pdf}
 \caption{DAG width by topological layer for $G_{\mathrm{module}}$ (top) and $G_{\mathrm{module}}^{-}$ (bottom). The distributions share a characteristic funnel shape: a sharp peak at level~$0$ (over $1{,}400$ leaf modules), a rapid decay through the first $20$ layers, a long tail extending to level~$153$, and a secondary peak near level~$126$. The near-identical profiles confirm that the funnel topology arises from logical necessity, not from redundant imports.}
 \label{fig:dag-structure}
 \end{figure}
@@ -208,7 +208,7 @@ $G_{\mathrm{thm}}$ is a DAG with $84$ topological layers---roughly half the dept
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\textwidth]{analysis/thm_dag_structure.pdf}
+\includegraphics[width=\textwidth]{figures/thm_dag_structure.pdf}
 \caption{DAG width by topological layer for $G_{\mathrm{thm}}$ ($84$ layers). The source layer ($119{,}633$ zero-citation declarations) dominates; the remaining layers decay rapidly, reaching single digits by layer~$60$.}
 \label{fig:thm-dag-structure}
 \end{figure}
@@ -222,7 +222,7 @@ Unlike $G_{\mathrm{module}}$ and $G_{\mathrm{thm}}$, the namespace graph $G_{\ma
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\textwidth]{analysis/ns_dag_structure.pdf}
+\includegraphics[width=\textwidth]{figures/ns_dag_structure.pdf}
 \caption{Condensed DAG of $G_{\mathrm{ns}}^{(2)}$ by topological layer ($4{,}080$ super-nodes, $8$ layers). Each bar counts the number of super-nodes (SCCs) at that layer. Layer~$0$ holds $3{,}941$ leaf SCCs; layer~$5$ holds a single giant SCC comprising $5{,}899$ namespaces. The shallow, bimodal structure reflects pervasive mutual dependency: most namespaces either sit at the periphery or belong to one densely interconnected core.}
 \label{fig:ns-dag-structure}
 \end{figure}
@@ -269,26 +269,25 @@ $\deg^{-}$ & Module & PR & Module & $c_B$ & Module \\
 \textit{Abbreviations:} AN = \module{Analysis.Normed}, LA = \module{LinearAlgebra}, CT = \module{CategoryTheory},\\
 ABO = \module{Algebra.BigOperators.Group}, AS = \module{Analysis.SpecificLimits},\\
 FD = \module{FiniteDimension}, DD = \module{DirectoryDependency}, CompileInd.\ = \module{CompileInductive}, Fin.\ = \module{Finiteness}.
-\textcolor{red}{these graph especially captions are too small}
-We compare in-degree, PageRank, and betweenness pairwise in Figure~\ref{fig:centrality}. Out-degree is omitted from this comparison because it measures a module's role as an \emph{importer}---how many prerequisites it gathers---rather than its structural position within the network. Moreover, as shown in \S\ref{sec:degree-distribution}, high out-degree values largely reflect redundant umbrella imports and collapse under transitive reduction, making out-degree a poor proxy for structural importance.
+We compare in-degree, PageRank, and betweenness pairwise in Figures~\ref{fig:centrality-indeg-pr}--\ref{fig:centrality-betw-pr}. Out-degree is omitted from this comparison because it measures a module's role as an \emph{importer}---how many prerequisites it gathers---rather than its structural position within the network. Moreover, as shown in \S\ref{sec:degree-distribution}, high out-degree values largely reflect redundant umbrella imports and collapse under transitive reduction, making out-degree a poor proxy for structural importance.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/module_centrality_indeg_pr.pdf}
+\includegraphics[width=\textwidth]{figures/module_centrality_indeg_pr.pdf}
 \caption{In-degree vs.\ PageRank in $G_{\mathrm{module}}$. Each point is one module. If the two measures were equivalent, points would cluster along a diagonal; the wide scatter confirms they capture distinct structural roles.}
 \label{fig:centrality-indeg-pr}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/module_centrality_indeg_betw.pdf}
+\includegraphics[width=\textwidth]{figures/module_centrality_indeg_betw.pdf}
 \caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{module}}$. Modules with high betweenness but moderate in-degree serve as structural bridges between otherwise disconnected regions of the import graph.}
 \label{fig:centrality-indeg-betw}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/module_centrality_betw_pr.pdf}
+\includegraphics[width=\textwidth]{figures/module_centrality_betw_pr.pdf}
 \caption{Betweenness vs.\ PageRank in $G_{\mathrm{module}}$. The three-way divergence visible in Tables~\ref{tab:centrality} is not confined to the top extremes but pervades the entire distribution.}
 \label{fig:centrality-betw-pr}
 \end{figure}
@@ -342,25 +341,25 @@ The three columns of Table~\ref{tab:thm-centrality} have almost no overlap, and 
 
 \emph{Betweenness centrality} reveals a third, entirely disjoint set of structurally critical declarations. The top entries---\decl{Real}, \decl{Real.ofCauchy}, \decl{Rat.linearOrder}, \decl{Real.pi}, \decl{Real.exists\_cos\_eq\_zero}---trace the construction chain of the real numbers. These nodes sit at the narrow passage connecting the algebraic world (rational numbers, ordered rings, number fields) to the analytic world (measure theory, complex analysis, probability). \decl{Real.pi} occupies rank~$4$ because $\pi$'s definition threads through number theory, trigonometry, and analysis, making it a crossroads of multiple mathematical disciplines. Only $34{,}564$ of $308{,}129$ nodes ($11.2\%$) have nonzero betweenness, confirming that shortest paths through $G_{\mathrm{thm}}$ are concentrated through a small number of critical bridges.
 
-Figure~\ref{fig:thm-centrality-scatter} visualizes the pairwise relationships between the three centrality measures.
+Figures~\ref{fig:thm-centrality-indeg-pr}--\ref{fig:thm-centrality-betw-pr} visualizes the pairwise relationships between the three centrality measures.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/thm_centrality_indeg_pr.pdf}
+\includegraphics[width=\textwidth]{figures/thm_centrality_indeg_pr.pdf}
 \caption{In-degree vs.\ PageRank in $G_{\mathrm{thm}}$. Each point is one declaration. The wide scatter confirms that popularity (in-degree) and influence (PageRank) measure different structural properties at the declaration level.}
 \label{fig:thm-centrality-indeg-pr}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/thm_centrality_indeg_betw.pdf}
+\includegraphics[width=\textwidth]{figures/thm_centrality_indeg_betw.pdf}
 \caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{thm}}$. Declarations with high betweenness but moderate in-degree act as bottleneck connectors between proof clusters.}
 \label{fig:thm-centrality-indeg-betw}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/thm_centrality_betw_pr.pdf}
+\includegraphics[width=\textwidth]{figures/thm_centrality_betw_pr.pdf}
 \caption{Betweenness vs.\ PageRank in $G_{\mathrm{thm}}$. The three-way divergence is not confined to the top-$10$ extremes but pervades the entire distribution, confirming that no two centrality measures are redundant.}
 \label{fig:thm-centrality-betw-pr}
 \end{figure}
@@ -401,25 +400,25 @@ PR & Namespace & $c_B$ & Namespace \\
 
 Excluding the \ns{\_root\_} artifact (Remark~\ref{rem:root-artifact}), the two rankings reveal a clear separation (Table~\ref{tab:ns-centrality}). PageRank is dominated by mathematical infrastructure: \ns{Eq}, \ns{Set}, \ns{OfNat}, \ns{Real}, and \ns{Preorder}---the foundational types and structures on which proofs ultimately rest. Betweenness centrality, by contrast, promotes logical connectives and bridging concepts: \ns{And}, \ns{Exists}, and \ns{Function} occupy positions~$2$--$5$ by betweenness but do not appear in the PageRank top~$10$. These namespaces serve as structural bridges: proofs in distant mathematical theories must pass through logical connectives to compose their arguments.
 
-This separation echoes the module-level finding of \S\ref{sec:centrality}, where no single module dominates all three centrality measures, and the declaration-level finding of \S\ref{sec:thm-centrality}, where in-degree, PageRank, and betweenness identify disjoint categories of importance. At the namespace level, the two available measures already diverge sharply, confirming that the multidimensionality of structural importance persists across all three granularities. Figure~\ref{fig:ns-centrality-scatter} shows the pairwise scatter plots.
+This separation echoes the module-level finding of \S\ref{sec:centrality}, where no single module dominates all three centrality measures, and the declaration-level finding of \S\ref{sec:thm-centrality}, where in-degree, PageRank, and betweenness identify disjoint categories of importance. At the namespace level, the two available measures already diverge sharply, confirming that the multidimensionality of structural importance persists across all three granularities. Figures~\ref{fig:ns-centrality-indeg-pr}--\ref{fig:ns-centrality-betw-pr} shows the pairwise scatter plots.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/ns_centrality_indeg_pr.pdf}
+\includegraphics[width=\textwidth]{figures/ns_centrality_indeg_pr.pdf}
 \caption{In-degree vs.\ PageRank in $G_{\mathrm{ns}}^{(2)}$. Each point is one namespace. The extreme outlier is \ns{\_root\_} (Remark~\ref{rem:root-artifact}).}
 \label{fig:ns-centrality-indeg-pr}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/ns_centrality_indeg_betw.pdf}
+\includegraphics[width=\textwidth]{figures/ns_centrality_indeg_betw.pdf}
 \caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{ns}}^{(2)}$. Namespaces with disproportionately high betweenness serve as inter-domain bridges in the namespace dependency graph.}
 \label{fig:ns-centrality-indeg-betw}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analysis/ns_centrality_betw_pr.pdf}
+\includegraphics[width=\textwidth]{figures/ns_centrality_betw_pr.pdf}
 \caption{Betweenness vs.\ PageRank in $G_{\mathrm{ns}}^{(2)}$. Excluding \ns{\_root\_}, the scatter confirms that PageRank and betweenness capture distinct structural roles at the namespace level.}
 \label{fig:ns-centrality-betw-pr}
 \end{figure}
@@ -648,7 +647,7 @@ This finding reframes the cognitive redundancy of \S\ref{sec:transitive-reductio
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{analysis/module_robustness_curve.pdf}
+\includegraphics[width=0.85\textwidth]{figures/module_robustness_curve.pdf}
 \caption{Robustness curves for $G_{\mathrm{module}}$: fraction of nodes in the largest WCC as a function of the fraction removed, under random removal (blue) and targeted removal by PageRank (coral).}
 \label{fig:module-robustness}
 \end{figure}
@@ -683,7 +682,7 @@ $20\%$ & $0.799$ & $0.461$ & $0.338$ \\
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{analysis/thm_robustness_curve.pdf}
+\includegraphics[width=0.85\textwidth]{figures/thm_robustness_curve.pdf}
 \caption{Robustness curves for $G_{\mathrm{thm}}$: fraction of nodes in the largest WCC as a function of the fraction removed, under random removal (indigo) and targeted removal by PageRank (gold).}
 \label{fig:thm-robustness}
 \end{figure}
@@ -718,7 +717,7 @@ $50\%$ & $0.477$ & $0.000$ & $0.477$ \\
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{analysis/ns_robustness_curve.pdf}
+\includegraphics[width=0.85\textwidth]{figures/ns_robustness_curve.pdf}
 \caption{Robustness curves for $G_{\mathrm{ns}}^{(2)}$: fraction of nodes in the largest WCC as a function of the fraction removed, under random removal (blue) and targeted removal by PageRank (coral).}
 \label{fig:ns-robustness}
 \end{figure}
