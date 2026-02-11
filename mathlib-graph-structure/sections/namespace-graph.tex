@@ -60,6 +60,7 @@ For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declara
 \]
 where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set of all distinct depth-$k$ namespaces, and each edge $(n_1, n_2) \in E_k$ carries a weight equal to the number of edges $(d_1, d_2) \in E_{\mathrm{thm}}$ such that $\mathrm{ns}_k(d_1) = n_1 \neq n_2 = \mathrm{ns}_k(d_2)$.
 \end{definition}
+\xinze{LeanScout pipeline: could cross-validate}
 
 This definition yields not a single graph but a \emph{family} of graphs parameterized by the truncation depth~$k$. At $k = 1$, we obtain $3{,}184$ coarse namespaces---\ns{Nat}, \ns{Set}, \ns{CategoryTheory}---that correspond roughly (but not identically) to the top-level name components discussed in \S\ref{sec:thm-cross-namespace}. At the maximum depth ($k = 6$), we recover the full parent-namespace granularity with $15{,}456$ nodes. The parameterization is unique to namespace analysis: neither the module graph~$G_{\mathrm{module}}$ nor the theorem--premise graph~$G_{\mathrm{thm}}$ admits a comparable continuous refinement. Figure~\ref{fig:ns-aggregation} illustrates the aggregation for a concrete example.
 

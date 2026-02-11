@@ -15,7 +15,7 @@ A \emph{module} in \module{Mathlib} is identified by a dot-separated sequence of
 The \emph{depth} of a module $c_1.c_2.\cdots.c_k$ is~$k$, the number of dot-separated components.
 \end{definition}
 
-All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. $\mathcal{M}$ contains only \module{Mathlib.*} modules; external dependencies (\texttt{Std}, \texttt{Batteries}, \texttt{Init}) are excluded, so the graphs capture \module{Mathlib}'s internal structure rather than the full dependency closure.
+All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}.\xinze{LeanScout pipeline: could cross-validate} At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. $\mathcal{M}$ contains only \module{Mathlib.*} modules; external dependencies (\texttt{Std}, \texttt{Batteries}, \texttt{Init}) are excluded, so the graphs capture \module{Mathlib}'s internal structure rather than the full dependency closure.
 
 \begin{example}
 \leavevmode

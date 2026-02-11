@@ -731,7 +731,7 @@ The pattern matches the classic hub-dominated vulnerability signature observed a
 
 In Lean~4 source code, developers choose between \texttt{theorem} and \texttt{lemma} to declare propositions. While the kernel treats both identically---\texttt{lemma} is syntactic sugar for \texttt{theorem}---the choice carries cognitive significance: \texttt{theorem} typically marks a major result, while \texttt{lemma} signals an auxiliary stepping stone. Our extraction pipeline records both as kind \texttt{theorem}, erasing this distinction.
 
-To recover it, we parsed the \module{Mathlib} source code, tracking \texttt{namespace} blocks to reconstruct fully qualified names, and cross-referenced with~$G_{\mathrm{thm}}$. Of the $251{,}642$ propositions in the graph, $175{,}567$ ($69.8\%$) were matched to a source declaration: $129{,}444$ marked \texttt{theorem} and $46{,}123$ marked \texttt{lemma}.
+To recover it, we parsed the \module{Mathlib} source code, tracking \texttt{namespace} blocks to reconstruct fully qualified names, and cross-referenced with~$G_{\mathrm{thm}}$.\xinze{LeanScout pipeline: could cross-validate} Of the $251{,}642$ propositions in the graph, $175{,}567$ ($69.8\%$) were matched to a source declaration: $129{,}444$ marked \texttt{theorem} and $46{,}123$ marked \texttt{lemma}.
 
 \begin{table}[ht]
 \centering

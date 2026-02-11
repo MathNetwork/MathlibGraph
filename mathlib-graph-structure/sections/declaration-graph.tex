@@ -8,7 +8,7 @@ The main findings of this section are threefold. First, the hub structure of the
 \subsection{Data and Definitions}
 \label{sec:thm-data}
 
-The theorem--premise graph is constructed from two complementary data sources. The \texttt{lean4export} tool~\cite{lean4export} extracts the full environment of a Lean~4 project---every declaration, its type, its proof term, and the constants appearing in each---into a machine-readable format. The \texttt{lean-training-data} tool~\cite{lean_training_data} extracts premise-level dependencies by analyzing which constants appear in the proof term of each declaration. We combine these extractions into a single dataset, published on HuggingFace as \texttt{Xinze-Li-Moqian/mathfactor}.
+The theorem--premise graph is constructed from two complementary data sources. The \texttt{lean4export} tool~\cite{lean4export} extracts the full environment of a Lean~4 project---every declaration, its type, its proof term, and the constants appearing in each---into a machine-readable format. The \texttt{lean-training-data} tool~\cite{lean_training_data} extracts premise-level dependencies by analyzing which constants appear in the proof term of each declaration. We combine these extractions into a single dataset, published on HuggingFace as \texttt{Xinze-Li-Moqian/mathfactor}.\xinze{LeanScout pipeline: could cross-validate}
 
 \paragraph{What is a premise?}
 When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Consider a simple example:
@@ -146,7 +146,7 @@ The \decl{Nat.lt\_irrefl} example above showed a single theorem's premises; we n
 \end{codebox}
 
 \noindent
-The \texttt{lean-training-data} tool extracts premises not from the tactic script but from the compiled \emph{proof term}. For this theorem, the extracted premises are:
+The \texttt{lean-training-data} tool extracts premises not from the tactic script but from the compiled \emph{proof term}.\xinze{LeanScout pipeline: could cross-validate} For this theorem, the extracted premises are:
 
 \smallskip
 \begin{center}
