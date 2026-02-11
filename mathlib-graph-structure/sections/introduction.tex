@@ -10,10 +10,7 @@ It's important to observe that while the validity of each theorem is enforced de
 
 The present paper analyzes these structural patterns in the attempt to quantify the divergence between inherited mathematical structure (the product) and human organizational process (the process). The goal is to  establish a baseline for human-authored formal mathematics as AI-driven formalization and discovery accelerates~\cite{hubert2025alphaproof,achim2025aristotle,chen2025seedprover,xin2025deepseekprover}.
 
-XXXXX 
-comprising 308,129 declarations, 8,436,366 dependency edges, 7,563 modules, and 153 levels of DAG depth (\S\ref{sec:dag-depth}). All statistics refer to commit \texttt{534cf0b} (2 Feb 2026), extracted using \texttt{importGraph} (module layer) and premise-extraction tooling (declaration layer).\xinze{LeanScout pipeline: could cross-validate}
-
-We take \module{Mathlib} as our object of study and develop our analysis at four progressively finer levels of granularity:
+We take \module{Mathlib} as our object of study: 308,129 declarations, 8,436,366 dependency edges, and 7,563 modules. All statistics refer to commit \texttt{534cf0b} (2 Feb 2026), extracted using \texttt{importGraph} (module layer) and premise-extraction tooling (declaration layer).\xinze{LeanScout pipeline: could cross-validate} We develop our analysis at four progressively finer levels of granularity:
 
 \medskip
 \noindent\textbf{The module graph (\S\ref{sec:module-import}).}
@@ -60,7 +57,7 @@ together with the module tree~$T$ derived from the dot-separated file hierarchy 
 This formalization separates module imports and namespace classification from declaration-level dependencies. The former two reflects tooling and collaboration constraints; the latter records the complete logical network of traditional mathematics. This separation enables controlled comparison between human organizational process and inherited mathematical structure.
 
 We provide a quantitative characterization of \module{Mathlib}'s dependency structure across all three layers---degree distributions (\S\ref{sec:sa-degree}), DAG depth profiles (\S\ref{sec:dag-depth}), transitive redundancy (\S\ref{sec:transitive-reduction}), containment curves (\S\ref{sec:containment-decay}), centrality rankings (\S\ref{sec:sa-centrality}), community structure (\S\ref{sec:sa-community}), and robustness under node removal (\S\ref{sec:sa-robustness})---establishing an empirical baseline for the largest extant formal mathematics library (\S\ref{sec:structural-analysis}). Through this analysis, we identify key divergences between human organizational process and inherited mathematical structure, and derive actionable implications for library maintenance, AI-driven formalization, and tooling (\S\ref{sec:conclusion}).
-
+\xinze{We could remove those bubbles if no text in between}
 This analysis yields five key observations:
 \begin{finding}
     \textbf{Observation 1: Organization diverges from dependency.}
