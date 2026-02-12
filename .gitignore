@@ -8,7 +8,7 @@
 *.out
 *.synctex.gz
 *.pdf
-!mathlib-graph-structure/analysis/*.pdf
+!paper/figures/*.pdf
 
 # minted cache
 _minted/
