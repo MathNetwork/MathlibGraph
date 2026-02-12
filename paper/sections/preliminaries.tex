@@ -1,9 +1,7 @@
-\section{Appendix}
+\section{Mathematical Preliminaries}
 \label{sec:preliminaries}
 
-XXX AFTER THE REFERENCES XXX APPENDIX A: 
-
-We collect the standard graph-theoretic and network-analytic tools used throughout the paper. Readers familiar with these notions may skip to \S\ref{sec:module-import}.
+We collect the standard graph-theoretic and network-analytic definitions used throughout the paper. Readers familiar with these notions may skip to \S\ref{sec:module-import}.
 
 \subsection{Graph-Theoretic Notation}
 \label{sec:prelim-graph}
@@ -18,7 +16,10 @@ A directed graph~$G$ is \emph{weakly connected} if the underlying undirected gra
 
 A directed graph~$G$ is \emph{strongly connected} if for every pair of vertices~$u, v$ there exists a directed path from~$u$ to~$v$ and a directed path from~$v$ to~$u$. A \emph{strongly connected component (SCC)} is a maximal strongly connected subgraph. Every DAG has only trivial SCCs (single vertices). The \emph{condensation} of a directed graph replaces each SCC by a single super-node and each inter-SCC edge by an edge between the corresponding super-nodes; the resulting graph is always a DAG.
 
-\subsection{Centrality Measures}
+\subsection{Network-Analytic Methods}
+\label{sec:prelim-network}
+
+\subsubsection{Centrality Measures}
 \label{sec:prelim-centrality}
 
 We use three centrality measures, each capturing a different notion of structural importance.
@@ -47,7 +48,7 @@ where $\sigma_{st}$ is the number of shortest paths from~$s$ to~$t$, and $\sigma
 
 Betweenness identifies \emph{bridge} vertices: those that sit on many shortest paths between other pairs. Removing a high-betweenness vertex forces information flow to take long detours.
 
-\subsection{Community Detection and Partition Comparison}
+\subsubsection{Community Detection and Partition Comparison}
 \label{sec:prelim-community}
 
 \begin{definition}[Modularity~\cite{newman2004}]
@@ -115,7 +116,7 @@ The \emph{Rand Index} is $\mathrm{RI} = (a + d) / \binom{|V|}{2}$. Since even ra
 where the expectation is over random partitions with the same cluster-size distributions as $\mathcal{A}$ and $\mathcal{B}$. ARI equals~$1$ for identical partitions, $0$ for agreement at the level expected by chance, and can be negative for agreement worse than random.
 \end{definition}
 
-\subsection{Heavy-Tailed Distributions}
+\subsubsection{Heavy-Tailed Distributions}
 \label{sec:prelim-powerlaw}
 
 \begin{definition}[Degree Distribution]

@@ -1,7 +1,7 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-\subsection{Summary of Findings}
+\subsection{Summary and Discussion}
 \label{sec:summary}
 
 We have analyzed the network structure of \module{Mathlib} at three levels of granularity plus their cross-level interaction. Table~\ref{tab:summary} collects the key quantitative findings across all four columns---module, declaration, namespace, and cross-level---extending the two-level comparison of Table~\ref{tab:thm-vs-module} with the namespace graph of \S\ref{sec:namespace-graph} and the module--declaration interaction data of \S\ref{sec:module-declaration}.
@@ -44,9 +44,8 @@ At the declaration level (\S\ref{sec:theorem-premise}), finer resolution exposes
 
 At the cross-level (\S\ref{sec:module-declaration}), the overlay of all three organizational structures yields the sharpest results. Module cohesion of~$0.107$ (\S\ref{sec:cohesion}) and namespace containment of $22.2\%$ at depth~$1$ (\S\ref{sec:containment-decay}) confirm that both file and namespace boundaries are porous to logical dependencies. The module graph functions as a sparse gateway: $G_{\mathrm{file}}$ has $9.1\times$ more edges than~$G_{\mathrm{module}}$, with $92.2\%$ of cross-file dependencies reached through transitive chains rather than direct imports (\S\ref{sec:import_vs_declaration}). Yet the two human organizational systems---naming and filing---are internally coherent: the NMI between namespaces and modules is~$0.71$, far exceeding the NMI of~$0.34$ between namespaces and dependency-based communities (\S\ref{sec:ns-mod-cross}). The divergence between human organizational process and inherited mathematical structure is thus systematic, not accidental: human decisions are self-consistent (NMI~$0.71$), but the cross-cutting nature of mathematical dependency resists any hierarchical classification (cohesion~$0.107$, containment~$22.2\%$).
 
-\subsection{The Interplay of Product and Process}
+\paragraph{The interplay of product and process.}
 \label{sec:interplay}
-
 The central claim of this paper is that the network structure of a formal mathematical library records not only the inherited mathematical structure, but also the human organizational process. Our data substantiate this claim with five process-traces embedded in the product, corresponding to the five observations of \S\ref{sec:contribution}:
 
 \begin{enumerate}
@@ -78,7 +77,7 @@ The metrics developed in this paper are not merely descriptive; several admit di
 
 \paragraph{Monitoring structural drift.} As AI-generated proofs become a larger fraction of \module{Mathlib} contributions, the metrics established here---redundancy rate, cohesion distribution, degree distribution exponents, cross-namespace density---provide a dashboard for detecting structural drift. A sudden change in any of these indicators would signal that the library's character is shifting in ways that merit human review.
 
-\subsection{Limitations}
+\subsection{Limitations and Future Work}
 \label{sec:limitations}
 
 Several limitations constrain the scope of our conclusions.
@@ -89,7 +88,7 @@ Several limitations constrain the scope of our conclusions.
 
 \emph{Correlation, not causation.} We measure the divergence between the module tree~$T$ and the dependency graphs~$G_{\mathrm{module}}$ and~$G_{\mathrm{thm}}$, but we cannot disentangle the causal direction. Does~$T$ shape~$G$ (developers import along cognitive categories), or does~$G$ shape~$T$ (logical dependencies force namespace reorganization)? Our data are consistent with bidirectional influence (\S\ref{sec:interplay}), but a causal account would require longitudinal or experimental evidence that this study does not provide.
 
-\subsection{Future Directions}
+\paragraph{Future directions.}
 \label{sec:future}
 
 \emph{Longitudinal evolution.} Repeating this analysis across \module{Mathlib} versions---particularly across the Lean~3 to Lean~4 migration---would test whether structural indicators (redundancy rate, DAG depth, cohesion, cross-namespace density) are stable invariants of mathematical content or contingent features of a particular proof assistant and community. If the $17.5\%$ redundancy rate and $0.107$ cohesion are increasing over time, this would provide evidence for the critical-depth hypothesis of \S\ref{sec:module_conclusion}; if they are stable, it would suggest that the library has reached a structural equilibrium.

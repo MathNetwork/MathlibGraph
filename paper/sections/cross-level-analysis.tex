@@ -1,4 +1,4 @@
-\section{Cross-Level Analysis}
+\subsection{Cross-Level Analysis}
 \label{sec:cross_level}
 \label{sec:module-declaration}
 
@@ -6,7 +6,7 @@ Sections~\ref{sec:module-import}--\ref{sec:namespace-graph} analyzed the library
 
 The overlay yields three cross-level measurements. Namespace--module alignment (\S\ref{sec:ns-mod-cross}) measures the agreement between the two human organizational systems---naming and filing. Module cohesion (\S\ref{sec:cohesion}) quantifies how much declaration-level dependency traffic stays within file boundaries. Namespace--declaration interaction (\S\ref{sec:ns-decl-interaction}) compares the constraining power of the two systems at the declaration level and reveals a directional depth asymmetry between the import and declaration graphs. Assembling these measurements (\S\ref{sec:three-layers}) reveals a consistent pattern: human organizational process is internally coherent but collectively divergent from inherited mathematical structure.
 
-\subsection{Namespace--Module Alignment}
+\subsubsection{Namespace--Module Alignment}
 \label{sec:ns-mod-cross}
 
 The containment analysis of \S\ref{sec:containment-decay} and the cohesion analysis below each compare one human organizational system against the inherited mathematical structure. We first ask a different question: how well do the two \emph{human} systems---naming and filing---agree with each other? If both reflect the same cognitive model, their alignment should be high even when both diverge from logic.
@@ -40,7 +40,7 @@ The two directions of misalignment reflect distinct engineering pressures. When 
 \label{rem:two-pressures}
 The NMI of~$0.71$ between namespaces and modules is \emph{twice} the NMI of~$0.34$ between namespaces and dependency-based Louvain communities (\S\ref{sec:thm-community}). Human organizational decisions---naming and filing---agree with each other far more than either agrees with the logical structure of the dependency graph. This is unsurprising: both naming and filing are human decisions, often made by the same contributor, while the dependency structure is determined by mathematical necessity.
 
-\subsection{Module--Declaration Interaction}
+\subsubsection{Module--Declaration Interaction}
 \label{sec:cohesion}
 
 In $G_{\mathrm{thm}}$, each module becomes a \emph{region}---a set of declaration-vertices sharing a common source file. For each module~$m$, let $\mathcal{D}_m \subseteq \mathcal{D}$ denote its declarations. We partition the incident edges into two classes:
@@ -199,8 +199,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
 \label{fig:module-region}
 \end{figure}
 
-\begin{definition}[Module cohesion]
-\label{def:cohesion}
+\begin{definition}[Module cohesion (restated)]
 The \emph{cohesion} of a module~$m$ is
 \[
   \mathrm{coh}(m) = \frac{|E_{\mathrm{int}}(m)|}{|E_{\mathrm{int}}(m)| + |E_{\mathrm{ext}}(m)|},
@@ -295,7 +294,7 @@ Directory & $N$ & $\overline{d}_{\mathrm{imp}}$ & $\overline{d}_{\mathrm{use}}$ 
 
 Table~\ref{tab:depth-diff-by-dir} reveals a clear split. \module{CategoryTheory} ($\overline{\Delta} = -0.360$) stands out: its files import other category-theoretic modules at depth~${\sim}4.3$ but actually use declarations from modules at depth~${\sim}4.0$. This reflects the highly layered, self-contained nature of categorical formalization---deep categorical imports serve as portals to shallow definitional infrastructure. At the opposite extreme, \module{FieldTheory} ($\overline{\Delta} = +0.314$) imports modules at depth~${\sim}3.9$ but uses declarations at depth~${\sim}4.2$: its imports serve as cognitive shortcuts to deeper algebraic and ring-theoretic foundations. The positive-$\Delta$ directories (\module{RingTheory}, \module{NumberTheory}, \module{LinearAlgebra}, \module{FieldTheory}) are precisely those that build on deep algebraic infrastructure, confirming that the module graph functions as a sparse gateway to deeper dependency chains.
 
-\subsection{Namespace--Declaration Interaction}
+\subsubsection{Namespace--Declaration Interaction}
 \label{sec:ns-decl-interaction}
 
 The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries (see also Figure~\ref{fig:ns-aggregation}). We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
@@ -348,7 +347,7 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   \draw[depext] (za) to[out=-90,in=45] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
-\label{fig:ns-vs-mod-module}
+\label{fig:ns-vs-mod-module-app}
 \end{subfigure}%
 \hfill
 \begin{subfigure}[b]{0.48\textwidth}
@@ -393,10 +392,10 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   \draw[depext] (za) to[out=-90,in=45] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{green!50!black}{namespace}. $2$ of $6$ edges are intra-namespace (solid); $4$ are cross-namespace (dashed). Containment~$\approx 22.2\%$.}
-\label{fig:ns-vs-mod-namespace}
+\label{fig:ns-vs-mod-namespace-app}
 \end{subfigure}
 \caption{The same five declarations and six dependency edges, grouped by module (a) vs.\ namespace~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries, spanning multiple files, capture more intra-group dependencies than file boundaries---explaining why containment ($22.2\%$) exceeds cohesion ($10.7\%$).}
-\label{fig:ns-vs-mod}
+\label{fig:ns-vs-mod-app}
 \end{figure}
 
 \paragraph{Depth asymmetry.}
@@ -424,15 +423,15 @@ Import edges are nearly symmetric: the mean depth difference is~$+0.03$, and the
 
 The contrast is a structural consequence of transitivity. A single \texttt{import} brings an entire module into scope, providing transitive access to all upstream declarations. This compresses the vertical depth asymmetry into a lateral peer-to-peer pattern: importing \module{Data.Nat.Basic} implicitly conveys access to all the shallow infrastructure in \module{Init.Prelude}, without the importing module needing to reference depth-$0$ declarations directly. The module graph is thus not merely a sparse summary of declaration-level dependencies; it is a \emph{depth-compressed} summary that masks the gravitational pull of shallow infrastructure.
 
-\subsection{Three Layers Combined}
+\subsubsection{Three Layers Combined}
 \label{sec:three-layers}
 
-Table~\ref{tab:three-layers} assembles the cross-level measurements into a single comparison.
+Table~\ref{tab:three-layers-app} assembles the cross-level measurements into a single comparison.
 
 \begin{table}[ht]
 \centering
 \caption{Cross-level alignment summary. Each row compares two organizational layers.}
-\label{tab:three-layers}
+\label{tab:three-layers-app}
 \begin{tabular}{llrl}
 \toprule
 Comparison & Measure & Value & Interpretation \\
