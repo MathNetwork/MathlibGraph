@@ -14,7 +14,10 @@ meetings/
 *.out
 *.synctex.gz
 *.toc
+*.pdf
 !paper/figures/*.pdf
+
+# minted cache
 _minted/
 
 # Backups
