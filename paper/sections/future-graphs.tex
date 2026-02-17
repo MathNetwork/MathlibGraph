@@ -1,0 +1,185 @@
+\subsection{Future Graph Decompositions}
+\label{sec:future-graphs}
+
+The three dependency graphs defined above---$G_{\mathrm{module}}$, $G_{\mathrm{thm}}$, and $G_{\mathrm{ns}}^{(k)}$---are constructed from data available through the current extraction pipeline (\texttt{importGraph}, \texttt{lean4export}, \texttt{lean-training-data}). In this section, we define five additional graph decompositions that require deeper access to Lean's elaboration layer, specifically the ability to inspect type signatures vs.\ proof terms, trace typeclass instance synthesis, and read declaration-level metadata. We include these definitions to establish a formal framework for future empirical work; the analyses themselves are deferred pending access to metaprogramming-level extraction tools. \xinze{Hi Adam! Could you help us use LeanScout to extract the data types defined in the following subsections (statement vs proof deps, typeclass instance edges, public/private import flags, declaration attributes, etc.)? That would let us turn these formal definitions into actual empirical results. Thanks!}
+
+Throughout, we use the following notation. The \emph{Lean environment}~$\mathcal{E}$ denotes the compiled state of \module{Mathlib} at commit \texttt{534cf0b}. Each declaration~$d \in \mathcal{D}$ consists of a type~$d.\tau$ (the statement or signature) and, for non-axiomatic declarations, a value~$d.\pi$ (the proof term or definition body). We write $\mathrm{refs}(e)$ for the set of all named constants referenced in an expression~$e$.
+
+\subsubsection{The Statement and Proof Dependency Graphs}
+\label{sec:stmt-proof-graph}
+
+The declaration graph $G_{\mathrm{thm}}$ (Definition~\ref{def:thm-graph}) aggregates all premise references without distinguishing \emph{where} in a declaration each reference occurs. A finer decomposition separates the dependencies required by a declaration's \emph{statement} from those required only by its \emph{proof}.
+
+\begin{definition}[Statement and proof dependency]\label{def:stmt-proof-dep}
+For declarations $a, b \in \mathcal{D}$, define:
+\begin{align*}
+  a \xrightarrow{S} b &\iff b \in \mathrm{refs}(a.\tau), \\
+  a \xrightarrow{P} b &\iff b \in \mathrm{refs}(a.\pi) \setminus \mathrm{refs}(a.\tau).
+\end{align*}
+The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S = \{(a,b) : a \xrightarrow{S} b\}$, and the \emph{pure proof dependency graph} is $G_P = (\mathcal{D}, E_P)$ where $E_P = \{(a,b) : a \xrightarrow{P} b\}$. An edge $(a,b) \in E_{\mathrm{thm}}$ that belongs to both $\mathrm{refs}(a.\tau)$ and $\mathrm{refs}(a.\pi)$ is classified as a \emph{mixed edge} $E_{SP}$. This yields a partition $E_{\mathrm{thm}} = E_S \sqcup E_P \sqcup E_{SP}$ (where $E_S$ excludes mixed edges for disjointness, i.e., $E_S$ consists of edges in $\mathrm{refs}(a.\tau) \setminus \mathrm{refs}(a.\pi)$, $E_{SP} = \mathrm{refs}(a.\tau) \cap \mathrm{refs}(a.\pi)$, and $E_P$ as above).
+\end{definition}
+
+This decomposition directly instantiates the paper's central distinction. The statement dependency graph~$G_S$ captures \emph{inherited mathematical structure}: what a theorem asserts depends on logically prior definitions and results that are, in principle, invariant under changes of proof strategy. The pure proof dependency graph~$G_P$ captures \emph{human organizational process}: the choice of which lemmas, tactics, and automation to invoke reflects the tools, conventions, and taste of the proving community. The ratio $\rho = |E_P| / |E_{\mathrm{thm}}|$ would directly measure how much of the observed dependency network is proof engineering rather than mathematical necessity.
+
+\paragraph{Planned analyses.}
+Compare degree distributions, DAG depth profiles, community structure, and hub identity between~$G_S$ and~$G_P$. If statement-level dependencies form a sparser, deeper graph while proof-level dependencies are denser and shallower, this would confirm that the topological inversion observed in \S\ref{sec:dag-depth} (153-layer module hierarchy vs.\ 84-layer declaration DAG) has a finer analog at the edge level.
+
+\emph{Empirical analysis of this decomposition requires metaprogramming access to Lean's elaboration layer (specifically, separate traversal of \texttt{ConstantInfo.type} and \texttt{ConstantInfo.value}) and is deferred to future work.}
+
+\begin{remark}[Proof-internal dependency structure]\label{rem:local-deps}
+The decomposition $G_S / G_P$ refines the \emph{edges} of $G_{\mathrm{thm}}$. A complementary refinement concerns the \emph{internal structure} of each node: proof terms may contain local declarations introduced by \texttt{have}, \texttt{let}, or \texttt{suffices}, forming a proof-internal dependency tree~$G_{\mathrm{local}}(d)$ within each declaration~$d$. The size $|V(G_{\mathrm{local}}(d))|$ and depth of this tree measure proof complexity at a finer granularity than the proof term size~$\kappa(d)$ defined in \S\ref{sec:decl-metadata}. Extracting this structure requires access to the elaborated proof term or \texttt{InfoTree} and is left to future work.
+\end{remark}
+
+\subsubsection{The Typeclass Instance Graph}
+\label{sec:typeclass-graph}
+
+The hub nodes identified in \S\ref{sec:theorem-premise}---\decl{OfNat.ofNat} (in-degree $89{,}936$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.refl} ($69{,}580$)---owe much of their centrality to Lean's typeclass instance synthesis, which automatically inserts premise references invisible to the proof author. Isolating these synthesized edges would separate the \emph{language infrastructure} layer from the \emph{mathematical content} layer identified qualitatively in Remark~\ref{rem:two-layers}.
+
+\begin{definition}[Typeclass instance graph]\label{def:tc-graph}
+Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations and $\mathcal{I} \subset \mathcal{D}$ the set of all instance declarations. For each instance $i \in \mathcal{I}$, let $\mathrm{target}(i) \in \mathcal{C}$ be the class it provides and $\mathrm{requires}(i) \subseteq \mathcal{C}$ the classes it depends on as preconditions. The \emph{typeclass instance graph} is
+\[
+  G_{\mathrm{tc}} = (\mathcal{C},\, E_{\mathrm{tc}}), \quad (C_1, C_2) \in E_{\mathrm{tc}} \iff \exists\, i \in \mathcal{I} : \mathrm{target}(i) = C_2 \land C_1 \in \mathrm{requires}(i).
+\]
+\end{definition}
+
+\begin{definition}[Synthesized vs.\ explicit edge partition]\label{def:synth-partition}
+For each edge $(a, b) \in E_{\mathrm{thm}}$, define
+\[
+  \mathrm{synth}(a, b) =
+  \begin{cases}
+    1 & \text{if } b \text{ was inserted by typeclass instance synthesis during elaboration}, \\
+    0 & \text{if } b \text{ was explicitly referenced in the source}.
+  \end{cases}
+\]
+This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
+\end{definition}
+
+The typeclass system is Lean~4's mechanism for ad-hoc polymorphism---a \emph{tool-specific} organizational layer that has no analog in traditional mathematics. Baanen~\cite{baanen2022} demonstrated that typeclass design choices (bundled vs.\ unbundled) significantly reshape dependency structure; $G_{\mathrm{tc}}$ would isolate this effect. Recomputing centrality on the ``math-only'' subgraph $G_{\mathrm{thm}} \setminus E_{\mathrm{synth}}$ would test whether the hub structure shifts from language infrastructure (\decl{OfNat.ofNat}, \decl{DFunLike.coe}) to mathematical content (\decl{CategoryTheory.Category}, \decl{Real}).
+
+\paragraph{Coercion chains.}
+A complementary source of automatically inserted edges is the \emph{coercion} system. Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} $G_{\mathrm{coe}} = (\mathcal{T},\, E_{\mathrm{coe}})$ has types as nodes and coercion instances as edges: $(T_1, T_2) \in E_{\mathrm{coe}}$ if there exists a coercion $T_1 \to T_2$ registered in the environment. Long coercion chains (paths of length $\ge 3$ in $G_{\mathrm{coe}}$) degrade compilation performance and can produce opaque error messages; the diameter and maximum chain length of $G_{\mathrm{coe}}$ directly measure this fragility. Together, $G_{\mathrm{tc}}$ and $G_{\mathrm{coe}}$ capture the two main mechanisms by which Lean's type system silently inflates the dependency graph.
+
+\paragraph{Planned analyses.}
+Measure $\sigma$ to quantify the typeclass overhead. Recompute degree distributions and centrality rankings on $G_{\mathrm{thm}} \setminus E_{\mathrm{synth}}$. Compare community structure with and without synthesized edges. Compute the diameter and chain-length distribution of $G_{\mathrm{coe}}$.
+
+\emph{Empirical analysis requires tracing typeclass instance synthesis and coercion resolution during elaboration and is deferred to future work.}
+
+\subsubsection{The Visibility Graph}
+\label{sec:visibility-graph}
+
+The module graph $G_{\mathrm{module}}$ (Definition~\ref{def:module-graph}) treats all \texttt{import} edges uniformly. Since November 2025, Lean~4's module system~\cite{lean4modules} distinguishes \texttt{public import} from \texttt{import} (private), allowing modules to selectively limit transitive visibility.
+
+\begin{definition}[Visibility graph]\label{def:visibility-graph}
+For each import edge $(m_i, m_j) \in E_{\mathrm{mod}}$, let
+\[
+  \mathrm{vis}(m_i, m_j) \in \{\texttt{public},\, \texttt{private}\}.
+\]
+The \emph{public import subgraph} is
+\[
+  G_{\mathrm{mod}}^{\mathrm{pub}} = (\mathcal{M},\, \{(m_i, m_j) \in E_{\mathrm{mod}} : \mathrm{vis}(m_i, m_j) = \texttt{public}\}).
+\]
+The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actual namespace visibility scope---which declarations are transitively accessible from which modules.
+\end{definition}
+
+The transition from all-public to selective-private imports is a live instance of \emph{organizational restructuring}---the community actively reshaping the module system to reduce unintended transitive dependencies and compilation cascades. Our snapshot (February 2026) captures a transitional moment where most imports remain \texttt{public}; as private imports are adopted, the 17.5\% redundancy rate (\S\ref{sec:transitive-reduction}) and the 92.2\% indirect dependency rate (\S\ref{sec:import_vs_declaration}) will both change.
+
+\paragraph{Import utilization.}
+The visibility graph refines import edges by access scope; a complementary refinement measures how much of an imported module is actually \emph{used}. For each import edge $(m_i, m_j) \in E_{\mathrm{mod}}$, define the \emph{import utilization}
+\[
+  \mathrm{util}(m_i, m_j) = \frac{|\mathrm{refs}(m_i) \cap \mathcal{D}_{m_j}|}{|\mathcal{D}_{m_j}|},
+\]
+where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined in module~$m_j$ and $\mathrm{refs}(m_i) = \bigcup_{d \in \mathcal{D}_{m_i}} \mathrm{refs}(d.\pi)$ is the set of all premises invoked by declarations in~$m_i$. If the distribution of $\mathrm{util}$ is heavily right-skewed---most imports using only $1$--$2\%$ of the imported module's declarations---this provides direct, quantitative evidence that the current module granularity is too coarse and that finer-grained splitting would reduce unnecessary transitive exposure. This metric can be computed from existing data ($G_{\mathrm{file}}$ overlaid on $G_{\mathrm{module}}$) without metaprogramming access.
+
+\paragraph{Planned analyses.}
+Measure the current adoption rate of private imports. Compare the transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ with that of $G_{\mathrm{mod}}$. Simulate the effect of converting all transitively-redundant imports to private. Compute the distribution of $\mathrm{util}(m_i, m_j)$ across all import edges and identify modules with systematically low utilization as candidates for splitting.
+
+\emph{Import utilization can be computed from existing data; visibility analysis requires syntax-level extraction of import modifiers. Both are deferred to future work.}
+
+\subsubsection{The Build Graph}
+\label{sec:build-graph}
+
+The module graph $G_{\mathrm{module}}$ records \texttt{import} declarations, but the actual compilation order is determined by Lean's build system (Lake), which derives a build DAG from import dependencies and schedules modules for parallel or serial compilation. The \emph{critical path} of this DAG---the longest weighted path from source to sink---determines the minimum wall-clock build time, even with unlimited parallelism.
+
+\begin{definition}[Build graph]\label{def:build-graph}
+The \emph{build graph} is a weighted DAG
+\[
+  G_{\mathrm{build}} = (\mathcal{M},\, E_{\mathrm{mod}},\, w),
+\]
+where $w : \mathcal{M} \to \mathbb{R}_{\ge 0}$ assigns to each module~$m$ its compilation time (in seconds). The \emph{critical path} is the longest path in $G_{\mathrm{build}}$ under the weight function
+\[
+  W(\gamma) = \sum_{m \in \gamma} w(m),
+\]
+maximized over all directed paths~$\gamma$ from a source to a sink. The modules on this path are the \emph{compilation bottlenecks}: no amount of parallelism can reduce build time below~$W(\gamma^*)$.
+\end{definition}
+
+This graph directly substantiates the ``narrow waist creates compilation bottlenecks'' claim made in \S\ref{sec:sa-robustness} and \S\ref{sec:practice}. The current paper identifies bottleneck \emph{candidates} via centrality rankings (PageRank, betweenness), but centrality is a topological proxy---it does not account for the actual time cost of compiling each module. Huch and Wenzel~\cite{huch2024} demonstrate that DAG-based scheduling enables $>100\times$ speedup for the Isabelle AFP; Baanen et al.~\cite{baanen2025} report $6$--$33\%$ speedups from structural refactors in \module{Mathlib}. With per-module timing data, we could identify whether the critical path runs through the same high-centrality modules or through unexpected bottlenecks invisible to topological analysis.
+
+\paragraph{Planned analyses.}
+Profile a full \module{Mathlib} build to obtain $w(m)$ for each module. Compute the critical path and compare its constituent modules with centrality rankings from \S\ref{sec:centrality}. Measure the potential speedup from parallelization: the ratio of sequential build time ($\sum_m w(m)$) to critical path length ($W(\gamma^*)$).
+
+\emph{Empirical analysis requires profiling a full Lake build with per-module timing instrumentation and is deferred to future work.}
+
+\subsubsection{The File Co-Modification Graph}
+\label{sec:co-edit-graph}
+
+The module graph captures \emph{structural coupling} (explicit import dependencies), but software engineering research has long recognized a complementary form of coupling: \emph{logical coupling}, measured by co-modification frequency in version control~\cite{decan2019}. Two modules that are frequently modified together---even without a direct import relationship---likely share a hidden dependency that the import graph does not capture.
+
+\begin{definition}[Co-modification graph]\label{def:co-edit-graph}
+Let $\{p_1, \ldots, p_R\}$ be the set of merged pull requests to \module{Mathlib} over a given time window. For each PR~$p_r$, let $\mathrm{files}(p_r) \subseteq \mathcal{M}$ be the set of modules modified. The \emph{co-modification graph} is the weighted undirected graph
+\[
+  G_{\mathrm{co}} = (\mathcal{M},\, E_{\mathrm{co}},\, w_{\mathrm{co}}), \quad w_{\mathrm{co}}(m_i, m_j) = |\{p_r : m_i, m_j \in \mathrm{files}(p_r)\}|.
+\]
+An edge exists between $m_i$ and $m_j$ if $w_{\mathrm{co}}(m_i, m_j) \ge 1$.
+\end{definition}
+
+This graph captures traces of \emph{human organizational process} from a data source entirely independent of Lean's compilation model: the Git history. Comparing $G_{\mathrm{co}}$ with $G_{\mathrm{module}}$ tests whether structural coupling predicts logical coupling. Module pairs with high co-modification weight but no direct import edge reveal hidden dependencies---candidates for refactoring or explicit import addition. Conversely, direct import edges with zero co-modification suggest stable, well-encapsulated interfaces.
+
+\paragraph{Planned analyses.}
+Extract $G_{\mathrm{co}}$ from the \module{Mathlib} Git log (approximately ${\sim}20{,}000$ merged PRs as of February 2026). Compute the overlap between high-weight edges in $G_{\mathrm{co}}$ and edges in $G_{\mathrm{module}}$. Identify module pairs with high logical coupling but no structural coupling.
+
+\emph{This data can be extracted directly from the Git history using standard tools (no metaprogramming access required) and is deferred to future work.}
+
+\subsubsection{Declaration Metadata as Node Attributes}
+\label{sec:decl-metadata}
+
+Beyond graph topology, declarations carry rich metadata that can serve as node-level attributes, enabling correlation analyses between structural position and declaration properties.
+
+\begin{definition}[Declaration attributes]\label{def:decl-attributes}
+The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})$ maps each declaration to its set of Lean attributes, where $\mathcal{A} = \{\texttt{simp},\, \texttt{ext},\, \texttt{to\_additive},\, \texttt{instance},\, \texttt{reducible},\, \texttt{inline},\, \ldots\}$. In particular:
+\begin{itemize}
+  \item The \emph{proof complexity} $\kappa(d) = |\{\text{Expr nodes in } d.\pi\}|$ measures proof term size.
+  \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.
+  \item Two declarations satisfy $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs.
+\end{itemize}
+\end{definition}
+
+These attributes bridge the two dimensions of our framework. Proof complexity~$\kappa$ and tactic usage characterize the \emph{process} layer (how theorems are proved), while $\upsilon$ and the \texttt{to\_additive} equivalence characterize \emph{tool-mediated structure}---features arising from Lean's type system and metaprogramming infrastructure rather than mathematical content. In particular, computing~$\phi$ would convert our qualitative observation about semantic flattening (\S\ref{sec:thm-vs-lemma}) into a precise count of automatically generated mirrors.
+
+\paragraph{Definitional unfolding depth.}
+Lean's type checker relies on \emph{definitional equality}: to verify that two types match, the kernel may need to unfold a chain of definitions. The \emph{unfolding depth} $\delta(d)$ counts the maximum number of definition expansions the kernel performs during type-checking of~$d$. This quantity is invisible in the explicit dependency graph $G_{\mathrm{thm}}$---it does not appear in $\mathrm{refs}(d.\pi)$---yet it constitutes a form of \emph{implicit coupling}: declarations with high~$\delta$ are brittle, because changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged. The distribution of~$\delta$ across $\mathcal{D}$ measures the kernel's hidden workload, complementing the explicit dependency structure captured by $G_{\mathrm{thm}}$.
+
+\paragraph{Planned analyses.}
+Correlate $\kappa(d)$ with topological depth $\mathrm{depth}(d)$ and in-degree $\deg^{-}(d)$. Test whether universe-polymorphic declarations ($\upsilon(d) \ge 1$) have systematically higher in-degree. Precisely count \texttt{to\_additive} mirrors to quantify semantic flattening. Compute tactic usage distributions per top-level namespace and measure proof methodology variation across mathematical domains via Jensen--Shannon divergence. Correlate $\delta(d)$ with compilation time to test whether unfolding depth is a significant contributor to build bottlenecks.
+
+\emph{Empirical analysis requires metaprogramming access to Lean's \texttt{Environment} API (for attributes, proof term sizes, universe parameters, and kernel-level unfolding traces) and is deferred to future work.}
+
+\subsubsection{Temporal Graph Sequences}
+\label{sec:temporal-graphs}
+
+All analyses in this paper are computed from a single snapshot. A longitudinal extension would test whether the structural properties we observe are stable invariants of mathematical content or transient features of a particular development phase.
+
+\begin{definition}[Temporal graph sequence]\label{def:temporal-sequence}
+Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib} commits. Each commit $c_t$ yields an environment $\mathcal{E}_t$ and corresponding graphs $G_{\mathrm{thm}}^{(t)} = (\mathcal{D}_t, E_t)$ and $G_{\mathrm{mod}}^{(t)} = (\mathcal{M}_t, F_t)$. Define:
+\begin{itemize}
+  \item \emph{Growth indicators}: $|\mathcal{D}_t|$, $|\mathcal{M}_t|$, and edge density $|E_t| / |\mathcal{D}_t|$.
+  \item \emph{Structural stability}: community persistence $\mathrm{NMI}(\mathcal{L}^{(t)}, \mathcal{L}^{(t+1)})$, hub turnover (rank correlation of in-degree rankings between consecutive snapshots), and redundancy trend $r(G_{\mathrm{mod}}^{(t)})$ over time.
+  \item \emph{Structural events}: discontinuities in the time series coinciding with known events (e.g., the Lean~3$\to$4 port via Mathport, 2023; the module system introduction, November 2025).
+\end{itemize}
+\end{definition}
+
+The temporal dimension directly captures the \emph{process} of organizational restructuring. If \module{Mathlib}'s dependency structure is primarily determined by inherited mathematical logic, structural indicators should be stable under refactoring; if organizational process dominates, we expect significant structural change at refactoring events while mathematical content remains constant. The Lean~3$\to$4 port is a natural experiment: identical mathematical content, entirely rewritten proof infrastructure.
+
+\paragraph{Planned analyses.}
+Construct $G^{(t)}$ for monthly snapshots spanning the post-port era (2023--2026). Track growth indicators, structural stability, and redundancy trends. Test whether the $17.5\%$ redundancy rate and $0.107$ cohesion are increasing, stable, or approaching critical thresholds.
+
+\emph{Longitudinal analysis requires running the extraction pipeline across multiple historical commits and is deferred to future work.}
