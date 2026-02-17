@@ -1,0 +1,34 @@
+
+\begin{figure}[h]
+	\centering
+        \includegraphics[width=0.84\linewidth]{figs/miniF2F_SOTA.pdf}
+		\caption{Growth in MiniF2F-Test performance over time.}
+		\label{fig:miniF2F_SOTA}
+	\vspace{-0.5in}
+\end{figure}
+
+\section{Introduction}
+
+Recent advances in large language models (LLMs) have shown extending reasoning lengths through natural language can significantly boost performance on math benchmarks such as MATH and AIME \citep{openai2024openaio1card,deepseekai2025deepseekr1incentivizingreasoningcapability}. 
+Training such models requires reinforcement learning (RL) on verifiable answers. 
+It is extremely difficult to automatically, or even manually, verify a proof in natural language since each step must be carefully checked for correctness \citep{petrov2025proofbluffevaluatingllms}.
+This poses significant challenges for applying reinforcement learning to the training of large language models to prove mathematical statements.
+Unlike natural language, formal languages such as Lean can provide a clear and automatic signal on the correctness of a formalized proof.    % which is suitable for RL.
+A noteworthy work from AlphaProof \citep{alphaproof} uses Lean to successfully solve 3 problems from the 2024 International Mathematical Olympaid (IMO).
+AlphaProof demonstrates that LLMs using formal language are capable of proving very challenging problems that LLMs using natural language fail to prove.
+
+There are two types of LLM formal provers, step-level provers \citep{alphaproof,polu2022formal,wu2024LeangithubcompilinggithubLean,wu2024internlm25stepproveradvancingautomatedtheorem,xin2025bfsproverscalablebestfirsttree} and whole-proof generation provers\citep{xin2025deepseekproverv,dong2025stpselfplayllmtheorem}.
+Step-level provers incrementally generate Lean code line-by-line. While this enables close interaction with the Lean environment, it requires special scaffolding to generate a complete Lean proof, and the interaction is often too granular to allow high-level reasoning.
+In contrast, whole-proof models generate an entire Lean proof at once, but typically lack interaction with the Lean compiler.
+Recent work has shown that combining whole-proof models with long chain-of-thought reasoning \citep{kimina,deepseek-v2,lin2025goedel} substantially outperforms step-level provers.
+% interact more
+In this work, we propose \textbf{Seed-Prover}, a whole-proof model with following features:
+\begin{itemize}
+    \item \textbf{Lemma-Style Proving}: Seed-Prover tries to generate useful intermediate lemmas before proving the main statement. These lemmas serve as shared knowledge across different inference paths.
+    \item \textbf{Iterative Proof Refinement}: Seed-Prover iteratively refines its proof based on Lean compiler feedback, previous proved lemmas, and self-summarization.
+    \item \textbf{Test-Time Scaling}: We implement a three-tiered inference strategy that enables Seed-Prover to think both deeply and broadly—allocating thinking budget to fine details while exploring interesting properties.
+    \item \textbf{SOTA Performance}: Seed-Prover proves 5 out of 6 problems in IMO 2025, saturates MiniF2F \citep{zhengminif2f} (shown in Figure~\ref{fig:miniF2F_SOTA}), and outperforms prior work by up to $3\times$ on multiple formal benchmarks.
+\end{itemize}
+
+% Seed-Geometry
+Due to the lack of sufficient geometry support in Lean, Seed-Prover incorporates a dedicated geometry reasoning engine \textbf{Seed-Geometry}. Similar to existing line of efforts in AlphaGeometry \cite{trinh2024solving,chervonyi2025gold} and TongGeometry \cite{zhang2024proposing}, Seed-Geometry follows the forward-chaining design in the reasoning engine implementation, where the system derives all known facts by checking applicable rules until closure is reached. By backward-tracing fact dependencies, Seed-Geometry identifies the minimum dependency relations in a geometry problem's configuration, seperating the problem context from the auxiliary constructions necessary to prove a problem. Using statistics derived from more than past 20 years of math olympiad competitions, Seed-Geometry performs extensive search in the geometry space defined by its dedicated domain-specific language and establishes a repository of 230 million unique geometry problems requiring auxiliaries. A Seed model trained on such dedicated geometry data becomes an exceptionally effective neuro-symbolic geometry prover, where it fills in the missing auxiliary geometry elements and the geometry reasoning engine performs step-by-step forward-chaining, completing the final proof of a problem. In experiments, Seed-Geometry solves 43 of the IMO-AG-50 (\textit{vs.} 42 by AlphaGeometry 2), a benchmark that curates geometry problems of IMO from 2000 to 2024. It also sets a new state-of-the-art on the IMO shortlist geometry problems from 2000 to 2022, and notably solves the geometry problem of IMO 2025 under just 2 seconds.

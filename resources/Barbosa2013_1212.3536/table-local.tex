@@ -1,0 +1,36 @@
+\begin{tabular}{lll}
+\hline
+Designation & Formula & Reference(s) \\
+\hline
+&&\\[-7pt]
+Betweenness centrality &
+$\displaystyle{B_i=\sum_{j\neq i}\sum_{{k\neq i}\atop{k\in R_j}}
+\frac{\sigma_{jk}(i)}{\sigma_{jk}}}$ &
+\cite{a71,f77}\\[22pt]
+Stress centrality &
+$\displaystyle{S_i=\sum_{j\neq i}\sum_{{k\neq i}\atop{k\in R_j}}
+\sigma_{jk}(i)}$ &
+\cite{s53}\\[22pt]
+Closeness centrality &
+$\displaystyle{C_i=\left\{\begin{array}{ll}
+\displaystyle
+\frac{1}{\sum_{j\in R_i}d_{ij}},&\mbox{if $R_i\neq\emptyset$}\\\hfill 0,&\mbox{otherwise}
+\end{array}\right.}$ &
+\cite{s66}\\[22pt]
+Graph centrality &
+$\displaystyle{G_i=\left\{\begin{array}{ll}
+\displaystyle
+\frac{1}{\max_{j\in R_i}d_{ij}},&\mbox{if $R_i\neq\emptyset$}\\\hfill 0,&\mbox{otherwise}
+\end{array}\right.}$ &
+\cite{hh95}\\[22pt]
+HITS update rule for hubs &
+$\displaystyle{y_i:=\sum_{j\in O_i}x_j}$ &
+\cite{k99}\\[22pt]
+HITS update rule for authorities &
+$\displaystyle{x_i:=\sum_{j\in I_i}y_j}$ &
+\cite{k99}\\[22pt]
+Page-rank update rule with damping factor $0.85$ &
+$\displaystyle{\rho_i:=0.15+0.85\sum_{j\in I_i}\frac{\rho_j}{\delta_j^-}}$ &
+\cite{bp98}\\[15pt]
+\hline
+\end{tabular}

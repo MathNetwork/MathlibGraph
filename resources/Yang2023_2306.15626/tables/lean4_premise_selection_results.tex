@@ -1,0 +1,13 @@
+\begin{table*}[ht]
+  \centering
+  \caption{Premise selection testing performance on LeanDojo Benchmark 4 (Lean 3 results in  Table~\ref{table:premise_selection_results}). We train and evaluate two models independently using different data splits (\texttt{random} and \texttt{novel\_premises}). R@k is the recall for the top $k$ retrieved premises, and MRR is the mean reciprocal rank metric.}
+  \begin{tabular}{@{}lcccccc@{}}
+    \toprule
+     Method & \multicolumn{3}{c}{\texttt{random}} & \multicolumn{3}{c}{\texttt{novel\_premises}} \\
+     \cmidrule(r){2-4} \cmidrule(r){5-7} & R@1 & R@10 & MRR & R@1 & R@10 & MRR \\
+    \midrule
+    Ours & 12.8 & 34.7 & 0.29 & 9.8 & 32.1 & 0.24 \\
+    \bottomrule
+  \end{tabular}
+  \label{table:lean4_premise_selection_results}
+\end{table*}

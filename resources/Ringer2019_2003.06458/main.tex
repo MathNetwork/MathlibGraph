@@ -1,0 +1,139 @@
+\documentclass[PGL, biber]{nowfnt} % creates the journal version
+% \documentclass{now}  % creates the book pdf version
+
+% begin Sunrise stuff
+\brokenpenalty=10000
+\displaywidowpenalty=0
+\clubpenalty=10000
+\widowpenalty=10000
+\setcounter{topnumber}{10}
+\def\topfraction{1}
+\setcounter{bottomnumber}{10}
+\def\bottomfraction{0.8}
+\setcounter{totalnumber}{10}
+\def\textfraction{0}
+\renewcommand{\floatpagefraction}{0.95}
+\hbadness=10000
+\vbadness=10000
+\interfootnotelinepenalty10000
+\raggedbottom
+\frenchspacing
+\catcode`\@=11
+\let\cite\citet
+\catcode`\@=12
+% end Sunrise stuff
+
+\usepackage[utf8]{inputenc}
+
+% https://tex.stackexchange.com/questions/299969/titlesec-loss-of-section-numbering-with-the-new-update-2016-03-15
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\ttlh@hang}{\parindent\z@}{\parindent\z@\leavevmode}{}{}
+\patchcmd{\ttlh@hang}{\noindent}{}{}{}
+\makeatother
+
+% the now document class sets various dimensions, so be sure to *not* set
+% or alter dimensions in your latex code.
+% be sure to remove all manual formatting commands such \newpage, \clearpage.
+
+% a few definitions that are *not* needed in general:
+
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage[misc]{ifsym}
+\usetikzlibrary{shapes,shapes.geometric,arrows,automata,snakes}
+
+\input{macros}
+\input{lstcoq}
+
+
+\title{QED at Large: A Survey of Engineering of Formally Verified Software}
+
+\booltrue{authortwocolumn}
+\maintitleauthorlist{
+Talia Ringer \\
+University of Washington \\
+tringer@cs.washington.edu
+\and
+Karl Palmskog \\
+University of Texas at Austin \\
+palmskog@acm.org
+\and
+Ilya Sergey \\
+Yale-NUS College\\ and\\ National University of Singapore\\
+ilya.sergey@yale-nus.edu.sg
+\and
+Milos Gligoric \\
+University of Texas at Austin \\
+gligoric@utexas.edu
+\and
+Zachary Tatlock \\
+University of Washington \\
+ztatlock@cs.washington.edu
+}
+
+%ISSUE DATA AS PROVIDED BY NOW
+\issuesetup
+{%
+ copyrightowner={Author1 and Author2},
+ volume        = xx,
+ issue         = xx,
+ pubyear       = 2019,
+ isbn          = xxx-x-xxxxx-xxx-x,
+ eisbn         = xxx-x-xxxxx-xxx-x,
+ doi           = 10.1561/XXXXXXXXX,
+ firstpage     = 102, %Explain
+ lastpage      = 281
+ }
+
+%\addbibresource{bib/proof-engineering.bib}
+%\addbibresource{bib/proceedings.bib}
+\addbibresource{proof-engineeringSunriseUpdated.bib}
+\addbibresource{proceedingsSunrise.bib}
+
+%\usepackage{mwe}
+
+%AUTHORS FOR ABSTRACT PAGE
+\author[1]{Talia Ringer}
+\author[2]{Karl Palmskog}
+\author[3]{Ilya Sergey}
+\author[4]{Milos Gligoric}
+\author[5]{Zachary Tatlock}
+
+\affil[1]{University of Washington; tringer@cs.washington.edu}
+\affil[2]{University of Texas at Austin; palmskog@acm.org}
+\affil[3]{Yale-NUS College; ilya.sergey@yale-nus.edu.sg}
+\affil[4]{University of Texas at Austin; gligoric@utexas.edu}
+\affil[5]{University of Washington; ztatlock@cs.washington.edu}
+
+%\articledatabox{\nowfntstandardcitation}
+
+\begin{document}
+
+%\frontmatter  % title page, contents, catalog information
+
+%\maketitle
+
+%\tableofcontents
+
+%\mainmatter
+
+\makeabstracttitle
+
+\input{abstract}
+\input{intro}
+\input{applications}
+\input{trusted}
+\input{automation}
+\input{organization}
+\input{development}
+\input{conclusion}
+\input{acknowledgements} 
+
+\backmatter  % references
+\printbibliography
+
+\end{document}

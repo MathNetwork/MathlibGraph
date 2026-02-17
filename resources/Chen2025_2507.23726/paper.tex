@@ -1,0 +1,81 @@
+
+\documentclass[]{bytedance_seed}
+
+% single-column: \documentclass[]{bytedance_seed}, 
+%Please prioritize using single-column。
+
+% twocolumn: \documentclass[twocolumn]{bytedance_seed}
+
+\usepackage[toc,page,header]{appendix}
+\usepackage{tablefootnote}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs} % For better table rules
+\usepackage{array}    % For column formatting
+\usepackage{pdflscape} % For landscape orientation
+\usepackage{cleveref}
+\usepackage{pdfpages}
+
+
+\crefname{table}{Table}{Tables} % Sets the singular and plural forms
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{minitoc}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{amssymb}
+
+
+%%%%%%%%%%%%%%%%%%%%
+\definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
+\definecolor{tacticcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
+\definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+\definecolor{attributecolor}{rgb}{0.7, 0.1, 0.1} % red
+\def\lstlanguagefiles{lstlean.tex}
+\title{Seed-Prover: Deep and Broad Reasoning for\\ Automated Theorem Proving}
+
+\author{ByteDance Seed AI4Math}
+
+
+\abstract{
+LLMs have demonstrated strong mathematical reasoning abilities by leveraging reinforcement learning with long chain-of-thought, yet they continue to struggle with theorem proving due to the lack of clear supervision signals when solely using natural language. 
+Dedicated domain-specific languages like Lean provide clear supervision via formal verification of proofs, enabling effective training through reinforcement learning. 
+In this work, we propose \textbf{Seed-Prover}, a lemma-style whole-proof reasoning model. Seed-Prover can iteratively refine its proof based on Lean feedback, proved lemmas, and self-summarization.
+To solve IMO-level contest problems, we design three test-time inference strategies that enable both deep and broad reasoning. Seed-Prover proves $78.1\%$ of formalized past IMO problems, saturates MiniF2F, and achieves over 50\% on PutnamBench, outperforming the previous state-of-the-art by a large margin.
+To address the lack of geometry support in Lean, we introduce a geometry reasoning engine \textbf{Seed-Geometry}, which outperforms previous formal geometry engines.
+We use these two systems to participate in IMO 2025 and fully prove 5 out of 6 problems.
+This work represents a significant advancement in automated mathematical reasoning, demonstrating the effectiveness of formal verification with long chain-of-thought reasoning.
+}
+
+\checkdata[Project Page]{\url{https://github.com/ByteDance-Seed/Seed-Prover}}
+
+\begin{document}
+\maketitle
+\vspace{-20pt}
+%不需要目录就注释掉 注意目录不要和第一页放在一块 要有\newpage
+%\newpage
+%\tableofcontents
+%\newpage
+
+\input{sections/introduction}
+\input{sections/approach}
+
+\input{sections/experiments}
+\input{sections/conclusion}
+
+\clearpage
+
+\bibliographystyle{plainnat}
+\bibliography{main}
+
+\clearpage
+\beginappendix
+\input{sections/appendix}
+
+\end{document}

@@ -1,0 +1,17 @@
+\begin{table*}[ht]
+  \centering
+  \caption{Premise selection testing performance. For each method, we train and evaluate two models independently using different data splits (\texttt{random} and \texttt{novel\_premises}; see Sec.~\ref{sec:leandojo}). R@k is the recall for the top $k$ retrieved premises, and MRR is the mean reciprocal rank metric (higher is better). Our retriever outperforms BM25 and ablations. Results for Lean 4 are in Appendix~\ref{appendix:lean4}.}
+  \begin{tabular}{@{}lcccccc@{}}
+    \toprule
+     Method & \multicolumn{3}{c}{\texttt{random}} & \multicolumn{3}{c}{\texttt{novel\_premises}} \\
+     \cmidrule(r){2-4} \cmidrule(r){5-7} & R@1 & R@10 & MRR & R@1 & R@10 & MRR \\
+    \midrule
+    BM25 & 6.7 & 17.2 & 0.15 & 5.9 & 15.5 & 0.14\\
+    \quad w/ all premises & 1.9 & 11.9 & 0.08 & 2.1 & 12.4 & 0.08 \\
+    Ours & \textbf{13.5} & \textbf{38.4} & \textbf{0.31} & \textbf{9.1} & \textbf{27.6} & \textbf{0.24} \\
+    \quad w/ all premises & 11.7 & 36.2 & 0.27 & 7.1 & 23.1 & 0.20 \\
+    \quad w/o in-file negatives & 10.8 & 33.1 & 0.25 & 7.9 & 25.7 & 0.22 \\
+    \bottomrule
+  \end{tabular}
+  \label{table:premise_selection_results}
+\end{table*}

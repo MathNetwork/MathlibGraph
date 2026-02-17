@@ -1,0 +1,308 @@
+\chapter{Foundations and Trusted Bases}
+\label{ch:foundations}
+
+We give a short overview of the pre-history (Section~\ref{sec:pre}) and early history (Section~\ref{sec:early-history}) of proof assistants, and then 
+discuss their foundations (Section~\ref{sec:foundations}) and trusted bases (Section~\ref{sec:trustedbases}). 
+%We also briefly outline the long-lived debate about the meaning and usefulness of formal proofs.
+
+\section{Proof Assistant Pre-History}
+\label{sec:pre}
+
+Specification and verification of software systems can be viewed as reducing human, informal notions and reasoning to systematic application of logical principles and axioms. From this perspective, Aristotle's systematization of the principles of correct reasoning~\citep{AristotlePriorAnalytics,sep-aristotle-logic} is arguably the oldest precursor. The proposal of \cite{Leibniz1685} to reduce human reasoning to mathematical calculation %(\emph{calculemus!}) 
+is a second important step. Leibniz also laid the foundations for symbolic propositional logic, although this was also done independently by, e.g., Boole.
+
+A later important development was the introduction of predicate logic (or \emph{predicate calculus}) by Frege in the late 19th century~\citep{Frege1893,sep-frege}. Two key innovations in Frege's logical system were (1) the introduction of \emph{quantifiers} of expressions in propositions, and (2) a notion of proof (sequences of valid inferences) for propositions with quantifiers. Frege was able to capture and prove concepts from number theory in his system from first principles. However, his system included an axiom later shown by Russell to make the system inconsistent~\citep{sep-frege-theorem}. Nevertheless, the logics of ITPs based on higher-order logic are reminiscent of Frege's logic (which included second-order quantification), and his notion of proof is similar to the modern conception.
+%\milos{Do we need to show any of these logics? I cannot imagine what it was in Frege's logic, but maybe it does not matter in the end.}
+
+In the early 20th century, Russell and Whitehead continued Frege's work of putting mathematics on a firm logical basis. Crucially, this included developing methods for avoiding inconsistencies, e.g., due to unrestricted formation of sets of entities~\citep{Russell1918}. In the end, they proved many significant theorems of arithmetic and set theory in their logical system by rigorous inference~\citep{Whitehead1997}, but relied on axioms that were considered questionable at the time~\citep{sep-principia-mathematica}; this is echoed in more recent concerns for philosophical justification of the basis for the logical system underpinning a proof assistant~\citep{Barras2010}.
+%In addition, the lines of demarcation between expressiveness and inconsistency in logical systems is still being actively explored~\revisit{[CITE]}.
+\citet{Goedel1930} established the connection between truth and provability for \emph{first-order} predicate logic, showing that proofs of true propositions can always be constructed, in principle (systems of inference rules can be made \emph{complete}). However, he then subsequently established that even modest extensions of expressibility in first-order logic lead to \emph{incompleteness}~\citep{Goedel1931}: there can be no system that allows constructing proofs for all true propositions. Together with other negative results, e.g., by \cite{Tarski1936}, this ended the search for a single universal logical system as a foundation for mathematics and all mathematical endeavors.
+
+At roughly the same time, a theoretical basis for computation and computer programs was given by \cite{Church1936} in the $\lambda$-calculus, and computers were developed more practically by von Neumann and others in the 1940s~\citep{vonNeumann1993}. As pointed out by \cite{Backus1978}, the $\lambda$-calculus and computers as described by von Neumann gave rise to two distinct program styles: the functional style is characterized by computational steps as reductions of \emph{expressions} and an absence of state, and the imperative style is characterized by computation as transitions between complex states and \emph{statements} that effect such transitions.
+
+Also around that time, \cite{Curry1934} observed a connection between axioms and type systems.
+This and later observations culminated in 1969 (published in \cite{Howard1980}) with the principle of \emph{formulae-as-types},
+also known as \emph{propositions as types}, the Curry-Howard correspondence, or the Curry-Howard isomorphism.
+This principle established the connection between programs and proofs, which provided groundwork for the
+later development of ITPs.
+
+\cite{turing1949} first considered the problem of correctness for an imperative program that computes the factorial of its input by repeated additions. He described how full correctness could be decomposed into verifying assertions associated with certain points in the code (today called \emph{invariants}), and how to ensure program termination by finding a consistently decreasing quantity (today called a \emph{variant} or \emph{ranking function}). However, this work remained obscure, and more systematic approaches for reasoning about imperative programming languages were presented only late in the 1960s~\citep{Floyd1967Flowcharts,Hoare:CACM69}.
+
+\cite{McCarthy1960} proposed a practical realization of the functional style of programming in the form of the Lisp language. \cite{McCarthy1963} also highlighted the problem of putting computing and programs on a formal foundation. To this end, he proposed several formalisms for capturing different classes of functions, and showed how to reason about the equivalence of such functions. He also described how datatypes could be constructed recursively and be subject to inductive reasoning. \cite{Burstall1969} showed how to reason about more practical programs in the functional style using the principle of structural induction.
+
+Research on logical reasoning using computers initially took two main forms~\citep{Warden2009Book}: (1)~fully automated proofs of propositions in simple proof systems such as Robinson's resolution system~\citep{Robinson1965}, and (2)~computer checking of the validity of single steps in human-constructed mathematical proofs, as in the Automath system by de~Bruijn~\citep{DeBruijn1970,DeBruijn1994}; Automath is notable for representing both propositions and proofs in the same formal system (a variant of the $\lambda$-calculus). The former approach is limited by the difficulty (and resulting long machine time) of finding proofs algorithmically and its bounds on expressiveness of propositions, while the latter is limited by the ingenuity (and labor supply) of the humans that construct the proofs that the system checks.
+The legacy of Automath includes the \emph{de~Bruijn principle}~\citep{Barendregt2002}, which states that proof-checking programs should be as small and simple as possible to facilitate high assurance and trustworthiness.
+
+%\milos{It would be so nice if there could be a timeline going down
+%  this section on the side of the paper, but I guess that is mostly
+%  impossible to fit properly (as we are not necessarily following
+%  years across sections).}
+
+\section{Proof Assistant Early History}
+\label{sec:early-history}
+
+In the early 1970s, Milner proposed an approach to computer proofs in between full automation and basic inference checking. One of his insights was that fine-grained automation can be directed by human ingenuity through so-called \emph{proof tactics} (Section~\ref{sec:tactics}), alleviating the burden on users in Automath-style systems. He also chose an underlying formal system (Scott's logic of computable functions~\citep{Scott1993}) that could represent concepts familiar to computer scientists and programmers, such as integers, lists, and computer programs themselves~\citep{Gordon2000}. The first implementation of his approach, called Stanford LCF~\citep{Milner1972b}, provided a workflow still used in several modern proof assistants, where the user inputs a command (e.g., a single tactic to apply to attempt to reach the current proof goal) and the system executes the command, resulting in a complete proof or in a number of subgoals. Although tactics could be complex, the system guaranteed that a proof reported as finished could be exported and verified independently by an Automath-style checker~\citep{Warden2009Book}.
+
+Limitations on the flexibility and scalability of Stanford LCF prompted Milner to develop ML (Meta Language), a programming language for use in a new version of LCF. ML was a typed language, and Milner defined a theorem in LCF as an abstract data type whose predefined values were instances of axioms and whose operations were inference rules. This technique, which persists in some proof assistants today, is usually referred to as the ``LCF approach,'' and it in effect reduces the soundness of inferences in an embedded logical system to the soundness of the type system (and type checking mechanism) of the host language. Adventurous and flexible tactics could be implemented in ML and applied without concern for affecting soundness, although, e.g., termination was not guaranteed.
+
+The resulting implementation of LCF in ML was called Edinburgh LCF~\citep{Milner1979}, and was further developed mainly by Paulson and Huet, who enhanced its reasoning capabilities and wrote a compiler for ML to avoid the overhead of interpretation~\citep{Gordon2000}. Paulson then went on to develop the Isabelle proof assistant framework~\citep{Paulson1994,Paulson2000}, and Huet to develop, with Coquand, the first version of the Coq proof assistant~\citep{Coquand1985}. 
+Gordon used the last version of the LCF system, called Cambridge LCF, as a basis for the HOL proof assistant~\citep{Gordon1993}. 
+The Nuprl proof assistant~\citep{Constable1986} also followed in the LCF tradition.
+Together, these proof assistants comprise the \emph{LCF family}, and their recent incarnations
+are now widely used in the research community. 
+Recently developed proof assistants such as RedPRL~\citep{redprl} and Lean~\citep{deMoura2015} have also joined the LCF family.
+ML was standardized as Standard ML~\citep{Milner1997}, and it and its dialects are widely used as implementation languages for proof assistants.
+
+While Automath targetted mathematics, the initial applications of LCF-style systems for verification was in the area of programming languages and compilers. Stanford LCF had case studies for verified compilation of an imperative language to a stack-based language~\citep{Milner1972}, and equational theories on integers and lists~\citep{Newey1973}. Edinburgh LCF had case studies for verified programming language implementations~\citep{Cohn1983}, and an important use case of HOL was hardware verification~\citep{Boulton1992}.
+
+\cite{pa-history-geuvers-sadhana09} and \cite{Harrison2014} provide a more comprehensive description of the history of ITPs.
+
+\section{Proof Assistant Foundations}
+\label{sec:foundations}
+
+The foundational theories of many ITPs are based on some variation of the theory of \emph{types}, which goes back to Russell and his attempt in the early 1900s to avoid inconsistency in formal systems by forbidding pathological cases such as the set of all sets with some arbitrary property~\citep{sep-russell-paradox}. Specifically, \cite{Church1940} introduced the \emph{simply typed} $\lambda$-calculus to avoid inconsistencies in the original $\lambda$-calculus. This typed calculus, also referred to as Higher-Order Logic (HOL), is the basis of the proof assistants HOL4 and HOL Light.
+
+While $\lambda$-calculus gives an account of computation, the principle of propositions-as-types was a later development, related to the conception of \emph{intuitionistic} mathematics by Brouwer, Heyting, Kolmogorov, and others~\citep{Heyting1956}. A basic tenet of intuitionism (or \textit{constructivism}) is to only admit mathematical objects that can be mentally construed from basic principles; postulation of existence or axiomatization is not enough. At the level of logical reasoning, this leads to intuitionists rejecting certain proofs established by an appeal to the law of excluded middle (LEM)---that all propositions are either true or false. Moreover, intuitionists interpret functions as effective methods of computation rather than, say, relations that satisfy some set of equations. Consequently, many classical mathematical theorems do not hold as typically formulated with such a restricted logic. However, similar theorems turn out to be possible to prove in many cases, as shown, e.g., by \cite{Bishop1985}. Widely used proof assistants based on intuitionistic type theories, following the tradition of \cite{MartinLof1982a, MartinLof1982b}, include Coq, Agda, and Lean.
+
+\textit{Logical frameworks}~\citep{Harper1993} support reasoning about many different logics from within a single system. 
+Automath is a logical framework, as is LF (Section~\ref{sec:dsmetatheory}).
+The popular general-purpose proof assistant Isabelle similarly supports many logics, as long as they can be made to conform to underlying framework for simply-typed higher-order natural deduction. While HOL is the most commonly used logic for Isabelle, other bundled logics include first-order logic with Zermelo-Fraenkel set theory, and constructive type theory~\citep{Paulson2000}.
+
+%\external{Lars}{It may be worth pointing out that Isabelle is not fully ``generic'', i.e., all object logics need to conform to simply-typed higher-order natural deduction (``Isabelle/Pure''). In order to implement any type theory, you'd probably only have Pure types ``object'' and ``proposition'' for example, implementing a type system on top. There have been past attempts, but they weren't really successful. One such current attempt is by Kaliszyk \& Pąk: \url{https://link.springer.com/article/10.1007/s10817-018-9479-z}.}
+
+%Martin-L{\"o}f presented a series of constructive type theories with various properties.
+
+%While Milner chose Scott's logic of computable functions as foundation for the various incarnations of LCF, later members of the LCF family use different foundations. In particular, Isabelle/HOL uses the polymorphic simply-typed $\lambda$-calculus, while Coq uses the Calculus of Inductive Constructions~\cite{Coquand1990}.
+
+%- logic of computable functions, lambda calculus
+%- first-order and higher-order logic
+%- type theories (simple, constructive, ...) and dependent types
+%- connections to axiomatic set theory
+%- comparison to first-order provers, SAT/SMT solvers, model checkers, ...
+%- do foundations matter?
+%- program verification and axiomatic, denotational, operational program semantics (Hoare, Floyd, Dijkstra, Scott, Plotkin, Milner...)
+
+\subsection{Proof Objects}
+\label{sec:proof-objects}
+
+\citet{Barendregt2013} characterizes proof assistants according to how they deal with \emph{proof objects}, i.e., the certificates that some property is true according to the underlying logic. In proof assistants closely related to LCF such as Isabelle, HOL4, and HOL Light, proof objects are normally not represented in full, but constructed and checked piece by piece, i.e., they are \emph{ephemeral}. In contrast, Coq and Agda produce complete proof objects, although such objects are usually not kept in memory once constructed, but are stored on disk.
+
+The time to construct and validate proof objects (piecemeal) in Isabelle, HOL4, and HOL Light is directly proportional to the object's size. However, checking proofs in Coq, Agda, and other proof assistants that support \emph{reflection}~\citep{Boutin1997}, i.e., computational steps in proofs, may not be proportional to proof object size. In effect, one computional step can take as long as all conventional steps combined.
+
+%The size of proof objects can be an issue with explicit proof objects, and the 
+
+\citet{Barendregt2007} uses a formula of the following kind to illustrate the usefulness of reflection and its relation to proof object sizes:
+$$
+A \defeq p \leftrightarrow (p \leftrightarrow (p \leftrightarrow (p \leftrightarrow (p \leftrightarrow (p \leftrightarrow (p \leftrightarrow (p \leftrightarrow (p \leftrightarrow p))))))))
+$$
+Proving $A$ directly requires repeated and tedious use of basic derivation rules. In addition, even if rule application is automated, the proof object will be large. Instead, it is possible to perform the proof indirectly by using computation. To this end, we define:
+$$
+B(1) \defeq p \qquad B(n + 1) \defeq p \leftrightarrow B(n)
+$$
+We then prove by induction on $n$ that whenever $n \geq 1$, we have $B(2 \times n)$. We conclude the proof of $A$ by rewriting using two equalities, $A = B(10)$ and $10 = 2 \times 5$, and apply the fact about $B$ that we just proved. In proof assistants that support reflection, the final proof object contains no trace of the proofs of the two equalities, since they are established using reductions in the logic engine. In proof assistants without reflection, full proofs must be provided for the equalities before they can be used for rewriting, resulting in large proof objects. For example, proof objects in Isabelle/HOL are typically large, but this does not necessarily mean that proof checking is slower overall, since they are ephemeral~\citep{Wenzel2015}. In effect, large proof objects in Isabelle can be viewed as a consequence of deliberate design decisions, e.g., concerning how to perform rewriting, computation, and proof checking.
+
+%However, Isabelle users are usually content without explicit proof objects.
+
+%\external{Lars}{This may be overly nitpicky, but in Isabelle, proof objects are not something that are checked in usual mode of operation. Rather, proof tactics construct values of ML type ``thm'' through a set of functions in the kernel. That is the core of the traditional HOL approach. Based on that, these kernel functions \emph{also} construct a proof object (ML type ``proof'') that contains a configurable amount of information. By default, only ``thm'' dependencies are tracked, but no derivations. It can be configured to contain quasi-full information to replay proofs, but hardly anybody or anything does that, at all.}
+
+%\milos{I liked this comparison between Coq and Isabelle. Not sure if it fits in this survey, but do we care which one is more popular (e.g., GitHub projects or %classes on one or the other).}
+
+%This so-called Poincaré Principle should be interpreted as follows: From the
+%assum ption A (s) and the side condition th a t s com putationally reduces in sev­
+%eral steps to t according to th e rew rite system R, it follows th a t A (t). The
+%alternative is th a t th e tran sitio n from A (s) to A (t) is only allowed if s = t
+%has been proved first.
+
+\subsection{Equality}
+\label{sec:equality}
+
+In logical systems and type theories, there is a conceptual difference between \emph{definitional equality}, used for proof checking (type checking), and \emph{propositional equality}, used in expressing statements to prove. 
+
+In \emph{intensional} type theories, such as the early intuitionistic type theory by \cite{MartinLof1982a} and the Calculus of Constructions~\citep{Coquand1988} (CoC), these concepts are completely distinct, which can limit what can conveniently be proven to be equal. For example, in Coq, $0+n=n$ follows by definitional equality, while $n+0=n$ requires inductive reasoning. 
+In contrast, in \emph{extensional} type theories, such as that implemented in Nuprl~\citep{Constable1986}, definitional and propositional equality coincide. However, this means that proof checking is inherently undecidable, since propositional equality can be used to specify undecidable problems. Intuitively, intensionally equal entities are such that they are ``constructed in the same way,'' while extensionally equal entities ``behave in the same way.'' Proofs in extensional systems can sometimes be translated into intensional theories after adding a few axioms~\citep{Oury2005}.
+
+Even within intensional type theories, not all notions of propositional equality are created equal.
+Homotopy type theory~\citep{univalent2013homotopy} (HoTT), for example, is an intensional type theory~\citep{nlab:intensional_type_theory} in which 
+the notion of propositional equality corresponds to type equivalence.
+A \textit{type equivalence} between types \lstinline{A} and \lstinline{B} is a function:
+\begin{lstlisting}
+f : A -> B.
+\end{lstlisting}
+for which there exists some function:
+\begin{lstlisting}
+g: B -> A.
+\end{lstlisting}
+that is a mutual inverse:
+\begin{lstlisting}
+section$\phantom{ion}$ : $\forall$ (a : A), g (f a) = a.
+retraction : $\forall$ (b : B), f (g b) = b.
+\end{lstlisting}
+\textit{Univalence} in HoTT states that propositional
+equality between types is equivalent to type equivalence between those types.
+Consequentially, in HoTT, it is possible to treat equivalent types as being the same.
+
+Both CoC and HoTT are intensional. In both of these type theories,
+propositional equality corresponds to inhabitance of the identity type. However, in HoTT,
+univalence provides a means of constructing a term of the identity type~\citep{escardo2018self}
+that is not present in CoC. This has implications for other properties of these intensional
+type theories. For example, in HoTT, as a consequence of univalence, \textit{functional extensionality} holds: functions
+can be proven equal merely from the fact that they always return the same values for the same arguments.
+This is not true in CoC, though it may be consistently assumed as an axiom.
+
+There are many other weaker equalities %(equivalence relations) 
+than propositional equality that can be useful for reasoning about programs and systems. \cite{McBride2002} proposes a heterogenous equality relation for type theories where terms can be considered equal despite having different types. As \cite{CPDT} remarks, researchers are continually discovering new ways for entities such as functions and data to be equal.
+
+\subsection{Predicativity}
+
+The term \emph{predicative} was first used by \cite{Russell1906} to describe so-called propositional functions $\phi(x)$ that define a class, i.e., for which the class $\{x : \phi(x)\}$ actually exists. He distinguished such functions from \emph{impredicative} functions for which no such class exists~\citep{Feferman2005}. For example, the propositional function specifying that a class has itself as member does not define a class, and is thus impredicative. In modern logical systems, enforcing predicativity means that when objects are defined using quantifiers, no such quantifier may be instantiated with the object itself (see Chapter 12 of \cite{CPDT}).
+
+Isabelle's meta-logic stays within predicative simple type theory~\citep{Paulson2000}.
+In Coq, the \lstinline{Type} universe (including \lstinline{Set}) is predicative, but \lstinline{Prop} is impredicative.
+Including both of these provides a balance to users of consistency with common axioms and expressivity:
+Impredicative \lstinline{Type} with \textit{large elimination} (pattern matching that returns terms of type \lstinline{Type})
+would not be consistent with LEM, which can be added as an axiom in Coq~\citep{predicavity1}.
+On the other hand, there is an informal
+consensus that the impredicativity of \lstinline{Prop} adds expressivity which is useful for expressing
+most mathematical proofs~\citep{predicavity1}.
+Otherwise, in predicative logic, some proofs are more complex~\citep{predicativity2},
+though it is not known to what extent this has practical implications on what it is possible to express in each logic.
+Thus, Coq includes an impredicative \lstinline{Prop} universe in which large elimination is disabled.
+
+\subsection{Definitional Mechanisms}
+\label{sec:definitional}
+%
+Programs of interest to computer scientists and engineers often involve classic data structures such as lists, trees, and natural numbers. These data structures can be described, e.g., by initial algebras in category theory or in fixpoint theory~\citep{Scott1970}. Most proof assistants provide mechanisms for defining such data structures; these mechanisms take one of three forms~\citep{Berghofer1999}: (1)~axiomatic, (2)~inherent, and (3)~definitional.
+
+In the first approach, taken by early users of the LCF system, datatype constructors are defined by introducing new axioms, from which induction principles are proved~\citep{Paulson1984}. In the second approach, the underlying logic is extended to support custom datatypes, which requires metatheoretic investigation, e.g., as carried out by \cite{Coquand1990} for inductive types in CoC, and then implemented in Coq by \cite{PaulinMohring1993}. In the third approach, datatype support is added on top of already existing mechanisms; this is done by \cite{Pfenning1990} for the CoC and by \cite{Berghofer1999} for HOL. Church's classic encoding of numbers as functions repeatedly applying an argument function in the $\lambda$-calculus may be considered an example of the definitional approach.
+
+Initial support for datatypes in proof assistants only included inductive datatypes, i.e., the minimal solutions to fixpoint equations. Inductive datatypes are arguably the most important, since they facilitate proofs by the fundamental technique of structural induction~\citep{Burstall1969,harper2016practical}. However, some applications require coinductive datatypes (maximal solutions), which can be accounted for in most type theories~\citep{Coquand1994}. \citet{Gimenez1995} initially implemented support for coinductive and corecursive functions in Coq, while \citet{Paulson1997} did the same for Isabelle/HOL.
+
+A long-standing issue in proof assistants is developing mechanisms for \emph{quotient types}, which are defined by dividing members of an existing type into equivalence classes. Quotients are widely used in mathematical reasoning, in particular in algebra. An initial approach to quotients in Isabelle/HOL was proposed by \cite{Slotosch1997}, with later alternatives by \cite{Paulson2006} and \cite{Huffman2013}. \cite{Cohen2013b} proposed an approach to quotient types in Coq which elides the conventional approach using \emph{setoids}~\citep{GEUVERS2002271} that significantly restricts the scope of rewriting tactics.
+
+The dependently-typed language Cedille~\citep{stump2017calculus} makes it possible to define induction principles
+in a language based on Church-encodings~\citep{Church1941}, and encodes datatypes in terms of induction principles. 
+This allows for, among other things, zero-cost reuse of functions and proofs across certain datatypes (Section~\ref{sec:proof-reuse}).
+
+Research on definitional mechanisms is still an active topic.
+\citet{Sozeau2010} designed and implemented a Coq extension for defining functions equationally which compiles definitions down to eliminators for inductive types; this extensions was used for the function \lstinline{acc} in Chapter~\ref{ch:ex}. \citet{Biendarra2017} presented a redesigned Isabelle/HOL library, following the definitional approach, for writing and reasoning about inductive and coinductive datatypes. While Coq and Agda inherently allow \emph{nonuniform} datatypes, i.e., recursive types whose arguments vary recursively, HOL systems did not support them until the advent of this library, which reduces such definitions to uniform counterparts.
+
+%\external{Lars}{Research on definitional mechanisms is still going on. Most notably, Blanchette et.al. have completely revamped Isabelle's (co)datatype mechanism \url{https://link.springer.com/chapter/10.1007/978-3-319-66167-4_1}. There are some limits to their approach (certain kinds of recursion are not admitted), which can be lifted in some circumstances \url{https://ieeexplore.ieee.org/document/8005071}.}
+
+%\external{John}{There's a lot more that could be said here, if you want to. You skip encoding datatypes in the lambda calculus (Chuch, etc, encodings), which was the intent of CoC until Geuvers proved you couldn't have an induction principle. There's MLTT in which datatypes need to be introduced one by one via introduction/elimination rules (rather than a general mechanism as in CiC and Agda). Then there's Cedille, which attempt to return to the Church-encoding style.}
+
+%\external{Giuliano}{About (2) inherent definition mechanisms in Isabelle/HOL: ``Safety and
+%conservativity of definitions in HOL and Isabelle/HOL''. Also, the type
+%to set extension is an interesting addition to the core Isabelle/HOL
+%logic ``From Types to Sets by Local Type Definitions in Higher-Order Logic''.}
+%
+%\external{Giuliano}{About (3) definitional tools. Isabelle/HOL has a number of definitional
+%packages that allow to specify objects that are then constructed
+%automatically along with proofs of their properties; for example, you
+%mention the work of Paulson on datatypes, but there is a much more
+%advanced datatype/codatatype package, e.g. ``Foundational Nonuniform
+%(Co)datatypes for Higher-Order Logic'', ``Friends with benefits:
+%Implementing corecursion in foundational proof assistants''. Also, the
+%transfer package ``Lifting and Transfer: A modular design for quotients
+%in Isabelle/HOL''}
+%
+%\external{Giuliano}{I have the impression that one view that emerged in the Isabelle/HOL
+%community is that the relatively weak expressiveness of the logic (e.g.
+%compared to Coq) (a) is not a problem because one can develop powerful
+%definitional packages on top of it, and (b) that it makes proof
+%automation easier (also, also because of definitional packages, the
+%particular set of axioms chosen, among equivalent sets, does not have
+%impact).}
+
+\subsection{Totality of Functions and Termination}
+\label{sec:totality-termination}
+The logic of Church's simply-typed $\lambda$-calculus, HOL, is a logic of total functions. This means that partial functions cannot be directly described in proof assistants based on HOL, such as Isabelle/HOL. Similarly, the Calculus of Inductive Constructions (CIC), which Coq is based on, supports only total functions. Partial functions can still be indirectly encoded in CIC and HOL, for example by (a) returning values in a monad~\citep{McBride2015}, such as the coinductive delay monad described by \cite{Capretta2005}, (b) requiring proofs of argument value subset membership as function arguments~\citep{CoqArt}, (c) letting functions return values in the option type, or (d) capturing functions as inductive relations between input and output.
+
+Functions in proof assistants based on intuitionistic type theories like CIC need to be terminating for the sake of consistency. When a function is defined in Coq, for example, termination is automatically proven for cases where functions recurse on a subterm of the input and in other simple cases; in more advanced cases, users must manually prove termination or rely on approaches that use, e.g., \emph{sizes} of argument terms~\citep{Abel2017}. In contrast, functions in HOL are not required to be computable at the outset, and thus do not need to be accompanied by termination witnesses. On the other hand, the uses of functions with unproven termination are somewhat limited.
+
+Requirements for totality and termination are two hurdles that new users of ITPs face. They are constraints even to users familiar with functional programming languages, where no such requirements are typically imposed. For certain functions, arguing and formally proving termination may not even be a key concern. 
+In that spirit, Zombie~\citep{Casinghino2014} separates out a logical, terminating fragment from a programmatic,
+possibly non-terminating fragment, that way the programmer can move freely between those fragments.
+
+In other languages, a common technique to encode such functions in a total setting is to define a ``fuel'' argument, such as a natural number. Either the fuel argument is empty (0) and the function terminates, or there is enough fuel to continue to, e.g., perform recursive calls. This allows 
+for proving termination by a simple structural argument on the fuel type. When calling the function in some other context, passing ``infinite fuel'' may be possible, which implicitly trusts that the function always terminates. \cite{Jourdan2012} provide a detailed description of the fuel technique in the context of a verified parsing function on a potentially infinite stream of tokens in Coq.
+
+
+%\external{Joachim}{``enforcing totality also means enforcing termination of functions.''
+%I disagree, and in Isabelle, functions are total, but they need not be
+%terminating (or rather, because functions are not computed, but are
+%functions in the mathematical sense, the question does not make sense).
+%I elaborate this point on
+%\url{http://www.joachim-breitner.de/blog/732-Isabelle_functions__Always_total\%2C_sometimes_undefined}}
+
+%\external{Lars}{The fact that HOL is a logic of total functions is only half of the story. Partial functions can easily be represented, but usually not in a way that their partiality is "obvious". In HOL, all types are inhabited, so you can easily complete a partial function by mapping all "undefined" inputs to an unspecified value. This is, to the best of my knowledge, how all HOL variants do it by default. Many of them also admit defining functions that do not terminate, which means that their characteristic equations can only be used if termination for a specific input is proved. I write about this a bit more in a paper draft of mine: \url{https://lars.hupel.info/pub/dict.pdf} (see 3.2).}
+
+%\external{John}{A reference to Abel's work on sized types would be appropriate in this section. For example:
+%\url{http://www.cse.chalmers.se/~abela/icfp17-long.pdf}}
+
+%Paulson gives an early account of recursive functions, inductive datatypes, and reasoning by structural induction in the logic of LCF.
+%HOL provides two primitive definitional mechanisms: constant definitions and type definitions, further definitional packages are built on top
+%https://www.joachim-breitner.de/blog/732-Isabelle_functions__Always_total%2C_sometimes_undefined
+ 
+\section{Trusted Computing Bases of Proofs and Programs}
+\label{sec:trustedbases}
+
+The concept of a Trusted Computing Base (TCB) was introduced by \cite{Rushby1981} in the context of security of computer systems. The basic idea is that the security of a system may be reduced to the security of a proper subset of all system components. If these components behave as expected, the system as a whole is secure. For verified software, security is replaced with correctness, e.g., functional correctness. \cite{Kumar2015} divides the TCB into the following categories:
+\begin{itemize}
+\item formal models of system components (e.g., model of a processor);
+\item system components for which there are no explicit formal models (e.g., linker or operating system);
+\item tools used to check proofs about the system (e.g., proof assistant).
+\end{itemize}
+
+\subsection{TCB of Proofs}
+\label{sec:trust-proofs}
+
+\cite{Pollack1998} considers the question of how to trust specific machine-checked proofs, and by extension, programs that such proofs pertain to. He divides the question into a purely formal part---whether a provided proof is derivable in a given formal system---and an informal part that asks whether the proof has a purported meaning as expressed outside any formal system. 
+
+As to the formal part, trusting the proof can be reduced, by computer, to trusting the (implementation of) the proof checker of the formal system; the source code for such proof checkers can be compact and readable. However, Pollack argues that a complicated semantics of the checker's implementation language can still provide serious obstacle to trust, and proposes that the language itself should be a logical framework designed to represent formal systems, such as LF~\citep{Harper1993} or Isabelle~\citep{Paulson1994}. As to the informal part, Pollack points to that understanding specific pieces of mathematics relies on acceptance of previous mathematics, whose trust may be partly due to its wide acceptance. 
+
+Based on Pollack's investigation, \cite{Wiedijk2012} defined the notion of \emph{Pollack-inconsistency}, which is expressed in terms of the mechanisms a proof checker uses to print and parse its formulas (which are what the user ultimately must intepret informally). In particular, Wiedijk argues that a system should always be able to parse formulas it outputs. He then demonstrates that current proof assistants are Pollack-inconsistent to some extent, but outlines how this can be addressed by modifying the implementations of printing and parsing.
+
+With the goal of determining how small a trusted proof checker can be for a practical application,
+\cite{Appel2003} attempted to minimize the size of a proof checker for proof-carrying machine code.
+The result was less than 2700 lines of code.
+The Lean theorem prover attempted to minimize the size of the proof-checking kernel from the start~\citep{deMoura2015}.
+
+\cite{coqincoq} encoded a limited version of the formal system underlying Coq in Coq itself, and proved strong normalization of its type system. \cite{Barras2010} addressed the problem of providing set-theoretical models of CoC, the logic that underpins Coq, with the ultimate goal of ensuring that Coq's theory is consistent with the theory implicitly or explicitly assumed by most mathematicians. \cite{Anand2014} encoded and verified the foundations of the Nuprl proof assistant in Coq. \cite{Davis2015} certified the Milawa theorem prover. \cite{Kuncar2018} proved the relative consistency of extensions made to the foundations of Isabelle/HOL. 
+\cite{Anand2018} encoded Coq's internal data structures in Coq itself and gave a semantics for type checking, leading up to the MetaCoq project~\citep{Sozeau2019} for building verified checking and extraction for Coq.
+
+\subsection{TCB of Programs}
+\label{sec:trust-programs}
+
+Coq and other similar proof assistants contain logic engines that can execute functions that have been verified. However, execution inside such a logic engine is generally slow compared to execution of native functional programs~\citep{Leroy2015}, and does not directly support handling of input and output. Instead, to obtain practical verified programs, proof assistant users rely on mechanisms such as \emph{program extraction} to produce programs that can be integrated into larger systems or executed in conventional runtime environments. However, these mechanisms may increase the trusted base of verified programs.
+
+\paragraph{Program Extraction}
+
+\citet{Paulin1989,Paulin-Mohring1989} proposed realizability for CoC to $F_\omega$. To obtain practical executable programs from Coq functions, \cite{Paulin1993} extended the realizability from $F_\omega$ to ML. \cite{Letouzey2003,Letouzey2004} later introduced a new extraction mechanism for Coq which removed several restrictions. This introduced an intermediate language called MiniML, which can be translated to OCaml, Haskell, and Scheme. The new mechanism, argued correct by a conventional proof, was evaluated on several large projects~\citep{Berger2005,CruzFilipe2006,Letouzey2008}.
+
+\cite{Berghofer2002} identified a subset of HOL that can be translated to practical functional languages and implemented code generation for Isabelle/HOL. \cite{Haftmann2010} proposed a redesign of the code generation mechanism in Isabelle/HOL; their approach is based on translating HOL to an intermediate language called Mini-Haskell, and then further to Standard ML, Haskell, and OCaml. The correctness argument is reminiscent of that for Coq's extraction mechanism. \cite{Haftmann2013} proposed a data refinement (Section~\ref{sec:refinement}) framework which replaces abstract datatypes with concrete ones, which widens the scope of code generation.
+
+%\external{Jared}{I think Lean has one of the most interesting program extraction stories. It has a VirtualMachine which can be used to execute the full language efficiently including things like io, exeception, inter-process communication. Lean 4 takes this to the extreme, Leo is currently bootstrapping the entire system in Lean, much of the system including a brand new optimizing compiler and runtime system will be written in Lean. \url{http://leanprover.github.io/talks/vu2019.pdf}}
+
+%\external{Guiliano}{Program extraction in Isabelle/HOL: ``Code generation via higher-order rewrite systems'', ``Data refinement in Isabelle/HOL'', ``A Verified Compiler from Isabelle/HOL to CakeML''}
+
+\paragraph{Beyond Extraction and Code Generation}
+
+Practical functional programming languages such as OCaml and Haskell lack a fully formal (and machine-checked) semantics. Proof assistant users who want to avoid trusting extraction may use \emph{deep embeddings} (Section~\ref{sec:embedding}) of target practical programming languages along with language semantics. These embeddings and semantics can then be used in certified compilers (Section~\ref{sec:verified-compilers}), which may include formal models of system components such as processors, to produce verified machine code. However, these approaches may have more restrictions and inconveniences than extraction.
+Removing or circumventing these restrictions may be fruitful. Continuing to develop and improve certified compilers for Coq like \OE uf and 
+CertiCoq, for example, may help proof engineers circumvent extraction to OCaml and Haskell altogether.
+Instead, proof engineers may be able to directly compile certified programs to machine or assembly code and run those programs directly.
+
+%\subsection{Usefulness of Formal Reasoning}
+%
+%\cite{DeMillo1977} initiated a general debate about the usefulness of formal proofs, later addressed by \cite{Asperti2009} and \cite{Bringsjord2015}.
+
+%\milos{Later part of this section felt a bit Coq heavy, but that is
+%  probably unavoidable considering that Karl and Talia are Coq experts.}
+
+%- program verification in proof assistants (semantic embeddings, proof systems, VC generation, ...)
+%- program extraction (Coq, Isabelle/HOL, HOL4, ...)
+%- verified compilation and machine-code generation (CompCert, CakeML, Bedrock, Verified Software Toolchain, ...)
+%- trusting verified programs and validating assumptions by empirical testing (CSmith, ...)
+
+%HOL is based on higher-order logic.  Its class of functions satisfying the Poincare Principle is empty. Therefore the proof-objects are huge and therefore made ephemeral
+%Coq is based on higher order intuitionistic intensional type theory with the Poincare Principle for beta/delta/iota-reduction

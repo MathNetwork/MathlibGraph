@@ -1,0 +1,35 @@
+{
+   "sources" : [
+      {
+         "usage" : "toplevel",
+         "filename" : "paper.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "main.bib"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "seed/ByteSans-Bold.ttf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "seed/ByteSans-Medium.ttf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "seed/bytesans.tfm"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "seed/bytesansmedium.tfm"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "seed/seed_logo.png"
+      }
+   ],
+   "process" : {
+      "compiler" : "pdflatex"
+   }
+}

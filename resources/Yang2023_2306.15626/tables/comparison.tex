@@ -1,0 +1,22 @@
+\begin{table*}[ht]
+  \centering
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    & & LeanStep~\cite{han2022proof} & \texttt{lean-gym}~\cite{polu2023formal} & LeanDojo (ours) \\
+    \midrule
+    \multirow{4}{*}{Data extraction} & Premise information & \xmark & N/A & \cmark \\
+    & Lean 4 support & \xmark & N/A & \cmark \\
+    & Recent \texttt{mathlib} & \xmark & N/A & \cmark \\
+    & Repos other than \texttt{mathlib} & \xmark & N/A & \cmark \\
+    \midrule
+    \multirow{3}{*}{Interaction} & Estimated errors & N/A & 21.1\% & 1.4\% \\
+    & Lean 4 support & N/A & \xmark & \cmark \\
+    & Recent \texttt{mathlib} & N/A & \xmark & \cmark \\
+    & Repos other than \texttt{mathlib} & N/A & \cmark & \cmark \\
+    \midrule
+    & Documentation \& unit tests & \xmark & \xmark & \cmark \\
+    \bottomrule
+  \end{tabular}
+  \caption{Comparing LeanDojo with existing tools for data extraction and interaction with Lean.}
+  \label{table:comparison}
+\end{table*}

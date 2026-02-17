@@ -1,0 +1,95 @@
+\section{Approach}
+Here we introduce the two systems we used in IMO 2025, Seed-Geometry and Seed-Prover.
+
+\subsection{Seed-Geometry}
+Seed-Geometry builds on the success of TongGeometry \cite{zhang2024proposing} and performs a major redesign. From a global perspective, both systems leverage trained neural models to complete missing auxiliary constructions and specialized reasoning engines to forward-chain derivation. However, Seed-Geometry is a substantial upgrade over TongGeometry in the following aspects.
+% \begin{itemize}
+%     \item Extended domain specific language
+%     \item Extremely fast reasoning engine
+%     \item Exceptional large language model
+%     \item Extensive search
+% \end{itemize}
+% We now cover each enhancement in the following.
+
+\subsubsection{Extended Domain-Specific Language} 
+Seed-Geometry constructs geometric diagrams in the principle of ruler-and-compass construction. However, plain ruler-and-compass construction steps can be long and cumbersome, making the language representation of the constructions overly verbose, introducing unnecessary burden on both the neural processing of Transformer-based large language model and the symbolic derivation of the backend engine. To mitigate these issues, Seed-Geometry groups particular action sequences into specific actions, making the representation of the problem concise enough. Of particular note, Seed-Geometry has several such composite actions: isogonal conjugate with respect to a triangle and a point, exsimilitude center of two circles, insimilitude center of two circles. All three actions can be represented with primitive ruler-and-compass actions; yet the construction sequence in itself is non-trivial and unnecessarily clumsy. 
+
+\subsubsection{Extremely Fast Reasoning Engine}
+Seed-Geometry improved its reasoning engine's performance by rewriting its backend in C++ and making it accessible to Python users through Pybind11. This change led to roughly 100-fold speed increase compared to the Python implementation in TongGeometry. The C++ implementation handles memory more efficiently and benefits from compiler optimizations, allowing for much faster \textbf{deep} searches within the reasoning engine. This is particularly crucial because the engine's forward-chaining design typically slows down considerably when the search tree expands widely at deeper levels.
+
+\subsubsection{Exceptional Large Language Model}
+Seed-Geometry utilizes a high-performing large language model from the Seed family \cite{seed2025seed1}. This particular Seed model has undergone extensive pre-training on vast datasets of coding and mathematics, granting it a wide array of specialized skills. The specific model size was chosen considering the number of data tokens. We considered training two models in an actor--critic setup initially: the policy model that proposed possible next auxiliary element to construct and a value model that predicted the number of steps to go from the state. However, we note from preliminary experiments that a single Seed model serving as the policy would suffice, contradicting the design of both a policy model and a value model in existing work \cite{zhang2024proposing}. We also note that a policy model unspecialized to the specific goal makes both training and solving more manageable and therefore, we only trained the model on pairs of problem context and auxiliaries, without the target fact goal in the prompt.
+
+\subsubsection{Extensive Search}
+When presented with a new problem, Seed-Geometry first transforms the representation into a canonical form. If the reasoning backend successfully finds the goal fact to prove in the reasoning process, the problem is considered immediately solved. Otherwise, Seed-Geometry initiates a search process. In particular, Seed-Geometry employs beam search, with the policy model generating proposals for each beam in the buffer. With the extremely fast reasoning engine, Seed-Geometry supports running each new generated proposal in time. If any one of the proposal leads to the proof, the problem is considered proven; otherwise we select the top few proposals for the next step of expansion in the search tree based on each proposal's cumulative negative log likelihood. The search process terminates until a fixed number of steps have been consumed. Seed-Geometry's search process is made efficient and scalable. Compared to TongGeometry, Seed-Geometry's solving process supports a distributed setup where each GPU process communicates with each other and blocked only at the beam selection point. Each GPU process is also equipped with a CPU thread pool that asynchronously executes the reasoning step during language model inference such that the reasoning cost can be overlapped with language model inference. %Our largest search job launches with a beam size of 4k and 4k number of samples per beam, resulting in 16M samples to reason per step.
+
+\subsection{Seed-Prover}
+Seed-Prover is a large language model specialized in formal reasoning in Lean 4. Its most significant distinction from prior work lies in its adoption of lemma-style proving as the proof paradigm, which places \textbf{lemmas} at the center of the reasoning process. This approach offers several key advantages: it enables clear identification of lemmas that have and have not been proved, indicating the progress made in solving the main problem; lemmas can be processed independently and combined freely; lemmas from different inference trajectories can be combined to address more challenging problems. Both the training and inference procedures of Seed-Prover are designed around lemmas.
+
+\subsubsection{Lemma-Style Proving}
+Previous works \citep{kimina, deepseek-v2, lin2025goedel} trained the model to generate whole proofs starting with the keyword \textit{theorem}. In contrast, we first require the model to generate some useful lemmas---each introduced by the keyword \textit{lemma}---before generating the main proof using \textit{theorem} by applying the generated lemmas.
+An example is shown in Figure~\ref{fig:lemma-style}.
+This lemma-style proof provides following merits.
+First, it allows clear identification of the lemmas that have been successfully proved, and those that need further refinement.
+Second, lemmas are modular---they can be compiled independently, stored independently, and combined freely.
+% Third, for particularly challenging problems, a possible approach is to combine lemmas from different inference attemps. 
+Additionally, proofs of lemmas may provide inspiration to the model for proving unproved lemmas and the main problem.
+To enable this workflow, we establish a lemma pool for each difficult problem, which stores comprehensive data from all our inference runs, including lemma statements, lemma names, complete proofs, proof difficulties, and dependency relations.
+The lemma pool is typically used to (1) retrieve the most relevant lemmas by name or formal statement; (2) sample the most difficult lemmas according to their proof difficulty.
+
+\begin{figure}[t]
+	\centering
+        \includegraphics[width=0.9\linewidth]{figs/lemma-style.pdf}
+		\caption{An example of whole proof and lemma-style proof in Lean 4.}
+		\label{fig:lemma-style}
+	\vspace{-0.15in}
+\end{figure}
+
+\subsubsection{Conjecture Proposing}
+When tackling challenging contest-level math problems, human contestants often identify interesting properties of the problem and use them to guide their reasoning. Seed-Prover is trained to propose such potentially useful properties by chain-of-thought reasoning. Notably, this process differs from chain-of-thought reasoning to solve the problem directly; rather, it emphasizes broad exploration of the problem space without committing to a particular approach. Take functional equations as an example: one might conjecture that the function is \textit{injective}, \textit{surjective}, \textit{bijective}, \textit{monotonic}, or \textit{periodic}—all without engaging in deep, targeted reasoning about the problem itself. In a sense, many useful properties of a problem may be enumerated before full problem resolution.
+The proposer module accepts an unsolved problem and, optionally, some already proved lemmas as input, and generates 10–50 candidate conjectures about properties of the problem. Proposing multiple conjectures in parallel significantly increases diversity and the likelihood of covering the valuable properties.
+For each problem, we may repeat this process multiple times to create a large conjecture pool.
+
+This approach differs from Draft, Sketch, Prove \citep{jiangdraft}, which presumes the ability to fully solve the problem upfront. In contrast, our method performs broad exploratory searches over the problem space enabling discovery of useful properties, which makes it possible to solve problems that the model cannot solve directly in natural language.
+
+\subsubsection{Training}
+To enable seamless interaction between Seed-Prover and Lean, we adopt multi-stage, multi-task reinforcement learning (RL) based on VAPO \citep{vapo}. The RL reward is 1 if the formal statement is successfully proven, and 0 otherwise. Additionally, a formatting penalty is applied to encourage the model to generate lemmas before attempting the main theorem. As training progresses, problem diffculty, problem quality, and maximum output length are progressively increased. The training dataset comprises a combination of open-source datasets \citep{yinglean, numina_math_datasets, albalak2025bigmathlargescalehighqualitymath, yu2025dapo, peng2025criticlean} and in-house formalized problems. For problems that are too difficult for single-pass generation, we use our proposer to generate easier problem variants and put these into the training dataset. We also exclude problems which are too easy (i.e. proof rate above 1/4) from RL training.
+
+Unlike prior work \citep{kimina, deepseek-v2} that only utilize formal statements as prompts for RL training, our approach randomly incorporates natural language hints, natural language proofs, similar lemmas, proved lemmas, failed lemmas, failed attempts, summaries of previous attempts, and Lean compiler feedback into the prompt. This diverse prompting strategy enhances the model's adaptability within our inference pipeline by enabling it to understand and utilize various types of input.
+
+\subsubsection{Test-Time Scaling}
+
+\begin{figure}[t]
+	\centering
+        \includegraphics[width=0.9\linewidth,page=1]{figs/seedprover-inference.pdf}
+		\caption{The workflows of single-pass whole proof generation, light, and medium inference settings.}
+		\label{fig:test-time-1}
+	\vspace{-0.15in}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+        \includegraphics[width=0.9\linewidth,page=2]{figs/seedprover-inference.pdf}
+		\caption{The workflow of heavy inference setting.}
+		\label{fig:test-time-2}
+	\vspace{-0.15in}
+\end{figure}
+
+
+Here, we introduce our approach to test-time scaling of Seed-Prover. Depending on available inference budgets and problem difficulties, we developed three levels of strategies, which are illustrated in Figure~\ref{fig:test-time-1} and Figure~\ref{fig:test-time-2}.
+
+\paragraph{Light} Previous work evaluated LLM theorem provers by Pass@$k$. We find that iteratively refining proofs using Lean compiler feedback \citep{deltaprover} in conjunction with self-summarization can surpass the limits of single-pass inference token budgets and improve proof ability significantly. In the light setting, each proof attempt is refined up to 8–16 times and evaluated under Pass@8–16. We denote the sample budget of Pass@$n$ and up to $m$ refinements as $n \times m$, so the sample budget of the light setting is equivalent to generating the whole proof at Pass@64–256. This setting completes in 1–2 hours. Under this setting, Seed-Prover proves IMO 2022 P2 ($\textit{MOHS}=15$\footnote{MOHS is Math Olympiad Hardness Scale: \url{https://web.evanchen.cc/upload/MOHS-hardness.pdf}. We note that the hardness scale for human contestants may not be well-aligned with the difficulty of proving it in Lean using an LLM.}), whereas without refinement, the same problem can only be proved in Pass@8192.
+We observed two dominant behaviors of Seed-Prover in the light inference setting. 
+First, it fixes Lean syntax errors in response to Lean compiler feedback.
+Second, it refines initial proof sketches, a process that might entirely alter the reasoning trajectory.
+
+\paragraph{Medium}
+Proofs for challenging competition problems are often lengthy and structurally complex. The medium test-time setting introduces both outer and inner refinement processes. The outer refinement process mirrors the light setting which refines the proof of the original main problem. The inner refinement process targets difficult lemmas that the outer refinement process generates but fails to prove, using a light setting with an $8 \times 8$ budget to handle finer details. If any inner refinement successfully proves at least one lemma (indicating meaningful progress), the outer refinement process will update this information into the prompt and continue its refinement.
+Under this setting, Seed-Prover solves harder problems like IMO 2003 P6 ($\textit{MOHS}=35$), IMO 2020 P5 ($\textit{MOHS}=20$), IMO 2024 P1 ($\textit{MOHS}=5$) and IMO 2025 P5 ($\textit{MOHS}=15$), and final proofs potentially exceeding 1000 lines of code. 
+
+\paragraph{Heavy} While the medium setting encourages reasoning in \textbf{depth} over proof details, it lacks the \textbf{breadth} needed to explore diverse properties of the given problem.
+Under the heavy inference setting, Seed-Prover begins with a conjecture pool and an empty lemma pool for the given problem. Initially, the proposer generates thousands of conjectures (by default 5000) to populate the conjecture pool.
+During inference, Seed-Prover tries to prove or disprove every conjecture in the conjecture pool using the light setting. Successfully proved conjectures are moved into the lemma pool. Seed-Prover leverages the lemma pool and Lean compiler feedback to refine the proof attempts.
+Additional conjectures are proposed based on proved lemmas.
+After days of thinking, the lemma pool accumulates several thousand nontrivial math facts. Each lemma is scored based on its proof rate, semantic relevance, and proof length. The proof rate serves as a strong indicator of lemma value; empirically, lemmas with low proof rate are often crucial to the final proof. Semantic relevance is assessed by an LLM judge. Unrelated lemmas or lemmas with short proof lengths are removed. We take hundreds of the top-ranked lemmas to help Seed-Prover finish the proof of the main problem using the medium inference setting. Seed-Prover has been trained to select and integrate these lemmas into a complete proof during RL.
+IMO 2017 P2 ($\textit{MOHS}=40$), IMO 2025 P3 ($\textit{MOHS}=25$) and IMO 2025 P4 ($\textit{MOHS}=15$) are proved under the heavy inference setting. 

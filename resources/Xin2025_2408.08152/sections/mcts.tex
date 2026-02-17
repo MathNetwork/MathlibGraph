@@ -1,0 +1,119 @@
+\section{Exploration-oriented Monte-Carlo Tree Search} \label{sec:tree-search}
+
+\subsection{Tactic-level Tree Abstraction} \label{sec:tree-abstraction}
+
+To implement the tree search method in the whole-proof generation setting, we introduce a proof tree abstraction to define the tailored state and action space, leveraging a truncate-and-resume mechanism.
+Roughly following the paradigm of \citet{yao2023tree}, we begin by decomposing an incomplete proof into a sequence of tree nodes that correspond to individual proof steps, and then we utilize the partial content stored in these tree nodes to continue the proof generation process.
+Figure~\ref{fig:overview_mcts} illustrates the process of constructing a proof search tree from whole-proof generation.
+
+\paragraph{Truncate: Proof Decomposition into Tree Nodes.}
+We construct the proof search tree at the tactic level, where each tree edge represents a single transition step of the tactic state. Initially, we submit the entire proof the model generated to the Lean prover to parse it into tactics. We then truncate the proof at the earliest verification error, ensuring that all subsequent tactic codes can be successfully applied to advance the proof towards the desired theorem. The tactic codes are segmented into several code fractions, each containing a valid tactic code and its associated chain-of-thought comments, corresponding to a single tree edge that represents a tactic state transition. Through this abstraction, each tactic code is converted into a series of tree nodes, forming a path from the root to a specific node.
+
+\paragraph{Resume: Proof Generation from a Tree Node.}
+In Lean 4, different tactics can lead to the same tactic state, meaning each node in our proof tree can correspond to various tactic codes that achieve the same outcome. To handle this, we store a set of these equivalent tactic codes at each node. When the tree search agent expands a node, it randomly selects one tactic to use as a prompt for the language model. This prompt includes the incomplete proof code ending with the chosen tactic and the tactic state information from the Lean prover as a comment block. The fine-tuned model (see Section \ref{sec:sft-tactic-state}) has been trained to recognize and utilize this format, using the incomplete code augmented with tactic state comments to guide subsequent proof generation.
+
+\begin{figure}[t!]
+   \centering
+   \includegraphics[width=0.8\textwidth]{figures/prover15_main_mcts.pdf}
+  \caption{\textbf{Truncate-and-Resume Mechanism in the Expansion Step of MCTS.} (a) After selecting a node, we trace its corresponding incomplete proof code prefix, which includes the file header, initial statement, and successfully applied tactics from the ancestor nodes. (b) The language model then generates the subsequent proof based on this prefix along with a comment block containing the current tactic state. (c) The combined proof code (prefix and newly generated code) is verified by the Lean 4 prover. If no errors are found, the tree-search procedure terminates. If errors are detected, we truncate the newly generated code at the first error message, discard the subsequent code, and parse the successful portion into tactics. (d) Each tactic is added as a new node in the search tree, extending a chain of descendants beneath the selected node. (e) Once the tree updates are complete, the next iteration of expansion begins by selecting an alternative candidate node, which is not limited to leaf nodes. This process repeats until a correct proof is found or the sample budget is exhausted.}
+  \label{fig:overview_mcts}
+\end{figure}
+
+\subsection{Interactive Theorem Proving via Monte-Carlo Tree Search}
+\label{sec:mcts}
+Our proof search tree is developed using the standard Monte-Carlo Tree Search (MCTS) paradigm \citep[MCTS;][]{coulom2006efficient, browne2012survey}, which iteratively applies four steps: \textit{Selection}, \textit{Expansion}, \textit{Simulation}, and \textit{Backpropagation}.
+We integrate the \textit{Simulation} step into \textit{Expansion} because our whole-proof generation model inherently performs a rollout from the expanded node.
+The detailed design of the algorithm workflow is as follows.
+
+\paragraph{Selection.}
+The selection step, \aka the tree policy, starts from the root node and traverses downward to identify a promising node for expansion.
+The objective of this algorithmic step is to trade off between exploration and exploitation \citep{kocsis2006bandit}.
+The tree policy at a tree node $s$ is computed by selecting the action that maximizes the value from the set of valid operations:
+\begin{align} \label{eq:tree_policy}
+    TreePolicy(s) = \mathop{\arg\max}_{a\in Children(s)\cup\{\oslash\}} Q_{UCB}(s, a),
+\end{align}
+where the action $a$ can be either moving to a child node, denoted by $a\in Children(s)$, or expanding the current node $s$, denoted by a special token $a=\oslash$.
+This approach uses a technique called \textit{virtual node} \citep{wang2023dt}, which assigns each node an imaginary child to represent the selection of the current node $s$ for expansion. 
+It enables the tree search agent to continually expand non-leaf nodes, as the action space is supported by a generative model whose output scope cannot be determined by a fixed number of trails.
+The value estimation $Q_{UCB}(s,a)$ of performing action $a$ on node $s$ is composed by two components:
+\begin{align}
+    \forall a\in Children(s)\cup\{\oslash\},\quad Q_{UCB}(s, a) &= \underbrace{Q(s, a)}_{\text{Exploitation}} + ~~~ \underbrace{UCB(s, a)}_{\text{Exploration}},
+\end{align}
+where $Q(s, a)$ denotes a sample-based estimation of action values derived from the selection history, functioning as the exploitation component that retrieves high-value candidates from previous trials. $UCB(s, a)$ denotes the exploration bonus computed by upper confidence bounds \citep[UCB;][]{auer2002using}, which diminishes with the repeated execution of the state-action pair $(s,a)$. More specifically, $Q_{UCB}(s, a)$ stands for an optimistic estimation of $Q(s, a)$ and can serve as an upper bound with high probability. We defer the discussion of detailed settings of node values and UCB bonus to Section~\ref{sec:rmax}.
+
+\paragraph{Expansion.}\label{para:expansion}
+The next step is invoking the proof generation model to expand the node nominated by the selection phase.
+Resuming the incomplete proof codes stored on the node designated for expansion, we perform whole-proof generation to propose a series of subsequent tactics and submit the generated proof to Lean prover for verification.
+Such a trial of proof completion is equivalent to conducting a single rollout of simulation within the standard MCTS framework.
+When the verification result indicates the proof is complete, the search procedure is ready to be terminated, having found a new proof of the desired theorem.
+Otherwise, we parse the verification feedback and truncate the generated proof to the assertion of the earliest verification error.
+The remaining tactics are transformed into a path of nodes to be merged into the search tree (see Figure~\ref{fig:overview_mcts}).
+It is important to note that, because we use the whole-proof generation setting—where the output is an entire proof consisting of a sequence of tactics, rather than just the next tactic—our expansion procedure may insert a path of tree nodes into the search tree during each iteration. This differs from the conventional MCTS designed for competitive games, which typically expands only one layer of children nodes per iteration \citep{silver2016mastering, silver2018general, schrittwieser2020mastering}.
+
+\paragraph{Backpropagation.}
+The final phase of each tree search iteration is to update value statistics along the selection trajectory from the root to the expanded node, \ie, updating the values associated with the tree policy stated in Eq.~\eqref{eq:tree_policy}.
+Let $\tau=\{(root, s^{(1)}), (s^{(1)}, s^{(2)}), (s^{(2)}, s^{(3)}), \dots, (s^{(|\tau|-1)}=s_t, \oslash)\}$ denote the selection trajectory of $t$-th iteration that ends with $s_t$ as the expanding node.
+We update $Q_{UCB}(s,a)$ for all $(s,a)\in\tau$ by taking the most recent trajectory reward $R(\tau)$ into account (details refer to Eq.~\eqref{eq:ducb}).
+The extrinsic source of rewards comes from the compiler feedback, specifically assigning a reward of $R_{\text{extrinsic}}(\tau)=1$ for completed proofs and $R_{\text{extrinsic}}(\tau)=0$ for unsolved ones.
+In Section~\ref{sec:rmax}, we will introduce an intrinsic reward mechanism to augment the reward assignment that enhances the agent's incentive for exploration.
+
+\subsection{Intrinsic Rewards for Monte-Carlo Tree Search} \label{sec:rmax}
+
+In the search problem of formal theorem proving, the extrinsic rewards are extremely sparse, \ie, the search agent only obtains non-zero rewards when the proof is completely solved.
+More specifically, the proof search process forms a tree structure with only a narrow set of leaves delivering non-zero rewards, which matches a famous hard-exploration case \citep{krishnamurthy2016pac} in the literature of statistical reinforcement learning.
+To promote exploration in sparse-reward sequential decision making, one classical paradigm is constructing intrinsic rewards \citep{schmidhuber2010formal} that encourage the agent to not only optimize extrinsic rewards but also acquire general information about the interactive environment \citep{bellemare2016unifying, houthooft2016vime, pathak2017curiosity, burda2019exploration}.
+In this section, we present our intrinsic-reward-driven exploration algorithm, \textit{RMax applied to Tree Search} (\treesearch), to incorporate reward-free exploration in the proof search problem.
+
+\paragraph{RMax applied to MCTS.}
+We adopt RMax \citep{brafman2002r}, a classical exploration mechanism, to construct intrinsic rewards for Monte-Carlo tree search.
+The core idea of RMax is to explore a broad coverage of the state space.
+The agent awards itself a maximal amount of reward upon reaching an unseen state.
+In the context of proof search, where no extrinsic rewards are provided until the proof is completed, our algorithmic procedure resembles ZeroRMax \citep{jin2020reward}, in which the agent's exploration is driven solely by intrinsic rewards, \ie, setting $R(\tau)=R_{\text{intrinsic}}(\tau)$.
+The intrinsic reward of a tree expansion step is determined by whether a new node is added to the search tree,
+\begin{align}\label{eq:rmax_reward}
+    R_{\text{intrinsic}}(\tau) = \mathbb{I}\left[\text{at least one new node is added to the search tree}\right],
+\end{align}
+where $\tau$ denotes the most recent selection trajectory that requires a reward assignment for backpropagation.
+This exploration strategy prioritizes the expansion of nodes where the prover model generates tactics that lead to a diverse range of tactic states.
+As multiple Lean codes can result in the same transition of intermediate states, this heuristics can potentially reduce redundant generation and improve sample efficiency.
+
+\paragraph{UCB for Non-stationary Rewards.}
+The common setting of UCB exploration bonus for Monte-Carlo tree search is using UCB1 \citep{auer2002finite}:
+\begin{align} \label{eq:ucb1}
+    Q_{UCB1}(s, a) &= \frac{W(s,a)}{N(s, a)} + \sqrt{\frac{2\ln\sum_{a'}N(s,a')}{N(s,a)}}, \\
+    W(s,a) &= \textstyle{\sum_{\tau\in\Gamma(s,a)}}~R(\tau), \\
+    N(s,a) &= \left|\Gamma(s,a)\right|,
+\end{align}
+where $\Gamma(s,a) = \{\tau\mid (s,a)\in\tau\}$ denotes the list of tree-policy trajectory $\tau$ containing $(s,a)$ as an intermediate selection step.
+To facilitate discussions, we organize the list $\Gamma(s,a)=\{\tau_1,\tau_2,\cdots\}$ such that newly collected trajectories have larger subscript indices.
+In this work, we propose to use an alternative variant of UCB method.
+Note that the derived intrinsic reward in Eq.~\eqref{eq:rmax_reward} is a non-stationary reward signal whose expected value decays with the progress of exploration.
+That is because it becomes definitely harder to discover new nodes with unseen tactic states as the search tree expands through sophisticated exploration.
+To tackle the non-stationarity, we consider \textit{discounted upper confidence bounds} \citep[DUCB;][]{garivier2011upper}, which uses a discount factor $\gamma\in(0,1)$ to smoothly drop those outdated feedback records:
+\begin{align} \label{eq:ducb}
+    Q_{DUCB}(s, a) &= \frac{W_\gamma(s,a)}{N_\gamma(s, a)} + \sqrt{\frac{2\ln\sum_{a'}N_\gamma(s,a')}{N_\gamma(s,a)}}, \\
+    W_\gamma(s,a) &= \textstyle{\sum_{t=1}^{N(s,a)}}~\gamma^{N(s,a)-t}R(\tau_t), \\
+    N_\gamma(s,a) &= \textstyle{\sum_{t=0}^{N(s,a)-1}}~\gamma^t,
+\end{align}
+where newly received feedback would be assigned a larger weight in the value estimation.
+In practice, we set $\gamma=0.99$.
+Note that the role of discount factor $\gamma$ in DUCB differs from its role in value iteration for infinite-horizon MDPs.
+The discounting is applied to tree search iterations rather than to the action-step horizon within a single trajectory.
+
+\subsection{Parallelization of Monte-Carlo Tree Search}
+
+To enhance the efficiency of Monte-Carlo Tree Search (MCTS), we implement several established parallelization techniques as described by \citet{chaslot2008parallel}.
+\begin{itemize}
+    \item \textbf{Root Parallelization:} We deploy 256 MCTS runners per node, with one language model per GPU and a batch size of 512 for proof generation. The Lean prover is invoked through REPL and executed on a cluster with thousands of CPU cores, where each proof verification task is handled by an individual process, created and terminated in a sandbox. Both proof generation by language models and verification by Lean provers are handled asynchronously. This setup allows MCTS runners to perform concurrent tree search operations, significantly accelerating the process.
+    \item \textbf{Tree Parallelization:} We manage each search tree with 32 thread workers to parallelize the tree iteration steps. This method effectively schedules and balances the tasks of proof generation and Lean verification. Each thread worker iteratively performs the tree search loop by selecting a candidate node for expansion, invoking the language model to generate the proof, verifying the generated proof with the Lean prover, and performing backpropagation.
+    \item \textbf{Virtual Loss:} To encourage diverse node selection among concurrent thread workers, we assign a virtual reward $R(\tau)=0$ for ongoing iterations. This involves backpropagating a reward of $0$ temporarily and updating it to the true reward upon completion. This strategy promotes exploration of different nodes for expansion, thereby enhancing the overall search efficiency.
+\end{itemize}
+
+\subsection{Comparison with Existing Methods}
+
+In this section, we compare our proposed proof tree search method, which introduces a novel truncate-and-resume mechanism for whole-proof generation, with existing approaches. Current methods for using language models in formal mathematics proof search generally fall into two main strategies:
+\begin{itemize}
+    \item \textbf{Multi-pass proof-step generation}: This strategy breaks down the proving process into multiple episodes of tactic generation and verification, typically following a \textbf{tree search} pattern. It involves generating and verifying one tactic at a time, repeating the process for the next tactic until no proof goals remain. Notable examples include GPT-f~\citep{polu2020generative, polu2022formal}, Thor~\citep{jiang2022thor}, ReProver~\citep{yang2024leandojo}, Hypertree Proof Search~\citep{lample2022hypertree}, and InternLM2-StepProver~\citep{wu2024lean}.
+    \item \textbf{Single-pass whole-proof generation}: This approach generates and verify an entire proof in one attempt. If the proof is incorrect, the model generates a new proof in the next attempt. Methods in this category include DSP~\citep{jiang2022draft}, Subgoal-Prover~\cite{zhao2023decomposing}, LEGO-Prover~\citep{wang2023lego}, Lyra~\citep{zheng2023lyra}, and miniCTX~\citep{hu2024minictx}.
+\end{itemize}
+Our proof tree search method uniquely bridges these two strategies, offering a novel hybrid approach. It starts with whole-proof generation, similar to the single-pass approach, but extends this by implementing a sophisticated truncate-and-resume mechanism. This process involves truncating the generated proof to its successful initial segment, parsing this segment into individual tactics, and resuming the tree search from this point. This iterative process effectively implements a Monte-Carlo Tree Search, seamlessly integrating single-pass whole-proof generation with multi-pass proof-step generation. Consequently, we can train a single model with nearly identical objectives to support both strategies simultaneously. Our experimental results demonstrate that this unified approach achieves superior performance in both settings. By combining the strengths of existing methods and introducing innovative techniques, our method offers a more versatile and effective solution for formal mathematics proof search, potentially paving the way for future advancements in this field.
