@@ -45,3 +45,4 @@ docs/out/
 # OS
 .DS_Store
 .vscode/
+paper/main.pdf
