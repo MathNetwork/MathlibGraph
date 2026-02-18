@@ -6,11 +6,7 @@ Ultimately, the value of \module{Mathlib} lies not merely in aggregating verifie
 
 The present paper analyzes these structural patterns in the attempt to quantify the divergence between inherited mathematical structure (the product) and human organizational process (the process). Our goal is to establish a baseline for human-authored formal mathematics, particularly as AI-driven formalization and automated discovery increasingly capture the attention of the mathematical community.~\cite{hubert2025alphaproof,achim2025aristotle,chen2025seedprover,xin2025deepseekprover}. We take \module{Mathlib} as the central object of study: 308,129 declarations, 8,436,366 dependency edges, and 7,563 modules. All statistics refer to commit \texttt{534cf0b} (2 Feb 2026), extracted using \texttt{importGraph} (module layer) and premise-extraction tooling (declaration layer). Our module import graph reflects a post-\texttt{shake} state: Mathlib's CI runs the \texttt{shake} linter, which automatically removes certain transitively redundant imports; the raw developer-written imports would contain more redundancy. Moreover, the Lean~4 module system (introduced November 2025) distinguishes \texttt{public import} from \texttt{import}~\cite{lean4modules}; our snapshot captures a transitional state where most imports are still \texttt{public}, and the import graph will change structurally as the community gradually adopts private imports. We develop our analysis at four progressively finer levels of granularity:
 
-\medskip
-\noindent\textbf{The module graph (\S\ref{sec:module-import}).}
-Each module (source file) is a node. The \texttt{import} statements form edges. We analyze two graphs simultaneously together with the systematic divergence between them: the module tree~$T$ (Figure~\ref{fig:namespace-tree}), derived from the dot-separated hierarchy of modules (\S\ref{sec:namespace-tree}), which encodes the human cognitive classification of mathematics; the module graph~$G_{\mathrm{module}}$ (Figure~\ref{fig:tr-graph}), which encodes the compiler-verified logical dependencies---though $17.5\%$ of its edges are transitively redundant even after Mathlib's \texttt{shake} linter (\S\ref{sec:transitive-reduction}). This granularity captures, at least in part, the \emph{architecture} of the library, \emph{i.e.}, its overall shape, organizational principles, and structural vulnerabilities.
-
-\begin{figure}[ht]
+\begin{figure}[!htb]
 \centering
 \begin{subfigure}[t]{0.45\textwidth}
 \centering
@@ -84,10 +80,10 @@ Each module (source file) is a node. The \texttt{import} statements form edges. 
 \end{figure}
 
 \medskip
-\noindent\textbf{The declaration graph (\S\ref{sec:theorem-premise}).}
-Each theorem or definition is a node. The premises invoked in a proof form edges (\textcolor{red!70!black}{red} throughout our figures: \textcolor{red!70!black}{red identifiers} in source code, \textcolor{red!70!black}{red nodes} for declarations, and \textcolor{red!70!black}{red arrows}---solid for intra-boundary, dashed for cross-boundary---for dependency edges; see Figures~\ref{fig:module-region}, \ref{fig:ns-aggregation}, and~\ref{fig:ns-vs-mod}). This level penetrates into the mathematical content itself---no longer dependencies between files, but logical relations between theorems. It measures the \emph{reasoning structure} of mathematics, \emph{i.e.}, which theorems serve as core lemmas, which are isolated special cases, and how knowledge flows across theories.
+\noindent\textbf{The module graph (\S\ref{sec:module-import}).}
+Each module (source file) is a node. The \texttt{import} statements form edges. We analyze two graphs simultaneously together with the systematic divergence between them: the module tree~$T$ (Figure~\ref{fig:namespace-tree}), derived from the dot-separated hierarchy of modules (\S\ref{sec:namespace-tree}), which encodes the human cognitive classification of mathematics; the module graph~$G_{\mathrm{module}}$ (Figure~\ref{fig:tr-graph}), which encodes the compiler-verified logical dependencies---though $17.5\%$ of its edges are transitively redundant even after Mathlib's \texttt{shake} linter (\S\ref{sec:transitive-reduction}). This granularity captures, at least in part, the \emph{architecture} of the library, \emph{i.e.}, its overall shape, organizational principles, and structural vulnerabilities.
 
-\begin{figure}[H]
+\begin{figure}[!htb]
 \centering
 \begin{subfigure}[t]{0.36\textwidth}
 \centering
@@ -219,10 +215,14 @@ Each theorem or definition is a node. The premises invoked in a proof form edges
 \end{figure}
 
 \medskip
+\noindent\textbf{The declaration graph (\S\ref{sec:theorem-premise}).}
+Each theorem or definition is a node. The premises invoked in a proof form edges (\textcolor{red!70!black}{red} throughout our figures: \textcolor{red!70!black}{red identifiers} in source code, \textcolor{red!70!black}{red nodes} for declarations, and \textcolor{red!70!black}{red arrows}---solid for intra-boundary, dashed for cross-boundary---for dependency edges; see Figures~\ref{fig:module-region}, \ref{fig:ns-aggregation}, and~\ref{fig:ns-vs-mod}). This level penetrates into the mathematical content itself---no longer dependencies between files, but logical relations between theorems. It measures the \emph{reasoning structure} of mathematics, \emph{i.e.}, which theorems serve as core lemmas, which are isolated special cases, and how knowledge flows across theories.
+
+\medskip
 \noindent\textbf{The namespace graph (\S\ref{sec:namespace-graph}).}
 It offers an intermediate granularity derived from the declaration graph. Each declaration's fully qualified name defines a hierarchy of namespaces at varying depths; truncating to depth~$k$ and aggregating declaration-level edges yields a family of dependency graphs $G_{\mathrm{ns}}^{(k)}$ (Figure~\ref{fig:ns-aggregation}; \textcolor{green!40!black}{green boxes} denote namespace boundaries). We measure how \emph{containment} (Definition~\ref{def:containment})---the proportion of edges staying within namespace boundaries (see also Figure~\ref{fig:ns-vs-mod-namespace})---decays from $48.9\%$ at the top-level directory to ${\sim}13\%$ at finer namespaces. This decay curve quantifies the scale at which human cognitive classification retains organizing force and the scale at which mathematical logic overwhelms it. At the coarsest level, broad mathematical disciplines capture nearly half of all dependencies; at finer levels, most dependencies escape any single namespace.
 
-\begin{figure}[ht]
+\begin{figure}[!htb]
 \centering
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize, inner sep=2pt},
@@ -306,7 +306,7 @@ It offers an intermediate granularity derived from the declaration graph. Each d
 \noindent\textbf{Cross-level analysis (\S\ref{sec:module-declaration}).}
 The preceding three levels treat modules, namespaces, and declarations as separate objects. In \S\ref{sec:module-declaration} we overlay them so that each module becomes a \emph{region} in the declaration dependency graph (Figure~\ref{fig:ns-vs-mod}), and we measure how well the human-drawn module and namespace boundaries align with the logical dependency structure. Module cohesion (Definition~\ref{def:cohesion}), or, more explicitly, the proportion of a module's dependency traffic that stays internal, measures how far reality departs from the ideal in which module boundaries capture logical structure.
 
-\begin{figure}[ht]
+\begin{figure}[!htb]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
 \centering
