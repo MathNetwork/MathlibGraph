@@ -1,7 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage{preamble}
 
-\title{The network structure of \texttt{Mathlib}: Logic vs. Organization}
+\title{The network structure of \texttt{Mathlib}: Organization vs. Logic}
 \author{Xinze Li \and Nanyun Peng \and Simone Severini}
 \date{\today}
 
@@ -10,7 +10,7 @@
 \maketitle
 
 \begin{abstract}
-We study the network structure of Mathlib (Lean 4) to measure the difference between how humans organize the library and its actual mathematical logic. By mapping dependencies between files, namespaces, and theorems, we observe a systematic mismatch: file boundaries capture only 10.7\% of the logical connections, and namespace boundaries capture only about 14\% at finer levels. We identify a structural inversion where the human-organized file graph is deep (153 layers) while the underlying logical graph is much shallower (84 layers). Furthermore, we find that 17.5\% of imports are redundant links included for development convenience rather than logical necessity. These findings show that formal libraries reflect the habits of their creators providing useful data for AI training and library maintenance.
+We analyze \texttt{Mathlib} (Lean 4) network structure to quantify the divergence between human organizational choices and the inherited mathematical structure. By mapping dependencies between files, namespaces, and theorems, we observe that file boundaries capture only 10.7\% of logical connections, and namespace boundaries capture only about 14\% at finer levels. We identify a distinct contrast where the human-organized file graph is deep (153 layers) while the underlying logical graph is much shallower (84 layers). Furthermore, we find that 17.5\% of imports are redundant links included for development convenience rather than logical necessity. These results quantify the extent to which formal libraries reflect human organizational choices, yielding structural metrics for AI training and library maintenance.
 \end{abstract}
 
 %\bigskip\noindent\xinze{Original abstract for reference:}
@@ -35,7 +35,7 @@ We study the network structure of Mathlib (Lean 4) to measure the difference bet
 {\Huge\bfseries Supplementary Material}
 \vspace{1cm}
 
-{\large Appendices to: \emph{On the architecture of \texttt{Mathlib}: logic vs.\ organization}}
+{\large Appendices to: \emph{The network structure of \texttt{Mathlib}: Organization vs. Logic}}
 \end{center}
 \vfill
 \setcounter{tocdepth}{2}
