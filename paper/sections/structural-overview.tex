@@ -85,7 +85,7 @@ In $G_{\mathrm{thm}}$, each module becomes a \emph{region}---a set of declaratio
   E_{\mathrm{int}}(m) &= \{(d_1, d_2) \in E_{\mathrm{thm}} \mid d_1, d_2 \in \mathcal{D}_m\}, \\
   E_{\mathrm{ext}}(m) &= \{(d_1, d_2) \in E_{\mathrm{thm}} \mid d_1 \in \mathcal{D}_m \oplus d_2 \in \mathcal{D}_m\},
 \end{align*}
-where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates this partition: of six dependency edges among declarations in \module{Data.Nat.Basic}, \module{Data.Nat.Defs}, and \module{Init.Prelude}, only one stays within its module---the rest pierce through file boundaries.
+where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region-app} illustrates this partition: of six dependency edges among declarations in \module{Data.Nat.Basic}, \module{Data.Nat.Defs}, and \module{Init.Prelude}, only one stays within its module---the rest pierce through file boundaries.
 
 \begin{definition}[Module cohesion]
 \label{def:cohesion}
@@ -144,7 +144,7 @@ The gap between the module graph and declaration-level dependencies is striking:
   \draw[depext] (za) to[out=-90,in=45] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
-\label{fig:ns-vs-mod-module}
+\label{fig:ns-vs-mod-module-app}
 \end{subfigure}%
 \hfill
 \begin{subfigure}[b]{0.48\textwidth}
@@ -189,10 +189,10 @@ The gap between the module graph and declaration-level dependencies is striking:
   \draw[depext] (za) to[out=-90,in=45] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{green!50!black}{namespace}. $2$ of $6$ edges are intra-namespace (solid); $4$ are cross-namespace (dashed). Containment~$\approx 22.2\%$.}
-\label{fig:ns-vs-mod-namespace}
+\label{fig:ns-vs-mod-namespace-app}
 \end{subfigure}
 \caption{The same five declarations and six dependency edges, grouped by module (a) vs.\ namespace~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries, spanning multiple files, capture more intra-group dependencies than file boundaries---explaining why containment ($22.2\%$) exceeds cohesion ($10.7\%$).}
-\label{fig:ns-vs-mod}
+\label{fig:ns-vs-mod-app}
 \end{figure}
 
 \subsubsection{Namespace--Declaration Interaction}

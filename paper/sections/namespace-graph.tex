@@ -61,7 +61,7 @@ For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declara
 where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set of all distinct depth-$k$ namespaces, and each edge $(n_1, n_2) \in E_k$ carries a weight equal to the number of edges $(d_1, d_2) \in E_{\mathrm{thm}}$ such that $\mathrm{ns}_k(d_1) = n_1 \neq n_2 = \mathrm{ns}_k(d_2)$.
 \end{definition}
 
-This definition yields not a single graph but a \emph{family} of graphs parameterized by the truncation depth~$k$. At $k = 1$, we obtain $3{,}184$ coarse namespaces---\ns{Nat}, \ns{Set}, \ns{CategoryTheory}---that correspond roughly (but not identically) to the top-level name components discussed in \S\ref{sec:thm-cross-namespace}. At the maximum depth ($k = 6$), we recover the full parent-namespace granularity with $15{,}456$ nodes. The parameterization is unique to namespace analysis: neither the module graph~$G_{\mathrm{module}}$ nor the theorem--premise graph~$G_{\mathrm{thm}}$ admits a comparable continuous refinement. Figure~\ref{fig:ns-aggregation} illustrates the aggregation for a concrete example.
+This definition yields not a single graph but a \emph{family} of graphs parameterized by the truncation depth~$k$. At $k = 1$, we obtain $3{,}184$ coarse namespaces---\ns{Nat}, \ns{Set}, \ns{CategoryTheory}---that correspond roughly (but not identically) to the top-level name components discussed in \S\ref{sec:thm-cross-namespace}. At the maximum depth ($k = 6$), we recover the full parent-namespace granularity with $15{,}456$ nodes. The parameterization is unique to namespace analysis: neither the module graph~$G_{\mathrm{module}}$ nor the theorem--premise graph~$G_{\mathrm{thm}}$ admits a comparable continuous refinement. Figure~\ref{fig:ns-aggregation-app} illustrates the aggregation for a concrete example.
 
 \begin{figure}[ht]
 \centering
@@ -163,7 +163,7 @@ This definition yields not a single graph but a \emph{family} of graphs paramete
   \node[font=\small\sffamily, anchor=north] at (13.0,-2.5) {(c) $G_{\mathrm{ns}}^{(1)}$};
 \end{tikzpicture}
 \caption{The aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Five declarations (\textcolor{red!70!black}{red dots}) and their dependencies (\textcolor{red!70!black}{red arrows}: solid = intra-module, dashed = cross-module, dotted = cross-namespace) in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green dashed boxes} mark depth-$2$ namespace boundaries, \textcolor{blue!60!black}{blue dashed boxes} mark module boundaries, and the \textcolor{blue!60!black}{blue arrow} shows the module-level import edge from~$G_{\mathrm{module}}$. (b)~Aggregation to depth-$2$ namespaces: declarations merge into \textcolor{green!50!black}{green namespace nodes}; the three intra-\ns{Nat} edges (one solid, two dashed) become internal, and the single cross-namespace edge (dotted) becomes a weighted \textcolor{green!50!black}{green edge} in~$G_{\mathrm{ns}}^{(2)}$. (c)~Aggregation to depth~$1$: all five declarations share namespace \ns{Nat}; every edge is now internal, and containment reaches $100\%$. All names have the \texttt{Nat.}\ prefix removed.}
-\label{fig:ns-aggregation}
+\label{fig:ns-aggregation-app}
 \end{figure}
 
 As depth~$k$ increases, namespace boundaries split while module boundaries remain fixed, converting intra-namespace edges into cross-namespace edges and driving containment downward.

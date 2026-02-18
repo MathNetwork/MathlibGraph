@@ -48,7 +48,7 @@ In $G_{\mathrm{thm}}$, each module becomes a \emph{region}---a set of declaratio
   E_{\mathrm{int}}(m) &= \{(d_1, d_2) \in E_{\mathrm{thm}} \mid d_1, d_2 \in \mathcal{D}_m\}, \\
   E_{\mathrm{ext}}(m) &= \{(d_1, d_2) \in E_{\mathrm{thm}} \mid d_1 \in \mathcal{D}_m \oplus d_2 \in \mathcal{D}_m\},
 \end{align*}
-where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates this partition: of six dependency edges among declarations in \module{Data.Nat.Basic}, \module{Data.Nat.Defs}, and \module{Init.Prelude}, only one stays within its module---the rest pierce through file boundaries.
+where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region-app} illustrates this partition: of six dependency edges among declarations in \module{Data.Nat.Basic}, \module{Data.Nat.Defs}, and \module{Init.Prelude}, only one stays within its module---the rest pierce through file boundaries.
 
 \begin{figure}[H]
 \centering
@@ -89,7 +89,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
 ]
 \end{forest}
 \caption{File-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level.}
-\label{fig:tree-view}
+\label{fig:tree-view-app}
 \end{subfigure}%
 \hfill
 % ── Panel (b): Source code (top right, next to tree) ──
@@ -117,7 +117,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
 \hspace{1.5em}: 0 + n = n := \textbf{by}\\
 \hspace{1.5em}induction n <;> exact \textcolor{red!70!black}{Eq.refl} \_
 \caption{Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term generates a dependency edge in~(c).}
-\label{fig:source-view}
+\label{fig:source-view-app}
 \end{subfigure}
 
 \par\vspace{4pt}
@@ -193,10 +193,10 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region} illustrates 
 
 \end{tikzpicture}
 \caption{An isometric view of $G_{\mathrm{thm}}$ layered by module. Each \textcolor{blue!60!black}{blue card} represents a module file; \textcolor{red!70!black}{red nodes} are declarations. Solid \textcolor{red!70!black}{red arrows} show intra-module edges ($E_{\mathrm{int}}$); dashed \textcolor{red!70!black}{red arrows} show external edges ($E_{\mathrm{ext}}$) that pierce module boundaries. \textcolor{blue!60!black}{Blue arrows} on the right show the corresponding module-level imports from $G_{\mathrm{module}}$.}
-\label{fig:dep-view}
+\label{fig:dep-view-app}
 \end{subfigure}
-\caption{Three views of the same declarations. (a)~The file-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ layered by module; of six dependency edges, only one stays within its module, visualizing the low cohesion of~$0.107$ (\S\ref{sec:cohesion}). The \textcolor{blue!60!black}{blue} boundaries represent source files, in contrast to the \textcolor{green!40!black}{green} namespace boundaries of Figure~\ref{fig:ns-aggregation}; the two layers partially overlap (NMI~$\approx 0.71$; \S\ref{sec:ns-mod-cross}). All names have the \texttt{Nat.}\ prefix removed.}
-\label{fig:module-region}
+\caption{Three views of the same declarations. (a)~The file-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level. (b)~Proof source code: each \textcolor{red!70!black}{red identifier} creates a dependency edge in~(c). (c)~An isometric view of~$G_{\mathrm{thm}}$ layered by module; of six dependency edges, only one stays within its module, visualizing the low cohesion of~$0.107$ (\S\ref{sec:cohesion}). The \textcolor{blue!60!black}{blue} boundaries represent source files, in contrast to the \textcolor{green!40!black}{green} namespace boundaries of Figure~\ref{fig:ns-aggregation-app}; the two layers partially overlap (NMI~$\approx 0.71$; \S\ref{sec:ns-mod-cross}). All names have the \texttt{Nat.}\ prefix removed.}
+\label{fig:module-region-app}
 \end{figure}
 
 \begin{definition}[Module cohesion (restated)]
@@ -297,7 +297,7 @@ Table~\ref{tab:depth-diff-by-dir} reveals a clear split. \module{CategoryTheory}
 \subsubsection{Namespace--Declaration Interaction}
 \label{sec:ns-decl-interaction}
 
-The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries (see also Figure~\ref{fig:ns-aggregation}). We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
+The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries (see also Figure~\ref{fig:ns-aggregation-app}). We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
 
 At depth~$1$, namespace containment is $22.2\%$: roughly one in five edges stays within the same depth-$1$ namespace. By depth~$2$, containment drops to $14.2\%$ and saturates near $12.6\%$ by depth~$3$ (Table~\ref{tab:containment-decay}). Module cohesion, the mean proportion of a module's edges that stay internal, is $0.107$---close to the file-level containment of $15.6\%$ reported in the same table.
 
@@ -347,7 +347,7 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   \draw[depext] (za) to[out=-90,in=45] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
-\label{fig:ns-vs-mod-module-app}
+\label{fig:ns-vs-mod-module-cross}
 \end{subfigure}%
 \hfill
 \begin{subfigure}[b]{0.48\textwidth}
@@ -392,10 +392,10 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   \draw[depext] (za) to[out=-90,in=45] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{green!50!black}{namespace}. $2$ of $6$ edges are intra-namespace (solid); $4$ are cross-namespace (dashed). Containment~$\approx 22.2\%$.}
-\label{fig:ns-vs-mod-namespace-app}
+\label{fig:ns-vs-mod-namespace-cross}
 \end{subfigure}
 \caption{The same five declarations and six dependency edges, grouped by module (a) vs.\ namespace~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries, spanning multiple files, capture more intra-group dependencies than file boundaries---explaining why containment ($22.2\%$) exceeds cohesion ($10.7\%$).}
-\label{fig:ns-vs-mod-app}
+\label{fig:ns-vs-mod-cross}
 \end{figure}
 
 \paragraph{Depth asymmetry.}

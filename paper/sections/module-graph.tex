@@ -69,7 +69,7 @@ Modules are organized hierarchically: each dot-separated name mirrors a path in 
 ]
 \end{forest}
 \caption{Directory structure}
-\label{fig:dir-tree}
+\label{fig:dir-tree-app}
 \end{subfigure}%
 \hfill
 \begin{subfigure}[t]{0.52\textwidth}
@@ -95,10 +95,10 @@ Modules are organized hierarchically: each dot-separated name mirrors a path in 
   \node[font=\scriptsize, text=gray] at (1.8,-1.3) {$\cdots$};
 \end{tikzpicture}
 \caption{Module tree $T$: arrows point parent $\to$ child ($\in E_T$)}
-\label{fig:namespace-tree}
+\label{fig:namespace-tree-app}
 \end{subfigure}
 \caption{A fragment of the \module{Mathlib} source tree (commit \texttt{534cf0b}). Left: the directory layout. Right: the corresponding rooted tree~$T$. Each directory path maps to a module with dots replacing separators, e.g., \module{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} $\leftrightarrow$ \module{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
-\label{fig:prefix-tree}
+\label{fig:prefix-tree-app}
 \end{figure}
 
 We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, \module{Mathlib.Algebra} is a prefix of \module{Mathlib.Algebra.Group.Defs}.
@@ -240,7 +240,7 @@ The \emph{redundancy rate} of $G_{\mathrm{module}}$ is the fraction of edges rem
   \draw[redundant] (a) -- (d);
 \end{tikzpicture}
 \caption{Subgraph of $G_{\mathrm{module}}$}
-\label{fig:tr-graph}
+\label{fig:tr-graph-app}
 \end{subfigure}%
 \hfill
 \begin{subfigure}[t]{0.46\textwidth}
@@ -258,10 +258,10 @@ The \emph{redundancy rate} of $G_{\mathrm{module}}$ is the fraction of edges rem
     \textnormal{\sffamily\color{orange!80!red} $\leftarrow$ would be redundant} \\
 \end{tabular}
 \caption{Source file headers}
-\label{fig:tr-source}
+\label{fig:tr-source-app}
 \end{subfigure}
 \caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \module{Algebra.Group.Defs} were to import \module{Init} directly (\textcolor{orange!80!red}{dashed orange} edge), that edge would be transitively redundant: \module{Init} is already reachable via both \module{Data.Int.Notation} and \module{Data.Nat.Notation}. All names have the \module{Mathlib.}\ prefix removed.}
-\label{fig:transitive-reduction}
+\label{fig:transitive-reduction-app}
 \end{figure}
 
 The raw module graph has $|E_{\mathrm{module}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{module}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. Importantly, Mathlib's CI runs the \texttt{shake} linter, which automatically removes certain types of redundant imports; the $17.5\%$ we measure is therefore the residual redundancy \emph{after} \texttt{shake}---imports that \texttt{shake} intentionally preserves (e.g., because they bring needed typeclass instances or notations into scope) or that \texttt{shake} does not target. The raw developer-written redundancy would be higher. These redundant edges are not accidents of careless coding. Developers commonly import umbrella modules---such as importing all of group theory rather than a single lemma---for development ergonomics: the imports ease future refactoring (if a file later needs a lemma from the umbrella, the import is already there), simplify adding new theory to a file, and ensure that typeclass instances and notation remain available. The redundancy reflects the gap between what the compiler requires and what facilitates ongoing library development.
