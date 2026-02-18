@@ -1,8 +1,8 @@
 \documentclass[11pt]{article}
 \usepackage{preamble}
 
-\title{On the architecture of \texttt{Mathlib}: logic vs.\ organization}
-\author{Xinze Li \and Simone Severini}
+\title{The network structure of \texttt{Mathlib}: Logic vs. Organization}
+\author{Xinze Li \and Nanyun Peng \and Simone Severini}
 \date{\today}
 
 \begin{document}
@@ -10,7 +10,7 @@
 \maketitle
 
 \begin{abstract}
-We analyze \texttt{Mathlib} (Lean~4) by constructing dependency graphs for modules, declarations, and namespaces to quantify the divergence between human organizational practice and intrinsic mathematical structure. We show that module hierarchies align with namespaces but decouple from declaration-level logic. The module graph acts as a deep, compressed interface for shallow logical dependencies, exhibiting "ergonomic redundancy" where 17.5\% of imports serve development utility rather than necessity. This suggests that formalization encodes human practice as much as mathematical truth, offering baselines for AI training and library maintenance.
+We stud the network structure of Mathlib (Lean 4) to quantify the divergence between human organizational practice (the process) and intrinsic mathematical structure (the product). By constructing multi-layer dependency graphs for modules, namespaces, and declarations, we reveal a systematic mismatch: human-imposed file boundaries capture only 10.7\% of logical dependencies (``module cohesion''), and namespace containment drops to $\approx 14\%$ at fine granularity. We identify a ``topological inversion'' where the human-organized module graph is deep (153 layers) while the underlying logical graph is shallow (84 layers). Furthermore, we find that 17.5\% of imports exhibit ``ergonomic redundancy''---links that serve development utility rather than logical necessity. These findings demonstrate that formal libraries encode the cognitive habits of their creators as deeply as mathematical truth, offering precise structural baselines for AI training and library maintenance.
 \end{abstract}
 
 %\bigskip\noindent\xinze{Original abstract for reference:}
@@ -18,7 +18,7 @@ We analyze \texttt{Mathlib} (Lean~4) by constructing dependency graphs for modul
 %\xinze{The formalization of mathematics is translating centuries of implicit human reasoning into explicit, machine-verifiable code. As collaborative libraries like \texttt{Mathlib} reach unprecedented scales, they offer a unique empirical record of the macroscopic architecture of mathematical knowledge. However, it remains unclear how the strict logical dependencies required for formal verification interact with the cognitive and organizational strategies of the human communities that build them. Here, we analyze the network topology of \texttt{Mathlib} to quantify the relationship between human file organization and intrinsic mathematical logic. By comparing the macroscopic \emph{module import graph} ($N \approx 7.6 \times 10^3$) with the microscopic \emph{declaration dependency graph} ($N \approx 3.1 \times 10^5$), we find that 17.5\% of file imports are logically redundant---even after Mathlib's \texttt{shake} linter has already pruned certain redundant imports in CI. Rather than reflecting compiler necessity, these redundancies serve as development ergonomics: they ease refactoring and future extensibility of library files~\cite{baanen2025}. Furthermore, while directory structures effectively compartmentalize broad fields like Algebra and Analysis, fine-grained theorem dependencies frequently transcend these boundaries. The library exhibits a heavy-tailed citation distribution, bounded proof complexity, a remarkably deep hierarchy (153 layers), and a hub-dominated architecture vulnerable to targeted disruption. Our snapshot (February 2026) captures a transitional state: Lean~4's module system~\cite{lean4modules} (introduced November 2025) distinguishes \texttt{public import} from \texttt{import}, and as private imports are adopted the import graph structure will change significantly. By establishing a quantitative baseline for formalized library organization, these metrics inform maintenance prioritization and AI-assisted premise selection. Ultimately, our findings suggest that future proof assistants and search tools might benefit from architecturally decoupling the minimal dependency graphs required for verification from the semantically rich structures optimized for human interaction.}
 
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-10}}
-\newpage
+%\newpage
 \input{sections/introduction}
 \input{sections/conceptual-framework}
 
