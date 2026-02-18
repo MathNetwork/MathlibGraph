@@ -1,11 +1,11 @@
-\subsection{Future Graph Decompositions}
+\section{Future Graph Decompositions}
 \label{sec:future-graphs}
 
 The three dependency graphs defined above---$G_{\mathrm{module}}$, $G_{\mathrm{thm}}$, and $G_{\mathrm{ns}}^{(k)}$---are constructed from data available through the current extraction pipeline (\texttt{importGraph}, \texttt{lean4export}, \texttt{lean-training-data}). In this section, we define five additional graph decompositions that require deeper access to Lean's elaboration layer, specifically the ability to inspect type signatures vs.\ proof terms, trace typeclass instance synthesis, and read declaration-level metadata. We include these definitions to establish a formal framework for future empirical work; the analyses themselves are deferred pending access to metaprogramming-level extraction tools. \xinze{Hi Adam! Could you help us use LeanScout to extract the data types defined in the following subsections (statement vs proof deps, typeclass instance edges, public/private import flags, declaration attributes, etc.)? That would let us turn these formal definitions into actual empirical results. Thanks!}
 
 Throughout, we use the following notation. The \emph{Lean environment}~$\mathcal{E}$ denotes the compiled state of \module{Mathlib} at commit \texttt{534cf0b}. Each declaration~$d \in \mathcal{D}$ consists of a type~$d.\tau$ (the statement or signature) and, for non-axiomatic declarations, a value~$d.\pi$ (the proof term or definition body). We write $\mathrm{refs}(e)$ for the set of all named constants referenced in an expression~$e$.
 
-\subsubsection{The Statement and Proof Dependency Graphs}
+\subsection{The Statement and Proof Dependency Graphs}
 \label{sec:stmt-proof-graph}
 
 The declaration graph $G_{\mathrm{thm}}$ (Definition~\ref{def:thm-graph}) aggregates all premise references without distinguishing \emph{where} in a declaration each reference occurs. A finer decomposition separates the dependencies required by a declaration's \emph{statement} from those required only by its \emph{proof}.
@@ -30,7 +30,7 @@ Compare degree distributions, DAG depth profiles, community structure, and hub i
 The decomposition $G_S / G_P$ refines the \emph{edges} of $G_{\mathrm{thm}}$. A complementary refinement concerns the \emph{internal structure} of each node: proof terms may contain local declarations introduced by \texttt{have}, \texttt{let}, or \texttt{suffices}, forming a proof-internal dependency tree~$G_{\mathrm{local}}(d)$ within each declaration~$d$. The size $|V(G_{\mathrm{local}}(d))|$ and depth of this tree measure proof complexity at a finer granularity than the proof term size~$\kappa(d)$ defined in \S\ref{sec:decl-metadata}. Extracting this structure requires access to the elaborated proof term or \texttt{InfoTree} and is left to future work.
 \end{remark}
 
-\subsubsection{The Typeclass Instance Graph}
+\subsection{The Typeclass Instance Graph}
 \label{sec:typeclass-graph}
 
 The hub nodes identified in \S\ref{sec:theorem-premise}---\decl{OfNat.ofNat} (in-degree $89{,}936$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.refl} ($69{,}580$)---owe much of their centrality to Lean's typeclass instance synthesis, which automatically inserts premise references invisible to the proof author. Isolating these synthesized edges would separate the \emph{language infrastructure} layer from the \emph{mathematical content} layer identified qualitatively in Remark~\ref{rem:two-layers}.
@@ -64,7 +64,7 @@ Measure $\sigma$ to quantify the typeclass overhead. Recompute degree distributi
 
 \emph{Empirical analysis requires tracing typeclass instance synthesis and coercion resolution during elaboration and is deferred to future work.}
 
-\subsubsection{The Visibility Graph}
+\subsection{The Visibility Graph}
 \label{sec:visibility-graph}
 
 The module graph $G_{\mathrm{module}}$ (Definition~\ref{def:module-graph}) treats all \texttt{import} edges uniformly. Since November 2025, Lean~4's module system~\cite{lean4modules} distinguishes \texttt{public import} from \texttt{import} (private), allowing modules to selectively limit transitive visibility.
@@ -95,7 +95,7 @@ Measure the current adoption rate of private imports. Compare the transitive clo
 
 \emph{Import utilization can be computed from existing data; visibility analysis requires syntax-level extraction of import modifiers. Both are deferred to future work.}
 
-\subsubsection{The Build Graph}
+\subsection{The Build Graph}
 \label{sec:build-graph}
 
 The module graph $G_{\mathrm{module}}$ records \texttt{import} declarations, but the actual compilation order is determined by Lean's build system (Lake), which derives a build DAG from import dependencies and schedules modules for parallel or serial compilation. The \emph{critical path} of this DAG---the longest weighted path from source to sink---determines the minimum wall-clock build time, even with unlimited parallelism.
@@ -119,7 +119,7 @@ Profile a full \module{Mathlib} build to obtain $w(m)$ for each module. Compute 
 
 \emph{Empirical analysis requires profiling a full Lake build with per-module timing instrumentation and is deferred to future work.}
 
-\subsubsection{The File Co-Modification Graph}
+\subsection{The File Co-Modification Graph}
 \label{sec:co-edit-graph}
 
 The module graph captures \emph{structural coupling} (explicit import dependencies), but software engineering research has long recognized a complementary form of coupling: \emph{logical coupling}, measured by co-modification frequency in version control~\cite{decan2019}. Two modules that are frequently modified together---even without a direct import relationship---likely share a hidden dependency that the import graph does not capture.
@@ -139,7 +139,7 @@ Extract $G_{\mathrm{co}}$ from the \module{Mathlib} Git log (approximately ${\si
 
 \emph{This data can be extracted directly from the Git history using standard tools (no metaprogramming access required) and is deferred to future work.}
 
-\subsubsection{Declaration Metadata as Node Attributes}
+\subsection{Declaration Metadata as Node Attributes}
 \label{sec:decl-metadata}
 
 Beyond graph topology, declarations carry rich metadata that can serve as node-level attributes, enabling correlation analyses between structural position and declaration properties.
@@ -163,7 +163,7 @@ Correlate $\kappa(d)$ with topological depth $\mathrm{depth}(d)$ and in-degree $
 
 \emph{Empirical analysis requires metaprogramming access to Lean's \texttt{Environment} API (for attributes, proof term sizes, universe parameters, and kernel-level unfolding traces) and is deferred to future work.}
 
-\subsubsection{Temporal Graph Sequences}
+\subsection{Temporal Graph Sequences}
 \label{sec:temporal-graphs}
 
 All analyses in this paper are computed from a single snapshot. A longitudinal extension would test whether the structural properties we observe are stable invariants of mathematical content or transient features of a particular development phase.
