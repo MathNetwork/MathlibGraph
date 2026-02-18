@@ -1,8 +1,8 @@
-\subsection{Conclusion}
+\section{Conclusion}
 \label{sec:conclusion}
 \xinze{DRAFT: This section needs a rewrite to match the restructured observations in the introduction (now three findings instead of five). The summary paragraphs, process-traces, and implications should be tightened accordingly.}
 
-\subsubsection{Summary and Discussion}
+\subsection{Summary and Discussion}
 \label{sec:summary}
 We have analyzed the network structure of \module{Mathlib} at three levels of granularity plus their cross-level interaction. Table~\ref{tab:summary} collects the key quantitative findings across all four columns---module, declaration, namespace, and cross-level---extending the two-level comparison of Table~\ref{tab:thm-vs-module} with the namespace graph of \S\ref{sec:namespace-graph} and the module--declaration interaction data of \S\ref{sec:module-declaration}.
 
@@ -58,7 +58,7 @@ The central claim of this paper is that the network structure of a formal mathem
 
 But the relationship between product and process is not unidirectional. The product reshapes the process in return, through at least two mechanisms. First, the $37.1\%$ cross-directory edge rate in $G_{\mathrm{module}}^{-}$ (\S\ref{sec:cross-namespace}) exerts reorganization pressure on the directory hierarchy: when modules in one namespace systematically depend on another, developers eventually redraw the cognitive categories---as witnessed by \module{Mathlib}'s ongoing absorption of \module{RingTheory} into \module{Algebra}. Second, the deep dependency chain ($153$ layers; \S\ref{sec:dag-depth}) constrains the development process directly: modifications to high-PageRank modules trigger recompilation cascades that shape contributor behavior, incentivizing stability at the core and experimentation at the periphery. (Lean's module system, introduced November 2025, is designed specifically to mitigate these recompilation cascades by reducing transitive visibility through private imports.) Formalization thus initiates a feedback cycle: the module tree shapes the module graph; the module graph reshapes the module tree. Network analysis, as developed in this paper, provides the quantitative vocabulary for tracing this cycle.
 
-\subsubsection{Implications for Practice}
+\subsection{Implications for Practice}
 \label{sec:practice}
 
 The metrics developed in this paper are not merely descriptive; several admit direct operational use.
@@ -73,7 +73,7 @@ The metrics developed in this paper are not merely descriptive; several admit di
 
 \paragraph{Monitoring structural drift.} As AI-generated proofs become a larger fraction of \module{Mathlib} contributions, the metrics established here---redundancy rate, cohesion distribution, degree distribution exponents, cross-namespace density---provide a dashboard for detecting structural drift. A sudden change in any of these indicators would signal that the library's character is shifting in ways that merit human review. Similarly, the adoption of private imports through the module system will alter redundancy rates and transitive visibility; our metrics provide a baseline against which this language-level change can be measured.
 
-\subsubsection{Limitations and Future Work}
+\subsection{Limitations and Future Work}
 \label{sec:limitations}
 
 Several limitations constrain the scope of our conclusions.

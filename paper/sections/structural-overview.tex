@@ -1,14 +1,14 @@
-\subsection{Structural and Cross-Level Properties}
+\section{Structural and Cross-Level Properties}
 \label{sec:structural-overview}
 The preceding section defined the three dependency graphs and reported their basic edge-level statistics. We now ask two complementary questions: (i)~do the three graphs share common structural signatures, or does each level have its own character? and (ii)~how do the three organizational systems---file boundaries, namespace boundaries, and logical dependencies---align and diverge when overlaid?
 
 The first question is addressed by five network-analytic tools applied uniformly across all three levels: degree distribution (\S\ref{sec:sa-degree}), DAG depth (\S\ref{sec:dag-depth}), centrality (\S\ref{sec:sa-centrality}), community detection (\S\ref{sec:sa-community}), and robustness (\S\ref{sec:sa-robustness}). The full analysis is reported in Appendix~\ref{sec:structural-analysis}; we summarize the key findings here. The second question is addressed by three cross-level measurements: namespace--module alignment, module cohesion, and namespace--declaration interaction. The full analysis is reported in Appendix~\ref{sec:cross_level}; this section extracts the definitions and results that are essential to the main narrative.
 
-\subsubsection{Structural Properties}
+\subsection{Structural Properties}
 \label{sec:structural-summary}
 \label{sec:graph-analysis}
 
-\paragraph{Per-Graph Findings}
+\subsubsection{Per-Graph Findings}
 
 \paragraph{The module graph.}
 \label{sec:module_conclusion}
@@ -55,7 +55,7 @@ The namespace graph is the only level admitting a continuous parameterization (D
 \noindent
 The containment decay curve is a quantitative measure of a cultural artifact's explanatory power: the disciplinary taxonomy ``works'' at the broadest scale but breaks down at sub-discipline granularity. A detailed discussion is provided in Appendix~\ref{app:ns-analysis}.
 
-\paragraph{Cross-Level Structural Comparison}
+\subsubsection{Cross-Level Structural Comparison}
 
 \paragraph{Degree distributions.}
 In $G_{\mathrm{module}}$, the out-degree $\deg^{+}(m) = |\mathrm{imports}(m)|$ counts the modules that $m$ directly imports; the in-degree $\deg^{-}(m)$ counts how many others depend on~$m$. High in-degree identifies \emph{infrastructure}; high out-degree identifies an \emph{integrator}. All three graphs share heavy-tailed degree distributions in which lognormal fits outperform pure power laws, confirming that the ``few hubs, many low-degree nodes'' pattern is universal across granularities (Table~\ref{tab:degree-stats}, Table~\ref{tab:thm-degree}, Table~\ref{tab:ns-degree-stats}; Appendix~\ref{sec:sa-degree}).
@@ -74,10 +74,10 @@ Louvain community detection recovers recognizable mathematical disciplines at al
 \paragraph{Robustness.}
 All three graphs exhibit the classic hub-dominated vulnerability signature: high resilience under random failure, extreme fragility under targeted attack. At $20\%$ targeted removal, the giant component shrinks to $58\%$ (module), $46\%$ (declaration), and $21\%$ (namespace). The namespace graph's heightened fragility reflects the concentration of connectivity in a small number of infrastructure namespaces (Appendix~\ref{sec:sa-robustness}).
 
-\subsubsection{Cross-Level Alignment}
+\subsection{Cross-Level Alignment}
 \label{sec:cross-level-summary}
 
-\paragraph{Module--Declaration Interaction}
+\subsubsection{Module--Declaration Interaction}
 \label{sec:cohesion-main}
 
 In $G_{\mathrm{thm}}$, each module becomes a \emph{region}---a set of declaration-vertices sharing a common source file. For each module~$m$, let $\mathcal{D}_m \subseteq \mathcal{D}$ denote its declarations. We partition the incident edges into two classes:
@@ -195,19 +195,19 @@ The gap between the module graph and declaration-level dependencies is striking:
 \label{fig:ns-vs-mod}
 \end{figure}
 
-\paragraph{Namespace--Declaration Interaction}
+\subsubsection{Namespace--Declaration Interaction}
 \label{sec:ns-decl-main}
 
 The containment analysis of \S\ref{sec:containment-decay} measured how much declaration-level dependency traffic stays within namespace boundaries. We can now compare this with module cohesion to assess the relative constraining power of the two human organizational systems at the declaration level.
 
 The comparison reveals a consistent ordering: namespace containment at depth~$1$ ($22.2\%$) exceeds file-level containment ($15.6\%$), which in turn exceeds module cohesion ($10.7\%$). Namespaces, as conceptual categories, retain slightly more dependency traffic than files---a naming domain like \ns{Nat} captures more intra-group dependencies than the file \module{Data.Nat.Basic}, because the namespace spans multiple files and encloses a larger set of related declarations. But all three figures are far below~$50\%$: regardless of which human boundary one draws---naming hierarchy or file system---the majority of mathematical dependencies cross it. Full details are provided in Appendix~\ref{sec:ns-decl-interaction}.
 
-\paragraph{The Granularity Equilibrium}
+\subsubsection{The Granularity Equilibrium}
 \label{sec:granularity-main}
 
 The cross-level analysis implicitly rests on a design parameter that is itself a process-trace: the granularity of modules. \module{Mathlib}'s $6{,}993$ modules contain $308{,}129$ declarations, yielding a mean of approximately $44$ declarations per module. This ratio is not determined by mathematics---it is determined by the cognitive capacity of human developers. At one extreme, one declaration per module would make $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$ ($308$K modules, unnavigable). At the other, all declarations in one module would collapse $G_{\mathrm{module}}$ to a single vertex. The current equilibrium---approximately $44$ declarations per module, cohesion~$0.107$, $9.1\times$ edge amplification---represents a compromise shaped by human cognitive constraints. The same argument applies to the namespace axis, where \module{Mathlib}'s ${\sim}20$ declarations per leaf namespace reflects naming conventions that balance logical grouping against navigational convenience (Appendix~\ref{sec:three-layers}).
 
-\paragraph{Three Layers Combined}
+\subsubsection{Three Layers Combined}
 \label{sec:three-layers-main}
 
 Table~\ref{tab:three-layers} assembles the cross-level measurements.

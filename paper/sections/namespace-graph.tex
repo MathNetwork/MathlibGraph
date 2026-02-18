@@ -1,4 +1,4 @@
-\section{The Namespace Graph}
+\subsection{The Namespace Graph}
 \label{sec:namespace-graph}
 
 The module-level analysis of \S\ref{sec:module-import} treats each source file as a single vertex. At the opposite extreme, the declaration-level analysis of \S\ref{sec:theorem-premise} treats every theorem and definition as its own vertex. Between these extremes lies a natural intermediate structure: the \emph{namespace}. In Lean~4, every declaration~$d$ carries a fully qualified name---e.g., \decl{Nat.Prime.dvd\_mul}---whose dot-separated components encode a hierarchical naming convention. By truncating names to different depths, we obtain a continuously parameterized family of dependency graphs that interpolates between the coarse module level and the fine declaration level. This section constructs these graphs and measures how \emph{containment}---the proportion of edges that stay within namespace boundaries---decays as granularity increases.
