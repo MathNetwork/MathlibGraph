@@ -187,6 +187,8 @@ Of the $243{,}725$ theorems in $G_{\mathrm{thm}}$, $109{,}088$ ($44.8\%$) have i
 \label{rem:leaf-theorems}
 The $44.8\%$ zero-citation rate means that nearly half of all theorems in $G_{\mathrm{thm}}$ are leaves. These leaves constitute the \emph{API surface} of \module{Mathlib}---the interface through which the library's knowledge is consumed by external users (mathematicians applying results, AI systems selecting premises, downstream projects building on Mathlib). Their existence is not waste but function: a library that formalized only internally-reused lemmas would be useless to its consumers.
 
+\xinze{De Moura~\cite{demoura2026proofassistants} observes that leaf theorems are the connection points with external project libraries (FLT, PFR, Sphere Eversion, etc.). We could name these projects here and note that the 44.8\% leaf rate characterizes the size of Mathlib's \textbf{external API surface}.}
+
 The dichotomy between high-zero-rate namespaces (systematically generated mirrored API) and low-zero-rate namespaces (hand-crafted building blocks) reveals a second process-trace in the product. The \texttt{@[to\_additive]} machinery leaves a distinctive structural fingerprint---entire subtrees of leaf theorems that inflate the graph's surface area without deepening its logical content. This automation artifact is invisible at the module level (a module contains both original and mirrored theorems) but becomes visible at the theorem level, where individual declarations can be classified by their provenance.
 
 \paragraph{Cross-Namespace Flow}
