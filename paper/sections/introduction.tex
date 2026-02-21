@@ -8,6 +8,9 @@ That said, it is important to observe that while the validity of each theorem is
 
 The present paper studies these structural patterns in the attempt to quantify the divergence between inherited mathematical structure (the product) and human organizational process (the process). Our goal is to establish a baseline for human-authored formal mathematics, particularly as AI-driven formalization and automated discovery increasingly capture the attention of the mathematical community~\cite{hubert2025alphaproof,achim2025aristotle,chen2025seedprover,xin2025deepseekprover}. 
 
+\paragraph{Acknowledgements.}
+We thank Leonardo de Moura for facilitating the collaboration that led to this work. We are grateful to Ginestra Bianconi for insightful feedback and for drawing the analogy between cross-namespace dependencies and horizontal gene transfer in phylogenetic networks. We thank Johan Commelin for connecting us with the Mathlib maintainer community, and Oliver Nash for valuable comments on an earlier draft and for clarifications regarding Mathlib's tooling and module system.
+
 \textbf{XXXX Do we need another section for the definitions? In could be indeed the Methodology section XXXX}
 
 We focus on \module{Mathlib}: 308,129 declarations, 8,436,366 dependency edges, and 7,563 modules. All statistics refer to commit \texttt{534cf0b} (2 Feb 2026), extracted using \texttt{importGraph} (module layer) and premise-extraction tooling (declaration layer). Our module import graph reflects a post-\texttt{shake} state: Mathlib's CI runs the \texttt{shake} linter, which automatically removes certain transitively redundant imports; the raw developer-written imports would contain more redundancy. Moreover, the Lean~4 module system (introduced November 2025) distinguishes \texttt{public import} from \texttt{import}~\cite{lean4modules}; our snapshot captures a transitional state where most imports are still \texttt{public}, and the import graph will change structurally as the community gradually adopts private imports. We perform our analysis across four scales:
@@ -389,9 +392,6 @@ The preceding three levels treat modules, namespaces, and declarations as separa
 
 \medskip
 Together, the four levels form a progression from coarse architecture (\S\ref{sec:module-import}) through fine-grained logical structure (\S\ref{sec:theorem-premise}) and its namespace-level aggregation (\S\ref{sec:namespace-graph}) to the tension between human organization and 'mathematical necessity' (\S\ref{sec:module-declaration}). Beyond characterizing the network, we identify structural metrics---module cohesion, centrality rankings, zero-citation rates, containment curves---that can serve as quantitative signals for library maintenance, compilation optimization, and AI training data curation.
-
-\paragraph{Acknowledgements.}
-We thank Leonardo de Moura for facilitating the collaboration that led to this work. We are grateful to Ginestra Bianconi for insightful feedback and for drawing the analogy between cross-namespace dependencies and horizontal gene transfer in phylogenetic networks. We thank Johan Commelin for connecting us with the Mathlib maintainer community, and Oliver Nash for valuable comments on an earlier draft and for clarifications regarding Mathlib's tooling and module system.
 
 \section{Previous works}
 \paragraph{Software dependency networks.}
