@@ -19,6 +19,62 @@ For declarations $a, b \in \mathcal{D}$, define:
 The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S = \{(a,b) : a \xrightarrow{S} b\}$, and the \emph{pure proof dependency graph} is $G_P = (\mathcal{D}, E_P)$ where $E_P = \{(a,b) : a \xrightarrow{P} b\}$. An edge $(a,b) \in E_{\mathrm{thm}}$ that belongs to both $\mathrm{refs}(a.\tau)$ and $\mathrm{refs}(a.\pi)$ is classified as a \emph{mixed edge} $E_{SP}$. This yields a partition $E_{\mathrm{thm}} = E_S \sqcup E_P \sqcup E_{SP}$ (where $E_S$ excludes mixed edges for disjointness, i.e., $E_S$ consists of edges in $\mathrm{refs}(a.\tau) \setminus \mathrm{refs}(a.\pi)$, $E_{SP} = \mathrm{refs}(a.\tau) \cap \mathrm{refs}(a.\pi)$, and $E_P$ as above).
 \end{definition}
 
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.52\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textbf{theorem} \textcolor{red!70!black}{length\_nil}\\
+\hspace{1em}: [].{\textcolor{teal}{length}} = 0 := rfl\\[6pt]
+\textbf{theorem} \textcolor{red!70!black}{length\_cons} (a : $\alpha$) (l : List $\alpha$)\\
+\hspace{1em}: (a :: l).{\textcolor{teal}{length}} = l.{\textcolor{teal}{length}} + 1 := rfl\\[6pt]
+\textbf{theorem} \textcolor{red!70!black}{length\_append} (l1 l2 : List $\alpha$)\\
+\hspace{1em}: (l1 ++ l2).{\textcolor{violet}{length}} = l1.{\textcolor{violet}{length}} + l2.{\textcolor{violet}{length}}\\
+\hspace{1em}:= \textbf{by} induction l1 \textbf{with}\\
+\hspace{1em}| nil => simp [\textcolor{orange!80!red}{length\_nil}]\\
+\hspace{1em}| cons a l ih => simp [\textcolor{orange!80!red}{length\_cons}, ih]
+\caption{Source code: references colored by edge type.}
+\label{fig:sp-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.44\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sedge/.style={->, >=Stealth, teal, semithick},
+  pedge/.style={->, >=Stealth, orange!80!red, semithick, dashed},
+  spedge/.style={->, >=Stealth, violet, thick},
+]
+  % Row 1: length_append
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:length\_append}]
+    (la) at (2, 3.2) {};
+  % Row 2: length_nil, length_cons
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:length\_nil}]
+    (ln) at (0.3, 1.6) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:length\_cons}]
+    (lc) at (3.7, 1.6) {};
+  % Row 3: length (definition)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:length}]
+    (ll) at (2, 0) {};
+  % P edges (proof-only): orange dashed
+  \draw[pedge] (la) -- (ln);
+  \draw[pedge] (la) -- (lc);
+  % SP edge (mixed): violet thick
+  \draw[spedge] (la) -- (ll);
+  % S edges (statement-only): teal solid
+  \draw[sedge] (ln) -- (ll);
+  \draw[sedge] (lc) -- (ll);
+\end{tikzpicture}
+\caption{$E_{\mathrm{thm}} = \textcolor{teal}{E_S} \sqcup \textcolor{orange!80!red}{E_P} \sqcup \textcolor{violet}{E_{SP}}$.}
+\label{fig:sp-graph}
+\end{subfigure}
+\caption{Statement vs.\ proof decomposition (Definition~\ref{def:stmt-proof-dep}). (a)~Source code for three \texttt{List.length} theorems: \textcolor{teal}{teal} = reference only in the type~$\tau$ ($E_S$), \textcolor{orange!80!red}{orange dashed} = only in the proof~$\pi$ ($E_P$), \textcolor{violet}{violet} = in both ($E_{SP}$). For \decl{length\_nil} and \decl{length\_cons}, the definition \decl{length} appears only in~$\tau$; for \decl{length\_append}, it appears in both~$\tau$ and~$\pi$. (b)~The edge-classified subgraph. All names have the \texttt{List.}\ prefix removed.}
+\label{fig:stmt-proof-decomp}
+\end{figure}
+
 This decomposition directly instantiates the paper's central distinction. The statement dependency graph~$G_S$ captures \emph{inherited mathematical structure}: what a theorem asserts depends on logically prior definitions and results that are, in principle, invariant under changes of proof strategy. The pure proof dependency graph~$G_P$ captures \emph{human organizational process}: the choice of which lemmas, tactics, and automation to invoke reflects the tools, conventions, and taste of the proving community. The ratio $\rho = |E_P| / |E_{\mathrm{thm}}|$ would directly measure how much of the observed dependency network is proof engineering rather than mathematical necessity.
 
 \paragraph{Planned analyses.}
@@ -54,6 +110,64 @@ For each edge $(a, b) \in E_{\mathrm{thm}}$, define
 This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
 \end{definition}
 
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textbf{theorem} \textcolor{red!70!black}{add\_zero} [AddMonoid $\alpha$] (a : $\alpha$)\\
+\hspace{1em}: a + 0 = a := \textcolor{red!70!black}{AddMonoid.add\_zero} a\\[8pt]
+\textnormal{\sffamily Elaborated term references:}\\[2pt]
+\hspace{1em}\textcolor{red!70!black}{AddMonoid.add\_zero}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- explicit}}\\
+\hspace{1em}\textcolor{gray!50}{HAdd.hAdd}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{+}}}\\
+\hspace{1em}\textcolor{gray!50}{OfNat.ofNat}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{0}}}
+\caption{Source: only \decl{AddMonoid.add\_zero} is explicit; \texttt{+}~and~\texttt{0} trigger instance synthesis.}
+\label{fig:tc-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sdot/.style={circle, fill=gray!50, minimum size=3.5pt, inner sep=0pt},
+  elink/.style={->, >=Stealth, red!70!black, semithick},
+  slink/.style={->, >=Stealth, gray!50, semithick, dashed},
+]
+  % Background zones (drawn first, behind nodes)
+  \fill[red!6, rounded corners=3pt] (-0.6, -0.5) rectangle (1.6, 1.0);
+  \node[font=\tiny\sffamily\itshape, red!40!black] at (0.5, 0.85) {math content};
+  \fill[gray!8, rounded corners=3pt] (1.9, -0.5) rectangle (5.0, 1.0);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (3.45, 0.85) {language infrastructure};
+  % Top node: the theorem
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:add\_zero}]
+    (thm) at (2.3, 2.8) {};
+  % Explicit dep (math content)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:AddMonoid.add\_zero}]
+    (axiom) at (0.5, 0.2) {};
+  % Synthesized deps (language infrastructure)
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:HAdd.hAdd}]
+    (hadd) at (2.8, 0.2) {};
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:OfNat.ofNat}]
+    (ofnat) at (4.3, 0.2) {};
+  % Explicit edge (solid red)
+  \draw[elink] (thm) -- (axiom);
+  % Synthesized edges (dashed gray)
+  \draw[slink] (thm) -- (hadd);
+  \draw[slink] (thm) -- (ofnat);
+\end{tikzpicture}
+\caption{$E_{\mathrm{thm}} = \textcolor{red!70!black}{E_{\mathrm{explicit}}} \sqcup \textcolor{gray!50}{E_{\mathrm{synth}}}$.}
+\label{fig:tc-graph}
+\end{subfigure}
+\caption{Synthesized vs.\ explicit edge partition (Definitions~\ref{def:tc-graph},~\ref{def:synth-partition}). (a)~In the source for \decl{add\_zero}, only \decl{AddMonoid.add\_zero} is an explicit reference; the notation~\texttt{+} and literal~\texttt{0} each trigger typeclass instance synthesis, silently inserting \textcolor{gray!50}{synthesized edges}. (b)~The subgraph of $G_{\mathrm{thm}}$: \textcolor{red!70!black}{solid} = explicit, \textcolor{gray!50}{dashed} = synthesized. The two zones separate mathematical content from language infrastructure (Remark~\ref{rem:two-layers}). Hub nodes such as \decl{OfNat.ofNat} (in-degree $89{,}936$) accumulate high centrality primarily through synthesized edges.}
+\label{fig:synth-partition}
+\end{figure}
+
 The typeclass system is Lean~4's mechanism for ad-hoc polymorphism---a \emph{tool-specific} organizational layer that has no analog in traditional mathematics. Baanen~\cite{baanen2022} demonstrated that typeclass design choices (bundled vs.\ unbundled) significantly reshape dependency structure; $G_{\mathrm{tc}}$ would isolate this effect. Recomputing centrality on the ``math-only'' subgraph $G_{\mathrm{thm}} \setminus E_{\mathrm{synth}}$ would test whether the hub structure shifts from language infrastructure (\decl{OfNat.ofNat}, \decl{DFunLike.coe}) to mathematical content (\decl{CategoryTheory.Category}, \decl{Real}).
 
 \paragraph{Coercion chains.}
@@ -80,6 +194,68 @@ The \emph{public import subgraph} is
 \]
 The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actual namespace visibility scope---which declarations are transitively accessible from which modules.
 \end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{re-exports Init's declarations}}\\[10pt]
+\textsf{\itshape\normalfont\sffamily vs.}\\[10pt]
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{Init hidden from importers}}
+\caption{\texttt{public import} re-exports; plain \texttt{import} keeps declarations private.}
+\label{fig:vis-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
+  pub/.style={->, >=Stealth, blue!60!black, thick},
+  priv/.style={->, >=Stealth, blue!60!black, thick, dashed},
+]
+  % Left: all public
+  \node[font=\tiny\sffamily\bfseries, blue!60!black] at (0.7, 3.8)
+    {$G_{\mathrm{mod}}^{\mathrm{pub}} = G_{\mathrm{mod}}$};
+  \fill[blue!6, rounded corners=3pt] (-0.2, -0.3) rectangle (1.6, 3.5);
+  \node[font=\tiny\sffamily\itshape, blue!40!black] at (0.7, -0.6)
+    {A sees \{B, C\}};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:A}]
+    (a1) at (0.7, 3.0) {};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:B}]
+    (b1) at (0.7, 1.5) {};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:C}]
+    (c1) at (0.7, 0.0) {};
+  \draw[pub] (a1) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (b1);
+  \draw[pub] (b1) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (c1);
+  % Right: private inner import
+  \node[font=\tiny\sffamily\bfseries, blue!60!black] at (3.7, 3.8)
+    {$G_{\mathrm{mod}}^{\mathrm{pub}} \subset G_{\mathrm{mod}}$};
+  \fill[blue!6, rounded corners=3pt] (2.8, 0.9) rectangle (4.6, 3.5);
+  \node[font=\tiny\sffamily\itshape, blue!40!black] at (3.7, -0.6)
+    {A sees \{B\} only};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:A}]
+    (a2) at (3.7, 3.0) {};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:B}]
+    (b2) at (3.7, 1.5) {};
+  \node[dot, fill=gray!40, label={[font=\tiny\ttfamily, gray!50]right:C}]
+    (c2) at (3.7, 0.0) {};
+  \draw[pub] (a2) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (b2);
+  \draw[priv] (b2) -- node[left, font=\tiny\sffamily, text=gray!50] {priv} (c2);
+\end{tikzpicture}
+\caption{Transitive visibility scope (blue shading) of module~A.}
+\label{fig:vis-graph}
+\end{subfigure}
+\caption{Visibility graph (Definition~\ref{def:visibility-graph}). (a)~\texttt{public import} re-exports the imported module's declarations; plain \texttt{import} keeps them private. (b)~Left: when~B publicly imports~C, A's transitive visibility includes~\{B,\,C\}. Right: when~B privately imports~C, A can see only~\{B\}---the private edge breaks the transitive chain, removing~C from $G_{\mathrm{mod}}^{\mathrm{pub}}$.}
+\label{fig:visibility}
+\end{figure}
 
 The transition from all-public to selective-private imports is a live instance of \emph{organizational restructuring}---the community actively reshaping the module system to reduce unintended transitive dependencies and compilation cascades. Our snapshot (February 2026) captures a transitional moment where most imports remain \texttt{public}; as private imports are adopted, the 17.5\% redundancy rate (\S\ref{sec:transitive-reduction}) and the 92.2\% indirect dependency rate (\S\ref{sec:import_vs_declaration}) will both change.
 
@@ -112,6 +288,82 @@ where $w : \mathcal{M} \to \mathbb{R}_{\ge 0}$ assigns to each module~$m$ its co
 maximized over all directed paths~$\gamma$ from a source to a sink. The modules on this path are the \emph{compilation bottlenecks}: no amount of parallelism can reduce build time below~$W(\gamma^*)$.
 \end{definition}
 
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Algebra/Order/Group.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Mathlib.Data.Nat.Defs}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\
+\textbf{import} \textcolor{blue!60!black}{Mathlib.Algebra.Group.Defs}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 6$\,s}}\\
+\textbf{import} \textcolor{blue!60!black}{Mathlib.Data.Int.Defs}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[8pt]
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Defs.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 6$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
+\textsf{\bfseries\color{blue!60!black}Data/Int/Defs.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}
+\caption{Import structure with per-module compilation times. The \textcolor{orange!80!red}{critical path} passes through \module{Algebra.Group.Defs} ($w=6$\,s).}
+\label{fig:build-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.55\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  mod/.style={rounded corners=2pt, draw=blue!50!black, fill=blue!6,
+    font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+  critmod/.style={rounded corners=2pt, draw=orange!80!red, fill=orange!6,
+    line width=0.8pt, font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+  edge/.style={->, >=Stealth, blue!50!black, semithick},
+  critedge/.style={->, >=Stealth, orange!80!red, thick},
+]
+  % Source (top)
+  \node[critmod] (top) at (2.2, 4) {Algebra.Order.Group};
+  \node[font=\tiny\sffamily, text=orange!80!red, above=1pt of top] {$w = 1$\,s};
+  % Middle row
+  \node[mod] (nat) at (-0.3, 2) {Data.Nat.Defs};
+  \node[font=\tiny\sffamily, text=gray!60, above=1pt of nat] {$w = 2$\,s};
+  \node[critmod] (grp) at (2.2, 2) {Algebra.Group.Defs};
+  \node[font=\tiny\sffamily, text=orange!80!red, above=1pt of grp] {$w = 6$\,s};
+  \node[mod] (int) at (4.7, 2) {Data.Int.Defs};
+  \node[font=\tiny\sffamily, text=gray!60, above=1pt of int] {$w = 2$\,s};
+  % Sink (bottom)
+  \node[critmod] (init) at (2.2, 0) {Init};
+  \node[font=\tiny\sffamily, text=orange!80!red, below=1pt of init] {$w = 1$\,s};
+  % Non-critical edges (blue)
+  \draw[edge] (top) -- (nat);
+  \draw[edge] (top) -- (int);
+  \draw[edge] (nat) -- (init);
+  \draw[edge] (int) -- (init);
+  % Critical path edges (orange)
+  \draw[critedge] (top) -- (grp);
+  \draw[critedge] (grp) -- (init);
+  % Annotations (below the graph)
+  \node[font=\tiny\sffamily, text=orange!80!red, anchor=west]
+    at (-0.3, -1.2) {$\gamma^*$: Order.Group $\to$ Group.Defs $\to$ Init};
+  \node[font=\tiny\sffamily, anchor=west]
+    at (-0.3, -1.8) {$W(\gamma^*) = 8$\,s\quad Sequential: $12$\,s\quad Speedup: $1.5\times$};
+\end{tikzpicture}
+\caption{$G_{\mathrm{build}}$: the \textcolor{orange!80!red}{critical path} $\gamma^*$ determines the minimum build time.}
+\label{fig:build-graph}
+\end{subfigure}
+\caption{Build graph (Definition~\ref{def:build-graph}). (a)~Import declarations with per-module compilation times $w(m)$. (b)~The weighted DAG: the \textcolor{orange!80!red}{critical path}~$\gamma^*$ (orange boxes and edges) yields $W(\gamma^*)=1{+}6{+}1=8$\,s; \module{Data.Nat.Defs} and \module{Data.Int.Defs} compile in parallel but cannot reduce the total below~$W(\gamma^*)$. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:build}
+\end{figure}
+
 This graph directly substantiates the ``narrow waist creates compilation bottlenecks'' claim made in \S\ref{sec:sa-robustness} and \S\ref{sec:practice}. The current paper identifies bottleneck \emph{candidates} via centrality rankings (PageRank, betweenness), but centrality is a topological proxy---it does not account for the actual time cost of compiling each module. Huch and Wenzel~\cite{huch2024} demonstrate that DAG-based scheduling enables $>100\times$ speedup for the Isabelle AFP; Baanen et al.~\cite{baanen2025} report $6$--$33\%$ speedups from structural refactors in \module{Mathlib}. With per-module timing data, we could identify whether the critical path runs through the same high-centrality modules or through unexpected bottlenecks invisible to topological analysis.
 
 \paragraph{Planned analyses.}
@@ -131,6 +383,72 @@ Let $\{p_1, \ldots, p_R\}$ be the set of merged pull requests to \module{Mathlib
 \]
 An edge exists between $m_i$ and $m_j$ if $w_{\mathrm{co}}(m_i, m_j) \ge 1$.
 \end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{gray!70}PR \#18042}\textsf{\color{gray!50}\enspace``refactor Nat order lemmas''}\\[2pt]
+\hspace{1em}\textcolor{blue!60!black}{Data/Nat/Defs.lean}\\
+\hspace{1em}\textcolor{blue!60!black}{Data/Nat/Order.lean}\\
+\hspace{1em}\textcolor{blue!60!black}{Data/Int/Defs.lean}\\[8pt]
+\textsf{\bfseries\color{gray!70}PR \#18107}\textsf{\color{gray!50}\enspace``add Int.cast lemmas''}\\[2pt]
+\hspace{1em}\textcolor{blue!60!black}{Data/Nat/Defs.lean}\\
+\hspace{1em}\textcolor{blue!60!black}{Data/Int/Defs.lean}\\[8pt]
+\textsf{\bfseries\color{gray!70}PR \#18253}\textsf{\color{gray!50}\enspace``move group lemmas''}\\[2pt]
+\hspace{1em}\textcolor{blue!60!black}{Algebra/Group/Defs.lean}\\
+\hspace{1em}\textcolor{blue!60!black}{Data/Nat/Order.lean}\\[8pt]
+\textnormal{\sffamily Co-modification counts:}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\tiny%
+Nat.Defs $\leftrightarrow$ Int.Defs: 2 PRs,\quad
+Nat.Defs $\leftrightarrow$ Nat.Order: 1,}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+Int.Defs $\leftrightarrow$ Nat.Order: 1,\quad
+Group.Defs $\leftrightarrow$ Nat.Order: 1}
+\caption{Three PRs and the modules they touch. Pairs co-modified in multiple PRs get higher weight.}
+\label{fig:co-edit-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  mod/.style={rounded corners=2pt, draw=blue!50!black, fill=blue!6,
+    font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+  coedge/.style={-, blue!50!black, semithick},
+  strongedge/.style={-, purple!70!black, very thick},
+  hiddenedge/.style={-, red!60!black, semithick, dashed},
+]
+  % Nodes
+  \node[mod] (natd) at (0, 2.5) {Data.Nat.Defs};
+  \node[mod] (nato) at (3.8, 2.5) {Data.Nat.Order};
+  \node[mod] (intd) at (0, 0) {Data.Int.Defs};
+  \node[mod] (grpd) at (3.8, 0) {Algebra.Group.Defs};
+  % Edges with weights
+  % Strong edge: co-modified 2 times
+  \draw[strongedge] (natd) -- node[left, font=\tiny\sffamily, text=purple!70!black] {$w=2$} (intd);
+  % Normal edges: co-modified 1 time, also in G_module
+  \draw[coedge] (natd) -- node[above, font=\tiny\sffamily, text=blue!50!black] {$w=1$} (nato);
+  \draw[coedge] (intd) -- node[below, font=\tiny\sffamily, text=blue!50!black, pos=0.4] {$w=1$} (nato);
+  % Hidden dependency: co-modified but NOT in G_module
+  \draw[hiddenedge] (grpd) -- node[right, font=\tiny\sffamily, text=red!60!black] {$w=1$} (nato);
+  % Legend
+  \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -1.0)
+    {\textcolor{blue!50!black}{\rule{8pt}{1.5pt}} in $G_{\mathrm{co}} \cap G_{\mathrm{mod}}$};
+  \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -1.5)
+    {\textcolor{red!60!black}{- - -} in $G_{\mathrm{co}} \setminus G_{\mathrm{mod}}$ (hidden dep.)};
+  \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -2.0)
+    {\textcolor{purple!70!black}{\rule{8pt}{2.5pt}} high weight ($w \ge 2$)};
+\end{tikzpicture}
+\caption{$G_{\mathrm{co}}$: edge weight = number of PRs co-modifying both modules. The \textcolor{red!60!black}{dashed edge} has no import in $G_{\mathrm{mod}}$---a hidden dependency.}
+\label{fig:co-edit-graph}
+\end{subfigure}
+\caption{Co-modification graph (Definition~\ref{def:co-edit-graph}). (a)~Three merged PRs and the files each touches. (b)~The resulting weighted undirected graph $G_{\mathrm{co}}$: \textcolor{blue!50!black}{solid} edges exist in both $G_{\mathrm{co}}$ and $G_{\mathrm{mod}}$ (structural + logical coupling); the \textcolor{red!60!black}{dashed} edge between \module{Algebra.Group.Defs} and \module{Data.Nat.Order} appears only in $G_{\mathrm{co}}$, revealing a hidden dependency invisible to the import graph. The \textcolor{purple!70!black}{thick} edge ($w=2$) indicates a stronger coupling. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:co-modification}
+\end{figure}
 
 This graph captures traces of \emph{human organizational process} from a data source entirely independent of Lean's compilation model: the Git history. Comparing $G_{\mathrm{co}}$ with $G_{\mathrm{module}}$ tests whether structural coupling predicts logical coupling. Module pairs with high co-modification weight but no direct import edge reveal hidden dependencies---candidates for refactoring or explicit import addition. Conversely, direct import edges with zero co-modification suggest stable, well-encapsulated interfaces.
 
@@ -152,6 +470,78 @@ The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})
   \item Two declarations satisfy $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs.
 \end{itemize}
 \end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+@[simp] \textbf{theorem} \textcolor{red!70!black}{mul\_one}\\
+\hspace{1em}[Monoid $\alpha$] (a : $\alpha$) : a * 1 = a\\[6pt]
+@[to\_additive] \textbf{theorem} \textcolor{red!70!black}{mul\_comm}\\
+\hspace{1em}[CommMonoid $\alpha$] (a b : $\alpha$) : a * b = b * a\\[4pt]
+\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!50}{%
+generates \decl{add\_comm} automatically}}\\[6pt]
+@[simp, ext] \textbf{theorem} \textcolor{red!70!black}{Prod.mk.eta}\\
+\hspace{1em}: (p.1, p.2) = p\\[10pt]
+\textnormal{\sffamily Extracted metadata per node:}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\alpha(d)$: attribute set \{simp, ext, \ldots\}}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\kappa(d)$: proof term size (Expr node count)}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\upsilon(d)$: universe polymorphism degree}
+\caption{Declarations with Lean attributes and the metadata extracted from each.}
+\label{fig:attr-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=4pt, inner sep=0pt},
+  depedge/.style={->, >=Stealth, gray!50, semithick},
+  tag/.style={rounded corners=1.5pt, font=\tiny\sffamily, inner sep=1.5pt},
+  simptag/.style={tag, fill=teal!15, text=teal!70!black, draw=teal!40},
+  exttag/.style={tag, fill=violet!15, text=violet!70!black, draw=violet!40},
+  toaddtag/.style={tag, fill=orange!15, text=orange!70!black, draw=orange!40},
+  mirror/.style={<->, >=Stealth, orange!60!black, semithick, dashed},
+  meta/.style={font=\tiny\sffamily, text=gray!60},
+]
+  % Node: mul_one
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_one}]
+    (mo) at (0, 3.2) {};
+  \node[simptag, anchor=west] at (0.25, 3.2) {simp};
+  \node[meta, anchor=west] at (0.25, 2.8) {$\kappa=12$\enspace$\upsilon=1$};
+  % Node: mul_comm
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_comm}]
+    (mc) at (0, 1.6) {};
+  \node[toaddtag, anchor=north] at (0, 1.1) {to\_additive};
+  \node[meta, anchor=west] at (0.25, 0.7) {$\kappa=34$\enspace$\upsilon=1$};
+  % Node: add_comm (mirror)
+  \node[dot, fill=orange!50!red, label={[font=\tiny\ttfamily, orange!60!black]right:add\_comm}]
+    (ac) at (4.0, 1.6) {};
+  \node[meta, anchor=west] at (4.25, 1.2) {$\kappa=34$\enspace$\upsilon=1$};
+  % Node: Prod.mk.eta
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:Prod.mk.eta}]
+    (pe) at (0, -0.4) {};
+  \node[simptag, anchor=west] at (0.25, -0.4) {simp};
+  \node[exttag, anchor=west] at (1.05, -0.4) {ext};
+  \node[meta, anchor=west] at (0.25, -0.85) {$\kappa=8$\enspace$\upsilon=2$};
+  % Mirror edge (to_additive)
+  \draw[mirror] (mc) -- node[above, font=\tiny\sffamily, text=orange!60!black] {$\sim_{\mathrm{add}}$} (ac);
+  % Dependency edges (faint)
+  \draw[depedge] (mo) -- (mc);
+  \draw[depedge] (mc) -- (pe);
+\end{tikzpicture}
+\caption{Nodes of $G_{\mathrm{thm}}$ enriched with attribute tags, proof complexity~$\kappa$, and universe degree~$\upsilon$. The \textcolor{orange!60!black}{dashed} arrow marks a \texttt{to\_additive} mirror pair.}
+\label{fig:attr-graph}
+\end{subfigure}
+\caption{Declaration metadata as node attributes (Definition~\ref{def:decl-attributes}). (a)~Lean source with attribute annotations. (b)~The declaration graph enriched with per-node metadata: colored tags indicate attributes ($\textcolor{teal!70!black}{\texttt{simp}}$, $\textcolor{violet!70!black}{\texttt{ext}}$, $\textcolor{orange!70!black}{\texttt{to\_additive}}$); $\kappa$ and $\upsilon$ are numeric features. The \textcolor{orange!60!black}{dashed} bidirectional arrow marks the automatically generated additive mirror \decl{add\_comm} $\sim_{\mathrm{add}}$ \decl{mul\_comm}.}
+\label{fig:decl-attributes}
+\end{figure}
 
 These attributes bridge the two dimensions of our framework. Proof complexity~$\kappa$ and tactic usage characterize the \emph{process} layer (how theorems are proved), while $\upsilon$ and the \texttt{to\_additive} equivalence characterize \emph{tool-mediated structure}---features arising from Lean's type system and metaprogramming infrastructure rather than mathematical content. In particular, computing~$\phi$ would convert our qualitative observation about semantic flattening (\S\ref{sec:thm-vs-lemma}) into a precise count of automatically generated mirrors.
 
@@ -176,6 +566,115 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
   \item \emph{Structural events}: discontinuities in the time series coinciding with known events (e.g., the Lean~3$\to$4 port via Mathport, 2023; the module system introduction, November 2025).
 \end{itemize}
 \end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.38\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize
+\textsf{\bfseries Timeline of snapshots}\\[6pt]
+\begin{tikzpicture}[
+  every node/.style={font=\tiny\sffamily},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  event/.style={font=\tiny\sffamily\itshape, text=red!60!black},
+]
+  % Timeline
+  \draw[->, >=Stealth, gray!60, thick] (0, 0) -- (0, -5.2);
+  \node[font=\tiny\sffamily, gray!50, anchor=east] at (-0.15, 0) {$t$};
+  % Snapshots
+  \node[dot] (c1) at (0, -0.3) {};
+  \node[anchor=west] at (0.2, -0.3) {$c_1$: Jan 2023};
+  \node[dot] (c2) at (0, -1.2) {};
+  \node[anchor=west] at (0.2, -1.2) {$c_2$: Jul 2023};
+  \node[event, anchor=west] at (0.2, -1.55) {Lean 3$\to$4 port};
+  \node[dot] (c3) at (0, -2.4) {};
+  \node[anchor=west] at (0.2, -2.4) {$c_3$: Jan 2024};
+  \node[dot] (c4) at (0, -3.3) {};
+  \node[anchor=west] at (0.2, -3.3) {$c_4$: Jan 2025};
+  \node[dot] (c5) at (0, -4.2) {};
+  \node[anchor=west] at (0.2, -4.2) {$c_5$: Nov 2025};
+  \node[event, anchor=west] at (0.2, -4.55) {module system};
+  \node[dot, fill=orange!80!red] (c6) at (0, -5.0) {};
+  \node[anchor=west, text=orange!80!red] at (0.2, -5.0) {$c_T$: Feb 2026 (this paper)};
+\end{tikzpicture}
+\caption{Monthly snapshots $\{c_1, \ldots, c_T\}$ with structural events marked.}
+\label{fig:temporal-timeline}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.58\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  mod/.style={circle, fill=blue!60!black, minimum size=2.5pt, inner sep=0pt},
+  edge/.style={-, blue!30!black, semithick, opacity=0.5},
+  frame/.style={rounded corners=3pt, draw=gray!40, fill=gray!3, inner sep=4pt},
+]
+  % Graph at t=1 (small)
+  \node[frame, minimum width=50pt, minimum height=40pt] (f1) at (0, -0.5) {};
+  \node[font=\tiny\sffamily, gray!60, above=0pt of f1] {$G^{(c_1)}$};
+  \node[mod] (a1) at (-0.4, -0.2) {};
+  \node[mod] (b1) at (0.3, -0.1) {};
+  \node[mod] (c1n) at (-0.1, -0.7) {};
+  \node[mod] (d1) at (0.5, -0.8) {};
+  \draw[edge] (a1) -- (b1);
+  \draw[edge] (b1) -- (c1n);
+  \draw[edge] (c1n) -- (d1);
+  % Growth indicators
+  \node[font=\tiny\sffamily, text=gray!50, below=2pt of f1] {$|\mathcal{D}|{=}50\text{k}$};
+  % Graph at t=3 (medium)
+  \node[frame, minimum width=55pt, minimum height=45pt] (f3) at (2.3, -0.5) {};
+  \node[font=\tiny\sffamily, gray!60, above=0pt of f3] {$G^{(c_3)}$};
+  \node[mod] (a3) at (1.8, -0.1) {};
+  \node[mod] (b3) at (2.5, 0.0) {};
+  \node[mod] (c3n) at (2.0, -0.5) {};
+  \node[mod] (d3) at (2.7, -0.4) {};
+  \node[mod] (e3) at (2.3, -0.9) {};
+  \node[mod] (f3n) at (1.9, -0.9) {};
+  \draw[edge] (a3) -- (b3);
+  \draw[edge] (a3) -- (c3n);
+  \draw[edge] (b3) -- (d3);
+  \draw[edge] (c3n) -- (e3);
+  \draw[edge] (d3) -- (e3);
+  \draw[edge] (c3n) -- (f3n);
+  \node[font=\tiny\sffamily, text=gray!50, below=2pt of f3] {$|\mathcal{D}|{=}150\text{k}$};
+  % Graph at t=T (large, current)
+  \node[frame, minimum width=62pt, minimum height=50pt, draw=orange!60!red] (fT) at (4.8, -0.5) {};
+  \node[font=\tiny\sffamily, orange!80!red, above=0pt of fT] {$G^{(c_T)}$};
+  \node[mod, fill=orange!80!red] (aT) at (4.3, 0.0) {};
+  \node[mod, fill=orange!80!red] (bT) at (5.0, 0.1) {};
+  \node[mod, fill=orange!80!red] (cT) at (4.5, -0.3) {};
+  \node[mod, fill=orange!80!red] (dT) at (5.2, -0.3) {};
+  \node[mod, fill=orange!80!red] (eT) at (4.3, -0.7) {};
+  \node[mod, fill=orange!80!red] (fT2) at (4.8, -1.0) {};
+  \node[mod, fill=orange!80!red] (gT) at (5.3, -0.7) {};
+  \node[mod, fill=orange!80!red] (hT) at (4.6, -0.5) {};
+  \draw[-, orange!40!red, semithick, opacity=0.5] (aT) -- (bT);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (aT) -- (cT);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (bT) -- (dT);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (cT) -- (eT);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (dT) -- (gT);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (eT) -- (fT2);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (hT) -- (fT2);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (cT) -- (hT);
+  \draw[-, orange!40!red, semithick, opacity=0.5] (gT) -- (fT2);
+  \node[font=\tiny\sffamily, text=orange!80!red, below=2pt of fT] {$|\mathcal{D}|{=}318\text{k}$};
+  % Growth arrows
+  \draw[->, >=Stealth, gray!40, thick] (0.95, -0.5) -- (1.55, -0.5);
+  \node[font=\tiny\sffamily, gray!40, above] at (1.25, -0.5) {$\cdots$};
+  \draw[->, >=Stealth, gray!40, thick] (3.15, -0.5) -- (3.95, -0.5);
+  \node[font=\tiny\sffamily, gray!40, above] at (3.55, -0.5) {$\cdots$};
+  % Tracked metrics below
+  \node[font=\tiny\sffamily, anchor=north west] at (-0.8, -2.0)
+    {Track: $|\mathcal{D}_t|$, edge density, community NMI, hub turnover, redundancy $r(G_{\mathrm{mod}}^{(t)})$};
+\end{tikzpicture}
+\caption{Graph snapshots growing over time; structural metrics tracked across the sequence detect events and trends.}
+\label{fig:temporal-graph}
+\end{subfigure}
+\caption{Temporal graph sequence (Definition~\ref{def:temporal-sequence}). (a)~Monthly snapshots of \module{Mathlib} commits, with two structural events: the Lean~3$\to$4 port (2023) and the module system introduction (November 2025). (b)~The declaration graph $G_{\mathrm{thm}}^{(t)}$ at three time points, growing from ${\sim}50$k to $318$k declarations. Tracking structural indicators across the sequence reveals whether properties like the $17.5\%$ redundancy rate are stable invariants or transient features of a particular development phase.}
+\label{fig:temporal-sequence}
+\end{figure}
 
 The temporal dimension directly captures the \emph{process} of organizational restructuring. If \module{Mathlib}'s dependency structure is primarily determined by inherited mathematical logic, structural indicators should be stable under refactoring; if organizational process dominates, we expect significant structural change at refactoring events while mathematical content remains constant. The Lean~3$\to$4 port is a natural experiment: identical mathematical content, entirely rewritten proof infrastructure.
 
