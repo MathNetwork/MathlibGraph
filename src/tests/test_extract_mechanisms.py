@@ -53,6 +53,13 @@ SAMPLE_OUTPUT = """\
 {"type":"module_import","module":"Mathlib.Algebra.Group.Defs","imported":"Mathlib.Algebra.Group.Basic","is_exported":true}
 {"type":"module_import","module":"Mathlib.Algebra.Group.Defs","imported":"Mathlib.Data.Int.Defs","is_exported":false}
 {"type":"module_import","module":"Mathlib.Analysis.Normed.Group.Basic","imported":"Mathlib.Topology.MetricSpace.Basic","is_exported":true}
+{"type":"decl_module","name":"instAddNat","module":"Mathlib.Algebra.Group.Defs"}
+{"type":"decl_module","name":"instMulNat","module":"Mathlib.Algebra.Group.Defs"}
+{"type":"decl_module","name":"mul_comm","module":"Mathlib.Algebra.Group.Basic"}
+{"type":"def_height","name":"List.map","height":5,"reducibility":"regular"}
+{"type":"def_height","name":"Nat.add","height":2,"reducibility":"regular"}
+{"type":"def_height","name":"id","height":null,"reducibility":"abbrev"}
+{"type":"def_height","name":"Classical.choice","height":null,"reducibility":"opaque"}
 """
 
 
@@ -313,6 +320,69 @@ class TestModuleImports:
         assert len(private) == 1
 
 
+class TestDeclModules:
+    """Test declaration → file module mapping."""
+
+    def test_decl_modules_extracted(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(SAMPLE_OUTPUT))
+        assert len(result["decl_modules"]) == 3
+
+    def test_decl_module_mapping(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(SAMPLE_OUTPUT))
+        assert result["decl_modules"]["instAddNat"] == "Mathlib.Algebra.Group.Defs"
+        assert result["decl_modules"]["mul_comm"] == "Mathlib.Algebra.Group.Basic"
+
+    def test_empty_decl_modules(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(""))
+        assert result["decl_modules"] == {}
+
+
+class TestDefHeight:
+    """Test definitional height extraction."""
+
+    def test_def_heights_extracted(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(SAMPLE_OUTPUT))
+        assert len(result["def_heights"]) == 4
+
+    def test_regular_height(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(SAMPLE_OUTPUT))
+        h = result["def_heights"]["List.map"]
+        assert h["height"] == 5
+        assert h["reducibility"] == "regular"
+
+    def test_abbrev_height(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(SAMPLE_OUTPUT))
+        h = result["def_heights"]["id"]
+        assert h["height"] is None
+        assert h["reducibility"] == "abbrev"
+
+    def test_opaque_height(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(SAMPLE_OUTPUT))
+        h = result["def_heights"]["Classical.choice"]
+        assert h["height"] is None
+        assert h["reducibility"] == "opaque"
+
+    def test_empty_def_heights(self):
+        from parser.from_mechanisms import parse_mechanisms
+
+        result = parse_mechanisms(io.StringIO(""))
+        assert result["def_heights"] == {}
+
+
 class TestSummaryTable:
     """Test summary table generation for paper."""
 
@@ -404,6 +474,23 @@ class TestRealData:
         assert stats["P_only"] > 0
         assert stats["SP"] > 0
 
+    def test_real_def_heights(self):
+        """Definitional heights should be extracted for many definitions."""
+        from parser.from_mechanisms import parse_mechanisms
+
+        with open(REAL_OUTPUT_PATH) as f:
+            result = parse_mechanisms(f)
+        heights = result["def_heights"]
+        if not heights:
+            pytest.skip("def_height records not present in mechanisms.ndjson (re-run extraction)")
+        # Most definitions have regular reducibility with a height
+        regular = [h for h in heights.values() if h["reducibility"] == "regular"]
+        assert len(regular) > 10000
+        # Heights should be non-negative integers
+        for h in regular:
+            assert isinstance(h["height"], int)
+            assert h["height"] >= 0
+
     def test_real_module_imports(self):
         """Module import graph should have thousands of edges."""
         from parser.from_mechanisms import parse_mechanisms
@@ -411,3 +498,24 @@ class TestRealData:
         with open(REAL_OUTPUT_PATH) as f:
             result = parse_mechanisms(f)
         assert len(result["module_imports"]) > 5000
+
+    def test_real_import_utilization(self):
+        """Import utilization should be computable from CSV + mechanisms."""
+        from parser.from_mechanisms import compute_import_utilization
+
+        hf_dir = Path.home() / ".cache/huggingface/hub/datasets--MathNetwork--MathlibGraph/snapshots/bc4173ec3beda64713ae81f602ce224491c61703"
+        edges_path = hf_dir / "mathlib_edges.csv"
+        if not edges_path.exists():
+            pytest.skip("HuggingFace dataset not available")
+
+        with open(REAL_OUTPUT_PATH) as f:
+            from parser.from_mechanisms import parse_mechanisms
+            result = parse_mechanisms(f)
+
+        if not result["decl_modules"]:
+            pytest.skip("decl_module records not present in mechanisms.ndjson (re-run extraction)")
+
+        stats = compute_import_utilization(edges_path, result["module_imports"], result["decl_modules"])
+        assert stats["total_import_edges"] > 5000
+        assert 0 < stats["mean_util"] < 1
+        assert stats["zero_util_edges"] >= 0

@@ -21,9 +21,12 @@ Usage:
     python -m parser.from_mechanisms --input mechanisms.ndjson
 """
 
+import csv
 import json
 import sys
 import argparse
+import statistics
+from pathlib import Path
 from typing import TextIO, Any
 
 
@@ -47,6 +50,8 @@ def parse_mechanisms(input_file: TextIO) -> dict[str, Any]:
         "deriving_handlers": [],
         "stmt_proof_stats": None,
         "module_imports": [],
+        "decl_modules": {},
+        "def_heights": {},
     }
 
     for line in input_file:
@@ -109,6 +114,13 @@ def parse_mechanisms(input_file: TextIO) -> dict[str, Any]:
                 "imported": obj["imported"],
                 "is_exported": obj.get("is_exported", True),
             })
+        elif typ == "decl_module":
+            result["decl_modules"][obj["name"]] = obj["module"]
+        elif typ == "def_height":
+            result["def_heights"][obj["name"]] = {
+                "height": obj.get("height"),  # None for abbrev/opaque
+                "reducibility": obj["reducibility"],
+            }
 
     return result
 
@@ -131,6 +143,67 @@ def get_parent_chain(result: dict[str, Any], name: str) -> list[str]:
         current = parent_map[current]
         chain.append(current)
     return chain
+
+
+def compute_import_utilization(
+    edges_path: Path,
+    module_imports: list[dict],
+    decl_modules: dict[str, str],
+) -> dict[str, Any]:
+    """
+    Compute import utilization: for each import edge (m_i → m_j),
+    what fraction of m_j's declarations are actually referenced by m_i.
+
+    Args:
+        edges_path: Path to mathlib_edges.csv (declaration-level edges)
+        module_imports: list of {module, imported, is_exported} dicts
+        decl_modules: dict mapping declaration name → file module name
+            (from 'decl_module' NDJSON records)
+
+    Returns summary statistics.
+    """
+    # Step 1: Count declarations per file module
+    mod_decl_count: dict[str, int] = {}
+    for mod in decl_modules.values():
+        mod_decl_count[mod] = mod_decl_count.get(mod, 0) + 1
+
+    # Step 2: For each (source_module, target_module), collect used target declarations
+    # used[(m_i, m_j)] = set of declarations in m_j referenced by m_i
+    used: dict[tuple[str, str], set[str]] = {}
+    with open(edges_path, "r", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            src_mod = decl_modules.get(row["source"], "")
+            tgt_mod = decl_modules.get(row["target"], "")
+            if src_mod and tgt_mod and src_mod != tgt_mod:
+                key = (src_mod, tgt_mod)
+                if key not in used:
+                    used[key] = set()
+                used[key].add(row["target"])
+
+    # Step 3: Compute utilization per import edge
+    import_set = {(imp["module"], imp["imported"]) for imp in module_imports}
+    utils = []
+    zero_count = 0
+    for mod_i, mod_j in import_set:
+        total_j = mod_decl_count.get(mod_j, 0)
+        if total_j == 0:
+            continue
+        used_count = len(used.get((mod_i, mod_j), set()))
+        util = used_count / total_j
+        utils.append(util)
+        if used_count == 0:
+            zero_count += 1
+
+    utils_sorted = sorted(utils)
+    return {
+        "total_import_edges": len(utils),
+        "mean_util": statistics.mean(utils) if utils else 0,
+        "median_util": statistics.median(utils) if utils else 0,
+        "p25_util": utils_sorted[len(utils_sorted) // 4] if utils else 0,
+        "p75_util": utils_sorted[3 * len(utils_sorted) // 4] if utils else 0,
+        "max_util": max(utils) if utils else 0,
+        "zero_util_edges": zero_count,
+    }
 
 
 def generate_summary(result: dict[str, Any]) -> dict[str, Any]:
