@@ -1,14 +1,735 @@
-\section{Methodology}
-\label{sec:methodology}
+\section{Definitions}
+\label{sec:definitions}
 
-\textbf{XXXX Maybe methodology should be before the "Our contrib" section XXXX. Here should go a small conclusion with open problems and then acknowledgments XXXX}
-\xinze{This section should describe our methodology. Topics to consider: (1) Why network analysis as the analytical framework? (2) Research design: why three layers of graphs? (3) Data extraction pipeline and tooling. (4) Analysis methods and metrics chosen. (5) Reproducibility and dataset availability. Need to discuss with co-authors what belongs here vs.\ what stays in the introduction and appendix.}
+We define the dependency graphs and organizational structures extracted from \module{Mathlib} that form the objects of study for this paper. All statistics refer to commit \texttt{534cf0b} (2 February 2026). Extended examples and illustrative figures appear in the appendix (\S\ref{sec:module-import}--\S\ref{sec:future-graphs}).
 
-\xinze{Re Methodology: most of the five topics are already covered elsewhere---(1) and (2) in the Introduction and Conceptual Framework, (3) and (5) in the Introduction's data/code availability paragraph and Appendix~B, (4) defined inline in each analysis section. \textbf{Options:} (a) keep this as a short ``bridge'' section (half a page) summarizing the three-layer design and pointing to the appendix for pipeline details; (b) remove the section entirely and distribute any remaining content to the Introduction. Leaning toward (a) for readability, but open to discussion.}
+\subsection{Modules and the module tree}
 
-\textbf{XXXX Do we need a small conclusions session? XXXX}
+\begin{definition}[Module]\label{def:module}
+A \emph{module} in \module{Mathlib} is identified by a dot-separated sequence of identifiers, such as $\module{Mathlib.Algebra.Group.Defs}$. Each module corresponds to a \texttt{.lean} source file, with dots replacing path separators. We write $\mathcal{M}$ for the set of all modules in \module{Mathlib}; at our snapshot, $|\mathcal{M}| = 7{,}563$.
+The \emph{depth} of a module $c_1.c_2.\cdots.c_k$ is~$k$, the number of dot-separated components.
+\end{definition}
 
-\xinze{Re Conclusions: we already have a full \texttt{\\section\{Conclusion\}} (\S\ref{sec:conclusion}) with Summary, Future Directions, and Limitations.}
+We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, \module{Mathlib.Algebra} is a prefix of \module{Mathlib.Algebra.Group.Defs}.
 
-\paragraph{Acknowledgements.}
-We thank Leonardo de Moura for facilitating the collaboration that led to this work. We are grateful to Ginestra Bianconi for insightful feedback and for drawing the analogy between cross-namespace dependencies and horizontal gene transfer in phylogenetic networks. We thank Johan Commelin for connecting us with the Mathlib maintainer community, and Oliver Nash for valuable comments on an earlier draft and for clarifications regarding Mathlib's tooling and module system.
+\begin{definition}[Module tree]\label{def:module-tree}
+The prefix relation induces a rooted tree $T = (\mathcal{M}, E_T)$ with root $\module{Mathlib}$, which we call the \emph{module tree}, where
+\[
+  E_T = \{(m, m') \in \mathcal{M} \times \mathcal{M} \mid m \text{ is a prefix of } m' \text{ and } \mathrm{depth}(m') = \mathrm{depth}(m) + 1\}.
+\]
+Its leaves are modules (source files); its internal nodes are shared prefixes of modules, corresponding to directories in the source repository.
+\end{definition}
+
+The module tree encodes the human cognitive classification of mathematics: top-level directories like \module{Algebra}, \module{Analysis}, and \module{Topology} reflect disciplinary boundaries established long before formalization.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
+\begin{forest}
+  for tree={
+    font=\scriptsize\ttfamily,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+        (!u.south west) +(7.5pt,0) |- (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1 {insert before={[,phantom]}} {}
+    },
+    fit=band,
+    before computing xy={l=13pt},
+  }
+[Mathlib/
+  [Algebra/
+    [Group/
+      [Defs.lean]
+    ]
+  ]
+  [Data/
+    [Nat/
+      [Notation.lean]
+    ]
+  ]
+  [\ldots, edge={draw, densely dotted}]
+]
+\end{forest}
+\caption{Directory structure}
+\label{fig:dir-tree-app}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.52\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+]
+  \node[dot, label=above:{Mathlib}]              (root) at (1.8,0) {};
+  \node[dot, label=left:{Algebra}]               (alg)  at (0,-1.3) {};
+  \node[dot, label=right:{Data}]                 (dat)  at (3.6,-1.3) {};
+  \node[dot, label=left:{Algebra.Group}]         (grp)  at (0,-2.6) {};
+  \node[dot, label=right:{Data.Nat}]             (nat)  at (3.6,-2.6) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]   (gd)   at (0,-3.9) {};
+  \node[dot, label=below:{Data.Nat.Notation}]    (nn)   at (3.6,-3.9) {};
+  \draw[dep] (root) -- (alg);
+  \draw[dep] (root) -- (dat);
+  \draw[dep] (alg)  -- (grp);
+  \draw[dep] (dat)  -- (nat);
+  \draw[dep] (grp)  -- (gd);
+  \draw[dep] (nat)  -- (nn);
+  \node[font=\scriptsize, text=gray] at (1.8,-1.3) {$\cdots$};
+\end{tikzpicture}
+\caption{Module tree $T$: arrows point parent $\to$ child ($\in E_T$)}
+\label{fig:namespace-tree-app}
+\end{subfigure}
+\caption{A fragment of the \module{Mathlib} source tree (commit \texttt{534cf0b}). Left: the directory layout. Right: the corresponding rooted tree~$T$. Each directory path maps to a module with dots replacing separators, e.g., \module{Mathlib/\allowbreak Algebra/\allowbreak Group/\allowbreak Defs.lean} $\leftrightarrow$ \module{Mathlib.\allowbreak Algebra.\allowbreak Group.\allowbreak Defs}.}
+\label{fig:prefix-tree-app}
+\end{figure}
+
+\subsection{The module graph $G_{\mathrm{module}}$}
+Each Lean source file begins with \texttt{import} statements that declare its dependencies. Lean~4 supports both \texttt{import} and \texttt{public import}; for the purposes of the module graph, both forms create an edge.
+
+\begin{definition}[Import set]
+\label{def:import-set}
+For each $m \in \mathcal{M}$, let $\mathrm{imports}(m) \subseteq \mathcal{M}$ denote the set of modules directly imported by $m$ (via either \texttt{import} or \texttt{public import}).
+\end{definition}
+
+\begin{definition}[Module graph]\label{def:module-graph}
+The \emph{module graph} of \module{Mathlib} is $G_{\mathrm{module}} = (\mathcal{M}, E_{\mathrm{module}})$ where
+\[
+  E_{\mathrm{module}} = \{(m_1, m_2) \in \mathcal{M} \times \mathcal{M} \mid m_2 \in \mathrm{imports}(m_1)\}.
+\]
+\end{definition}
+
+\noindent At our snapshot, $|E_{\mathrm{module}}| = 23{,}235$. The module graph is a DAG. Unlike the module tree, which records cognitive organization, the module graph records compiler-enforced dependencies; import edges frequently cross directory boundaries.
+
+Since November 2025, Lean~4's module system~\cite{lean4modules} distinguishes \texttt{public import} from \texttt{import} (private), allowing modules to selectively limit transitive visibility. This distinction refines the module graph:
+
+\begin{definition}[Visibility graph]\label{def:visibility-graph}
+For each import edge $(m_i, m_j) \in E_{\mathrm{mod}}$, let
+\[
+  \mathrm{vis}(m_i, m_j) \in \{\texttt{public},\, \texttt{private}\}.
+\]
+The \emph{public import subgraph} is
+\[
+  G_{\mathrm{mod}}^{\mathrm{pub}} = (\mathcal{M},\, \{(m_i, m_j) \in E_{\mathrm{mod}} : \mathrm{vis}(m_i, m_j) = \texttt{public}\}).
+\]
+The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actual namespace visibility scope---which declarations are transitively accessible from which modules.
+\end{definition}
+
+\noindent Our snapshot captures a transitional state in which most imports are still \texttt{public}; as private imports are adopted, $G_{\mathrm{mod}}^{\mathrm{pub}}$ will become a proper subgraph of $G_{\mathrm{module}}$, reducing transitive visibility and reshaping redundancy (\S\ref{sec:transitive-reduction}).
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{re-exports Init's declarations}}\\[10pt]
+\textsf{\itshape\normalfont\sffamily vs.}\\[10pt]
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{Init hidden from importers}}
+\caption{\texttt{public import} re-exports; plain \texttt{import} keeps declarations private.}
+\label{fig:vis-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
+  pub/.style={->, >=Stealth, blue!60!black, thick},
+  priv/.style={->, >=Stealth, blue!60!black, thick, dashed},
+]
+  % Left: all public
+  \node[font=\tiny\sffamily\bfseries, blue!60!black] at (0.7, 3.8)
+    {$G_{\mathrm{mod}}^{\mathrm{pub}} = G_{\mathrm{mod}}$};
+  \fill[blue!6, rounded corners=3pt] (-0.2, -0.3) rectangle (1.6, 3.5);
+  \node[font=\tiny\sffamily\itshape, blue!40!black] at (0.7, -0.6)
+    {A sees \{B, C\}};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:A}]
+    (a1) at (0.7, 3.0) {};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:B}]
+    (b1) at (0.7, 1.5) {};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:C}]
+    (c1) at (0.7, 0.0) {};
+  \draw[pub] (a1) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (b1);
+  \draw[pub] (b1) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (c1);
+  % Right: private inner import
+  \node[font=\tiny\sffamily\bfseries, blue!60!black] at (3.7, 3.8)
+    {$G_{\mathrm{mod}}^{\mathrm{pub}} \subset G_{\mathrm{mod}}$};
+  \fill[blue!6, rounded corners=3pt] (2.8, 0.9) rectangle (4.6, 3.5);
+  \node[font=\tiny\sffamily\itshape, blue!40!black] at (3.7, -0.6)
+    {A sees \{B\} only};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:A}]
+    (a2) at (3.7, 3.0) {};
+  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:B}]
+    (b2) at (3.7, 1.5) {};
+  \node[dot, fill=gray!40, label={[font=\tiny\ttfamily, gray!50]right:C}]
+    (c2) at (3.7, 0.0) {};
+  \draw[pub] (a2) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (b2);
+  \draw[priv] (b2) -- node[left, font=\tiny\sffamily, text=gray!50] {priv} (c2);
+\end{tikzpicture}
+\caption{Transitive visibility scope (blue shading) of module~A.}
+\label{fig:vis-graph}
+\end{subfigure}
+\caption{Visibility graph (Definition~\ref{def:visibility-graph}). (a)~\texttt{public import} re-exports the imported module's declarations; plain \texttt{import} keeps them private. (b)~Left: when~B publicly imports~C, A's transitive visibility includes~\{B,\,C\}. Right: when~B privately imports~C, A can see only~\{B\}---the private edge breaks the transitive chain, removing~C from $G_{\mathrm{mod}}^{\mathrm{pub}}$.}
+\label{fig:visibility}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+]
+  \node[dot, label=above:{Init}]                (d) at (0,0) {};
+  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.5,-1.5) {};
+  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.5,-1.5) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-3) {};
+
+  \draw[dep] (a) -- (b);
+  \draw[dep] (a) -- (c);
+  \draw[dep] (b) -- (d);
+  \draw[dep] (c) -- (d);
+\end{tikzpicture}
+\caption{A fragment of $G_{\mathrm{module}}$: \module{Algebra.Group.Defs} imports two modules that both depend on \module{Init}, forming a diamond. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:import-subgraph}
+\end{figure}
+
+A complementary refinement augments the module graph with compilation cost:
+
+\begin{definition}[Build graph]\label{def:build-graph}
+The \emph{build graph} is a weighted DAG
+\[
+  G_{\mathrm{build}} = (\mathcal{M},\, E_{\mathrm{mod}},\, w),
+\]
+where $w : \mathcal{M} \to \mathbb{R}_{\ge 0}$ assigns to each module~$m$ its compilation time (in seconds). The \emph{critical path} is the longest path in $G_{\mathrm{build}}$ under the weight function
+\[
+  W(\gamma) = \sum_{m \in \gamma} w(m),
+\]
+maximized over all directed paths~$\gamma$ from a source to a sink. The modules on this path are the \emph{compilation bottlenecks}: no amount of parallelism can reduce build time below~$W(\gamma^*)$.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Algebra/Order/Group.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Mathlib.Data.Nat.Defs}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\
+\textbf{import} \textcolor{blue!60!black}{Mathlib.Algebra.Group.Defs}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 6$\,s}}\\
+\textbf{import} \textcolor{blue!60!black}{Mathlib.Data.Int.Defs}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[8pt]
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Defs.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 6$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
+\textsf{\bfseries\color{blue!60!black}Data/Int/Defs.lean}%
+\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
+\textbf{import} \textcolor{blue!60!black}{Init}%
+\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}
+\caption{Import structure with per-module compilation times. The \textcolor{orange!80!red}{critical path} passes through \module{Algebra.Group.Defs} ($w=6$\,s).}
+\label{fig:build-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.55\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  mod/.style={rounded corners=2pt, draw=blue!50!black, fill=blue!6,
+    font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+  critmod/.style={rounded corners=2pt, draw=orange!80!red, fill=orange!6,
+    line width=0.8pt, font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+  edge/.style={->, >=Stealth, blue!50!black, semithick},
+  critedge/.style={->, >=Stealth, orange!80!red, thick},
+]
+  % Source (top)
+  \node[critmod] (top) at (2.2, 4) {Algebra.Order.Group};
+  \node[font=\tiny\sffamily, text=orange!80!red, above=1pt of top] {$w = 1$\,s};
+  % Middle row
+  \node[mod] (nat) at (-0.3, 2) {Data.Nat.Defs};
+  \node[font=\tiny\sffamily, text=gray!60, above=1pt of nat] {$w = 2$\,s};
+  \node[critmod] (grp) at (2.2, 2) {Algebra.Group.Defs};
+  \node[font=\tiny\sffamily, text=orange!80!red, above=1pt of grp] {$w = 6$\,s};
+  \node[mod] (int) at (4.7, 2) {Data.Int.Defs};
+  \node[font=\tiny\sffamily, text=gray!60, above=1pt of int] {$w = 2$\,s};
+  % Sink (bottom)
+  \node[critmod] (init) at (2.2, 0) {Init};
+  \node[font=\tiny\sffamily, text=orange!80!red, below=1pt of init] {$w = 1$\,s};
+  % Non-critical edges (blue)
+  \draw[edge] (top) -- (nat);
+  \draw[edge] (top) -- (int);
+  \draw[edge] (nat) -- (init);
+  \draw[edge] (int) -- (init);
+  % Critical path edges (orange)
+  \draw[critedge] (top) -- (grp);
+  \draw[critedge] (grp) -- (init);
+  % Annotations (below the graph)
+  \node[font=\tiny\sffamily, text=orange!80!red, anchor=west]
+    at (-0.3, -1.2) {$\gamma^*$: Order.Group $\to$ Group.Defs $\to$ Init};
+  \node[font=\tiny\sffamily, anchor=west]
+    at (-0.3, -1.8) {$W(\gamma^*) = 8$\,s\quad Sequential: $12$\,s\quad Speedup: $1.5\times$};
+\end{tikzpicture}
+\caption{$G_{\mathrm{build}}$: the \textcolor{orange!80!red}{critical path} $\gamma^*$ determines the minimum build time.}
+\label{fig:build-graph}
+\end{subfigure}
+\caption{Build graph (Definition~\ref{def:build-graph}). (a)~Import declarations with per-module compilation times $w(m)$. (b)~The weighted DAG: the \textcolor{orange!80!red}{critical path}~$\gamma^*$ (orange boxes and edges) yields $W(\gamma^*)=1{+}6{+}1=8$\,s; \module{Data.Nat.Defs} and \module{Data.Int.Defs} compile in parallel but cannot reduce the total below~$W(\gamma^*)$. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:build}
+\end{figure}
+
+\subsection{The declaration graph $G_{\mathrm{thm}}$}
+When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's elaborator inserts automatically.
+
+\begin{definition}[Declaration graph]
+\label{def:thm-graph}
+The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
+\[
+  E_{\mathrm{thm}} = \{(d_1, d_2) \in \mathcal{D} \times \mathcal{D} \mid d_2 \text{ appears as a premise in the proof term of } d_1\}.
+\]
+Each node carries two attributes: its \emph{kind} (one of eight declaration types) and its \emph{module} (the source file in which it is defined).
+\end{definition}
+
+\noindent At our snapshot, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. Where the module graph captures the \emph{architecture} of the library, the declaration graph captures the \emph{reasoning structure} of mathematics itself.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, red!70!black},
+]
+  % Top row: shared premises (cited)
+  \node[dot, label=above:{add\_comm}]  (ac) at (-3,0) {};
+  \node[dot, label=above:{add\_assoc}] (aa) at (0,0)  {};
+  \node[dot, label=above:{Eq.refl}]    (er) at (3,0)  {};
+
+  % Bottom row: two citing theorems
+  \node[dot, label=below:{add\_left\_comm}]  (alc) at (-2.2,-2) {};
+  \node[dot, label=below:{add\_right\_comm}] (arc) at (2.2,-2)  {};
+
+  % Edges from add_left_comm
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (alc) -- (aa);
+  \draw[dep] (alc) -- (er);
+
+  % Edges from add_right_comm
+  \draw[dep] (arc) -- (ac);
+  \draw[dep] (arc) -- (aa);
+  \draw[dep] (arc) -- (er);
+\end{tikzpicture}
+\caption{A fragment of $G_{\mathrm{thm}}$: the theorems \decl{add\_left\_comm} and \decl{add\_right\_comm} both cite the premises \decl{add\_comm}, \decl{add\_assoc}, and \decl{Eq.refl}. The shared node \decl{Eq.refl} (in-degree $69{,}580$) exemplifies the hub phenomenon. All names have the \texttt{Nat.}\ prefix removed except \decl{Eq.refl}.}
+\label{fig:thm-fragment}
+\end{figure}
+
+The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices.
+
+\paragraph{Statement and proof decomposition.}
+Every declaration $d$ has a type~$\tau$ (the statement) and optionally a proof term~$\pi$; an edge may originate from either or both.
+
+\begin{definition}[Statement and proof dependency]\label{def:stmt-proof-dep}
+For declarations $a, b \in \mathcal{D}$, define:
+\begin{align*}
+  a \xrightarrow{S} b &\iff b \in \mathrm{refs}(a.\tau), \\
+  a \xrightarrow{P} b &\iff b \in \mathrm{refs}(a.\pi) \setminus \mathrm{refs}(a.\tau).
+\end{align*}
+The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S = \{(a,b) : a \xrightarrow{S} b\}$, and the \emph{pure proof dependency graph} is $G_P = (\mathcal{D}, E_P)$ where $E_P = \{(a,b) : a \xrightarrow{P} b\}$. An edge $(a,b) \in E_{\mathrm{thm}}$ that belongs to both $\mathrm{refs}(a.\tau)$ and $\mathrm{refs}(a.\pi)$ is classified as a \emph{mixed edge} $E_{SP}$. This yields a partition $E_{\mathrm{thm}} = E_S \sqcup E_P \sqcup E_{SP}$ (where $E_S$ excludes mixed edges for disjointness, i.e., $E_S$ consists of edges in $\mathrm{refs}(a.\tau) \setminus \mathrm{refs}(a.\pi)$, $E_{SP} = \mathrm{refs}(a.\tau) \cap \mathrm{refs}(a.\pi)$, and $E_P$ as above).
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.52\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textbf{theorem} \textcolor{red!70!black}{length\_nil}\\
+\hspace{1em}: [].{\textcolor{teal}{length}} = 0 := rfl\\[6pt]
+\textbf{theorem} \textcolor{red!70!black}{length\_cons} (a : $\alpha$) (l : List $\alpha$)\\
+\hspace{1em}: (a :: l).{\textcolor{teal}{length}} = l.{\textcolor{teal}{length}} + 1 := rfl\\[6pt]
+\textbf{theorem} \textcolor{red!70!black}{length\_append} (l1 l2 : List $\alpha$)\\
+\hspace{1em}: (l1 ++ l2).{\textcolor{violet}{length}} = l1.{\textcolor{violet}{length}} + l2.{\textcolor{violet}{length}}\\
+\hspace{1em}:= \textbf{by} induction l1 \textbf{with}\\
+\hspace{1em}| nil => simp [\textcolor{orange!80!red}{length\_nil}]\\
+\hspace{1em}| cons a l ih => simp [\textcolor{orange!80!red}{length\_cons}, ih]
+\caption{Source code: references colored by edge type.}
+\label{fig:sp-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.44\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sedge/.style={->, >=Stealth, teal, semithick},
+  pedge/.style={->, >=Stealth, orange!80!red, semithick, dashed},
+  spedge/.style={->, >=Stealth, violet, thick},
+]
+  % Row 1: length_append
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:length\_append}]
+    (la) at (2, 3.2) {};
+  % Row 2: length_nil, length_cons
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:length\_nil}]
+    (ln) at (0.3, 1.6) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:length\_cons}]
+    (lc) at (3.7, 1.6) {};
+  % Row 3: length (definition)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:length}]
+    (ll) at (2, 0) {};
+  % P edges (proof-only): orange dashed
+  \draw[pedge] (la) -- (ln);
+  \draw[pedge] (la) -- (lc);
+  % SP edge (mixed): violet thick
+  \draw[spedge] (la) -- (ll);
+  % S edges (statement-only): teal solid
+  \draw[sedge] (ln) -- (ll);
+  \draw[sedge] (lc) -- (ll);
+\end{tikzpicture}
+\caption{$E_{\mathrm{thm}} = \textcolor{teal}{E_S} \sqcup \textcolor{orange!80!red}{E_P} \sqcup \textcolor{violet}{E_{SP}}$.}
+\label{fig:sp-graph}
+\end{subfigure}
+\caption{Statement vs.\ proof decomposition (Definition~\ref{def:stmt-proof-dep}). (a)~Source code for three \texttt{List.length} theorems: \textcolor{teal}{teal} = reference only in the type~$\tau$ ($E_S$), \textcolor{orange!80!red}{orange dashed} = only in the proof~$\pi$ ($E_P$), \textcolor{violet}{violet} = in both ($E_{SP}$). For \decl{length\_nil} and \decl{length\_cons}, the definition \decl{length} appears only in~$\tau$; for \decl{length\_append}, it appears in both~$\tau$ and~$\pi$. (b)~The edge-classified subgraph. All names have the \texttt{List.}\ prefix removed.}
+\label{fig:stmt-proof-decomp}
+\end{figure}
+
+\paragraph{Typeclass instance graph and synthesized edges.}
+Lean's typeclass mechanism automatically synthesizes algebraic structure, producing dependency edges invisible in the source code.
+
+\begin{definition}[Typeclass instance graph]\label{def:tc-graph}
+Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations and $\mathcal{I} \subset \mathcal{D}$ the set of all instance declarations. For each instance $i \in \mathcal{I}$, let $\mathrm{target}(i) \in \mathcal{C}$ be the class it provides and $\mathrm{requires}(i) \subseteq \mathcal{C}$ the classes it depends on as preconditions. The \emph{typeclass instance graph} is
+\[
+  G_{\mathrm{tc}} = (\mathcal{C},\, E_{\mathrm{tc}}), \quad (C_1, C_2) \in E_{\mathrm{tc}} \iff \exists\, i \in \mathcal{I} : \mathrm{target}(i) = C_2 \land C_1 \in \mathrm{requires}(i).
+\]
+\end{definition}
+
+\begin{definition}[Synthesized vs.\ explicit edge partition]\label{def:synth-partition}
+For each edge $(a, b) \in E_{\mathrm{thm}}$, define
+\[
+  \mathrm{synth}(a, b) =
+  \begin{cases}
+    1 & \text{if } b \text{ was inserted by typeclass instance synthesis during elaboration}, \\
+    0 & \text{if } b \text{ was explicitly referenced in the source}.
+  \end{cases}
+\]
+This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textbf{theorem} \textcolor{red!70!black}{add\_zero} [AddMonoid $\alpha$] (a : $\alpha$)\\
+\hspace{1em}: a + 0 = a := \textcolor{red!70!black}{AddMonoid.add\_zero} a\\[8pt]
+\textnormal{\sffamily Elaborated term references:}\\[2pt]
+\hspace{1em}\textcolor{red!70!black}{AddMonoid.add\_zero}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- explicit}}\\
+\hspace{1em}\textcolor{gray!50}{HAdd.hAdd}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{+}}}\\
+\hspace{1em}\textcolor{gray!50}{OfNat.ofNat}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{0}}}
+\caption{Source: only \decl{AddMonoid.add\_zero} is explicit; \texttt{+}~and~\texttt{0} trigger instance synthesis.}
+\label{fig:tc-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sdot/.style={circle, fill=gray!50, minimum size=3.5pt, inner sep=0pt},
+  elink/.style={->, >=Stealth, red!70!black, semithick},
+  slink/.style={->, >=Stealth, gray!50, semithick, dashed},
+]
+  % Background zones (drawn first, behind nodes)
+  \fill[red!6, rounded corners=3pt] (-0.6, -0.5) rectangle (1.6, 1.0);
+  \node[font=\tiny\sffamily\itshape, red!40!black] at (0.5, 0.85) {math content};
+  \fill[gray!8, rounded corners=3pt] (1.9, -0.5) rectangle (5.0, 1.0);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (3.45, 0.85) {language infrastructure};
+  % Top node: the theorem
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:add\_zero}]
+    (thm) at (2.3, 2.8) {};
+  % Explicit dep (math content)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:AddMonoid.add\_zero}]
+    (axiom) at (0.5, 0.2) {};
+  % Synthesized deps (language infrastructure)
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:HAdd.hAdd}]
+    (hadd) at (2.8, 0.2) {};
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:OfNat.ofNat}]
+    (ofnat) at (4.3, 0.2) {};
+  % Explicit edge (solid red)
+  \draw[elink] (thm) -- (axiom);
+  % Synthesized edges (dashed gray)
+  \draw[slink] (thm) -- (hadd);
+  \draw[slink] (thm) -- (ofnat);
+\end{tikzpicture}
+\caption{$E_{\mathrm{thm}} = \textcolor{red!70!black}{E_{\mathrm{explicit}}} \sqcup \textcolor{gray!50}{E_{\mathrm{synth}}}$.}
+\label{fig:tc-graph}
+\end{subfigure}
+\caption{Synthesized vs.\ explicit edge partition (Definitions~\ref{def:tc-graph},~\ref{def:synth-partition}). (a)~In the source for \decl{add\_zero}, only \decl{AddMonoid.add\_zero} is an explicit reference; the notation~\texttt{+} and literal~\texttt{0} each trigger typeclass instance synthesis, silently inserting \textcolor{gray!50}{synthesized edges}. (b)~The subgraph of $G_{\mathrm{thm}}$: \textcolor{red!70!black}{solid} = explicit, \textcolor{gray!50}{dashed} = synthesized. The two zones separate mathematical content from language infrastructure (Remark~\ref{rem:two-layers}). Hub nodes such as \decl{OfNat.ofNat} (in-degree $89{,}936$) accumulate high centrality primarily through synthesized edges.}
+\label{fig:synth-partition}
+\end{figure}
+
+\paragraph{Declaration attributes.}
+Lean's attribute system tags declarations with metadata that guides automation and reflects proof strategy choices.
+
+\begin{definition}[Declaration attributes]\label{def:decl-attributes}
+The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})$ maps each declaration to its set of Lean attributes, where $\mathcal{A} = \{\texttt{simp},\, \texttt{ext},\, \texttt{to\_additive},\, \texttt{instance},\, \texttt{reducible},\, \texttt{inline},\, \ldots\}$. In particular:
+\begin{itemize}
+  \item The \emph{proof complexity} $\kappa(d) = |\{\text{Expr nodes in } d.\pi\}|$ measures proof term size.
+  \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.
+  \item Two declarations satisfy $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs.
+\end{itemize}
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+@[simp] \textbf{theorem} \textcolor{red!70!black}{mul\_one}\\
+\hspace{1em}[Monoid $\alpha$] (a : $\alpha$) : a * 1 = a\\[6pt]
+@[to\_additive] \textbf{theorem} \textcolor{red!70!black}{mul\_comm}\\
+\hspace{1em}[CommMonoid $\alpha$] (a b : $\alpha$) : a * b = b * a\\[4pt]
+\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!50}{%
+generates \decl{add\_comm} automatically}}\\[6pt]
+@[simp, ext] \textbf{theorem} \textcolor{red!70!black}{Prod.mk.eta}\\
+\hspace{1em}: (p.1, p.2) = p\\[10pt]
+\textnormal{\sffamily Extracted metadata per node:}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\alpha(d)$: attribute set \{simp, ext, \ldots\}}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\kappa(d)$: proof term size (Expr node count)}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\upsilon(d)$: universe polymorphism degree}
+\caption{Declarations with Lean attributes and the metadata extracted from each.}
+\label{fig:attr-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=4pt, inner sep=0pt},
+  depedge/.style={->, >=Stealth, gray!50, semithick},
+  tag/.style={rounded corners=1.5pt, font=\tiny\sffamily, inner sep=1.5pt},
+  simptag/.style={tag, fill=teal!15, text=teal!70!black, draw=teal!40},
+  exttag/.style={tag, fill=violet!15, text=violet!70!black, draw=violet!40},
+  toaddtag/.style={tag, fill=orange!15, text=orange!70!black, draw=orange!40},
+  mirror/.style={<->, >=Stealth, orange!60!black, semithick, dashed},
+  meta/.style={font=\tiny\sffamily, text=gray!60},
+]
+  % Node: mul_one
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_one}]
+    (mo) at (0, 3.2) {};
+  \node[simptag, anchor=west] at (0.25, 3.2) {simp};
+  \node[meta, anchor=west] at (0.25, 2.8) {$\kappa=12$\enspace$\upsilon=1$};
+  % Node: mul_comm
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_comm}]
+    (mc) at (0, 1.6) {};
+  \node[toaddtag, anchor=north] at (0, 1.1) {to\_additive};
+  \node[meta, anchor=west] at (0.25, 0.7) {$\kappa=34$\enspace$\upsilon=1$};
+  % Node: add_comm (mirror)
+  \node[dot, fill=orange!50!red, label={[font=\tiny\ttfamily, orange!60!black]right:add\_comm}]
+    (ac) at (4.0, 1.6) {};
+  \node[meta, anchor=west] at (4.25, 1.2) {$\kappa=34$\enspace$\upsilon=1$};
+  % Node: Prod.mk.eta
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:Prod.mk.eta}]
+    (pe) at (0, -0.4) {};
+  \node[simptag, anchor=west] at (0.25, -0.4) {simp};
+  \node[exttag, anchor=west] at (1.05, -0.4) {ext};
+  \node[meta, anchor=west] at (0.25, -0.85) {$\kappa=8$\enspace$\upsilon=2$};
+  % Mirror edge (to_additive)
+  \draw[mirror] (mc) -- node[above, font=\tiny\sffamily, text=orange!60!black] {$\sim_{\mathrm{add}}$} (ac);
+  % Dependency edges (faint)
+  \draw[depedge] (mo) -- (mc);
+  \draw[depedge] (mc) -- (pe);
+\end{tikzpicture}
+\caption{Nodes of $G_{\mathrm{thm}}$ enriched with attribute tags, proof complexity~$\kappa$, and universe degree~$\upsilon$. The \textcolor{orange!60!black}{dashed} arrow marks a \texttt{to\_additive} mirror pair.}
+\label{fig:attr-graph}
+\end{subfigure}
+\caption{Declaration metadata as node attributes (Definition~\ref{def:decl-attributes}). (a)~Lean source with attribute annotations. (b)~The declaration graph enriched with per-node metadata: colored tags indicate attributes ($\textcolor{teal!70!black}{\texttt{simp}}$, $\textcolor{violet!70!black}{\texttt{ext}}$, $\textcolor{orange!70!black}{\texttt{to\_additive}}$); $\kappa$ and $\upsilon$ are numeric features. The \textcolor{orange!60!black}{dashed} bidirectional arrow marks the automatically generated additive mirror \decl{add\_comm} $\sim_{\mathrm{add}}$ \decl{mul\_comm}.}
+\label{fig:decl-attributes}
+\end{figure}
+
+\subsection{The namespace graphs $G_{\mathrm{ns}}^{(k)}$}
+Each declaration carries a fully qualified name (e.g., \decl{Nat.Prime.dvd\_mul}) whose dot-separated components form a hierarchy determined by \texttt{namespace} blocks in the source code, not by the file path. Truncating names to varying depths yields an intermediate family of graphs between the coarse module level and the fine declaration level.
+
+\begin{definition}[Namespace graph at depth~$k$]
+\label{def:ns-graph}
+For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declaration~$d$ truncated to depth~$k$: the first $k$ dot-separated components of $d$'s fully qualified name. If $d$'s name has fewer than $k+1$ components, $\mathrm{ns}_k(d)$ defaults to the full parent namespace; if $d$'s name has no dot, $\mathrm{ns}_k(d) = \ns{\_root\_}$. The \emph{namespace graph at depth~$k$} is the weighted directed graph
+\[
+  G_{\mathrm{ns}}^{(k)} = (\mathcal{N}_k,\, E_k),
+\]
+where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set of all distinct depth-$k$ namespaces, and each edge $(n_1, n_2) \in E_k$ carries a weight equal to the number of edges $(d_1, d_2) \in E_{\mathrm{thm}}$ such that $\mathrm{ns}_k(d_1) = n_1 \neq n_2 = \mathrm{ns}_k(d_2)$.
+\end{definition}
+
+\noindent At $k=1$, the $3{,}184$ coarse namespaces correspond roughly to mathematical topics; at $k=6$, the $15{,}456$ fine-grained namespaces approach the resolution of individual naming scopes.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10},
+  agg/.style={->, >=Stealth, gray!50, very thick, dashed, shorten <=2pt, shorten >=2pt},
+]
+  % ==================== Panel (a): G_thm ====================
+  % Blue module background fills
+  \fill[blue!6, rounded corners=3pt] (-0.3,-2.1) rectangle (2.5,1.8);
+  \fill[blue!6, rounded corners=3pt] (3.5,-0.6) rectangle (5.6,1.8);
+  % Green namespace fills (depth 2)
+  \fill[green!8, rounded corners=3pt] (0.0,-0.15) rectangle (5.3,1.25);
+  \fill[green!8, rounded corners=2pt] (0.0,-1.75) rectangle (2.2,-0.55);
+  % Blue module borders
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.1) rectangle (2.5,1.8);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-0.2,1.75) {\textnormal{\module{Data.Nat.Basic}}};
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (3.5,-0.6) rectangle (5.6,1.8);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (3.6,1.75) {\textnormal{\module{Data.Nat.Defs}}};
+  % Green namespace borders (depth 2)
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-0.15) rectangle (5.3,1.25);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.3) {\ns{Nat}};
+  \draw[green!50!black, rounded corners=2pt, thick, dashed]
+    (0.0,-1.75) rectangle (2.2,-0.55);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,-0.5) {\ns{Nat.Primrec}};
+  % Declaration dots (staggered diagonally to avoid label overlap)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_comm}]
+    (ac) at (1.8,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_left\_comm}]
+    (alc) at (0.5,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.6,-1.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (4.1,0.8) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (4.1,0.2) {};
+  % Dependency arrows: solid=intra-module, dashed=cross-module, dotted=cross-namespace
+  \draw[dep] (alc) -- (ac);
+  \draw[dep, dashed] (sea) to[out=175,in=10] (ac);
+  \draw[dep, dashed] (za) to[out=175,in=-10] (alc);
+  \draw[dep, densely dotted, thick] (prz) to[out=70,in=-100] (ac);
+  % Blue import arrow: Data.Nat.Defs imports Data.Nat.Basic
+  \draw[->, >=Stealth, blue!60!black, thick]
+    (3.5,1.55) -- node[above, font=\tiny\sffamily, text=blue!60!black] {\texttt{import}} (2.5,1.55);
+  % Panel label
+  \node[font=\small\sffamily, anchor=north] at (2.6,-2.5) {(a) $G_{\mathrm{thm}}$};
+
+  % ==================== Arrow a → b ====================
+  \draw[agg] (5.9,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    node[below, font=\tiny\sffamily, text=gray!60] {depth $2$} (7.3,-0.1);
+
+  % ==================== Panel (b): G_ns^(2) ====================
+  % Nat namespace node
+  \node[nsbox, minimum width=2.2cm, minimum height=1.1cm]
+    (nat2) at (8.8,0.55) {};
+  \node[font=\small\sffamily\bfseries, green!50!black] at (8.8,0.75) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (8.8,0.3) {4 declarations};
+  % Nat.Primrec namespace node
+  \node[nsbox, minimum width=2.2cm, minimum height=0.85cm]
+    (npr2) at (8.8,-1.15) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.8,-0.97) {\ns{Nat.Primrec}};
+  \node[font=\tiny\sffamily, text=gray] at (8.8,-1.35) {1 declaration};
+  % Cross-namespace edge: Nat.Primrec → Nat (green = namespace-level)
+  \draw[->, >=Stealth, green!50!black, thick] (npr2) --
+    node[right, font=\tiny, text=green!50!black] {$w\!=\!1$} (nat2);
+  \node[font=\tiny\itshape, text=gray, align=center] at (8.8,-2.0)
+    {\decl{Primrec.zero} $\to$ \decl{add\_comm}};
+  % Faded self-loop for absorbed internal edges
+  \draw[green!50!black, ->, >=Stealth, thin, opacity=0.35]
+    ([xshift=-4pt]nat2.north) to[out=130,in=50,looseness=6]
+    ([xshift=4pt]nat2.north);
+  \node[font=\tiny, text=green!40!black] at (8.8,1.75) {$3$ internal};
+  % Panel label
+  \node[font=\small\sffamily, anchor=north] at (8.8,-2.5) {(b) $G_{\mathrm{ns}}^{(2)}$};
+
+  % ==================== Arrow b → c ====================
+  \draw[agg] (10.3,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    node[below, font=\tiny\sffamily, text=gray!60] {depth $1$} (11.7,-0.1);
+
+  % ==================== Panel (c): G_ns^(1) ====================
+  \node[nsbox, minimum width=2.2cm, minimum height=2.2cm]
+    (nat1) at (13.0,-0.1) {};
+  \node[font=\small\sffamily\bfseries, green!50!black] at (13.0,0.4) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (13.0,0.05) {5 declarations};
+  \node[font=\tiny\sffamily, text=gray] at (13.0,-0.3) {4 internal edges};
+  \node[font=\tiny\itshape, text=red!50!black] at (13.0,-0.7) {contain.\,$=100\%$};
+  % Panel label
+  \node[font=\small\sffamily, anchor=north] at (13.0,-2.5) {(c) $G_{\mathrm{ns}}^{(1)}$};
+\end{tikzpicture}
+\caption{The aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Five declarations (\textcolor{red!70!black}{red dots}) and their dependencies (\textcolor{red!70!black}{red arrows}: solid = intra-module, dashed = cross-module, dotted = cross-namespace) in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green dashed boxes} mark depth-$2$ namespace boundaries, \textcolor{blue!60!black}{blue dashed boxes} mark module boundaries, and the \textcolor{blue!60!black}{blue arrow} shows the module-level import edge from~$G_{\mathrm{module}}$. (b)~Aggregation to depth-$2$ namespaces: declarations merge into \textcolor{green!50!black}{green namespace nodes}; the three intra-\ns{Nat} edges (one solid, two dashed) become internal, and the single cross-namespace edge (dotted) becomes a weighted \textcolor{green!50!black}{green edge} in~$G_{\mathrm{ns}}^{(2)}$. (c)~Aggregation to depth~$1$: all five declarations share namespace \ns{Nat}; every edge is now internal, and containment reaches $100\%$. All names have the \texttt{Nat.}\ prefix removed.}
+\label{fig:ns-aggregation-app}
+\end{figure}
+
+\subsection{Summary of tool-mediated decompositions}
+\label{sec:decomposition-summary}
+
+The dependency graphs defined above are not pure embodiments of mathematical logic---each is an entanglement of inherited mathematical structure and the organizational imprint of Lean's language mechanisms. Table~\ref{tab:decompositions} catalogs the complete family of decompositions, organized by the Lean mechanism they isolate.
+
+\begin{table}[!htb]
+\centering
+\caption{Tool-mediated decompositions of the dependency graphs. Each row identifies a Lean language mechanism, the corresponding graph decomposition or projection, and the dimension it isolates. Rows above the mid-rule are formally defined in this paper (\S\ref{sec:definitions}); rows below are described in \S\ref{sec:future-graphs} and deferred to future work.}
+\label{tab:decompositions}
+\footnotesize
+\begin{tabular}{@{}lllrl@{}}
+\toprule
+\textbf{Lean mechanism} & \textbf{Decomposition} & \textbf{Isolates} & \textbf{Scale} & \textbf{Ref.} \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Edge-level decompositions of $G_{\mathrm{thm}}$}} \\[3pt]
+Statement vs.\ proof & $E_S \sqcup E_P \sqcup E_{SP}$ & Assertion vs.\ proof strategy & $8.1/43.9/48.0\%$ & Def.~\ref{def:stmt-proof-dep} \\
+Explicit vs.\ synthesized & $E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$ & Human-written vs.\ elaborator & $\sigma = 74.2\%$ & Def.~\ref{def:synth-partition} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Subgraphs of $G_{\mathrm{thm}}$}} \\[3pt]
+Typeclass synthesis & $G_{\mathrm{tc}}$ & Algebraic hierarchy infrastructure & $1{,}817$ / $29{,}952$ & Def.~\ref{def:tc-graph} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Node-level enrichment of $G_{\mathrm{thm}}$}} \\[3pt]
+Attributes \& metadata & $\alpha(d)$, $\kappa(d)$, $\upsilon(d)$ & Proof complexity, polymorphism & $165$ types & Def.~\ref{def:decl-attributes} \\
+\texttt{to\_additive} & $\sim_{\mathrm{add}}$ mirror pairs & Metaprogrammed duplication & $18{,}659$ pairs & Def.~\ref{def:decl-attributes} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Refinements of $G_{\mathrm{module}}$}} \\[3pt]
+Public/private imports & $G_{\mathrm{mod}}^{\mathrm{pub}}$ & Intentional API vs.\ all imports & $45{,}289$ / $1{,}912$ & Def.~\ref{def:visibility-graph} \\
+Compilation cost & $G_{\mathrm{build}}$ & Engineering bottlenecks & $47{,}201$ edges & Def.~\ref{def:build-graph} \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Planned decompositions (future work)}} \\[3pt]
+Coercion insertion & $G_{\mathrm{coe}}$ & Implicit type conversion paths & $256$ coercions & \S\ref{sec:typeclass-graph} \\
+Structure inheritance & $G_{\mathrm{ext}}$ & \texttt{extends} hierarchy & $1{,}535$ edges & \S\ref{sec:typeclass-graph} \\
+\texttt{deriving} handlers & $E_{\mathrm{auto}}$ & Auto-generated instances & $15$ handlers & \S\ref{sec:decl-metadata} \\
+Tactic usage & $G_{\mathrm{tac}}$ & Proof strategy selection & --- & \S\ref{sec:decl-metadata} \\
+Unfolding depth & $\delta(d)$ & Kernel-level implicit coupling & --- & \S\ref{sec:decl-metadata} \\
+Import utilization & $\mathrm{util}(m_i, m_j)$ & Module granularity & --- & \S\ref{sec:visibility-graph} \\
+File co-modification & $G_{\mathrm{co}}$ & Social/development coupling & --- & \S\ref{sec:co-edit-graph} \\
+Temporal evolution & $G^{(t)}$ & Structural stability over time & --- & \S\ref{sec:temporal-graphs} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent These decompositions collectively operationalize the paper's central distinction. Each row acts as a \emph{projection} that isolates one dimension---inherited mathematical structure or human organizational process---from the entangled raw graph. The ``Scale'' column reports the footprint of each mechanism at our snapshot, extracted programmatically from Lean's \texttt{Environment} API across all $499{,}732$~Mathlib constants. Three findings stand out. First, the synthesis ratio $\sigma = 74.2\%$ means nearly three quarters of all dependency edges are inserted by Lean's elaborator rather than written by the mathematician. Second, the statement/proof partition reveals that only $8.1\%$ of edges are purely statement-level ($E_S$), while $43.9\%$ are proof-only ($E_P$) and $48.0\%$ appear in both; the proof dimension thus dominates the dependency structure. Third, $95.9\%$ of module import edges are public ($45{,}289$ of $47{,}201$), indicating that import visibility currently plays a minor architectural role. The decompositions above the mid-rule are formally defined and, where data is available, empirically analyzed in this paper; those below the mid-rule are formally specified in the appendix (\S\ref{sec:future-graphs}) and deferred to future empirical work.
+

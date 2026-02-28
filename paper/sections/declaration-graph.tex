@@ -22,16 +22,7 @@ When a mathematician writes a proof in Lean, the tactic script is compiled into 
 \end{codebox}
 
 \noindent
-The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
-
-\begin{definition}[Declaration graph]
-\label{def:thm-graph}
-The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
-\[
-  E_{\mathrm{thm}} = \{(d_1, d_2) \in \mathcal{D} \times \mathcal{D} \mid d_2 \text{ appears as a premise in the proof term of } d_1\}.
-\]
-Each node carries two attributes: its \emph{kind} (one of eight declaration types) and its \emph{module} (the source file in which it is defined).
-\end{definition}
+The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of the declaration graph $G_{\mathrm{thm}}$ (Definition~\ref{def:thm-graph}).
 
 The eight declaration kinds listed above are Lean~4's fundamental building blocks: theorems ($79.1\%$), definitions ($15.8\%$), abbreviations ($2.2\%$), constructors ($1.5\%$), inductive types ($1.2\%$), and three minor kinds (Table~\ref{tab:kind-overview} in Appendix~\ref{app:decl-detail}). We highlight two structural extremes below. The distinct roles these kinds play in the dependency structure are analyzed quantitatively in \S\ref{sec:thm-types}.
 
@@ -119,36 +110,6 @@ The \texttt{lean-training-data} tool extracts premises not from the tactic scrip
 The first two are the mathematical lemmas that the proof logically depends on. The remaining six are \emph{language infrastructure}: equality combinators that the kernel requires to compose rewriting steps, and typeclass instances that elaborate the \texttt{+}~notation into the concrete function \decl{Nat.add}. Every edge in $E_{\mathrm{thm}}$ records one such dependency, so this single theorem contributes eight edges.
 
 A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \decl{Eq.refl}---a constructor with in-degree $69{,}580$---is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
-  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
-  dep/.style={->, >=Stealth, thin, red!70!black},
-]
-  % Top row: shared premises (cited)
-  \node[dot, label=above:{add\_comm}]  (ac) at (-3,0) {};
-  \node[dot, label=above:{add\_assoc}] (aa) at (0,0)  {};
-  \node[dot, label=above:{Eq.refl}]    (er) at (3,0)  {};
-
-  % Bottom row: two citing theorems
-  \node[dot, label=below:{add\_left\_comm}]  (alc) at (-2.2,-2) {};
-  \node[dot, label=below:{add\_right\_comm}] (arc) at (2.2,-2)  {};
-
-  % Edges from add_left_comm
-  \draw[dep] (alc) -- (ac);
-  \draw[dep] (alc) -- (aa);
-  \draw[dep] (alc) -- (er);
-
-  % Edges from add_right_comm
-  \draw[dep] (arc) -- (ac);
-  \draw[dep] (arc) -- (aa);
-  \draw[dep] (arc) -- (er);
-\end{tikzpicture}
-\caption{A fragment of $G_{\mathrm{thm}}$: the theorems \decl{add\_left\_comm} and \decl{add\_right\_comm} both cite the premises \decl{add\_comm}, \decl{add\_assoc}, and \decl{Eq.refl}. Infrastructure premises (\decl{instHAdd}, \decl{Eq.symm}, etc.) are omitted for clarity. The shared node \decl{Eq.refl} (in-degree $69{,}580$) exemplifies the hub phenomenon analyzed in \S\ref{sec:thm-degree}. All names have the \texttt{Nat.}\ prefix removed except \decl{Eq.refl}.}
-\label{fig:thm-fragment}
-\end{figure}
 
 \noindent\textbf{Note.}
 The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$. This expansion is itself the transition from process (the human decision to bundle declarations into a module) to product (each logical dependency made explicit).
