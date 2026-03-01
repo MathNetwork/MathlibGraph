@@ -10,12 +10,10 @@ Output:
 """
 
 import re
-import sys
 import time
 from collections import Counter, defaultdict, deque
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE, FIGSIZE_HEATMAP, FIGSIZE_HEATMAP_WIDE
 
 COLORS = setup_style()

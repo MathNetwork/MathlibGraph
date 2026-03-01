@@ -48,6 +48,9 @@ node_modules/
 .next/
 docs/out/
 
+# Stray LaTeX files
+texput.log
+
 # OS
 .DS_Store
 .vscode/

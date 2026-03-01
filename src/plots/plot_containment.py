@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """Generate containment decay curve for the paper."""
 
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE
 
 COLORS = setup_style()
 import matplotlib.pyplot as plt
 
-# Data from namespace_graph.py output
+# Data from analyze_namespace_depth.py output
 # Namespace depths (computed on all 8,436,366 G_thm edges)
 ns_depths =       [1,     2,     3,     4,     5,     6]
 ns_containment =  [22.2,  14.2,  12.8,  12.7,  12.6,  12.6]

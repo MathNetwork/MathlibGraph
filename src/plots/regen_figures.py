@@ -3,12 +3,10 @@
 Regenerate 4 figures to match unified plot style.
 """
 
-import sys
 import time
 from pathlib import Path
 from collections import Counter
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 
 COLORS = setup_style()

@@ -7,12 +7,10 @@ degree distribution figures used in 7.1.1 and 7.1.2.
 Output: paper/analysis/ns_degree_distribution.pdf
 """
 
-import sys
 import time
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 
 COLORS = setup_style()

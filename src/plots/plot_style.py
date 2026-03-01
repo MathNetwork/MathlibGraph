@@ -1,9 +1,6 @@
 """Unified plotting style for all paper figures.
 
-Usage in any script:
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+Usage in any script under src/plots/:
     from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 """
 
