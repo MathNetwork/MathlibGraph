@@ -298,7 +298,7 @@ maximized over all directed paths~$\gamma$ from a source to a sink. The modules 
 \end{figure}
 
 \begin{remark}[Dimensions of import redundancy]\label{rem:redundancy-dimensions}
-The observation that $17.5\%$ of module imports are transitively redundant (\S\ref{sec:transitive-reduction}) admits finer analysis through the module-level decompositions above together with the cross-level import utilization metric (Definition~\ref{def:import-util}). (i)~\emph{Structural redundancy} measures reachability: an edge $(m_i, m_j)$ is redundant if $m_j$ is already transitively reachable from $m_i$ via other imports. The $17.5\%$ figure is computed under the current regime in which nearly all imports are \texttt{public}; as \texttt{private} imports are adopted, some currently redundant edges will become necessary, since private edges break transitive chains in $G_{\mathrm{mod}}^{\mathrm{pub}}$, making the current rate an upper bound. (ii)~\emph{Content redundancy}, measured by import utilization (\S\ref{sec:import-util}), reveals a complementary inefficiency: even among non-redundant imports, the median utilization is only $1.6\%$ (mean $5.1\%$), meaning modules typically consume a tiny fraction of what they import. (iii)~\emph{Build impact}: a structurally redundant import may nonetheless lie on the critical path of $G_{\mathrm{build}}$; conversely, removing it may yield no compilation speedup if the critical path runs elsewhere. Together, these three lenses decompose the coarse $17.5\%$ statistic into a richer diagnostic.
+The $17.5\%$ transitively redundant imports (\S\ref{sec:transitive-reduction}) admit finer analysis along three axes: \emph{structural redundancy} (reachability---an upper bound, since adopting private imports will break some transitive chains), \emph{content redundancy} (import utilization, Definition~\ref{def:import-util}: median $1.6\%$), and \emph{build impact} (whether a redundant edge lies on the critical path of $G_{\mathrm{build}}$).
 \end{remark}
 
 \subsection{The declaration graph $G_{\mathrm{thm}}$}
@@ -419,26 +419,9 @@ The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S =
 \subsubsection{Typeclass instance graph, coercions, and synthesized edges}
 \label{sec:typeclass-synth}
 
-In traditional mathematics, when one writes $a + b$ for integers, the reader implicitly knows which addition is meant.  This implicit knowledge---accumulated over centuries of shared convention---is what we call inherited structure.  But a formal proof checker has no such conventions: the expression \texttt{a + b} is ambiguous until the system knows \emph{which} addition, \emph{which} zero, and \emph{which} algebraic laws apply.
+Lean's \emph{typeclass mechanism} encodes mathematical knowledge that human practitioners share implicitly (e.g., which addition is meant by $a + b$) as explicit, machine-searchable declarations.  A \texttt{class} defines an abstract interface; an \texttt{instance} registers a concrete witness that a given type satisfies it.  The mechanism enables readable formal statements at the cost of creating a large infrastructure layer: $24{,}947$ instance declarations ($10.6\%$ of $\mathcal{D}$) form this layer, dominating the dependency graph's in-degree distribution.
 
-Lean's \emph{typeclass mechanism} solves this problem.  A \textbf{typeclass declaration} (\texttt{class}) defines an abstract interface---a bundle of operations and axioms:
-\begin{center}\small\ttfamily
-\textbf{class} \textcolor{red!70!black}{Group} ($\alpha$ : Type) \textbf{extends} Monoid $\alpha$, Inv $\alpha$ \textbf{where}\\
-\hspace{1em}mul\_left\_inv : $\forall$ a : $\alpha$, a$^{-1}$ * a = 1
-\end{center}
-An \textbf{instance declaration} (\texttt{instance}) registers a concrete witness that a given type satisfies this interface:
-\begin{center}\small\ttfamily
-\textbf{instance} : \textcolor{red!70!black}{Group} $\mathbb{Z}$ \textbf{where} \textnormal{\itshape\textcolor{gray}{-- proof that $\mathbb{Z}$ is a group}}
-\end{center}
-When Lean encounters \texttt{a * b} where \texttt{a b :~$\mathbb{Z}$}, its \emph{instance synthesis} algorithm searches the registered instances to find the relevant \texttt{Group~$\mathbb{Z}$}, resolving the ambiguity automatically.
-
-Without this mechanism, every invocation of a polymorphic operation would require explicit arguments.  For example, the statement $a + b = b + a$ for natural numbers would become something like:
-\begin{center}\small\ttfamily
-@HAdd.hAdd $\mathbb{N}$ $\mathbb{N}$ $\mathbb{N}$ instHAddNatNatNat a b = @HAdd.hAdd $\mathbb{N}$ $\mathbb{N}$ $\mathbb{N}$ instHAddNatNatNat b a
-\end{center}
-rendering formal mathematics essentially unreadable.  The typeclass mechanism is thus a \emph{tool-mediated compromise}: it encodes the implicit mathematical common sense of human practitioners as explicit, machine-searchable declarations, enabling readable formal statements at the cost of creating a large infrastructure layer.  In our data, $24{,}947$ instance declarations ($10.6\%$ of $\mathcal{D}$) form this layer---nodes that have no counterpart in traditional mathematics but dominate the dependency graph's in-degree distribution.
-
-This subsection defines three related constructions: the typeclass instance graph $G_{\mathrm{tc}}$, the synthesized/explicit edge partition, and two complementary subgraphs---the coercion graph $G_{\mathrm{coe}}$ and the structure inheritance graph $G_{\mathrm{ext}}$---that together capture the main mechanisms by which Lean's type system silently inflates the dependency graph.
+This subsection defines three related constructions: the typeclass instance graph $G_{\mathrm{tc}}$, the synthesized/explicit edge partition, and the coercion graph $G_{\mathrm{coe}}$ and structure inheritance graph $G_{\mathrm{ext}}$.
 
 \begin{definition}[Typeclass instance graph]\label{def:tc-graph}
 Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations and $\mathcal{I} \subset \mathcal{D}$ the set of all instance declarations. For each instance $i \in \mathcal{I}$, let $\mathrm{target}(i) \in \mathcal{C}$ be the class it provides and $\mathrm{requires}(i) \subseteq \mathcal{C}$ the classes it depends on as preconditions. The \emph{typeclass instance graph} is
@@ -554,8 +537,6 @@ For each edge $(a, b) \in E_{\mathrm{thm}}$, define
 \]
 This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
 \end{definition}
-
-In traditional mathematics, a statement like ``let $n \in \mathbb{R}$'' where $n$ is a natural number requires no explanation---the canonical embedding $\mathbb{N} \hookrightarrow \mathbb{R}$ is universally understood.  In Lean, this embedding must be explicitly registered as a chain of \emph{coercion instances} ($\mathbb{N} \to \mathbb{Z} \to \mathbb{Q} \to \mathbb{R}$), and every use silently inserts the entire chain into the dependency graph.
 
 \begin{definition}[Coercion graph]\label{def:coercion-graph}
 Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} is
@@ -702,11 +683,11 @@ In particular:
 \begin{itemize}
   \item The \emph{proof complexity} $\kappa(d) = |\{\text{Expr nodes in } d.\pi\}|$ measures proof term size.
   \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.
-  \item In traditional mathematics, a textbook proves a theorem for groups (multiplicative notation) and then writes ``similarly for the additive case''---a single sentence suffices because the reader understands the notational isomorphism.  In Lean, this shortcut is unavailable: the compiler requires a separate declaration with a distinct name, distinct type signature, and distinct proof term for the additive version.  The \texttt{@[to\_additive]} attribute automates this duplication: it instructs a metaprogram to generate the additive mirror of each marked multiplicative declaration.  Formally, $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs---declarations that carry no new mathematical content but are necessary for the formal system.
+  \item The \texttt{@[to\_additive]} attribute instructs a metaprogram to generate the additive mirror of each marked multiplicative declaration. Formally, $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as such mirrored pairs.
 \end{itemize}
 \end{definition}
 
-Mathematicians never ask ``how many definitions must be unfolded to type-check this statement.'' The concept has no traditional analogue because human verification does not proceed by mechanical reduction.  In Lean, however, the kernel must decide whether two types are \emph{definitionally equal} by unfolding chains of definitions, and the depth of this chain---the \emph{definitional height}---directly governs compilation cost.  A change to a single low-level definition can silently break type-checking for hundreds of downstream declarations, even when their explicit premise sets are unchanged.
+Lean's kernel decides definitional equality by unfolding chains of definitions; the depth of this chain---the \emph{definitional height}---governs compilation cost and constitutes a form of implicit coupling invisible in $G_{\mathrm{thm}}$.
 
 \begin{definition}[Definitional height]\label{def:def-height}
 For each definition $d \in \mathcal{D}$ with \texttt{DefinitionVal}, Lean computes a \emph{definitional height} $\delta(d)$ stored in the \texttt{ReducibilityHints} field:
@@ -844,7 +825,7 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
 \label{fig:tactic-usage}
 \end{figure}
 
-A traditional mathematician never needs to declare that ``equality on the integers is decidable'' or that ``finite groups have a printable representation''---these are meta-level properties that the mathematical community takes for granted.  In Lean, such properties must be explicitly witnessed as typeclass instances.  The \texttt{deriving} mechanism automates this: writing \texttt{deriving DecidableEq, Repr} after an inductive type instructs the compiler to generate the corresponding instances automatically, creating declarations and dependency edges that encode no mathematical content but are required for the type to interoperate with Lean's computational infrastructure.
+Lean's \texttt{deriving} mechanism automates the generation of meta-level typeclass instances (e.g., \texttt{DecidableEq}, \texttt{Repr}) that traditional mathematics takes for granted, creating declarations and dependency edges required for computational infrastructure.
 
 \begin{definition}[Auto-derived instance edges]\label{def:deriving-edges}
 Lean's \texttt{deriving} mechanism automatically generates typeclass instances (e.g., \texttt{Repr}, \texttt{DecidableEq}, \texttt{BEq}) for inductive types. Let $\mathcal{H} \subset \mathcal{A}$ be the set of registered \texttt{deriving} handlers. Each handler $h \in \mathcal{H}$ applied to a type $T$ produces a set of auto-generated declarations $\mathrm{derived}(h, T) \subset \mathcal{D}$, contributing edges in $G_{\mathrm{thm}}$ that were never written by a human. The set $E_{\mathrm{auto}} = \bigcup_{h, T} \{(d', d) : d \in \mathrm{derived}(h, T),\, d' \in \mathrm{refs}(d.\pi)\}$ captures the purely tool-generated fragment of the dependency graph.
@@ -1100,110 +1081,13 @@ For each depth $k \ge 1$, let $\mathrm{ns}_k(d)$ denote the namespace of declara
 where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set of all distinct depth-$k$ namespaces, and each edge $(n_1, n_2) \in E_k$ carries a weight equal to the number of edges $(d_1, d_2) \in E_{\mathrm{thm}}$ such that $\mathrm{ns}_k(d_1) = n_1 \neq n_2 = \mathrm{ns}_k(d_2)$.
 \end{definition}
 
-\noindent At $k=1$, the $3{,}184$ coarse namespaces correspond roughly to mathematical topics; at $k=6$, the $15{,}456$ fine-grained namespaces approach the resolution of individual naming scopes.
+\noindent At $k=1$, the $3{,}184$ coarse namespaces correspond roughly to mathematical topics; at $k=6$, the $15{,}456$ fine-grained namespaces approach the resolution of individual naming scopes. The aggregation process is illustrated in Figure~\ref{fig:ns-aggregation}.
 
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
-  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
-  dep/.style={->, >=Stealth, red!70!black, semithick},
-  depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
-  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10},
-  agg/.style={->, >=Stealth, gray!50, very thick, dashed, shorten <=2pt, shorten >=2pt},
-]
-  % ==================== Panel (a): G_thm ====================
-  % Blue module background fills
-  \fill[blue!6, rounded corners=3pt] (-0.3,-2.1) rectangle (2.5,1.8);
-  \fill[blue!6, rounded corners=3pt] (3.5,-0.6) rectangle (5.6,1.8);
-  % Green namespace fills (depth 2)
-  \fill[green!8, rounded corners=3pt] (0.0,-0.15) rectangle (5.3,1.25);
-  \fill[green!8, rounded corners=2pt] (0.0,-1.75) rectangle (2.2,-0.55);
-  % Blue module borders
-  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
-    (-0.3,-2.1) rectangle (2.5,1.8);
-  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
-    at (-0.2,1.75) {\textnormal{\module{Data.Nat.Basic}}};
-  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
-    (3.5,-0.6) rectangle (5.6,1.8);
-  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
-    at (3.6,1.75) {\textnormal{\module{Data.Nat.Defs}}};
-  % Green namespace borders (depth 2)
-  \draw[green!50!black, rounded corners=3pt, thick, dashed]
-    (0.0,-0.15) rectangle (5.3,1.25);
-  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
-    at (0.1,1.3) {\ns{Nat}};
-  \draw[green!50!black, rounded corners=2pt, thick, dashed]
-    (0.0,-1.75) rectangle (2.2,-0.55);
-  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
-    at (0.1,-0.5) {\ns{Nat.Primrec}};
-  % Declaration dots (staggered diagonally to avoid label overlap)
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_comm}]
-    (ac) at (1.8,0.9) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_left\_comm}]
-    (alc) at (0.5,0.15) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
-    (prz) at (0.6,-1.15) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
-    (sea) at (4.1,0.8) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
-    (za) at (4.1,0.2) {};
-  % Dependency arrows: solid=intra-module, dashed=cross-module, dotted=cross-namespace
-  \draw[dep] (alc) -- (ac);
-  \draw[dep, dashed] (sea) to[out=175,in=10] (ac);
-  \draw[dep, dashed] (za) to[out=175,in=-10] (alc);
-  \draw[dep, densely dotted, thick] (prz) to[out=70,in=-100] (ac);
-  % Blue import arrow: Data.Nat.Defs imports Data.Nat.Basic
-  \draw[->, >=Stealth, blue!60!black, thick]
-    (3.5,1.55) -- node[above, font=\tiny\sffamily, text=blue!60!black] {\texttt{import}} (2.5,1.55);
-  % Panel label
-  \node[font=\small\sffamily, anchor=north] at (2.6,-2.5) {(a) $G_{\mathrm{thm}}$};
+% Duplicate namespace aggregation figure removed; see Figure~\ref{fig:ns-aggregation} in the Introduction.
+% Label kept for backward compatibility with appendix references.
+\phantomsection\label{fig:ns-aggregation-app}
 
-  % ==================== Arrow a → b ====================
-  \draw[agg] (5.9,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
-    node[below, font=\tiny\sffamily, text=gray!60] {depth $2$} (7.3,-0.1);
-
-  % ==================== Panel (b): G_ns^(2) ====================
-  % Nat namespace node
-  \node[nsbox, minimum width=2.2cm, minimum height=1.1cm]
-    (nat2) at (8.8,0.55) {};
-  \node[font=\small\sffamily\bfseries, green!50!black] at (8.8,0.75) {\ns{Nat}};
-  \node[font=\tiny\sffamily, text=gray] at (8.8,0.3) {4 declarations};
-  % Nat.Primrec namespace node
-  \node[nsbox, minimum width=2.2cm, minimum height=0.85cm]
-    (npr2) at (8.8,-1.15) {};
-  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.8,-0.97) {\ns{Nat.Primrec}};
-  \node[font=\tiny\sffamily, text=gray] at (8.8,-1.35) {1 declaration};
-  % Cross-namespace edge: Nat.Primrec → Nat (green = namespace-level)
-  \draw[->, >=Stealth, green!50!black, thick] (npr2) --
-    node[right, font=\tiny, text=green!50!black] {$w\!=\!1$} (nat2);
-  \node[font=\tiny\itshape, text=gray, align=center] at (8.8,-2.0)
-    {\decl{Primrec.zero} $\to$ \decl{add\_comm}};
-  % Faded self-loop for absorbed internal edges
-  \draw[green!50!black, ->, >=Stealth, thin, opacity=0.35]
-    ([xshift=-4pt]nat2.north) to[out=130,in=50,looseness=6]
-    ([xshift=4pt]nat2.north);
-  \node[font=\tiny, text=green!40!black] at (8.8,1.75) {$3$ internal};
-  % Panel label
-  \node[font=\small\sffamily, anchor=north] at (8.8,-2.5) {(b) $G_{\mathrm{ns}}^{(2)}$};
-
-  % ==================== Arrow b → c ====================
-  \draw[agg] (10.3,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
-    node[below, font=\tiny\sffamily, text=gray!60] {depth $1$} (11.7,-0.1);
-
-  % ==================== Panel (c): G_ns^(1) ====================
-  \node[nsbox, minimum width=2.2cm, minimum height=2.2cm]
-    (nat1) at (13.0,-0.1) {};
-  \node[font=\small\sffamily\bfseries, green!50!black] at (13.0,0.4) {\ns{Nat}};
-  \node[font=\tiny\sffamily, text=gray] at (13.0,0.05) {5 declarations};
-  \node[font=\tiny\sffamily, text=gray] at (13.0,-0.3) {4 internal edges};
-  \node[font=\tiny\itshape, text=red!50!black] at (13.0,-0.7) {contain.\,$=100\%$};
-  % Panel label
-  \node[font=\small\sffamily, anchor=north] at (13.0,-2.5) {(c) $G_{\mathrm{ns}}^{(1)}$};
-\end{tikzpicture}
-\caption{The aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Five declarations (\textcolor{red!70!black}{red dots}) and their dependencies (\textcolor{red!70!black}{red arrows}: solid = intra-module, dashed = cross-module, dotted = cross-namespace) in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green dashed boxes} mark depth-$2$ namespace boundaries, \textcolor{blue!60!black}{blue dashed boxes} mark module boundaries, and the \textcolor{blue!60!black}{blue arrow} shows the module-level import edge from~$G_{\mathrm{module}}$. (b)~Aggregation to depth-$2$ namespaces: declarations merge into \textcolor{green!50!black}{green namespace nodes}; the three intra-\ns{Nat} edges (one solid, two dashed) become internal, and the single cross-namespace edge (dotted) becomes a weighted \textcolor{green!50!black}{green edge} in~$G_{\mathrm{ns}}^{(2)}$. (c)~Aggregation to depth~$1$: all five declarations share namespace \ns{Nat}; every edge is now internal, and containment reaches $100\%$. All names have the \texttt{Nat.}\ prefix removed.}
-\label{fig:ns-aggregation-app}
-\end{figure}
+% Duplicate namespace aggregation figure removed; see Figure~\ref{fig:ns-aggregation} in the Introduction.
 
 \subsection{Summary of tool-mediated decompositions}
 \label{sec:decomposition-summary}
@@ -1246,5 +1130,5 @@ Temporal evolution & $G^{(t)}$ & Structural stability over time & --- & \S\ref{s
 \end{tabular}
 \end{table}
 
-\noindent These decompositions collectively operationalize the paper's central distinction. Each row acts as a \emph{projection} that isolates one dimension---inherited mathematical structure or human organizational process---from the entangled raw graph. The ``Scale'' column reports the footprint of each mechanism at our snapshot, extracted programmatically from Lean's \texttt{Environment} API across all $499{,}732$~Mathlib constants. Three findings stand out. First, the synthesis ratio $\sigma = 74.2\%$ means nearly three quarters of all dependency edges are inserted by Lean's elaborator rather than written by the mathematician. Second, the statement/proof partition reveals that only $8.1\%$ of edges are purely statement-level ($E_S$), while $43.9\%$ are proof-only ($E_P$) and $48.0\%$ appear in both; the proof dimension thus dominates the dependency structure. Third, $95.9\%$ of module import edges are public ($45{,}289$ of $47{,}201$), indicating that import visibility currently plays a minor architectural role. Fourth, import utilization is strikingly low: the median module uses only $1.6\%$ of an imported module's declarations, and $37\%$ of import edges have zero direct utilization (\S\ref{sec:visibility-graph}). All decompositions above the mid-rule have been extracted and, where applicable, empirically analyzed in this paper; the two remaining rows (file co-modification and temporal evolution) require additional data sources and are deferred to future work (\S\ref{sec:future-graphs}).
+\noindent These decompositions collectively operationalize the paper's central distinction. Each row acts as a \emph{projection} that isolates one dimension---inherited mathematical structure or human organizational process---from the entangled raw graph. The ``Scale'' column reports the footprint of each mechanism at our snapshot, extracted programmatically from Lean's \texttt{Environment} API across all $499{,}732$~Mathlib constants. All decompositions above the mid-rule have been extracted and empirically analyzed in this paper; the two remaining rows (file co-modification and temporal evolution) require additional data sources and are deferred to future work (\S\ref{sec:future-graphs}).
 
