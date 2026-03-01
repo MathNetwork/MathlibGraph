@@ -817,29 +817,29 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
   dep/.style={->, >=Stealth, red!70!black, semithick},
 ]
   % The theorem node
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:mul\_div\_assoc}]
-    (thm) at (2.0, 3.5) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_div\_assoc}]
+    (thm) at (2.2, 3.2) {};
   % Tactic tag
-  \node[tac, anchor=west] at (2.3, 3.5) {rw};
+  \node[tac, anchor=west] at (2.5, 3.2) {rw};
   % Premises
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:div\_eq\_mul\_inv}]
-    (dm) at (0.5, 1.0) {};
+    (dm) at (1.0, 1.2) {};
   \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:mul\_assoc}]
-    (ma) at (3.5, 1.0) {};
+    (ma) at (3.8, 1.2) {};
   % Edges
   \draw[dep] (thm) -- (dm);
   \draw[dep] (thm) -- (ma);
   % Frequency bar (mini)
-  \node[font=\tiny\sffamily, text=gray!60, anchor=north west] at (-0.5, -0.2)
-    {Library-wide top tactics:};
-  \fill[violet!30] (-0.5, -0.8) rectangle (2.3, -0.55);
-  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (-0.4, -0.68)
+  \node[font=\tiny\sffamily, text=gray!60, anchor=north west] at (0.2, -0.1)
+    {Top tactics:};
+  \fill[violet!30] (0.2, -0.65) rectangle (2.8, -0.45);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.55)
     {\texttt{rw}\hspace{4pt}15.2\%};
-  \fill[violet!25] (-0.5, -1.2) rectangle (2.0, -0.95);
-  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (-0.4, -1.08)
+  \fill[violet!25] (0.2, -1.0) rectangle (2.5, -0.8);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.9)
     {\texttt{exact}\hspace{4pt}12.8\%};
-  \fill[violet!20] (-0.5, -1.6) rectangle (1.7, -1.35);
-  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (-0.4, -1.48)
+  \fill[violet!20] (0.2, -1.35) rectangle (2.2, -1.15);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -1.25)
     {\texttt{simp}\hspace{4pt}10.6\%};
 \end{tikzpicture}
 \caption{$G_{\mathrm{thm}}$ with \textcolor{violet!70!black}{tactic tags}; bottom: aggregate $\mathrm{freq}(t)$.}
