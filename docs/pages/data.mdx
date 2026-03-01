@@ -91,7 +91,7 @@ edges = edges_ds.to_pandas()
 The module graph is built by scanning Mathlib source files directly (not from HuggingFace), since it requires parsing `import` statements:
 
 ```python
-# Used in: plot_dag_depth.py, plot_robustness_curves.py, plot_community_figures.py
+# Used in: plots/plot_dag_depth.py, plots/plot_robustness_curves.py, plots/plot_community_figures.py
 
 from pathlib import Path
 import re, networkx as nx
