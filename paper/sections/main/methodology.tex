@@ -418,7 +418,27 @@ The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S =
 
 \subsubsection{Typeclass instance graph, coercions, and synthesized edges}
 \label{sec:typeclass-synth}
-Lean's typeclass mechanism automatically synthesizes algebraic structure, producing dependency edges invisible in the source code. This subsection defines three related constructions: the typeclass instance graph $G_{\mathrm{tc}}$, the synthesized/explicit edge partition, and two complementary subgraphs---the coercion graph $G_{\mathrm{coe}}$ and the structure inheritance graph $G_{\mathrm{ext}}$---that together capture the main mechanisms by which Lean's type system silently inflates the dependency graph.
+
+In traditional mathematics, when one writes $a + b$ for integers, the reader implicitly knows which addition is meant.  This implicit knowledge---accumulated over centuries of shared convention---is what we call inherited structure.  But a formal proof checker has no such conventions: the expression \texttt{a + b} is ambiguous until the system knows \emph{which} addition, \emph{which} zero, and \emph{which} algebraic laws apply.
+
+Lean's \emph{typeclass mechanism} solves this problem.  A \textbf{typeclass declaration} (\texttt{class}) defines an abstract interface---a bundle of operations and axioms:
+\begin{center}\small\ttfamily
+\textbf{class} \textcolor{red!70!black}{Group} ($\alpha$ : Type) \textbf{extends} Monoid $\alpha$, Inv $\alpha$ \textbf{where}\\
+\hspace{1em}mul\_left\_inv : $\forall$ a : $\alpha$, a$^{-1}$ * a = 1
+\end{center}
+An \textbf{instance declaration} (\texttt{instance}) registers a concrete witness that a given type satisfies this interface:
+\begin{center}\small\ttfamily
+\textbf{instance} : \textcolor{red!70!black}{Group} $\mathbb{Z}$ \textbf{where} \textnormal{\itshape\textcolor{gray}{-- proof that $\mathbb{Z}$ is a group}}
+\end{center}
+When Lean encounters \texttt{a * b} where \texttt{a b :~$\mathbb{Z}$}, its \emph{instance synthesis} algorithm searches the registered instances to find the relevant \texttt{Group~$\mathbb{Z}$}, resolving the ambiguity automatically.
+
+Without this mechanism, every invocation of a polymorphic operation would require explicit arguments.  For example, the statement $a + b = b + a$ for natural numbers would become something like:
+\begin{center}\small\ttfamily
+@HAdd.hAdd $\mathbb{N}$ $\mathbb{N}$ $\mathbb{N}$ instHAddNatNatNat a b = @HAdd.hAdd $\mathbb{N}$ $\mathbb{N}$ $\mathbb{N}$ instHAddNatNatNat b a
+\end{center}
+rendering formal mathematics essentially unreadable.  The typeclass mechanism is thus a \emph{tool-mediated compromise}: it encodes the implicit mathematical common sense of human practitioners as explicit, machine-searchable declarations, enabling readable formal statements at the cost of creating a large infrastructure layer.  In our data, $24{,}947$ instance declarations ($10.6\%$ of $\mathcal{D}$) form this layer---nodes that have no counterpart in traditional mathematics but dominate the dependency graph's in-degree distribution.
+
+This subsection defines three related constructions: the typeclass instance graph $G_{\mathrm{tc}}$, the synthesized/explicit edge partition, and two complementary subgraphs---the coercion graph $G_{\mathrm{coe}}$ and the structure inheritance graph $G_{\mathrm{ext}}$---that together capture the main mechanisms by which Lean's type system silently inflates the dependency graph.
 
 \begin{definition}[Typeclass instance graph]\label{def:tc-graph}
 Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations and $\mathcal{I} \subset \mathcal{D}$ the set of all instance declarations. For each instance $i \in \mathcal{I}$, let $\mathrm{target}(i) \in \mathcal{C}$ be the class it provides and $\mathrm{requires}(i) \subseteq \mathcal{C}$ the classes it depends on as preconditions. The \emph{typeclass instance graph} is
