@@ -23,14 +23,14 @@ The formalization of mathematics transforms latent logical dependencies into exp
 
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-10}}
 %\newpage
-\input{sections/introduction}
-\input{sections/conceptual-framework}
+\input{sections/main/introduction}
+\input{sections/main/conceptual-framework}
 
 \paragraph{Acknowledgements.}
 We thank Leonardo de Moura for facilitating the collaboration that led to this work. We are grateful to Ginestra Bianconi for insightful feedback and for drawing the analogy between cross-namespace dependencies and horizontal gene transfer in phylogenetic networks. We thank Johan Commelin for connecting us with the Mathlib maintainer community, and Oliver Nash for valuable comments on an earlier draft and for clarifications regarding Mathlib's tooling and module system.
 
-\input{sections/methodology}
-\input{sections/contribution}
+\input{sections/main/methodology}
+\input{sections/main/contribution}
 
 \clearpage
 \bibliographystyle{plain}
@@ -50,18 +50,18 @@ We thank Leonardo de Moura for facilitating the collaboration that led to this w
 \setcounter{tocdepth}{2}
 \tableofcontents
 \newpage
-\input{sections/preliminaries}
+\input{sections/appendix/preliminaries}
 \section{Dependency Graphs}
 \label{sec:dependency-graphs}
-\input{sections/module-graph}
-\input{sections/declaration-graph}
-\input{sections/namespace-graph}
-\input{sections/future-graphs}
-\input{sections/structural-overview}
-\input{sections/conclusion}
+\input{sections/appendix/module-graph}
+\input{sections/appendix/declaration-graph}
+\input{sections/appendix/namespace-graph}
+\input{sections/appendix/future-graphs}
+\input{sections/appendix/structural-overview}
+\input{sections/appendix/conclusion}
 \section{Supplementary Material}\label{app:supplementary}
-\input{sections/appendix-module}
-\input{sections/appendix-decl}
-\input{sections/appendix-ns}
-\input{sections/cross-level-analysis}
+\input{sections/appendix/appendix-module}
+\input{sections/appendix/appendix-decl}
+\input{sections/appendix/appendix-ns}
+\input{sections/appendix/cross-level-analysis}
 \end{document}
