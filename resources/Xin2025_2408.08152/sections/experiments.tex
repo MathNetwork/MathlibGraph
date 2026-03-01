@@ -1,0 +1,134 @@
+\section{Experimental Results}
+\label{sec:experiments}
+
+In this section, we evaluate the theorem-proving capabilities of \thiswork~using two distinct benchmarks: miniF2F, which encompasses high-school level exercises and competition problems, and ProofNet, which pertains to undergraduate-level theorems. We present the results for both complete proof generation and Monte-Carlo tree search methodologies, utilizing the same trained model and inference configuration as Section~\ref{sec:sft-eval} to ensure consistency.
+
+\subsection{Main Results}
+
+We present a comparative analysis of \thiswork~against previous state-of-the-art language models, highlighting its performance and advancements.
+
+
+\begin{itemize}
+    \item \textbf{General-purpose Models:} \textbf{GPT-3.5} and \textbf{GPT-4}~\citep{OpenAI} are advanced generative AI models developed by OpenAI, known for their effectiveness across diverse tasks, including code generation. Despite not being specifically designed for theorem proving, their extensive parameter scales provide significant capabilities. The evaluation of these models in formal theorem proving is facilitated by \textbf{COPRA}~\citep{thakur2023language}, an in-context learning agent that leverages these large language models to propose tactic applications. Additionally, we examine \textbf{Llemma}~\citep{azerbayev2024llemma}, a series of language models trained on extensive general mathematical corpora, commonly used as the base model for formal theorem proving.
+
+    \item \textbf{Specialized Models for Formal Mathematics:} \textbf{GPT-f}~\citep{polu2020generative, polu2022formal} represents an initial effort to apply Transformers~\citep{vaswani2017attention} to proof-step generation for theorem proving tasks, utilizing a best-first search module to construct complete proofs. Subsequent advancements include \textbf{ReProver}~\citep{yang2024leandojo}, \textbf{LLMStep}~\citep{welleck23llmstep}, and \textbf{Lean-STaR}~\citep{lin2024lean}. \textbf{Hypertree Proof Search}~\citep{lample2022hypertree} explores the use of Monte Carlo tree search in formal theorem proving using Lean. Concurrent works, \textbf{InternLM2-Math}~\citep{ying2024internlm} and \textbf{InternLM2-StepProver}~\citep{wu2024lean}, also demonstrate outstanding performance.
+\end{itemize}
+
+
+
+\paragraph{Metric.}
+We compare the performance of \thiswork~with state-of-the-art models using the pass@$K$ accuracy metric, which evaluates the model's ability to generate a correct proof within $K$ attempts.
+We display the sample budget $K$ according to the the following rules to align the computation budget across different generation schemes.
+\begin{itemize}
+    \item For single-pass sampling methods, we define the sample budget $K$ as the total number of proofs generated, with large values of $K$ factorized for the ease of comparison to tree search methods.
+    \item For best-first-search methods, following the notation of \citet{azerbayev2024llemma}, we present $K=N\times S\times T$ where $N$ denotes the number of best-first-search attempts, $S$ denotes the number of tactics generated for each expansion, and $T$ denotes the number of expansion iterations.
+    \item For tree search methods, \eg, \treesearch~and HTPS \citep{lample2022hypertree}, we present $K=N\times T$ where $N$ denotes the number of tree search attempts, and $T$ denotes the number of model generations invoked in tree expansions.
+\end{itemize}
+
+
+\paragraph{Results on miniF2F.}
+Table~\ref{tab:minif2f_results} provides a comparative analysis of various theorem-proving methods on the miniF2F-test dataset. In the single-pass whole-proof generation setting, \thiswork-RL achieved the highest pass rate at 60.2\%, marking a significant improvement of 10.2 percentage points over \lastwork's 50.0\%. With a sampling budget limited to 128 attempts, \thiswork-RL proved 51.6\% of the problems, significantly outperforming other whole-proof generation methods and is comparable to the leading tree search methods. In the Tree Search Methods category, \thiswork-RL + \treesearch~ leads with a pass rate of 62.7\%, establishing a new state-of-the-art and creating a substantial gap with existing methods. Notably, \thiswork-RL requires only 3200 whole-proof generation samplings to achieve a pass rate of 54.9\%, surpassing the previous state-of-the-art result of InternLM2-StepProver, which performs $64\times 3200$ tree searches to achieve 54.5\%.
+
+\input{tables/minif2f-main-results}
+
+\paragraph{Results on ProofNet.}
+Table~\ref{tab:proofnet_results} presents a comparative analysis of various theorem-proving methods on the ProofNet dataset. \thiswork-RL achieved pass rates of 22.6\% and 25.3\% for the overall ProofNet dataset in the single-pass whole-proof generation setting and with the enhancement of \treesearch, respectively. These results surpass the existing state-of-the-art methods, ReProver (13.8\%) and InternLM2-StepProver (18.1\%). When the number of whole-proof generation attempts is restricted to 3200, \thiswork~also proved 21.7\% of the theorems, demonstrating a 3.6\% improvement over the previous state-of-the-art, InternLM2-StepProver.
+
+\input{tables/proofnet-main-results}
+
+\vspace{-0.2in}
+
+\subsection{Re-Examining the Effectiveness of Training Strategies on Large-scale Sampling} \label{sec:large-train-eval}
+
+We revisit the effects of several training modules in n a large-scale sampling setting, focusing on both single-pass whole-proof generation and Monte-Carlo tree search. The results demonstration that the observations and findings presented in Section~\ref{sec:sft-eval} generalize to sampling scenarios with a large sample size.
+
+\vspace{-0.1in}
+
+\paragraph{General Enhancement of Reinforcement Learning.}
+To support the claim that online reinforcement learning from verification feedback generally enhances the model capabilities, we compare our final model to the SFT-only version using a large sample budget.
+The comparison results are presented as two columns in Table~\ref{tab:training-ablation}.
+\thiswork-RL consistently outperforms the SFT model across all generation settings, regardless of whether the chain-of-thought strategy is applied.
+The results also indicate that the improvements gained from conducting online RL is orthogonal to those achieved through \treesearch, which can be further combined to boost the performance.
+By integrating both CoT prompting and \treesearch, \thiswork-RL achieves a pass rate of $62.7\%$ on miniF2F-test.
+This performance shows a notable $3.7\%$ improvement over the SFT model, highlighting the critical role of reinforcement learning in enhancing the overall effectiveness of the proof completion model.
+
+\vspace{-0.1in}
+
+\paragraph{CoT, non-CoT, and Mixture Strategy.}
+We compare the performance of two generation modes, \ie, non-CoT and CoT, on miniF2F-test dataset.
+The results, shown in Table~\ref{tab:training-ablation}, indicate that the advantage of CoT over the non-CoT mode is amplified as the sample budget increases.
+This suggests that the incorporation of natural language chain-of-thought can diversify the planning pathways of theorem proving, potentially leading to a broader range of reasoning strategies and more innovative solutions.
+Results also show that these two modes have complementary advantages across different problems.
+The model's theorem proving strategy in the CoT mode is more systematic and proactive in mathematical thinking, while in the non-CoT mode, the model can efficiently use Lean high-level tactics to solve computational problems that can be addressed within Lean’s automation mechanisms.
+To leverage these advantages, we consider a mixture strategy, denoted by non-CoT \& CoT in Table~\ref{tab:training-ablation}, allocates half of sample budget to the CoT mode and the remains to the non-CoT mode.
+This simple combination of two guiding prompts shows great promise in further bootstrapping the performance of our proof completion model, achieving a pass rate of $63.5\%$ on miniF2F-test. In Appendix~\ref{apx:solutions}, we present example problems that illustrate the different advantages of the two generation modes.
+
+\input{tables/train-ablation}
+
+\subsection{Ablation Studies on \treesearch} \label{sec:rmaxts-ablation}
+
+\paragraph{Intrinsic Rewards and Discounted UCB.}
+We investigate the effectiveness of two core components of \treesearch, \ie, the intrinsic rewards defined in Eq.~\eqref{eq:rmax_reward} and the discounted upper confidence bound stated in Eq.~\eqref{eq:ducb}.
+We start with a baseline implementing the standard UCT algorithm \citep{kocsis2006bandit} without intrinsic rewards, in which the exploration is driven exclusively by the UCB bonus.
+Note that, since no non-zero rewards are provided for this baseline, all variants of the UCB formula become equivalent, as node selection is determined solely by visitation counts.
+The experimental results in Figure~\ref{fig:rmaxts-ablation} show that, in the absence of intrinsic rewards, the performance of UCT (without $R_{\text{intrinsic}}$) degenerates into a level comparable to that of non-search methods.
+Furthermore, we consider \treesearch~using the standard UCB1 (refer to Eq.~\eqref{eq:ucb1}) instead of the discounted UCB, denoted by \treesearch~(DUCB $\rightarrow$ UCB1).
+The results indicate that the performance of \treesearch~with UCB1 bonus is also moderate, comparable to that of UCT (without $R_{\text{intrinsic}}$).
+That is because UCB1 is designed to guarantee asymptotic performance through exhausted exploration \citep{auer2002finite} assuming the sample size to be sufficiently large.
+In contrast, the discounted UCB can accelerate the value propagation of non-stationary intrinsic rewards, preventing the guidance of $R_{\text{intrinsic}}$ from being dominated by that of visitation counts.
+This demonstrates that the discounted UCB mechanism is a crucial complement to intrinsic-reward-driven exploration.
+
+\begin{figure}[t!]
+\setlength{\tabcolsep}{0.09in}
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/sample6400.pdf}
+\end{minipage}
+\begin{minipage}{0.52\textwidth}
+\begin{center}
+    \scriptsize \vspace{-0.2in}
+    % \fontsize{7.2pt}{9.6pt}\selectfont
+    \begin{tabular}{ccc}
+        \toprule \vspace{0.02in}
+        & Sample budget & miniF2F-test \\
+        \toprule
+        \multirow{2}{*}{Single-Pass Generation} & $4\times 6400$ & $58.4\% \pm 0.5\%$ \\
+        & $16\times 6400$ & $60.2\%$ \\
+        \midrule
+        UCT & $4\times 6400$ & $58.2\% \pm 0.3\%$ \\
+        (without $R_{\text{intrinsic}}$) & $16\times 6400$ & $61.1\%$ \\
+        \midrule
+        \treesearch & $4\times 6400$ & $58.6\% \pm 0.3\%$ \\
+        (DUCB $\rightarrow$ UCB1) & $16\times 6400$ & $60.7\%$ \\
+        \midrule
+        \treesearch & $4\times 6400$ & $58.4\% \pm 0.3\%$ \\
+        (without tactic state) & $16\times 6400$ & $61.1\%$ \\
+        \midrule
+        \multirow{2}{*}{\treesearch} & $4\times 6400$ & $59.6\% \pm 0.6\%$ \\
+        & $16\times 6400$ & $62.7\%$ \\
+        \bottomrule
+    \end{tabular}
+    % \begin{tabular}{lcc}
+    %     \toprule \vspace{0.02in}
+    %     & \multicolumn{2}{c}{miniF2F-test} \\
+    %     & $4\times 6400$ & $16\times 6400$ \\
+    %     \toprule
+    %     Single-Pass Generation & & \\
+    %     UCT (without $R_{\text{intrinsic}}$) & & \\
+    %     \treesearch~(DUCB $\rightarrow$ UCB1) & & \\
+    %     \treesearch~(without tactic state) & & \\
+    %     \treesearch & & \\
+    %     \bottomrule
+    % \end{tabular}
+\end{center}
+\end{minipage}
+\caption{A modular ablation study examining the algorithmic design of \treesearch. The experiments are conducted on the miniF2F-test dataset with \thiswork-RL using the CoT mode. The left panel presents the curves of Pass@K accuracy within 6400 generation samples. The results with a larger sample size are presented in the right panel.}
+\label{fig:rmaxts-ablation} % referenced
+\end{figure}
+
+\paragraph{Guidance of Tactic State Information.}
+When expanding a tree node, we concatenate the intermediate tactic state information as a comment block to the incomplete code to guide the proof completion.
+With the provided auxiliary information, the proof completion model can enhance its internal representation of the tactic state, offering intermediate guidance for long-horizon planning.
+To demonstrate this advantage, we present experiments on \treesearch~that performs code completion directly from the raw incomplete code without accessing tactic state information, denoted by \treesearch~(without tactic state) in Figure~\ref{fig:rmaxts-ablation}.
+The results indicate that the performance gain from applying tree search becomes moderate in the absence of tactic state information, especially when tackling hard problems that require a large amount of samples.
+This highlights that the integration of compiler information is an essential component of the tree search algorithm, enhancing its overall effectiveness and sample efficiency.

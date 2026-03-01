@@ -1,0 +1,39 @@
+
+\section{Experiments}
+\label{sec:experiments}
+
+We evaluate {\name} on LeanDojo Benchmark. It outperforms baselines on premise selection and theorem proving, demonstrating the promise of theorem proving with retrieval-augmented language models. Experimental details and hyperparameters are in Appendix~\ref{appendix:experimentaldetails}.
+
+
+
+\smallsec{Premise Selection}
+For premise selection, we only use tactics in LeanDojo Benchmark that have at least one premise. The model, based on a ByT5 encoder, uses the state before a tactic as the query to retrieve 100 premises. Then, we calculate standard metrics in information retrieval: R@k (recall for the top $k$ retrieved premises) and MRR (mean reciprocal rank). 
+
+
+Our first baseline is a classical BM25 retriever~\cite{robertson2009probabilistic} without machine learning. Results in Table~\ref{table:premise_selection_results} show that our method outperforms BM25 significantly across the board. However, it exhibits a large performance degradation on the challenging data split (comparing \texttt{novel\_premises} to \texttt{random}). This is consistent with the general observation that machine learning can be brittle in the presence of distribution shifts. In addition, we compare with two ablations: one retrieving from all premises (instead of accessible premises only) and the other without in-file negatives. They perform worse than our method, demonstrating the effectiveness of our two improvements upon DPR.
+
+
+
+\smallsec{Theorem Proving Experimental Setup}
+Then we evaluate {\name} on theorem proving. The training has two stages: First, we train the retriever and use it to retrieve 100 premises for all proof states in LeanDojo Benchmark. Second, we train the tactic generator, taking as input the concatenation of the state and retrieved premises (truncated to a length limit). During evaluation, the tactic generator is combined with best-first search to prove theorems. We evaluate the \emph{Pass@1} metric: The prover is given only one attempt and must find the proof within a wall time limit of 10 minutes. Training takes five days on a single NVIDIA A100 GPU with 80GB memory, and evaluation takes two days on eight V100 GPUs. Please see Appendix~\ref{appendix:experimentaldetails} for details.
+
+\input{tables/premise_selection_results}
+
+
+
+\smallsec{Baselines}
+Following prior work~\cite{han2022proof,zheng2022minif2f}, we include \texttt{tidy} as a baseline. It is a tactic in \texttt{mathlib} that tries to complete the proof using heuristics (without machine learning). We apply \texttt{tidy} directly to the original theorem and see if it can succeed within the wall time limit. Another baseline uses GPT-4 as the tactic generator. Given a state, it queries GPT-4 to generate 35 tactics in zero-shot. After removing invalid ones, the remaining tactics are combined with best-first search to find proofs. Data contamination is possible: Many proofs had been publicly available on GitHub before GPT-4's data cutoff date (September 2021). See Appendix~\ref{appendix:gpt-4} for details.
+
+Unfortunately, it is not feasible to compare with existing LLM-based provers in Lean~\cite{han2022proof,polu2023formal,lample2022hypertree}. None of them are open-source or can be reproduced with reasonable effort. Furthermore, we cannot compare directly with the numbers reported in their papers, due to differences in data, infrastructure, and training procedures (details in Appendix~\ref{appendix:comparisons}). Many difficulties are due to the private nature of existing methods. By releasing our code and models, we hope to create accessible baselines for future work to build upon.
+
+
+\input{tables/theorem_proving_results}
+
+
+\smallsec{Results} 
+Table~\ref{table:theorem_proving_results} shows the results on the testing data of LeanDojo Benchmark. {\name} outperforms all baselines on two different data splits, demonstrating the effectiveness of retrieval-augmented theorem proving. GPT-4 performs substantially worse than our method, even though it may have seen the ground truth proofs due to data contamination. The task cannot be solved out of the box by state-of-the-art LLMs, calling for algorithmic innovations to make further progress.
+
+Testing theorems in \texttt{novel\_premises} are indeed much more challenging. All methods in Table~\ref{table:theorem_proving_results} perform substantially worse on \texttt{novel\_premises} than the \texttt{random} split. We argue that performance on challenging splits is more indicative of the prover's capability and should be emphasized in the future development of theorem proving.
+
+\smallsec{Evaluation on MiniF2F and ProofNet}
+We run {\name} to prove theorems in MiniF2F~\cite{zheng2022minif2f} and ProofNet~\cite{azerbayev2023proofnet}. These two datasets are for testing only and do not have training theorems, which makes them challenging since the distribution of theorems is quite different from \texttt{mathlib} used to train {\name}. MiniF2F focuses on math olympiads, and ProofNet focuses on exercises in undergraduate math textbooks. On MiniF2F's test set in Lean, {\name} achieves a Pass@1 of 26.5\%, which is competitive with state-of-the-art methods without RL (25.9\% in Polu~et~al.~\cite{polu2023formal}). On ProofNet, our Pass@1 is 13.8\%, which is the first reported theorem proving result on this dataset. Further, many theorems do not have ground truth proofs in Lean. Our prover discovers 33 proofs in MiniF2F and 39 proofs in ProofNet that currently do not have Lean proofs. Please see Appendix~\ref{appendix:experiments:minif2f} for details, examples, and caveats.

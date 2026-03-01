@@ -1,0 +1,15 @@
+\begin{table*}[ht]
+  \centering
+  \caption{Theorem proving Pass@1 (\%) on the testing data of LeanDojo Benchmark. Our {\name} model outperforms \texttt{tidy}, GPT-4, and a baseline that generates tactics directly without retrieval. Results for Lean 4 are in Appendix~\ref{appendix:lean4}.}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+     Method & \texttt{random} & \texttt{novel\_premises} \\
+    \midrule
+    \href{https://leanprover-community.github.io/mathlib_docs/tactic/tidy.html#tactic.tidy}{\texttt{tidy}} & 23.8 & 5.3 \\
+    GPT-4 & 29.0 & 7.4 \\
+    {\name} (ours) & \textbf{51.2} & \textbf{26.3} \\
+    \quad w/o retrieval & 47.6 & 23.2 \\
+    \bottomrule
+  \end{tabular}
+  \label{table:theorem_proving_results}
+\end{table*}

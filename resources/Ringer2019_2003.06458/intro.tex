@@ -1,0 +1,250 @@
+\chapter{Introduction}
+\label{sec:intro}
+
+A formal proof of program correctness can show that for all possible inputs, the program behaves as expected.
+This theoretical guarantee can provide practical benefits. For example,
+the formally verified optimizing C compiler CompCert~\citep{Leroy:POPL06}
+is empirically more reliable than GCC and LLVM:
+the test generation tool Csmith~\citep{Yang2011} found 79 bugs in GCC and 202 bugs in LLVM, but was unable to find any bugs
+in the verified parts of CompCert. 
+
+Methodologies for developing proofs of program correctness are as old as the proofs themselves~\citep{turing1949, Floyd1967Flowcharts, Hoare1971}.
+These proofs were on paper and of simple programs; tools to support their development followed soon after~\citep{Milner1972b}
+and have continued to evolve for over 40 years~\citep{Bjoerner2014}.
+Projects based on construction of formal, machine-checked proofs using these tools are now reaching a scale comparable to that of large software engineering projects. 
+For example, the initial correctness proofs for an operating system kernel took around 20 person years to develop~\citep{Klein2009}, and as of 2014 consisted of 480,000 lines of specifications and proof scripts~\citep{Klein2014micro}.
+
+This survey covers the timeline and research literature concerning proof development for program verification,
+including theories, languages, and tools. It emphasizes challenges and breakthroughs at each stage
+in history and highlights challenges that are currently present due to the increasing scale of proof developments. 
+
+\section{Challenges at Scale}
+
+Scaling up leads to new challenges and additional demand for tool support in proof development and maintenance. For example, users may
+have to reformulate properties to facilitate library reuse~\citep{Hales2017}, or to encode data structures in specific ways to aid in automation
+of proofs about them~\citep{Gonthier2008}. Proof development environments need to allow users to efficiently write, check, and share proofs~\citep{Faithfull2016}; proof libraries need to allow easy search and seamless integration of results into local developments~\citep{Gauthier2015}. Evolving projects face the possibility of previous proofs breaking due to seemingly unrelated changes, justifying design principles~\citep{Woos2016} as well as support for quick error detection~\citep{Celik2017} and repair~\citep{Ringer2018}.
+
+The research community has answered these challenges with theories, techniques, and tools
+for proofs of program correctness that scale---all of which fall under the umbrella of \textit{proof engineering},
+or software engineering for proofs. 
+Many of these techniques draw inspiration from work in software engineering on large-scale development practices and tools~\citep{Klein2014}. 
+However, even with close conceptual ties between construction of programs and proofs, research in software engineering requires careful translation to the world of formal proofs. For example, proof engineers can benefit from regression testing techniques by considering lemmas and their proofs in place of tests, as in \textit{regression proving}~\citep{Celik2017}; yet, the standard metric used to prioritize regression tests---statement coverage---has no clear analogue for lemmas with complex conditions and quantification.
+
+This survey serves to gather these theories, techniques, and tools into a single place,
+drawing parallels to software engineering, and pointing out challenges that are especially
+pronounced in proof development.
+It discusses the problems engineers encounter when verifying large systems, 
+existing solutions to these problems, and future opportunities for research to address underserved problems.
+
+\section{Scope: Domain and Literature}
+
+We consider proof engineering research in the context of interactive theorem provers (ITPs) or \textit{proof assistants} (used interchangeably with ITPs in this survey) that satisfy the \textit{de Bruijn criterion}~\citep{Barendregt2002,Barendregt2351}, which requires that they produce proof objects that a small proof-checking kernel can verify; the general workflow of such tools is illustrated in Figure~\ref{fig:workflow}. That is, we consider proof assistants such as Coq~\citep{coq}, Isabelle/HOL~\citep{isabelle}, 
+HOL Light~\citep{hollight}, and Agda~\citep{agda}; we do not consider program verifiers, theorem provers, and constraint solvers such as Dafny~\citep{Leino2010}, ACL2~\citep{acl2}, and Z3~\citep{z3}
+except when contributions carry over. We focus on proof engineering for software verification, 
+but consider contributions from mathematics and other domains when relevant.
+
+Sometimes, the key design principles in \emph{engineering} a large program verification effort are not the focus of the most well-known publications on the effort. Instead, 
+%to the extent that these principles are publicly documented, 
+they can be in less standard references such as workshop papers~\citep{Komendantskaya2012,Blanchette2013,CompanyCoq2016,Mulhern06proofweaving}, invited talks~\citep{WenzelIsabelleFuture}, blog posts~\citep{VerifiedCryptoFirefox}, and online documents~\citep{LeroyDeepSpecSS17,WenzelScalingIsabelle}. One purpose of this survey is to bring such design principles front-and-center.  Naturally, we shall aim to survey the relevant literature with our best effort to provide accurate and thorough citations.  To that end, we will not hesitate to cite both traditional research papers in well-known venues and relevant discussions in less traditional forms, without further distinction among them.
+
+\section{Overview}
+
+\begin{figure}[ht]
+  \centering
+{\footnotesize
+\begin{tikzpicture}[>=stealth',semithick]
+
+\begin{scope}
+\node[ellipse, draw=black, inner ysep=8pt, inner xsep=5pt] (user) { user };
+\end{scope}
+
+\begin{scope}[xshift=5.5cm]
+\node[rectangle, draw=black, minimum width=6.5cm, minimum height=2cm] (coq) { };
+\node[rectangle, draw=black, minimum height=1.5cm, fill=lightgray, xshift=-2cm] (engine) { logic engine };
+\node[rectangle, draw=black, xshift=1.8cm] (checker) { proof checker };
+\node[xshift=1.7cm, yshift=0.7cm] (sys) { proof assistant };
+\end{scope}
+
+\begin{scope}[xshift=9.5cm]
+\node[yshift=0.6cm] (ack) {\checkmark};
+\node[yshift=-0.6cm,xshift=-0.1cm] (nack) {\cross};
+\end{scope}
+
+\draw[->, thick] (user.north east) to node[xshift=-0.2cm, yshift=0.2cm] {tactics} ([yshift=0.33cm]engine.west);
+\draw[->, thick] ([yshift=0.38cm]engine.south west) to node[xshift=-0.2cm, yshift=-0.2cm] {subgoals} (user.south east);
+
+\draw[->, thick] (engine.east) to node[yshift=0.2cm] {proof} (checker.west);
+
+\draw[->, thick] (checker.east) to (ack.south west);
+\draw[->, thick] (checker.east) to (nack.north west);
+
+\end{tikzpicture}
+}
+\caption{Typical proof assistant workflow, adapted from \cite{pa-history-geuvers-sadhana09}.}
+\label{fig:workflow}
+\end{figure}
+
+After motivating chapters (Chapters~\ref{ch:ex} and~\ref{cha:appl-mech-proofs}), this survey discusses the history and foundations of 
+proof assistants (Chapter~\ref{ch:foundations}). It then surveys proof engineering research under three headings: languages and automation (Chapter~\ref{sec:prooflangs}), proof organization and scalability (Chapter~\ref{ch:organization}), and practical proof development and evolution (Chapter~\ref{ch:development}).
+At a glance, Chapter~\ref{sec:prooflangs} concerns proof automation approaches and languages, Chapter~\ref{ch:organization} concerns methods to express and organize programs and proofs, and Chapter~\ref{ch:development} concerns development processes and tools.
+Each of these three chapters is divided into sections; each section surveys a more granular area of proof engineering research,
+then concludes with a discussion of opportunities for future work within that area when applicable.
+The survey concludes (Chapter~\ref{ch:conclusion}) with a discussion of opportunities for future work within proof engineering more broadly.
+In the case of factual errors, an errata may be found on \url{https://proofengineering.org}.
+
+%\subsection{Venues}
+%
+%\begin{itemize}
+%\item primary focus journals: Journal of Automated Reasoning (JAR), Journal of Formalized Reasoning (JFR)
+%\item primary focus conferences: Interactive Theorem Proving (ITP), Certified Programs and Proofs (CPP)
+%\item secondary focus journals: Journal of Functional Programming (JFP), Logical Methods in Computer Science (LMCS)
+%\item secondary focus conferences: Symposium on Principles of Programming Languages (POPL), Conference on Automated Deduction (CADE), International Conference on Functional Programming (ICFP), European Symposium on Programming (ESOP), Tools and Algorithms for the Construction and Analysis of Systems (TACAS), Symposium on Logic in Computer Science (LICS), International Conference on Computer-Aided Verification (CAV), International Conference on Types for Proofs and Programs (TYPES), Conference on Programming Language Design and Implementation (PLDI),
+%Conferences on Intelligent Computer Mathematics (CICM), Theorem Proving in Higher Order Logics (TPHOLs)
+%\end{itemize}
+
+\section{Reading Guide}
+
+This survey aims to reach a broad audience of researchers, proof engineers, and community members
+who are interested in understanding, using, or contributing to proof engineering research.
+Readers need not be deterred for lack of background knowledge.
+It is not always necessary to understand previous chapters in order to understand later chapters;
+readers should feel free to skip sections or chapters, or to consult later chapters or cited resources for more information.
+This guide lists topics with which basic familiarity is helpful
+in order to get the most out of the referenced chapters (all chapters unless otherwise specified),
+along with resources (cited next to \Letter\ icons) for the interested reader:
+
+\begin{itemize}
+\item Programming languages, type systems, and metatheory \Letter~\citep{pierce2002types, harper2016practical}, including:
+\begin{itemize}
+\item ITPs \Letter~\citep{pa-history-geuvers-sadhana09, Harrison2014}, especially:
+\begin{itemize}
+\item Coq \Letter~\citep{CPDT, Pierce-al:SF, CoqArt} 
+\item Isabelle/HOL \Letter~\citep{wenzel2004isabelle, Nipkow2014concrete} 
+\end{itemize}
+\item Automated reasoning \Letter~\citep{Bradley2007, Kroening2008} (Chapters~\ref{cha:appl-mech-proofs} and~\ref{sec:prooflangs})
+\item The Curry-Howard correspondence \Letter~\citep{pfenning2010curry, sorensen2006lectures}
+\item Dependent and inductive types \Letter~\citep{CPDT}
+\item Equality \Letter~\citep{CPDT, nlab:equality} (Chapters~\ref{cha:appl-mech-proofs} and~\ref{ch:foundations})
+\item Compilers \Letter~\citep{cooper2011engineering} (Chapters~\ref{cha:appl-mech-proofs}, \ref{ch:foundations}, and~\ref{ch:organization})
+\end{itemize}
+\item Software engineering \Letter~\citep{se-canon} % TODO could use one more good resource, maybe with modern papers
+\item Systems \Letter~\citep{Anderson2014, Cachin2011} (Chapters~\ref{cha:appl-mech-proofs} and~\ref{ch:organization})
+\item Formalized mathematics \Letter~\citep{ams-proof, nlab:foundation_of_mathematics} (Chapter~\ref{cha:appl-mech-proofs})
+\end{itemize}
+
+\chapter{Proof Engineering by Example}
+\label{ch:ex}
+%\milos{After reading this chapter, I am not sure that this is a
+%  motivating example for our work.  This is simply an example; if used
+%  in later section, it could be called ``Running Example''.}
+
+To make our notion of engineering of machine-checked proofs of program correctness more concrete, we consider the classic problem of constructing a program that decides whether a string (say, ``$aaab$'') matches a regular expression (say, $a^*b$). This problem has been used to demonstrate the usefulness of rigorous proofs of program properties by induction~\citep{Harper1999,Yi2006}.
+
+\paragraph{Specification}
+A necessary step towards a correct program is to obtain a suitable \emph{specification} (Section~\ref{sec:specenc}) of \emph{functional correctness}, in this case, what it means for a string to match a regular expression. We adopt the usual meaning in terms of the theory of regular languages. Consider an enumerable alphabet $\Sigma$ of characters $c$, where it is decidable whether two characters are equal. A string $s$ is an element of the set $\Sigma^*$, consisting of 0 or more characters from the alphabet. We call any such set of strings (subset of $\Sigma^*$) a \emph{regular language}, and refer to the special \emph{empty string} of 0 letters as $\epsilon$. We then define regular expression syntax:
+\[
+r ::= \;\; \textbf{0} \;\; | \;\; \textbf{1} \;\; | \;\; c \;\; | \;\; r_1 + r_2 \;\; | \;\; r_1 \cdot r_2 \;\; | \;\; r^*
+\]
+We next define a matching relation between regular expressions and strings informally using inductive rules:
+
+\[
+\inferrule{ }{\epsilon \triangleleft \mathbf{1}} \qquad \inferrule{ }{c \triangleleft c} \qquad \inferrule{s \triangleleft r_1}{s \triangleleft r_1 + r_2} \qquad \inferrule{s \triangleleft r_2}{s \triangleleft r_1 + r_2}
+\]
+\vspace{-3pt}
+\[
+\inferrule{s \triangleleft r_1 \quad s' \triangleleft r_2}{s\,s' \triangleleft r_1 \cdot r_2} \qquad \inferrule{ }{\epsilon \triangleleft r^*} \qquad \inferrule{s \triangleleft r \quad s' \triangleleft r^*}{s\,s' \triangleleft r^*}
+\]
+
+The intended interpretation of $s \triangleleft\, r$, ``$s$ matches $r$,'' is that $s$ belongs to the regular language defined by $r$. One way to convince ourselves that $\triangleleft$ is adequate is by proving that it holds for some cases where we expect $s$ to be in the language of $r$ (e.g., ``$aaab$'' and $a^*b$), and that it does not hold for cases where we do not expect this (e.g., ``$ab$'' and $b^*$). \citet{Yi2006} defines equationally a function which purports to decide whether $s \triangleleft r$. We write $\mathit{r ! s}$ for the application of this function to given $r$ and $s$, omitting cases that include the Kleene star ($r^*$):
+\begin{eqnarray*}
+ \mathbf{0} ! s \defeq \mathit{false} \qquad \mathbf{1} ! s \defeq s = \epsilon \qquad c ! s \defeq s = c \qquad r_1 + r_2 ! s \defeq r_1 ! s \lor r_2 ! s\\
+  \epsilon \cdot r_2 ! c s \defeq r_2 ! c s  \quad c \cdot r_2 ! c s \defeq r_2 ! s \quad (r'_1 \cdot r'_2) \cdot r_2 ! c s \defeq r'_1 \cdot (r'_2 \cdot r_2) ! c s\\
+  r_1\cdot r_2 !\epsilon \defeq r_1 ! \epsilon \land r_2 ! \epsilon \qquad (r'_1 + r'_2) \cdot r_2 ! c s \defeq r'_1 \cdot r_2 ! c s \lor r'_2 \cdot r_2 ! c s
+%r^* ! \epsilon \defeq \mathit{true} \qquad r^* ! c s \defeq \bigvee \{ r'\cdot r^* !s\, |\, r' \in r \dagger_c \}\\
+%r^{*}_1 \cdot r_2 ! c s \defeq r_2 ! c s \lor \bigvee \{ r' \cdot (r^{*}_1 \cdot r_2) ! s \, | \, r' \in r_1 \dagger_c \}
+\end{eqnarray*}
+
+\vspace{-10pt}
+\paragraph{Encoding} Our approach to specifying and verifying this function in an ITP is to make a \emph{deep embedding} (Section~\ref{sec:embedding}) of the language of regular expressions. Specifically, we encode the language as an inductive datatype (Section~\ref{sec:definitional}) in the Coq proof assistant, parameterized by an arbitrary type \lstinline{char} of characters:
+\begin{lstlisting}[language=Coq]
+Inductive r : Type := r_zero : r | r_unit : r | r_char : char -> r
+| r_plus : r -> r -> r | r_times : r -> r -> r | r_star : r -> r.
+\end{lstlisting}
+We consider strings to be simple lists with elements in \lstinline{char}, i.e., to have type \lstinline{list char}. This allows us to define $s'$ appended to $s$ ($s\,s'$) as regular list concatenation ($s +\!\!\!+\, s'$). The matching relation becomes:
+\begin{lstlisting}[language=Coq,keepspaces=true]
+Inductive r_match : list char -> r -> Prop :=
+| r_match_unit  : r_match [] r_unit
+| r_match_char  : forall c, r_match (c :: []) (r_char c)
+| r_match_plus' : forall s r1 r2, r_match s r1 -> r_match s (r_plus r1 r2)
+| r_match_plus2 : forall s r1 r2, r_match s r2 -> r_match s (r_plus r1 r2)
+| r_match_times : forall s s' r1 r2,
+    r_match s r1 -> r_match s' r2 -> r_match (s ++ s') (r_times r1 r2)
+| r_match_star1 : forall r0, r_match [] (r_star r0)
+| r_match_star2 : forall s s' r0,
+    r_match s' (r_star r0) -> r_match (s ++  s') (r_star r0).
+\end{lstlisting}
+
+%\paragraph{Proposed matching program}
+
+
+%This definition is somewhat opaque and uses an auxiliary function $r \dagger_c$ whose definition we omit. Nevertheless, it can be captured in a functional programming language such as Coq's Gallina.
+%This definition uses an auxiliary function $r \dagger_c$, defined as follows.
+%\begin{eqnarray*}
+%\epsilon \dagger_c \defeq \emptyset \qquad c \dagger_c \defeq \{\epsilon\} \qquad c' \dagger_c \defeq \emptyset \qquad r_1 + r_2 \dagger_c \defeq r_1 \dagger_c \cup \, r_2 \dagger_c \\
+%r^* \dagger_c \defeq \{ r' \cdot r^* \, | r'\, \in r \dagger_c \} \quad c\cdot r_2 \dagger_c \defeq \{ r_2 \} \quad c' \cdot r_2 \dagger_c \defeq \emptyset \quad \epsilon \cdot r_2 \dagger_c \defeq r_2  \dagger_c \\
+%(r'_1 \cdot r'_2) \cdot
+%\end{eqnarray*}
+
+%\paragraph{Proof assistant encoding}
+We can now define the specification (type) \lstinline{acc_t} of a function \lstinline{acc} that decides the matching relation:
+\begin{lstlisting}[language=Coq]
+Definition acc_p (rs : r char * list char) := r_match (snd rs) (fst rs).
+Definition acc_t (rs : r char * list char) := {acc_p rs}+{not acc_p rs}.
+\end{lstlisting}
+
+\vspace{-15pt}
+\paragraph{Verified Implementation}
+Directly writing a computable function with this specification (with the type \lstinline{acc_t}) requires us to immediately establish termination (Section~\ref{sec:totality-termination}). However, we more conveniently use a \emph{definitional extension} (Section~\ref{sec:definitional}) to encode the function and prove partial correctness and termination separately~\citep{Sozeau2010} using a well-founded relation \lstinline{acc_lt} whose definition we omit:
+%However, we can instead write the behavior of the function $r!s$ as a functional~\citep{CoqArt}:
+\begin{lstlisting}[language=Coq]
+Equations acc (rs : re char * list char) : acc_t rs by wf rs acc_lt :=
+ acc (re_zero, _) := right _;
+ acc (re_unit, []) := left _; acc (re_unit, _ :: _) := right _;
+ acc (re_char c, [c']) := match char_eq_dec c c' with
+  left _ => left _ | right _ => right _ end;
+ acc (re_char _, []) := right _; acc (re_char _, _ :: _) := right _;
+ acc (re_plus r1 r2, s) :=
+  match acc (r1, s) with left _=> left _ | right _ =>
+   match acc (r2, s) with left _ => left _ | right _ => right _ end end;
+ (* ... re_times/re_star cases and proof scripts omitted ... *)
+\end{lstlisting}
+
+While our certified matching function follows the equational definition provided by Yi quite closely, we may have made some mistakes. One way to ensure the adequacy of our proof (Section~\ref{sec:trust-proofs}) is to connect it to a Coq theory of regular languages~\citep{Doczkal2018}. We use this theory's notion of language given by a regular expression (\lstinline{re_lang}) to build a matcher that uses our original \lstinline{acc} function, by converting from the theory's notion of a regular expression:
+\begin{lstlisting}[language=Coq]
+Program Definition acc' (r : regexp char) (w : list char) :
+ {w \in re_lang r}+{w \notin re_lang r} :=
+  match acc (@eq_comparable char) (regexp2re r, w) with
+  left _ => left _ | right _ => right _ end.
+\end{lstlisting}
+
+\vspace{-15pt}
+\paragraph{Executable Code}
+Finally, we can extract (Section~\ref{sec:trust-programs}) the Coq code for the function \lstinline{acc} to a practical programming language such as OCaml and run it on example regexp-string pairs where we have an intuition whether they should match or not. We could also refine (Section~\ref{sec:refinement}) the code to more performant Coq code, or to an imperative language (Section~\ref{sec:reas-about-imper}) embedded in Coq, making it possible to use 
+certified compilation (Section~\ref{sec:verified-compilers}) to assembly language.
+
+%\begin{lstlisting}[language=Caml]
+%let accept_F char_eq_dec rs accept_rec =
+% match snd rs with
+% | [] -> (match fst rs with | Re_zero -> false | Re_char _ -> false
+%          | Re_plus (r1, r2) -> (* ... omitted ... *) )
+% (* ... omitted ... *)
+%
+%let rec accept char_eq_dec a =
+%  accept_F char_eq_dec a (fun y _ -> accept char_eq_dec y)     
+%\end{lstlisting}
+
+%Our certified matching function follows the equational specification provided by Yi quite closely. We follow the approach advocated by Gries~\cite{Gries1981} and develop the function and its proof hand-in-hand, using Coq's sigma type facilities.
+
+%\paragraph{Executable program}
+
+%\paragraph{Program and specification evaluation}

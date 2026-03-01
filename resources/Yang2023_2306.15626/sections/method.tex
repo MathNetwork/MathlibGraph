@@ -1,0 +1,33 @@
+\section{{\name}: Retrieval-Augmented Theorem Prover}
+\label{sec:reprover}
+
+
+We develop the {\name} model that uses retrieval to select premises explicitly. At its core is a retrieval-augmented tactic generator (Fig.~\ref{fig:overall} \emph{Bottom}). Given the current proof state, it retrieves a handful of potentially useful premises and generates a tactic conditioning on the concatenation of the state and retrieved premises. When proving theorems, the model generates multiple tactic candidates at each step, which are used in a standard best-first search algorithm to find proofs~\cite{han2022proof,zheng2022minif2f,polu2023formal,jiang2022thor}. 
+
+
+\smallsec{Premise Retrieval}
+Our retriever is based on Dense Passage Retriever~\cite{karpukhin2020dense}. Given a state $s$ as the query and a library of candidate premises $\mathcal{P} = \{p_i\}_{i=1}^{N}$, it retrieves a ranked list of $m$ premises $\{p'_i\}_{i=1}^{m}$ from $\mathcal{P}$. In DPR, $s$ and $p_i$ are both raw texts but are embedded in a vector space, and we retrieve the top $m$ premises maximizing the cosine similarity between the state and the premise.
+
+More formally, we have a function $f$ parameterized by $\theta$ for embedding both the state and the premises into a $h$-dimensional vector space: $f(s, \theta), f(p_i, \theta) \in \mathbb{R}^{h}$. We retrieve premises maximizing $f(s, \theta)^T f(p_i, \theta)/(\lVert f(s, \theta) \rVert_2 \lVert f(p_i, \theta) \rVert_2)$. We choose $f$ to be a Transformer encoder~\cite{vaswani2017attention} followed by average pooling: $f(\cdot, \theta) = \textrm{AvgPool}(\textrm{Enc}(\cdot, \theta))$.
+
+The retrieval is efficient. The premise embeddings $f(p_i, \theta)$ can be pre-computed, and we only need one forward pass to compute $f(s, \theta)$. We do not rerank the retrieved premises as in Magnushammer~\cite{mikula2023magnushammer}, which is more costly since it requires a separate forward pass for each retrieved premise.
+
+Similar to DPR, we train the retriever by minimizing a contrastive loss between positive premises and in-batch negative premises. Specifically, suppose we have a batch of $b$ states. For each state, we sample a positive premise from the ground truth and $n$ negative premises from $\mathcal{P}$.\footnote{When training the retriever, we ignore proof states followed by tactics without using any premise.} They are called ``in-batch'' negatives because they are shared by all states in the batch---Every state is associated with all $b \cdot (n+1)$ premises; at least 1 of them is positive.
+Let $l_{ij} \in \{0, 1\}$ denote whether a state-premise pair $(s_i, p_j)$ is positive. We minimize the mean squared loss: 
+\begin{equation}
+\mathcal{L(\theta)} = \sum_{i=1}^{b} \sum_{j=1}^{b \cdot (n + 1)} \Big\lvert l_{ij} - \frac{f(s_i, \theta)^T f(p_j, \theta)}{\lVert f(s_i, \theta) \rVert_2 \lVert f(p_j, \theta) \rVert_2} \Big\rvert^{2}.
+\end{equation}
+
+
+\smallsec{Retrieving from Accessible Premises} We incorporate into DPR two insights tailored to premise selection.
+First, instead of retrieving from all premises in the math library, we restrict to premises accessible to the current theorem. They include premises defined in the same file before the theorem, as well as those imported from other files. We compute accessible premises for each theorem, relying on LeanDojo's capability in program analysis (Sec.~\ref{sec:leandojo}). Focusing on accessible premises makes $\mathcal{P}$ much smaller. LeanDojo Benchmark contains {\numpremises} premises in total, but the average number of accessible premises is only {\numaccessiblepremises}.
+
+\smallsec{In-file Negative Examples}
+DPR's performance depends critically on the quality of negative examples~\cite{zhan2021optimizing,lu2021multi}. In early experiments, we sampled all $n$ negative premises randomly, and the model often mistakenly retrieved other premises from the same file as the positive one. Therefore, we propose a scheme that samples $k$ in-file negatives and $n-k$ random negatives for training.
+
+
+
+\smallsec{Tactic Generation}
+As in Fig.~\ref{fig:overall} (\emph{Bottom}), retrieved premises are concatenated with the state.\footnote{We retrieve 100 premises, concatenate them with the state, and truncate the concatenation to a fixed length.} Then an encoder-decoder Transformer, ByT5~\cite{xue2022byt5}, takes them as input and generates the tactic. The model is trained to minimize the cross entropy loss w.r.t. human-written tactics.
+
+Training {\name} takes substantially less compute than prior methods (120 GPU hours vs. more than 1000 hours~\cite{han2022proof,lample2022hypertree}). All existing LLM-based provers pretrain on datasets specific to math and coding~\cite{polu2020generative,jiang2021lisa,han2022proof,lample2022hypertree,jiang2022thor,polu2023formal,first2023baldur}. The pretraining is computationally expensive, and the datasets are kept private. In contrast, we choose to avoid domain-specific pretraining and build upon \href{https://huggingface.co/google/byt5-small}{\texttt{google/byt5-small}}---a model checkpoint that is generic, publicly available, and relatively small (299M parameters vs. 837M~\cite{han2022proof} or 600M~\cite{lample2022hypertree}). We could see further benefits from domain-specific pretraining, as in Minerva~\cite{lewkowycz2022solving}, or stronger LLMs like LLaMA~\cite{touvron2023llama} or StarCoder~\cite{li2023starcoder}, but that is beyond our scope. In addition, our model is finetuned on human-written tactics only, without auxiliary data~\cite{han2022proof} or data collected through online interaction with Lean~\cite{polu2023formal,lample2022hypertree}. These orthogonal directions are valuable but will significantly increase the method's complexity and compute requirements.

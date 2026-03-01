@@ -1,0 +1,200 @@
+\subsection{The Module Graph}
+\label{sec:module-import}
+
+We begin with the coarsest level of analysis: module-level structures. Two graphs on the same vertex set $\mathcal{M}$ (the set of all \module{Mathlib} modules) capture complementary aspects of the library's organization. The \emph{module tree} $T$ (\S\ref{sec:module-names}--\S\ref{sec:namespace-tree}) inherits the cognitive classification that mathematicians have long applied to their subject. The \emph{module graph} $G_{\mathrm{module}}$ (\S\ref{sec:import-graph}) records the logical dependencies enforced by the compiler. Throughout this section, $T$ serves as the cognitive baseline against which we measure the structure of $G_{\mathrm{module}}$.
+
+\paragraph{Modules}
+\label{sec:module-names}
+Recall that a \emph{module} is a source file identified by its dot-separated path (Definition~\ref{def:module}). All statistics in this paper are computed from commit \texttt{534cf0b} (2 February 2026) of the \module{Mathlib} repository, using the official \texttt{importGraph} tool~\cite{importgraph}. At this commit, $|\mathcal{M}| = 7{,}563$. The set $\mathcal{M}$ serves as the shared vertex set for both graphs defined in this section. $\mathcal{M}$ contains only \module{Mathlib.*} modules; external dependencies (\texttt{Std}, \texttt{Batteries}, \texttt{Init}) are excluded, so the graphs capture \module{Mathlib}'s internal structure rather than the full dependency closure.
+
+\begin{example}
+\leavevmode
+\begin{itemize}
+  \item $\module{Mathlib}$ has depth~$1$.
+  \item $\module{Mathlib.Algebra}$ has depth~$2$.
+  \item $\module{Mathlib.Algebra.Group.Defs}$ has depth~$4$.
+\end{itemize}
+The maximum depth in \module{Mathlib} is~$7$.\footnote{Attained by, e.g., \module{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
+\end{example}
+
+\paragraph{The Module Hierarchy}
+\label{sec:namespace-tree}
+
+Modules are organized hierarchically: each dot-separated name mirrors a path in the source repository (see Figure~\ref{fig:prefix-tree-app}).
+
+Recall that the prefix relation induces the module tree $T$ (Definition~\ref{def:module-tree}). This hierarchy is distinct from Lean~4's \texttt{namespace} mechanism: in Lean~4, the \texttt{namespace} keyword creates a naming scope that need not align with file boundaries---a single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}). The two often coincide in practice, since \module{Mathlib}'s top-level directories (\module{Algebra}, \module{Analysis}, \module{CategoryTheory}, etc.) serve as both directory names and the primary organizational categories.
+
+The top-level directories (children of the root) include \module{Algebra} (1257 files), \module{CategoryTheory} (982 files), \module{Analysis} (755 files), etc.
+
+\paragraph{The Module Graph}
+\label{sec:import-graph}
+
+Each Lean source file begins with \texttt{import} statements that declare its dependencies. For example, the file \module{Mathlib/Data/Nat/Notation.lean} contains:
+
+\begin{codebox}
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Init}
+\end{codebox}
+
+\noindent
+This file depends on exactly one other module: \module{Mathlib.Init}.
+
+A file with more dependencies is \module{Mathlib/Algebra/Group/Defs.lean}, which imports nine modules (shown here in abbreviated form):
+
+\begin{codebox}
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Batteries.Logic}\\
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Algebra.Notation.Defs}\\
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Algebra.Regular.Defs}\\
+\hspace{1.5em}\textit{\color{gray}-- \ldots\ 6 more imports}
+\end{codebox}
+
+\noindent
+Each file is a \emph{vertex} in the module graph; each \texttt{import} statement is a directed \emph{edge} from the importing module to the imported module.
+
+Lean~4 supports both \texttt{import} and \texttt{public import}; the latter re-exports the imported module to downstream dependents. For the purposes of the module graph, both forms create an edge---they differ only in visibility, not in the dependency relationship~\cite{lean4modules}. The distinction is, however, structurally significant: \texttt{public import} re-exports a module's contents to all downstream dependents, while plain \texttt{import} does not. The Lean~4 module system (introduced November 2025) encourages the gradual replacement of \texttt{public import} with private \texttt{import}, which will reduce transitive visibility and reshape $G_{\mathrm{module}}$'s topology. Our snapshot captures a transitional state in which most imports are still \texttt{public}; our analysis treats both forms as equivalent edges, a simplification that will become increasingly coarse as the community adopts private imports.
+
+The module graph $G_{\mathrm{module}}$ (Definition~\ref{def:module-graph}) records each \texttt{import} as a directed edge from the importing module to the imported module. Since \module{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mathlib.Init}, we have the edge $(\module{Data.Nat.Notation},\; \module{Init}) \in E_{\mathrm{module}}$:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+]
+  \node[dot, label=above:{Init}]              (b) at (0,0) {};
+  \node[dot, label=above:{Data.Nat.Notation}] (a) at (4,0) {};
+  \draw[dep] (a) -- (b);
+\end{tikzpicture}
+\caption{The simplest import edge: \module{Data.Nat.Notation} imports \module{Init}. The arrow points from the importing module to the imported module. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:single-import-edge}
+\end{figure}
+
+\noindent\textbf{Note.}
+The module tree $T$ and the module graph $G_{\mathrm{module}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its prefix parent in the directory hierarchy; in $G_{\mathrm{module}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the directory hierarchy.
+
+The contrast between these two structures is conceptually significant. The module tree $T$ encodes a \emph{cognitive} organization of mathematics: its top-level directories---\module{Algebra}, \module{Analysis}, \module{Topology}---reflect a classification that mathematicians established long before formalization. The module graph $G_{\mathrm{module}}$, by contrast, encodes \emph{logical} dependencies that need not respect this classification. The extent to which $G_{\mathrm{module}}$ deviates from $T$---edges that cross directory boundaries, dependencies that link distant branches of the tree---reveals the internal structure of mathematics that no human taxonomy fully captures (see Figure~\ref{fig:import-subgraph}).
+
+The module graph $G_{\mathrm{module}}$ is DAG: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.} 
+
+\paragraph{Transitive Reduction and Redundant Imports}
+\label{sec:transitive-reduction}
+
+Since $G_{\mathrm{module}}$ is a DAG, it has a unique \emph{transitive reduction}~\cite{ahu1972}: the smallest subgraph $G_{\mathrm{module}}^{-} \subseteq G_{\mathrm{module}}$ with the same reachability relation. An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{transitively redundant} if $m_2$ is reachable from $m_1$ via a path of length $\ge 2$ in $G_{\mathrm{module}}$---that is, the dependency is already implied by other imports.
+
+\begin{definition}[Transitive reduction]
+The \emph{transitive reduction} of $G_{\mathrm{module}}$ is $G_{\mathrm{module}}^{-} = (\mathcal{M}, E_{\mathrm{module}}^{-})$ where
+\[
+  E_{\mathrm{module}}^{-} = E_{\mathrm{module}} \setminus \{(m_1, m_2)\in E_{\mathrm{module}} \mid \exists\, \text{path } m_1 \to \cdots \to m_2 \text{ in } G_{\mathrm{module}} \text{ of length} \ge 2\}.
+\]
+\end{definition}
+
+\begin{definition}[Redundancy rate]
+\label{def:redundancy-rate}
+The \emph{redundancy rate} of $G_{\mathrm{module}}$ is the fraction of edges removed by transitive reduction:
+\[
+  r \;=\; \frac{|E_{\mathrm{module}} \setminus E_{\mathrm{module}}^{-}|}{|E_{\mathrm{module}}|}.
+\]
+\end{definition}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=1pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+  redundant/.style={->, >=Stealth, orange!80!red, dashed, thick},
+]
+  \node[dot, label=above:{Init}]                (d) at (0,0) {};
+  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.2,-1.2) {};
+  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.2,-1.2) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-2.4) {};
+
+  \draw[dep] (a) -- (b);
+  \draw[dep] (a) -- (c);
+  \draw[dep] (b) -- (d);
+  \draw[dep] (c) -- (d);
+  \draw[redundant] (a) -- (d);
+\end{tikzpicture}
+\caption{Subgraph of $G_{\mathrm{module}}$}
+\label{fig:tr-graph-app}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\vspace{0pt}\raggedleft
+\scriptsize\ttfamily
+\begin{tabular}[t]{@{}l@{}}
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Data/Int/Notation.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Init} \\[6pt]
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Data/Nat/Notation.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Init} \\[6pt]
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Algebra/Group/Defs.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Data.Int.Notation} \\
+  \hspace{1em}public import \textcolor{blue!60!black}{Data.Nat.Notation} \\
+  \hspace{1em}\textcolor{orange!80!red}{public import \textcolor{blue!60!black}{Init}}
+    \textnormal{\sffamily\color{orange!80!red} $\leftarrow$ would be redundant} \\
+\end{tabular}
+\caption{Source file headers}
+\label{fig:tr-source-app}
+\end{subfigure}
+\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \module{Algebra.Group.Defs} were to import \module{Init} directly (\textcolor{orange!80!red}{dashed orange} edge), that edge would be transitively redundant: \module{Init} is already reachable via both \module{Data.Int.Notation} and \module{Data.Nat.Notation}. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:transitive-reduction-app}
+\end{figure}
+
+The raw module graph has $|E_{\mathrm{module}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{module}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. Importantly, Mathlib's CI runs the \texttt{shake} linter, which automatically removes certain types of redundant imports; the $17.5\%$ we measure is therefore the residual redundancy \emph{after} \texttt{shake}---imports that \texttt{shake} intentionally preserves (e.g., because they bring needed typeclass instances or notations into scope) or that \texttt{shake} does not target. The raw developer-written redundancy would be higher. These redundant edges are not accidents of careless coding. Developers commonly import umbrella modules---such as importing all of group theory rather than a single lemma---for development ergonomics: the imports ease future refactoring (if a file later needs a lemma from the umbrella, the import is already there), simplify adding new theory to a file, and ensure that typeclass instances and notation remain available. The redundancy reflects the gap between what the compiler requires and what facilitates ongoing library development.
+
+The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \module{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{module}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \module{Mathlib} to its direct children.
+
+\paragraph{Module Containment Decay}
+\label{sec:module-containment}
+
+The module graph's relationship to the module hierarchy $T$ can be quantified at every depth of the hierarchy, not only at the top level. At each depth~$k$, we truncate both endpoints of every import edge to their first~$k$ dot-separated components and measure the proportion of edges whose truncated endpoints match.
+
+\begin{definition}[Module containment at depth~$k$]
+\label{def:module-containment}
+For each depth $k \ge 1$, let $\mathrm{trunc}_k(m)$ denote the first~$k$ components of module~$m$. For example,
+\[
+  \mathrm{trunc}_2(\module{Mathlib.Algebra.Group.Defs}) = \module{Mathlib.Algebra}.
+\]
+The \emph{module containment ratio at depth~$k$} is
+\[
+  \mathrm{contain}_{\mathrm{mod}}(k) \;=\; \frac{|\{(m_1,m_2) \in E_{\mathrm{module}} \mid \mathrm{trunc}_k(m_1) = \mathrm{trunc}_k(m_2)\}|}{|E_{\mathrm{module}}|}.
+\]
+\end{definition}
+
+Module depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$ and a maximum of~$7$. Containment decays steeply: at depth~$1$ ($13$ top-level packages), $97.5\%$ of import edges stay within the same package; by depth~$4$, containment has fallen to~$8.8\%$ (Table~\ref{tab:module-containment} in Appendix~\ref{app:module-detail}). The steep collapse reveals that, within a discipline, dependencies routinely cross subdirectory boundaries. The containment curve for declaration-level dependencies (\S\ref{sec:containment-decay}) starts from a much lower baseline ($48.9\%$ at the top-level directory) but exhibits the same qualitative pattern.
+
+\paragraph{Cross-Directory Dependencies}
+\label{sec:cross-namespace}
+
+\begin{definition}[Top-level directory]
+For a module $m = \module{Mathlib.}X.Y.\cdots$, the \emph{top-level directory} is $\mathrm{dir}(m) = X$, the first directory component under the \module{Mathlib/} root.
+\end{definition}
+
+\begin{definition}[Intra-/inter-directory edge]
+An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{intra-directory} if $\mathrm{dir}(m_1) = \mathrm{dir}(m_2)$ and \emph{inter-directory} otherwise. For example, the edge
+\[
+  (\module{Mathlib.Algebra.Group.Defs},\;\; \module{Mathlib.Algebra.Notation.Defs})
+\]
+is intra-directory (both have $\mathrm{dir} = \module{Algebra}$), while
+\[
+  (\module{Mathlib.Algebra.Group.Defs},\;\; \module{Mathlib.Order.Defs})
+\]
+is inter-directory.
+\end{definition}
+
+\noindent
+In $G_{\mathrm{module}}$, $14{,}464$ edges ($61.4\%$) are intra-directory and $9{,}106$ ($38.6\%$) are inter-directory. In $G_{\mathrm{module}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.
+
+The cross-directory heatmaps (Appendix~\ref{app:module-heatmaps}) confirm that while the diagonal dominates---most imports stay within the same top-level directory---significant off-diagonal traffic exists. The strongest inter-directory dependency is \module{RingTheory} $\to$ \module{Algebra} ($485$ edges), followed by \module{Data} $\to$ \module{Algebra} ($377$) and \module{Algebra} $\to$ \module{Data} ($318$).
+
+Degree distribution, DAG depth, centrality, and robustness analyses for the module graph are reported in Appendix~\ref{app:module-detail}.
+
+\noindent\textbf{Language contingency.}
+\label{rem:language-contingency}
+Note that the module graph's topology is shaped not only by mathematical dependencies but by Lean~4's specific compilation model: its prohibition of cyclic imports, its transitive visibility semantics, and the \texttt{public import} mechanism that allows selective re-export. Design choices such as fine-grained incremental compilation, selective re-export at the declaration level, or explicit interface files would alter the structure of $G_{\mathrm{module}}$ even for identical mathematical content. For instance, Huch and Wenzel~\cite{huch2024} show how the Isabelle AFP's theory DAG structure enables distributed parallel build scheduling with ${>}100\times$ speedup, directly illustrating how compilation model shapes graph topology. The structural statistics reported in this section---$17.5\%$ redundancy (measured after the \texttt{shake} linter), DAG depth~$153$, mean out-degree~$3.1$---should be understood as properties of formalized mathematics \emph{in Lean~4}, not of formalized mathematics in general. Moreover, Lean's module system (introduced November 2025) distinguishes \texttt{public import} from \texttt{import}, a language-level mechanism designed to reshape exactly the graph we analyze. Our snapshot still has mostly \texttt{public} imports; as private imports are adopted, transitive visibility will shrink, redundancy rates will change, and the funnel topology may flatten. This makes our snapshot a baseline of the pre-module-system era.
+

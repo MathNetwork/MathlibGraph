@@ -1,0 +1,19 @@
+\section{Conclusion, Limitation, and Future Work}
+
+We present \thiswork, a language model with 7 billion parameters that outperforms all open-source models in formal theorem proving in Lean 4.
+\thiswork~is initialized with \thiswork-Base, which extends the pre-training of DeepSeekMath-Base 7B using a specialized corpus for formal mathematical reasoning.
+Supervised fine-tuning is conducted on a comprehensive Lean 4 code completion dataset, encompassing a wide range of formal theorems from various mathematical domains.
+Subsequently, we employ GRPO to enhance whole-proof generation through online reinforcement learning.
+Upon developing the \thiswork~model, we introduce \treesearch, a variant of Monte-Carlo tree search, to improve problem-solving capabilities via large-scale search with extensive exploration.
+These components form a comprehensive pipeline for training an LLM-based proof assistant, enabling \thiswork~to achieve significant improvements over \lastwork.
+
+The framework of \thiswork~is designed to establish an AlphaZero-like pipeline for formal theorem proving.
+The use of expert iteration and synthetic data mirrors the core trial-and-error loop of reinforcement learning, with the compiler oracle serving as the world model to provide environmental supervision.
+Within the RL paradigm, the integrated tree search module has proven to be highly effective in advancing superhuman performance across various domains \citep{silver2016mastering, fawzi2022discovering, lutz2023top}.
+In developing \thiswork, we focus on the exploration aspect of RL, introducing \treesearch~to diversify the generation of proof steps.
+However, the exploitation aspect, specifically the problem of proof search, remains unexplored.
+A promising future direction is training a critic model to assess incomplete proofs and prune search branches.
+Such a partial-proof critic model would implicitly perform temporal credit assignment \citep{sutton1984temporal}, decomposing proof-level feedback into step-wise value differences \citep{arjona2019rudder}.
+Developing critic models for assessing long planning paths and providing guidance rewards presents a crucial and challenging problem \citep{ng2000algorithms, sorg2010reward} that warrants further investigation.
+
+Finally, recent work has progressed beyond proving individual theorems to addressing real-world theory proving within complex, multi-theorem Lean files~\citep{hu2024minictx}. This shift is a natural extension of our whole-proof generation approach. Our observations indicate that the current model already possesses some understanding of file-level context. Moving forward, we will focus on enhancing this aspect to support cutting-edge Lean mathematical formalization developers with our language model advancements.

@@ -1,0 +1,217 @@
+\section{Evaluation}
+
+\subsection{Seed-Geometry}
+Using Seed-Geometry's backend, we performed large-scale problem generation. In particular, we took a similar approach to TongGeometry \cite{zhang2024proposing} by collecting data statistics of geometry problems over more than the past 20 years, and ran the problem generation program on the trees. In more than 7 days, the problem generation program found over 230 million unique problems, reaching 8x the search efficiency compared to the Python implementation. After necessary preprocessing using a pretrained byte-pair encoding \cite{sennrich2015neural}, the dataset totaled 38B tokens. We trained both a policy model to complete the auxiliary objects given the context and a value model to estimate the number of steps remaining under the current state. The policy model was initialized from a pretrained Seed model and the value model was initialized with the trained policy model. However, in the experiments, we found that under extensive search, the value model could harm the general performance due to large errors in value estimation. We also compared generating auxiliary actions step-by-step with beam search and generating the whole auxiliary sequence in one go. Results from the latter were significantly inferior to the former. Therefore, in the final evaluation, we used step-by-step generation with beam search in a distributed setup, with each GPU process hosting a policy model for proposal generation.
+
+\cref{tab:performance_imo} lists the performance of Seed-Geometry in IMO geometry problems from 2000 to 2024. Using the accounting method in IMO-AG-50, Seed-Geometry achieves 43 problem solves compared to AlphaGeometry 2, reaching 1 more solution. The problems that Seed-Geometry cannot solve but AlphaGeometry 2 does are not proof-based problems but rather computation-based problems, which AlphaGeometry 2 could potentially address using its algebraic engine.
+\cref{tab:performance_imosl} lists the performance of our model in the much harder IMO shortlist problems from 2000 to 2022. The original benchmark of IMOSL-AG-30 was claimed to be established from the problems in the benchmark, but omitted many of the hard problems. Here, we include all hard-level problems in the shortlist and present the full results. As shown in the tables, AlphaGeometry 2 solved 19 of the 39 problems (with some unattempted) and our Seed-Geometry solved 22 of them.
+In addition, Seed-Geometry solved IMO 2025 P2 in 2 seconds after it received the human-provided problem formulation.
+
+Based on the results provided, Seed-Geometry has established a new state-of-the-art in automated geometry problem solving, surpassing the performance of its predecessor, AlphaGeometry 2. In summary, by solving more problems in both the standard IMO and the more difficult IMO shortlist benchmarks, Seed-Geometry demonstrates a superior capability in handling complex, proof-based geometry challenges, setting a new performance standard in the field.
+
+\begin{table}[h!]
+    \centering
+    \caption{Performance comparison of AlphaGeometry 2 (AG2) and Seed-Geometry (SG) in IMO geometry problems from 2000 to 2024. Note that in IMO-AG-50, the 2002 P2, 2003 P4, 2004 P5, 2008 P1, and 2009 P4 are separated into two, whereas we merge each of them into one.}
+    \label{tab:performance_imo}
+    \vspace{1em} % Add some vertical space between caption and minipages
+    \begin{minipage}[t]{0.32\textwidth} % First part
+        \centering
+        % \caption*{\textbf{Part 1}} % Optional: Add a sub-caption
+        \begin{tabular}{>{\centering\arraybackslash}m{2cm} cc}
+            \toprule
+            \textbf{ID} & \textbf{AG2} & \textbf{SG} \\
+            \midrule
+            2000 P1  & \checkmark & \checkmark \\
+            2000 P6  & \checkmark & \checkmark \\
+            2001 P1  & \text{\sffamily X} & \text{\sffamily X} \\
+            2001 P5  & \checkmark & \text{\sffamily X} \\
+            2002 P2  & \checkmark & \checkmark \\
+            2002 P6  & \text{\sffamily X} & \text{\sffamily X} \\
+            2003 P3  & \text{\sffamily X} & \text{\sffamily X} \\
+            2003 P4  & \checkmark & \checkmark \\
+            2004 P1  & \checkmark & \checkmark \\
+            2004 P5  & \checkmark & \checkmark \\
+            2005 P1  & \checkmark & \checkmark \\
+            2005 P5  & \checkmark & \checkmark \\
+            2006 P1  & \text{\sffamily X} & \checkmark \\
+            2006 P6  & \text{\sffamily X} & \text{\sffamily X} \\
+            2007 P2  & \checkmark & \checkmark \\
+            \bottomrule
+        \end{tabular}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[t]{0.32\textwidth} % Second part
+        \centering
+        % \caption*{\textbf{Part 2}} % Optional: Add a sub-caption
+        \begin{tabular}{>{\centering\arraybackslash}m{2cm} cc}
+            \toprule
+            \textbf{ID} & \textbf{AG2} & \textbf{SG} \\
+            \midrule
+            2007 P4  & \checkmark & \checkmark \\
+            2008 P1  & \checkmark & \checkmark \\
+            2008 P6  & \checkmark & \checkmark \\
+            2009 P2  & \checkmark & \checkmark \\
+            2009 P4  & \checkmark & \text{\sffamily X} \\
+            2010 P2  & \checkmark & \checkmark \\
+            2010 P4  & \checkmark & \checkmark \\
+            2011 P6  & \checkmark & \checkmark \\
+            2012 P1  & \checkmark & \checkmark \\
+            2012 P5  & \checkmark & \checkmark \\
+            2013 P3  & \checkmark & \checkmark \\
+            2013 P4  & \checkmark & \checkmark \\
+            2014 P3  & \checkmark & \checkmark \\
+            2014 P4  & \checkmark & \checkmark \\
+            2015 P3  & \checkmark & \checkmark \\
+            \bottomrule
+        \end{tabular}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[t]{0.32\textwidth} % Third part
+        \centering
+        % \caption*{\textbf{Part 3}} % Optional: Add a sub-caption
+        \begin{tabular}{>{\centering\arraybackslash}m{2cm} cc}
+            \toprule
+            \textbf{ID} & \textbf{AG2} & \textbf{SG} \\
+            \midrule
+            2015 P4  & \checkmark & \checkmark \\
+            2016 P1  & \checkmark & \checkmark \\
+            2017 P4  & \checkmark & \checkmark \\
+            2018 P1  & \checkmark & \checkmark \\
+            2018 P6  & \text{\sffamily X} & \checkmark \\
+            2019 P2  & \checkmark & \checkmark \\
+            2019 P6  & \checkmark & \checkmark \\
+            2020 P1  & \checkmark & \checkmark \\
+            2020 P6  & \text{\sffamily X} & \text{\sffamily X} \\
+            2021 P3  & \checkmark & \checkmark \\
+            2021 P4  & \checkmark & \checkmark \\
+            2022 P4  & \checkmark & \checkmark \\
+            2023 P2  & \checkmark & \checkmark \\
+            2023 P6  & \text{\sffamily X} & \checkmark \\
+            2024 P4  & \checkmark & \checkmark \\
+            \bottomrule
+        \end{tabular}
+    \end{minipage}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Performance comparison of AlphaGeometry 2 (AG2) and Seed-Geometry (SG) in IMO shortlist geometry problems from 2000 to 2022. Note that in IMOSL-AG-30, many geometry problems are ignored and here we fill in those missing geometry problems for comparison, with 2016 G7 merged into one. NA represents ``not attempted'' as the problems results were not directly reported in the original paper.}
+    \label{tab:performance_imosl}
+    \vspace{1em} % Add some vertical space between caption and minipages
+    \begin{minipage}[t]{0.32\textwidth} % First part
+        \centering
+        % \caption*{\textbf{Part 1}} % Optional: Add a sub-caption
+        \begin{tabular}{>{\centering\arraybackslash}m{2cm} cc}
+            \toprule
+            \textbf{ID} & \textbf{AG2} & \textbf{SG} \\
+            \midrule
+            2002 G7  & \checkmark & \checkmark \\
+            2002 G8  & \checkmark & \checkmark \\
+            2003 G5  & \checkmark & \checkmark \\
+            2004 G7  & \text{\sffamily X} & \checkmark \\
+            2004 G8  & \textbf{NA} & \checkmark \\
+            2005 G5  & \checkmark & \checkmark \\
+            2005 G6  & \text{\sffamily X} & \checkmark \\
+            2006 G9  & \checkmark & \checkmark \\
+            2007 G8  & \text{\sffamily X} & \text{\sffamily X} \\
+            2009 G6  & \checkmark & \checkmark \\
+            2009 G7  & \checkmark & \text{\sffamily X} \\
+            2009 G8  & \checkmark & \text{\sffamily X} \\
+            2010 G5  & \checkmark & \checkmark \\
+            \bottomrule
+        \end{tabular}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[t]{0.32\textwidth} % Second part
+        \centering
+        % \caption*{\textbf{Part 2}} % Optional: Add a sub-caption
+        \begin{tabular}{>{\centering\arraybackslash}m{2cm} cc}
+            \toprule
+            \textbf{ID} & \textbf{AG2} & \textbf{SG} \\
+            \midrule
+            2011 G3  & \text{\sffamily X} & \text{\sffamily X} \\
+            2011 G4  & \textbf{NA} & \checkmark \\
+            2011 G5  & \textbf{NA} & \checkmark \\
+            2011 G6  & \checkmark & \text{\sffamily X} \\
+            2011 G7  & \checkmark & \text{\sffamily X} \\
+            2012 G6  & \text{\sffamily X} & \checkmark \\
+            2012 G7  & \textbf{NA} & \text{\sffamily X} \\
+            2012 G8  & \text{\sffamily X} & \checkmark \\
+            2014 G7  & \checkmark & \checkmark \\
+            2015 G5  & \checkmark & \checkmark \\
+            2015 G7  & \textbf{NA} & \text{\sffamily X} \\
+            2015 G8  & \textbf{NA} & \text{\sffamily X} \\
+            2016 G5  & \checkmark & \checkmark \\
+            \bottomrule
+        \end{tabular}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[t]{0.32\textwidth} % Third part
+        \centering
+        % \caption*{\textbf{Part 3}} % Optional: Add a sub-caption
+        \begin{tabular}{>{\centering\arraybackslash}m{2cm} cc}
+            \toprule
+            \textbf{ID} & \textbf{AG2} & \textbf{SG} \\
+            \midrule
+            2016 G6  & \checkmark & \checkmark \\
+            2016 G7  & \checkmark & \checkmark \\
+            2016 G8  & \textbf{NA} & \text{\sffamily X} \\
+            2017 G7  & \text{\sffamily X} & \text{\sffamily X} \\
+            2017 G8  & \textbf{NA} & \text{\sffamily X} \\
+            2018 G7  & \checkmark & \checkmark \\
+            2019 G6  & \checkmark & \checkmark \\
+            2019 G8  & \textbf{NA} & \text{\sffamily X} \\
+            2020 G8  & \checkmark & \checkmark \\
+            2021 G8  & \text{\sffamily X} & \text{\sffamily X} \\
+            2022 G6  & \text{\sffamily X} & \text{\sffamily X} \\
+            2022 G7  & \text{\sffamily X} & \text{\sffamily X} \\
+            2022 G8  & \textbf{NA} & \text{\sffamily X} \\
+            \bottomrule
+        \end{tabular}
+    \end{minipage}
+\end{table}
+
+
+\subsection{Seed-Prover}
+% To compare SeedProver with the state-of-the-art models including self-play theorem prover (STP) \citep{dong2025stpselfplayllmtheorem} and BFS-Prover \citep{xin2025bfsproverscalablebestfirsttree}, we evaluate them on MiniF2F \citep{zhengminif2f}, Putnam \citep{tsoukalasputnambench}, and IMO benchmarks.
+To evaluate the performance of Seed-Prover, we tested it on IMO 2025\footnote{ByteDance was officially invited to participate in IMO 2025.
+}, past IMO problems, MiniF2F \citep{zhengminif2f}, PutnamBench \citep{tsoukalasputnambench}, CombiBench \citep{liu2025combibench}, and MiniCTX-v2 \citep{hu2025minictx} covering a wide range of mathematical domains.
+For PutnamBench and CombiBench, we first evaluate using the light setting and use the medium setting for unsolved problems. For IMO problems and MiniF2F, we also use the heavy setting for the remaining unsolved problems. The results are shown in Table~\ref{tab:seed_prover_performance}. Unless otherwise specified, we use Lean v4.14.0 with its corresponding Mathlib version.
+
+\begin{table}[t]
+\centering
+\caption{Performance comparison of Seed-Prover against previous systems across formal math tasks. The performance on PutnamBench is using the number of proved statements instead of percentage following previous works \citep{tsoukalasputnambench}.}
+\begin{tabular}{lll}
+\toprule
+\textbf{Metric}               & \textbf{Seed-Prover}                              & \textbf{Previous SOTA}                     \\ \midrule
+IMO 2025                      & 4/6 (Heavy, 5/6 post-competition)                       & 5/6 (Natural language, Gemini)\\
+Past IMO                      & 78.1\% (Heavy)                                      & —                                          \\
+MiniF2F-valid                 & 100.0\% (Medium\textsuperscript{1})              & 90.6\% (DeepSeek-Prover-V2 \citep{deepseek-v2})                \\
+MiniF2F-test                  & 99.6\% (Medium\textsuperscript{2})                                     & 92.2\% (Kimina-Prover \citep{kimina})                     \\
+PutnamBench                   & 331/657 (Medium)                                  & 86/657 (Goedel-Prover-V2 \citep{lin2025goedel})                  \\
+CombiBench                    & 30.0\% (Medium)                                     & 10.0\% (Deepseek-Prover-V2 \citep{deepseek-v2})                  \\
+MiniCTX-v2                    & 81.8\% (Light)                                    & 44.3\% (o4-mini \citep{minictx_leaderboard_website})                           \\ \bottomrule
+\end{tabular}
+{\\ \footnotesize
+\textsuperscript{1}One problem used Heavy.
+\textsuperscript{2}One problem failed under Heavy.}
+\label{tab:seed_prover_performance}
+\end{table}
+
+\paragraph{IMO 2025} During the IMO 2025 contest, all problems were translated into formal statements by human experts. For fill-in-the-blank problems (``determine $x$ such that \dots''), initial solution candidates were generated by Seed1.6-Thinking before translation. We conducted searches for IMO 2025 Problems 1, 3, 4, and 5 using both the medium and heavy inference settings in parallel. As required by the IMO committee, all proof submissions were due by July 18th. Seed-Geometry solved Problem 2 instantly, and Seed-Prover derived the proof for Problem 5 under the medium inference setting, while proofs for the other three problems required the heavy inference setting. Notably, the proof for Problem 1 was finished after the deadline.
+
+\paragraph{Past IMO} To evaluate our system's performance on past IMO problems, we curated a dataset consisting of 155 past IMO problems. Most problems were adapted from Compfiles\footnote{\url{https://github.com/dwrensha/compfiles}} and MiniF2F \citep{zhengminif2f}. Additionally, a subset of problems was manually added or corrected by human experts.
+For problems prior to 2017, we used light and medium settings. For problems after 2017, we use the heavy inference setting if the medium inference setting failed.
+Seed-Prover successfully proves 121/155 problems, achieving an overall success rate of $78.1\%$.
+By difficulty, Seed-Prover proves 47/55 easy problems (P1 or P4), 47/56 medium problems (P2 or P5), and 27/44 hard problems (P3 or P6).
+By subject area, it proves 72/85 algebra problems, 42/55 number theory problems, and 7/14 combinatorics problems.
+This demonstrates that the Seed-Prover's performance at IMO 2025 reflects consistent capability on IMO problems across all years.
+
+\paragraph{MiniF2F \citep{zhengminif2f}} Under the medium setting, we prove $99.6\%$ problems on both MiniF2F-valid and MiniF2F-test. We used the heavy inference setting to tackle the last problem in both splits (i.e. IMO 1990 P3 and IMOSL 2007 Algebra P6). Seed-Prover successfully proved IMO 1990 P3 and failed on IMOSL 2007 Algebra P6.
+Interestingly, among the most challenging problems solved in MiniF2F are ones such as AMC12A 2021 P12, AMC12A 2021 P25, and AMC12A 2020 P9, which are relatively straightforward to reason about in natural language, but pose significant challenges when formalized in Lean. This difficulty arises primarily from obstacles in applying Vieta’s formulas or the non-triviality of counting roots.
+
+\paragraph{PutnamBench \citep{tsoukalasputnambench}} We evaluated Seed-Prover on PutnamBench using the light and medium inference settings. Under the light inference setting only, Seed-Prover proved $201/657$ problems from PutnamBench. Using the medium inference setting improved this performance to $331/657$ problems. This result shows a significant performance jump compared to previous works on undergraduate math problems.
+
+\paragraph{CombiBench \citep{liu2025combibench}} Previous benchmarks have primarily focused on number theory and algebra problems. CombiBench is a benchmark specifically centered on combinatorial problems, where the problems often involve newly-defined concepts. Here, we evaluate Seed-Prover on CombiBench using the medium inference setting. Our model proves 30 out of 100 problems from CombiBench, outperforming previous work. Nonetheless, relative to other benchmarks, our model still struggles with proving combinatorics problems.
+
+\paragraph{MiniCTX-v2}\citep{hu2025minictx} To test our system on a broader range of mathematical subjects from real-world formalization projects—including the ability to understand new definitions, notations, and lemmas—we evaluated Seed-Prover on MiniCTX-v2. This dataset includes context-rich problems from formalization repositories in subjects such as axiomatic systems, high-energy physics, analysis, and research-level number theory, all of which were written after Nov.~2024 to prevent data contamination. For evaluation purposes, we used the light inference setting under Lean v4.16.0. Our system successfully achieved $81.8\%$ of MiniCTX-v2, which demonstrates its strong potential in real-world automated theorem proving, generalizing beyond standalone competition problems. For comparison, the baseline o4-mini solved $44.3\%$ statements at Pass@8 \citep{minictx_leaderboard_website}.

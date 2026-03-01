@@ -1,0 +1,62 @@
+\section{Contributors}
+The names are sorted alphabetically. An asterisk * indicates a member who left Seed.
+
+\paragraph{Algorithm}
+Luoxin Chen, Liankai Huang, Zhicheng Jiang, Allan Jie, Xiaoran Jin, Xing Jin, Chenggang Li, Wenlei Shi, Jiahui Wang, Siran Wang, Chenrui Wei, Shufa Wei, Yonghui Wu, Huajian Xin, Fan Yang, Hongyi Yuan, Zheng Yuan, Tianyang Zhan, Chi Zhang, Yue Zhang*, Yichi Zhou, Thomas Hanwen Zhu
+
+\paragraph{Data}
+Jinming Gu, Wenhao Huang, Zhicheng Jiang, Xiaoran Jin, Kaijing Ma, Jiawei Shen, Tong Sun, Chenrui Wei, Shufa Wei, Yuchen Wu, Yihang Xia, Huaiyuan Ying*, Zheng Yuan, Ge Zhang
+
+\paragraph{Infra}
+Cheng Ren, He Sun, Zhihong Wang, Tianyun Zhao*, Jianqiu Zhao, Thomas Hanwen Zhu
+
+\section{LooKeng: An Easy-to-Use and Effective Python Interface for Lean}
+\label{LooKeng}
+
+Interacting with Lean poses significant challenges that limit the flexibility of Lean-based workflows. 
+The most popular interface, LeanDojo \citep{yang2023Leandojo}, only supports earlier versions of Lean 4, restricting users from accessing Lean's newest updates.
+Furthermore, LeanDojo requires creating a Lean repository for interaction, which makes it impractical to use considering the massive scale of Lean interaction during model development and inference.
+To address these issues, we introduce LooKeng, a REPL\footnote{\href{https://github.com/leanprover-community/repl}{https://github.com/leanprover-community/repl}}-based Python interface designed to simplify and accelerate the interaction process. 
+LooKeng offers powerful features for developers while providing a user-friendly interface for end-users.
+The core functionality of LooKeng includes `init\_state', `run\_tac', and `verify\_proof'. One can use LooKeng to interact with Lean step-by-step or verify an entire proof directly.
+% We compare our interface with other Lean interface in Table~\ref{tab:lookeng}.
+The key features of LooKeng are summarized as follows:
+\begin{itemize}
+    \item \textbf{Stateless Design}: A Lean state can be simultaneously processed using different LooKeng instances, enabling effortless scaling and sharing.
+    % A significant advantage is that if a Lean instance crashes, users can resume their work by simply restarting, without the need for state reconstruction.
+    
+    \item \textbf{Complex Tactics}: Complex tactics such as \texttt{apply?} and \texttt{all\_goals} are fully supported, with enhanced infotree integration to prevent false positive proofs.
+
+    \item \textbf{Version-Free}: The LooKeng CLI allows users to manage and switch between different Lean versions. 
+    
+    \item \textbf{Memory Control}: Users can easily track the memory consumption of the Lean backend, set custom thresholds, and automatically terminate processes when memory usage exceeds the limit.
+
+     \item \textbf{Proof Verification}: LooKeng provides a straightforward method, `verify\_proof', to rigorously verify the final proof using the native Lean interface, ensuring correctness and reliability.
+
+     \item \textbf{Proof Simplification}: LooKeng can remove useless tactics and hypothesis in the proof to obtain a simpler proof.
+
+     \item \textbf{Statement Negation}: LooKeng is able to generate the negated statement of a statement.
+
+     \item \textbf{Multi-Concurrency Support}: LooKeng can run as a service, handling thousands of concurrent requests via async architecture and resource isolation.
+
+\end{itemize}
+
+
+% \begin{table}[htbp]
+% \centering
+% \caption{Comparison of LooKeng and other Lean interfaces.}
+% \label{tab:lookeng}
+% \begin{tabular}{l|ccc|cc}
+% \hline
+% \multirow{2}{*}{Project} & \multicolumn{3}{c|}{System Management} & \multicolumn{2}{c}{Complex Tactics} \\
+% \cline{2-6}
+% & Memory & Stateless & Version-Free & all\_goals & apply? \\
+% \hline
+% LeanDojo \citep{yang2023Leandojo} & $\times$ & $\times$ & $\leq$ v4.12.0 & \checkmark & $\times$  \\
+% Pantograph \citep{aniva2024pantograph} & $\times$ & manaul & $\times$ & $\times$ & $\times$  \\
+% ITP-interface \citep{thakur2025proofwala} & \checkmark & $\times$ & $\times$ & \checkmark & $\times$  \\
+% \hline
+% \textbf{LooKeng} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+% \hline
+% \end{tabular}
+% \end{table}

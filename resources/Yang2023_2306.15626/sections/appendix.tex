@@ -1,0 +1,562 @@
+\setcounter{table}{0}
+\renewcommand{\thetable}{\Alph{table}}
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{\Alph{figure}}
+\setcounter{section}{0}
+\renewcommand{\thesection}{\Alph{section}}
+
+
+\section{LeanDojo Technical Details}
+\label{appendix:leandojo}
+
+We provide more information on how LeanDojo extracts data from and interacts with Lean.\footnote{``Lean'' in our paper refers to Lean 3 by default. Lean 4 is not backward-compatible but is also supported by LeanDojo. Our Lean 4 results are in Appendix~\ref{appendix:lean4}.} For further details, please check our open-source implementation. 
+
+\subsection{Extracting Premise Information from Lean's Elaborator}
+\label{appendix:leandojo:premises}
+
+``Premises'' in this paper belong to a category of Lean expressions called ``constants.'' In Lean, definitions of constants are grouped into nested, hierarchical \href{https://leanprover.github.io/theorem_proving_in_lean/dependent_type_theory.html#namespaces}{namespaces}. Therefore, each premise has a unique fully-qualified name. For example, \hlorange{\texttt{mod\_self}} in Fig.~\ref{fig:lean_code} is defined in the namespace \texttt{nat}; therefore, its fully qualified name is \texttt{\hlorange{nat.mod\_self}}. However, it would be too verbose if premises had to be referred to using full names. In practice, tactics often refer to premises using short names such as \hlorange{\texttt{mod\_self}}. In case multiple premises share the same short name, Lean automatically infers the correct one from the context through a process called ``name resolution''. LeanDojo is able to trace the input/output of Lean's name resolution and thereby extract accurate premise information for training the retriever.
+
+Name resolution in Lean is implemented in a process called ``elaboration,'' which happens after parsing but before the parsed expressions are checked by Lean's trusted kernel. Elaboration takes as input user-entered expressions (called ``pre-expressions'') that are concise, partially specified, and potentially ambiguous. It turns them into complete expressions ready to be checked by the kernel. This is realized by inferring not only full names but also missing types, implicit arguments, overloading, type coercion, etc. Please refer to de~Moura~et~al.~\cite{de2015elaboration} for details on Lean's elaboration process. In LeanDojo, we modify Lean's internal implementation, intercepting the elaborator to record its input/output:
+\begin{itemize}[leftmargin=*]
+\item \emph{Pre-expression}: The input to Lean's elaborator, including where premises are used in proofs.
+\item \emph{Expression}: The output of the elaborator, including the premise's full name and where it is defined.
+\end{itemize}
+Locations are spans in the source code, specified by the file name and the row/column numbers of its start/end. Our modification takes the form of a Git patch that LeanDojo can automatically apply to any version of Lean 3 after March 24, 2022.
+
+
+\subsection{Reliable Interaction with Lean}
+\label{appendix:leandojo:interaction}
+
+Polu~et~al.~\cite{polu2023formal} introduced 
+\href{https://github.com/openai/lean-gym}{\texttt{lean-gym}}. To our knowledge, it is the only mature, open-source tool before LeanDojo for interacting with Lean programmatically. However, we found severe issues with \texttt{lean-gym}: About 21.1\% of the correct, human-written proofs are misjudged as incorrect, leading to two problems: First, it underestimates the prover's evaluation performance. Second, the results are too noisy as feedback signals for reinforcement learning.
+
+After carefully analyzing \texttt{lean-gym}'s implementation, we identified the root cause of the problem. When proving a theorem, the environment used by \texttt{lean-gym} is subtly different from the original environment used by humans. Specifically, \texttt{lean-gym} fails to handle namespaces correctly (illustrated in Fig.~\ref{fig:lean-gym}). As a result, name resolution fails unexpectedly when checking correct proofs.
+
+For example, Fig.~\ref{fig:lean-gym} compares the correct environment and the environment constructed by \texttt{lean-gym}. The theorem should be inside the namespace ``\texttt{buffer}''. However, in \texttt{lean-gym}, it merely opens the namespace. These two scenarios are different when it comes to name resolution. Being inside a namespace instructs Lean to favor constants defined in that namespace, whereas opening a namespace does not have such an effect. In this example, the short name ``\texttt{read}'' is ambiguous: We have ``\texttt{monad\_reader.read}'' defined in ``\texttt{init/control/reader.lean}'' and ``\texttt{buffer.read}'' defined in ``\texttt{data/buffer.lean}''. In the correct environment, the ``\texttt{read}'' in ``\texttt{unfold read}'' resolves to ``\texttt{buffer.read}''. Whereas in \texttt{lean-gym}'s environment, it incorrectly resolved to ``\texttt{monad\_reader.read}''. Lean complains that ``\texttt{read}'' is not an equational lemma, because it is referring to a wrong ``\texttt{read}''. LeanDojo does not suffer from this kind of error since it uses a different mechanism for constructing the environment. Specifically, it wraps the interaction code as a Lean tactic, which is inserted into the proof. Therefore, the environment is guaranteed to be correct.
+
+We quantitatively compare \texttt{lean-gym} and LeanDojo on the number of proof checking errors. In this study, we use Lean \href{https://github.com/leanprover-community/lean/releases/tag/v3.42.1}{v3.42.1} paired with \texttt{mathlib} version \href{https://github.com/leanprover-community/mathlib/tree/6e5ca7d0097313e59f7533a42e3ea5197484c775}{6e5ca7d0097313e59f7533a42e3ea5197484c775} since they are supported by both tools. We use LeanDojo to extract all tactic-style proofs and enter them into both tools. These proofs are all correct, but \texttt{lean-gym} failed on 21.1\% of them. In contrast, LeanDojo only failed on 1.4\%, and its failures are a subset of \texttt{lean-gym}'s. We include this study in our open-source repo and document example proofs from the remaining 1.4\% to provide transparency on LeanDojo's limitations.\footnote{\url{https://github.com/lean-dojo/LeanDojo/blob/main/tests/interaction/test_unexpected_errors.py}}
+
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=1.0\linewidth]{figures/lean-gym.pdf}
+  \caption{An example of correct proofs misjudged as incorrect by \texttt{lean-gym}, adapted from the theorem \href{https://github.com/leanprover-community/lean/blob/9fc1dee97a72a3e34d658aefb4b8a95ecd3d477c/library/data/buffer.lean\#L47}{\texttt{read\_eq\_read'}} in ``\texttt{data/buffer.lean}'' of Lean's standard library. The error message is because \texttt{lean-gym} failed to resolve the short name ``\texttt{read}'' to the correct fully-qualified name. The Lean code in this figure is only for illustrative purposes. It does not reflect the implementation technique used by \texttt{lean-gym} to construct the environment. Instead of generating actual Lean code, \texttt{lean-gym} uses Lean's metaprogramming APIs to construct the environment.}
+  \label{fig:lean-gym}
+\end{figure*}
+
+\subsection{Comparison with Existing Tools for Learning-Based Theorem Proving in Lean}
+\label{appendix:tool_comparison}
+
+To our knowledge, LeanStep~\cite{han2022proof}\footnote{LeanStep is technically a dataset. We are referring to the \href{https://github.com/jasonrute/lean_proof_recording}{lean\_proof\_recording} tool for extracting it.} and \texttt{lean-gym}~\cite{polu2023formal} are the only published tools for learning-based theorem proving in Lean. There are a few unpublished prototypes, such as \href{https://github.com/leanprover-community/repl}{repl}, \href{https://github.com/leanprover-community/lean-client-python}{lean-client-python}, and \href{https://github.com/dselsam/lean-gym}{\texttt{lean-gym} for Lean 4}, none of which is mature enough or is under active development. Therefore, we only compare LeanDojo with LeanStep and \texttt{lean-gym} (summarized in Table~\ref{table:comparison}).
+
+\smallsec{Functionality}
+LeanDojo supports both data extraction and interacting with Lean programmatically. In contrast, LeanStep is only for data extraction, and \texttt{lean-gym} is only for interacting with Lean. They are not actively maintained, so they do not support recent versions of \texttt{mathlib} (tested on August 11, 2023, using \texttt{mathlib} commit \href{https://github.com/leanprover-community/mathlib/tree/19c869efa56bbb8b500f2724c0b77261edbfa28c}{19c869efa56bbb8b500f2724c0b77261edbfa28c}). Also, neither of them support Lean 4 (Appendix~\ref{appendix:lean4}). LeanDojo fully supports recent \text{mathlib} and Lean 4. Furthermore, LeanStep cannot extract premise information and is not applicable to repos other than \texttt{mathlib}. Last, LeanDojo comes with comprehensive documentation and unit tests, whereas other tools barely have any.
+
+\smallsec{Implementation details}
+LeanStep and LeanDojo use different mechanisms to extract ASTs and proof trees. LeanStep implements an ad-hoc parser in Python for parsing Lean code into ASTs. It also intercepts Lean's tactic system to insert logging code. Then the logs are used to reconstruct proof trees. This implementation is brittle and does not work for the current versions of Lean/\texttt{mathlib}. In contrast, LeanDojo relies on Lean’s built-in mechanisms for exporting ASTs and proof states (\texttt{lean ----ast ----tsast ----tspp}), which works robustly for recent Lean/\texttt{mathlib}. This mechanism was developed after LeanStep.
+
+Regarding interaction with Lean, both \texttt{lean-gym} and LeanDojo rely on Lean's metaprogramming APIs, and LeanDojo partially builds upon \texttt{lean-gym}'s code. However, \texttt{lean-gym} has a critical issue in that it misjudges many correct proofs as incorrect (Appendix~\ref{appendix:leandojo:interaction}). The main reason is that \texttt{lean-gym} fails to distinguish two subtly different cases when constructing the proof environment: (1) opening a namespace; (2) being inside a namespace. LeanDojo does not suffer from this issue. Instead of operating as a standalone program in the IO monad, it wraps the interaction code into a special tactic, which is inserted into the correct location in the proof. Therefore, the interaction code is guaranteed to run in the same environment as the original human-written proof.
+
+\input{tables/comparison}
+
+\section{LeanDojo Benchmark}
+\label{appendix:benchmark}
+
+
+\subsection{Dataset Format}
+\label{appendix:dataformat}
+
+We describe the data format of LeanDojo Benchmark, which has the following directory structure:
+
+\dirtree{%
+.1 /.
+.2 corpus.jsonl\DTcomment{All premises defined in \texttt{mathlib} and Lean's standard library}.
+.2 metadata.json\DTcomment{Metadata}.
+.2 licenses.
+.3 lean\DTcomment{Attribution to Lean's Apache 2.0 license}.
+.3 mathlib\DTcomment{Attribution to \texttt{mathlib}'s Apache 2.0 license}.
+.3 README.md\DTcomment{Statement that LeanDojo Benchmark is released under CC BY 2.0}.
+.2 random\DTcomment{Theorems/proofs of the \texttt{random} split}.
+.3 train.json\DTcomment{{\numtraintheorems} theorems}.
+.3 val.json\DTcomment{{\numvaltheorems} theorems}.
+.3 test.json\DTcomment{{\numtesttheorems} theorems}.
+.2 novel\_premises\DTcomment{Theorems/proofs of the \texttt{novel\_premises} split}.
+.3 train.json\DTcomment{{\numtraintheorems} theorems}.
+.3 val.json\DTcomment{{\numvaltheorems} theorems}.
+.3 test.json\DTcomment{{\numtesttheorems} theorems}.
+}
+
+\smallsec{Premise Definitions}
+\texttt{corpus.jsonl} contains the definition of premises. It has 3,280 lines. Each line is in JSON format and corresponds to a Lean file. Below is an example for ``\href{https://github.com/leanprover-community/lean/tree/cce7990ea86a78bdb383e38ed7f9b5ba93c60ce0/library/init/control/functor.lean}{\texttt{init/control/functor.lean}}'', which directly imports three other files: ``\href{https://github.com/leanprover-community/lean/tree/cce7990ea86a78bdb383e38ed7f9b5ba93c60ce0/library/init/core.lean}{\texttt{init/core.lean}}'', ``\href{https://github.com/leanprover-community/lean/tree/cce7990ea86a78bdb383e38ed7f9b5ba93c60ce0/library/init/function.lean}{\texttt{init/function.lean}}'', and ``\href{https://github.com/leanprover-community/lean/tree/cce7990ea86a78bdb383e38ed7f9b5ba93c60ce0/library/init/meta/name.lean}{\texttt{init/meta/name.lean}}''. It defines two constants that can be used as premises: ``\texttt{functor}'' and ``\texttt{functor.map\_const\_rev}''. For each premise, we have access to its full name, the source code, and its start/end location within the file.
+\begin{lstlisting}[language=json,numbers=none]
+"path": "_target/deps/lean/library/init/control/functor.lean",
+"imports": [
+  "_target/deps/lean/library/init/core.lean",
+  "_target/deps/lean/library/init/function.lean",
+  "_target/deps/lean/library/init/meta/name.lean"
+],
+"premises": [
+  {
+    "full_name": "functor", 
+    "code": "class functor (f : Type u (*@$\rightarrow$@*) Type v) : Type (max (u+1) v) :=\n(map : (*@$\Pi$@*) {(*@$\alpha$@*) (*@$\beta$@*) : Type u}, ((*@$\alpha$@*) (*@$\rightarrow$@*) (*@$\beta$@*)) (*@$\rightarrow$@*) f (*@$\alpha$@*) (*@$\rightarrow$@*) f (*@$\beta$@*))\n(map_const : (*@$\Pi$@*) {(*@$\alpha$@*) (*@$\beta$@*) : Type u}, (*@$\alpha$@*) (*@$\rightarrow$@*) f (*@$\beta$@*) (*@$\rightarrow$@*) f (*@$\alpha$@*) := (*@$\lambda$@*) (*@$\alpha$@*) (*@$\beta$@*), map (*@$\circ$@*) const (*@$\beta$@*))",
+    "start": [11, 1],
+    "end": [13, 70],
+    "kind": "class"
+  },
+  {
+    "full_name": "functor.map_const_rev",
+    "code": "@[reducible] def functor.map_const_rev {f : Type u (*@$\rightarrow$@*) Type v} [functor f] {(*@$\alpha$@*) (*@$\beta$@*) : Type u} : f (*@$\beta$@*) (*@$\rightarrow$@*) (*@$\alpha$@*) (*@$\rightarrow$@*) f (*@$\alpha$@*) :=\n(*@$\lambda$@*) a b, b <$ a",
+    "start": [18, 1],
+    "end": [19, 14],
+    "kind": "definition"
+  }
+]
+\end{lstlisting}
+
+
+\smallsec{Theorems and Tactics}
+Theorems in LeanDojo Benchmark are split into training/validation/testing using two different strategies (Sec.~\ref{sec:leandojo}). They are formatted in JSON, and below is an example corresponding to the theorem ``\href{https://github.com/leanprover-community/mathlib/blob/19c869efa56bbb8b500f2724c0b77261edbfa28c/src/analysis/special_functions/trigonometric/angle.lean#L512}{\texttt{real.angle.to\_real\_pi\_div\_two}}''. LeanDojo has recorded two tactics: ``\texttt{split}'' and ``\texttt{linarith [pi\_pos]}''. For each tactic, we have the proof states before/after it. The ``\texttt{linarith [pi\_pos]}'' tactic illustrates how premises are recorded: They are annotated using HTML-like strings such as ``\texttt{linarith [<a>pi\_pos</a>]}'', followed by a ``provenance list''. Each element in the list corresponds to a premise in the tactic. 
+\begin{lstlisting}[language=json,numbers=none]
+"url": "https://github.com/leanprover-community/mathlib",
+"commit": "19c869efa56bbb8b500f2724c0b77261edbfa28c",
+"file_path": "src/analysis/special_functions/trigonometric/angle.lean",
+"full_name": "real.angle.to_real_pi_div_two",
+"start": [512, 9],
+"end": [513, 56],
+"traced_tactics": [
+  {
+    "tactic": "split",
+    "annotated_tactic": ["split", []],
+    "state_before": "(*@$\vdash$@*) -(*@$\pi$@*) < (*@$\pi$@*) / 2 (*@$\land$@*) (*@$\pi$@*) / 2 (*@$\leq$@*) (*@$\pi$@*)",
+    "state_after": "2 goals\n(*@$\vdash$@*) -(*@$\pi$@*) < (*@$\pi$@*) / 2\n\n(*@$\vdash$@*) (*@$\pi$@*) / 2 (*@$\leq$@*) (*@$\pi$@*)"
+  },
+  {
+    "tactic": "linarith [pi_pos]",
+    "annotated_tactic": [
+      "linarith [<a>pi_pos</a>]", 
+      [
+        {
+          "full_name": "real.pi_pos",
+          "def_path": "src/analysis/special_functions/trigonometric/basic.lean",
+          "def_pos": [122, 7],
+        }
+      ]
+    ],
+    "state_before": "(*@$\vdash$@*) -(*@$\pi$@*) < (*@$\pi$@*) / 2",
+    "state_after": "no goals"
+  }
+]
+\end{lstlisting}
+Not all theorems have tactic-style proofs. For those without tactic-style proofs, concatenating the tactics does not lead to a complete proof of the original theorem. However, this is not an issue when using the data for theorem proving evaluation or for training tactic generators.
+
+
+\subsection{Datasheet}
+\label{appendix:datasheet}
+
+We present a datasheet~\cite{gebru2021datasheets} for documentation and responsible usage of LeanDojo Benchmark.
+
+
+\smallsec{Motivation}
+
+\begin{itemize}[leftmargin=*]
+\item \emph{For what purpose was the dataset created?} It was created as a benchmark for learning-based theorem proving in Lean.
+
+\item \emph{Who created the dataset (e.g., which team, research group) and on behalf of which entity (e.g., company, institution, organization)?} It was created by the authors of this paper.
+
+\item \emph{Who funded the creation of the dataset?} See the acknowledgments in Sec.~\ref{sec:ack}.
+
+\end{itemize}
+
+\smallsec{Composition}
+
+\begin{itemize}[leftmargin=*]
+\item \emph{What do the instances that comprise the dataset represent (e.g., documents, photos, people, countries)?} The dataset consists of formal definitions, theorems, and proofs written in Lean~\cite{de2015lean}.
+
+\item \emph{How many instances are there in total (of each type, if appropriate)?} The dataset has {\numproofs} theorems and their proofs, as well as {\numpremises} premises defined in {\numfiles} files.
+
+\item \emph{Does the dataset contain all possible instances or is it a sample (not necessarily random) of instances from a larger set?} The dataset contains all theorems/proofs that LeanDojo can extract from the commit \href{https://github.com/leanprover-community/mathlib/tree/19c869efa56bbb8b500f2724c0b77261edbfa28c}{\texttt{19c869efa56bbb8b500f2724c0b77261edbfa28c}} of \texttt{mathlib} released on October 11, 2023.
+
+\item \emph{What data does each instance consist of?} Theorems/proofs in the dataset are Lean code written by programmers and mathematicians.
+
+\item \emph{Are relationships between individual instances made explicit?} Definitions in the dataset are linked to proofs using them as premises.
+
+\item \emph{Are there recommended data splits?} Yes, we recommend two data splits: \texttt{random} and \texttt{novel\_premises}. 
+Please see Sec.~\ref{sec:leandojo} for details.
+
+\item \emph{Are there any errors, sources of noise, or redundancies in the dataset?} ASTs extracted by LeanDojo contain a small number of errors due to potential flaws in Lean's AST exporting mechanism. However, they do not have a tangible impact on our work.
+
+\item \emph{Is the dataset self-contained, or does it link to or otherwise rely on external resources (e.g., websites, tweets, other datasets)?} The dataset is self-contained.
+
+\item \emph{Does the dataset contain data that might be considered confidential (e.g., data that is protected by legal privilege or by doctor-patient confidentiality, data that includes the content of individuals’ non-public communications)?} No.
+
+\item \emph{Does the dataset contain data that, if viewed directly, might be offensive, insulting, threatening, or might otherwise cause anxiety?} No.
+
+\end{itemize}
+
+
+\smallsec{Collection Process}
+
+\begin{itemize}[leftmargin=*]
+
+\item \emph{How was the data associated with each instance acquired?} The data is directly observable by opening \texttt{mathlib} in VS Code with the Lean plugin. However, we had to instrument Lean to export the data programmatically.
+
+\item \emph{What mechanisms or procedures were used to collect the data (e.g., hardware apparatuses or sensors, manual human curation, software programs, software APIs)?} The data was generated by building a Lean repo using our modified Lean and postprocessing the exported data.
+
+\item \emph{Who was involved in the data collection process (e.g., students, crowd workers, contractors), and how were they compensated (e.g., how much were crowd workers paid)?} No manual effort was involved in the data collection process.
+
+\item \emph{Over what timeframe was the data collected?} The final version of the dataset was generated in October 2023. 
+
+\end{itemize}
+
+\smallsec{Uses}
+
+\begin{itemize}[leftmargin=*]
+
+\item \emph{Has the dataset been used for any tasks already?} We have used the dataset for training and evaluating machine learning models on the tasks of premise selection and theorem proving.
+
+\item \emph{Is there a repository that links to any or all papers or systems that use the dataset?} Yes, {\weburl}.
+
+\end{itemize}
+
+\smallsec{Distribution}
+
+\begin{itemize}[leftmargin=*]
+
+\item \emph{Will the dataset be distributed to third parties outside of the entity (e.g., company, institution, organization) on behalf of which the dataset was created?} Yes, the dataset is publicly available on the Internet.
+
+\item \emph{How will the dataset be distributed (e.g., tarball on website, API, GitHub)?} The dataset can be downloaded as a tarball.
+
+\item \emph{Will the dataset be distributed under a copyright or other intellectual property (IP) license, and/or under applicable terms of use (ToU)?} The dataset is distributed under CC BY 2.0. The data generation code is distributed under the MIT license. The dataset was extracted from \href{https://github.com/leanprover-community/mathlib}{mathlib}, which depends on \href{https://github.com/leanprover-community/lean}{lean}. Both of them are distributed under the Apache 2.0 license. We include their licenses in the dataset as attribution (Appendix~\ref{appendix:dataformat}).
+
+\item \emph{Have any third parties imposed IP-based or other restrictions on the data associated with the instances?} No.
+
+\item \emph{Do any export controls or other regulatory restrictions apply to the dataset or to individual instances?} No.
+
+\end{itemize}
+
+\smallsec{Maintenance}
+
+\begin{itemize}[leftmargin=*]
+
+\item \emph{Who will be supporting/hosting/maintaining the dataset?} The authors of this paper.
+
+\item \emph{How can the owner/curator/manager of the dataset be contacted (e.g., email address)?} Please contact Kaiyu Yang at \texttt{kaiyuy@caltech.edu}.
+
+\item \emph{Is there an erratum?} No.
+
+\item \emph{Will the dataset be updated (e.g., to correct labeling errors, add new instances, delete instances)?} Please check {\weburl} for any update.
+
+\item \emph{If others want to extend/augment/build on/contribute to the dataset, is there a mechanism for them to do so?} Yes, they can use our data generation code, which is publicly available.
+
+\end{itemize}
+
+
+
+
+\subsection{Data Hosting, Licensing, and Maintenance}
+\label{appendix:hosting}
+
+LeanDojo Benchmark is distributed under the CC BY 2.0 license. The data is hosted on \href{https://zenodo.org/}{zenodo.org} (a long-term data repository operated by CERN). The LeanDojo tool for data extraction and interaction with Lean is released at \url{https://github.com/lean-dojo/LeanDojo} 
+under the MIT license. Our model checkpoints are hosted on Hugging Face Hub. LeanDojo's documentation is hosted on Read the Docs at \url{https://leandojo.readthedocs.io}. LeanDojo's website ({\weburl}) is the entry point for everything related to it, including any future updates or maintenance. 
+
+
+
+\section{Experiments}
+
+\subsection{Details and Hyperparameters}
+\label{appendix:experimentaldetails}
+
+The premise retriever and tactic generator in {\name} are initialized by the \href{https://huggingface.co/google/byt5-small}{\texttt{google/byt5-small}} checkpoint on Hugging Face. It is a T5-like~\cite{raffel2020exploring} encoder-decoder Transformer that operates directly on UTF-8 bytes without tokenization. We choose ByT5~\cite{xue2022byt5} instead of T5 because Lean code makes extensive use of Unicode math symbols, which may cause problems to T5's pretrained tokenizer. The retriever uses the encoder only, whereas the generator uses both the encoder and the decoder. 
+
+In training, we use one NVIDIA A100 GPU with 80GB of memory. The code is implemented in PyTorch and PyTorch Lightning, with bfloat16 mixed precision and DeepSpeed ZeRO Stage 2~\cite{rasley2020deepspeed}. Both the retriever and the generator are optimized using AdamW~\cite{loshchilovdecoupled} with a batch size of 8. In the first 2,000 steps, the learning rate warms up linearly from 0 to the maximum value. Then it decays to 0 following a cosine schedule. The maximum learning rate is $10^{-4}$ for the retriever and $5 \times 10^{-4}$ for the generator. When training the retriever, we sample 3 negative premises for each example, including 1 in-file negative premise. When training the generator, we apply dropout to retrieved premises with a dropout rate of 0.5. Then, we truncate the generator's input to 2,300 tokens.
+
+During evaluation, the tactic generator is combined with best-first search to find proofs. At each search step, it produces 64 tactic candidates using beam search. Each tactic is associated with a log-likelihood score. In best-first search, we prioritize the states by the sum of log-likelihoods of tactics leading to that state. 
+
+
+\subsection{The GPT-4 Baseline}
+\label{appendix:gpt-4}
+
+Now we describe the GPT-4~\cite{openai2023gpt4} baseline in Sec.~\ref{sec:experiments}. Similar to {\name}, it is a tactic generator combined with best-first search. However, the tactic generator is based on GPT-4's capability to follow instructions in zero-shot. Specifically, given a proof state, we use the following prompt to instruct GPT-4 to produce a list of tactics, each paired with a confidence score:
+{
+\setlength{\fboxsep}{0.8em}
+\noindent\fbox{%
+    \parbox{\dimexpr\textwidth-2\fboxsep}{%
+        \textbf{Prompt Template:}\newline
+        \texttt{You are an expert in Lean3 theorem proofs. We are trying to solve the Lean3 theorem `\textit{THEOREM\_FULL\_NAME}' from the mathlib file `\textit{FILE\_PATH}'. The current tactic state is: `\textit{TACTIC\_STATE}'. Suggest exactly 35 unique tactics to progress in solving `\textit{THEOREM\_FULL\_NAME}', along with their confidence levels as a float between 0 and 1. Rank them in order of effectiveness. Present the tactics and their confidence levels as comma-separated tuples in this format: \#(tactic\_\{1\}, confidence\_\{1\})\#, \#(tactic\_\{2\}, confidence\_\{2\})\#, ..., \#(tactic\_\{\textit{35}\}, confidence\_\{\textit{35}\})\#.}
+    }%
+}
+}
+We adapted the prompt to a particular theorem and state by substituting the variables with the appropriate values. Given the inherent variability in GPT-4's outputs, we requested 35 and filtered out invalid ones. We used a token length limit of 1,024 and kept all other API parameters at their default values. Below are a few example prompts and GPT-4's responses:
+
+{
+\setlength{\fboxsep}{0.8em}
+\noindent\fbox{%
+    \parbox{\dimexpr\textwidth-2\fboxsep}{%
+        \textbf{Example Prompt 1:}\newline
+        \texttt{You are an expert in Lean3 theorem proofs. We are trying to solve the Lean3 theorem `polynomial.chebyshev.aeval\_U' from the mathlib file `mathlib/src/analysis/special\_functions/trigonometric/chebyshev.lean'. The current tactic state is: `R : Type u\_1, A : Type u\_2, \_inst\_1 : comm\_ring R, \_inst\_2 : comm\_ring A, \_inst\_3 : algebra R A, x : A, n : $\mathbb{N}$ $\vdash$ $\Uparrow$(aeval x) (chebyshev.U R n) = eval x (chebyshev.U A n)'. Suggest exactly 35 unique tactics to progress in solving `polynomial.chebyshev.aeval\_U', along with their confidence levels as a float between 0 and 1. Rank them in order of effectiveness. Present the tactics and their confidence levels as comma-separated tuples in this format: \#(tactic\_\{1\}, confidence\_\{1\})\#, \#(tactic\_\{2\}, confidence\_\{2\})\#, ..., \#(tactic\_\{\textit{35}\}, confidence\_\{\textit{35}\})\#.}
+    }%
+}
+}
+
+{
+\setlength{\fboxsep}{0.8em}
+\noindent\fbox{%
+    \parbox{\dimexpr\textwidth-2\fboxsep}{%
+        \textbf{Example Response 1:}\newline
+        \texttt{\#(rw chebyshev.U, 0.9)\#, \#(simp only [chebyshev.U], 0.9)\#, \#(simp\_rw chebyshev.U, 0.8)\#, \#(apply aeval\_add, 0.75)\#, \#(apply aeval\_mul, 0.75)\#, \#(apply aeval\_sub, 0.75)\#, \#(apply aeval\_X, 0.7)\#, \#(apply aeval\_C, 0.7)\#, \#(apply aeval\_pow, 0.7)\#, \#(rw $\textbackslash$u2190aeval\_pow, 0.65)\#, \#(rw \u2190aeval\_mul, 0.65)\#, \#(rw $\textbackslash$u2190aeval\_add, 0.65)\#, \#(rw $\textbackslash$u2190aeval\_sub, 0.65)\#, \#(apply algebra\_map\_eq, 0.6)\#, \#(intro aeval\_algebra\_map\_eq, 0.6)\#, \#(apply eval\_map, 0.55)\#, \#(rw eval\_map, 0.55)\#, \#(apply aeval\_eq\_eval, 0.55)\#, \#(rw\_for\_target aeval\_eq\_eval, 0.5)\#, \#(apply aeval\_eq\_eval', 0.5)\#, \#(rw\_for\_target aeval\_eq\_eval', 0.5)\#, \#(apply aeval\_commutes, 0.45)\#, \#(rw aeval\_commutes, 0.45)\#, \#(apply aeval\_eq\_of\_is\_scalar\_tower, 0.4)\#, \#(rw is\_scalar\_tower.aeval\_apply, 0.4)\#, \#(try\_for 100 {exact\_mod\_cast chebyshev.U\_eq\_refl}, 0.35)\#, \#(simp * at *, 0.3)\#, \#(simp int.coe\_nat\_ring\_hom, 0.25)\#, \#(apply chebyshev.U\_is\_polynomial, 0.2)\#, \#(rw\_algebra\_map\_eq\_of\_ring\_hom, 0.15)\#, \#(unfold chebyshev.U, 0.1)\#, \#(congr, 0.05)\#, \#(change (chebyshev.U R n).eval x = chebyshev.U A n, 0.05)\#, \#(change ($\textbackslash$u21d1(aeval x) (chebyshev.U R n) = chebyshev.U A n), 0.05)\#, \#(apply\_fun aeval x, 0.05)\#, \#(apply\_fun eval x, 0.05)\#, \#(simp {context\_md := reducible} [], 0.01)\#}
+    }%
+}
+}
+
+{
+\setlength{\fboxsep}{0.8em}
+\noindent\fbox{%
+    \parbox{\dimexpr\textwidth-2\fboxsep}{%
+        \textbf{Example Prompt 2:}\newline
+        \texttt{You are an expert in Lean3 theorem proofs. We are trying to solve the Lean3 theorem `euler\_sine.integral\_cos\_pow\_pos' from the mathlib file `mathlib/src/analysis/special\_functions/trigonometric
+        /euler\_sine\_prod.lean'. The current tactic state is: `n : $\mathbb{N}$ $\vdash$ 0 < $\int$ (x : $\mathbb{R}$) in 0..$\pi$ / 2, cos x \^{} n'. Suggest exactly 35 unique tactics to progress in solving `euler\_sine.integral\_cos\_pow\_pos', along with their confidence levels as a float between 0 and 1. Rank them in order of effectiveness. Present the tactics and their confidence levels as comma-separated tuples in this format: \#(tactic\_{1}, confidence\_{1})\#, \#(tactic\_{2}, confidence\_{2})\#, ..., \#(tactic\_{35}, confidence\_{35})\#.}
+    }%
+}
+}
+
+{
+\setlength{\fboxsep}{0.8em}
+\noindent\fbox{%
+    \parbox{\dimexpr\textwidth-2\fboxsep}{%
+        \textbf{Example Response 2:}\newline
+        \texttt{\#(exact integral\_pos\_of\_antimono\_increasing\_on cos.pow\_antimono\_
+        increasing\_on\_cos\_even\_nnreal, 0.99)\#, \#(apply integral\_pos\_of\_antimono\_
+        increasing\_on, 0.95)\#, \#(interval\_integrable\_integral\_pos, 0.90)\#, \#(exact integral\_pos\_pre, 0.85)\#, \#(interval\_integ\_timedout, 0.80)\#, \#(interval\_integrable\_pos, 0.75)\#, \#(exact integral\_pos\_of\_nonneg\_dint\_val, 0.70)\#, \#(exact interval\_integrable\_pos\_left, 0.65)\#, \#(exact interval\_
+        integrable\_pos\_right, 0.60)\#, \#(exact integral\_pos\_of\_nonneg\_f, 0.55)\#, \#(rw integral\_on\_interval, 0.50)\#, \#(rw interval\_integral\_pos\_
+        of\_supporting, 0.45)\#, \#(rw integral\_pos\_of\_interval\_integrable\_pos, 0.40)\#, \#(apply integral\_
+        pos\_of\_antimono\_increasing\_on\_cos\_even\_nnreal, 0.35)\#, \#(norm\_cast apply\_pos, 0.30)\#, \#(apply\_pos\_of\_nonneg\_pos, 0.25)\#, \#(rw interval\_integral\_pos\_of\_antimono, 0.20)\#, \#(use cos\_slow\_mono\_on\_pos, 0.15)\#, \#(apply cos\_slow\_mono\_on\_pos, 0.10)\#, \#(exact integral\_pos\_pre\_cos\_pow\_even, 0.09)\#, \#(norm\_cast apply\_nonneg\_pos, 0.08)\#, \#(rw integral\_pos\_of\_
+        monotone\_integrable, 0.07)\#, \#(use cos\_pos\_constant\_sequence, 0.06)\#, \#(apply cos\_pos\_constant\_sequence, 0.05)\#, \#(use integral\_pos\_of\_ascending\_sequence, 0.04)\#, \#(apply integral\_pos\_of\_ascending\_sequence, 0.03)\#, \#(interval\_integral\_pos\_of\_antimono\_increasing\_on\_pos, 0.02)\#, \#(norm\_cast apply\_pos\_of\_nonzero\_pos, 0.01)\#, \#(apply\_pos\_of\_nonzero\_pos, 0.005)\#, \#(rw integral\_pos\_of\_nonneg\_f\_monotone, 0.001)\#}
+    }%
+}
+}
+
+Data contamination is possible. Our GPT-4 experiments were performed in 2023, but many theorems and proofs in the dataset have been publicly available on GitHub before GPT-4's data cutoff date (September 2021).
+
+
+\subsection{Justifications for Not Comparing with Existing LLM-Based Provers}
+\label{appendix:comparisons}
+
+In Table~\ref{table:theorem_proving_results}, we do not empirically compare {\name} with any existing LLM-based prover. Unfortunately, such a comparison is infeasible. Provers targeting different proof assistants are generally not comparable, so we focus the discussion on the three existing provers in Lean~\cite{han2022proof,polu2023formal,lample2022hypertree}. Most importantly, they are impossible to reproduce with reasonable effort, due to private code and pretraining data. Therefore, the only potential comparison is to evaluate {\name} under their experimental settings and compare with the numbers reported in their papers. However, that is also impractical for numerous reasons:
+\begin{itemize}[leftmargin=*]
+
+\item The data is different. All existing methods used an outdated version of \texttt{mathlib} more than two years ago. We cannot use LeanDojo to extract data from this version. As mentioned in Sec.~\ref{sec:leandojo},
+LeanDojo only supports repos released after March 24, 2022. Also, we cannot use their dataset directly, since it does not contain premise information required by {\name}.
+
+\item Lample~et~al.~\cite{lample2022hypertree} trained on a synthetic dataset named Equations, which is not publicly available.
+
+\item All existing methods co-train the tactic generator on auxiliary tasks from the PACT dataset~\cite{han2022proof}. Co-training increases the data/compute requirements by an order of magnitude, which cannot be afforded by us (or probably most academic labs). All existing methods were developed by researchers in the industry.
+
+\item Polu~et~al.~\cite{polu2023formal} and Lample~et~al.~\cite{lample2022hypertree} further finetuned their models on new proofs collected through online interaction with Lean, whereas our method is only trained on human-written proofs.
+
+\item The tool for interacting with Lean may impact the performance. Han~et~al.~\cite{han2022proof} and Polu~et~al.~\cite{polu2023formal} used \texttt{lean-gym}, which has severe limitations (Appendix~\ref{appendix:leandojo:interaction}). Lample~et~al.~\cite{lample2022hypertree} developed their own private tool, which is not publicly available.
+
+\end{itemize}
+
+
+Most of these difficulties are due to the private nature of existing methods. By releasing our code and models, we take a major step in establishing accessible baselines for future work to build upon.
+
+
+
+\subsection{Evaluation on MiniF2F and ProofNet}
+\label{appendix:experiments:minif2f}
+
+We evaluate our {\name} model on MiniF2F~\cite{zheng2022minif2f} and ProofNet~\cite{azerbayev2023proofnet} (Sec.~\ref{sec:experiments}) to test its capability in proving theorems outside its training data distribution. We use the same hyperparameters and evaluation setup as the previous experiments (Appendix~\ref{appendix:experimentaldetails}).
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.55\linewidth]{figures/minif2f.png}
+  \caption{Examples of new proofs discovered by {\name} on MiniF2F~\cite{zheng2022minif2f}.}
+  \label{fig:minif2f}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.78\linewidth]{figures/proofnet.png}
+  \caption{Examples of new proofs discovered by {\name} on ProofNet~\cite{azerbayev2023proofnet}.}
+  \label{fig:proofnet}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.82\linewidth]{figures/proofnet_retrieval.png}
+  \caption{Three new proofs discovered by {\name} on ProofNet~\cite{azerbayev2023proofnet} that cannot be found by a baseline without premise retrieval. All of the three proofs rely on premises: ``\texttt{finite\_field.prod\_univ\_units\_id\_eq\_neg\_one}''}, ``\texttt{norm\_add\_sq\_real}'', ``\texttt{norm\_sub\_pow\_two\_real}'', and ``\texttt{exists\_countable\_basis}''.
+  \label{fig:proofnet_retrieval}
+\end{figure*}
+
+\smallsec{MiniF2F}
+We use the commit \href{https://github.com/facebookresearch/miniF2F/commit/5271ddec788677c815cf818a06f368ef6498a106}{5271ddec788677c815cf818a06f368ef6498a106} of Meta's version of MiniF2F~\cite{lample2022hypertree}. {\name} achieves a Pass@1 of 26.5\% on the test set, which is competitive with state-of-the-art methods without reinforcement learning (25.9\% in Polu~et~al.~\cite{polu2023formal}). Moreover, {\name} can prove 33 theorems that currently do not have Lean proofs (examples in Fig.~\ref{fig:minif2f}). For the complete list of 33 new proofs, please see our \href{https://github.com/facebookresearch/miniF2F/pull/13}{pull request} to MiniF2F.
+
+There are caveats about quantitatively comparing {\name} with existing methods on MiniF2F. Many difficulties in Appendix~\ref{appendix:comparisons} still apply, e.g., different tools for interacting with Lean may impact the performance. Also, MiniF2F is a test-only dataset without training theorems, and existing methods focus on reinforcement learning (RL) to learn from proofs collected via online interaction with the proof assistant~\cite{polu2023formal,lample2022hypertree}. In contrast, {\name} is trained via supervised learning on a static dataset, so we only compare with the non-RL baseline in existing methods (Polu~et~al.~\cite{polu2023formal} achieves a Pass@1 of 25.9\% without RL and 29.6\% with RL). Furthermore, we do not compare with Lample~et~al.~\cite{lample2022hypertree} due to differences in the evaluation metric. They use Pass@64, which requires running the prover on each theorem 64 times. We use Pass@1, and it already takes one day for a single evaluation on MiniF2F's test set. Therefore, evaluating Pass@64 would be too computationally expensive for the resources we have access to. Finally, MiniF2F is available in multiple proof assistants~\cite{jiang2022thor,jiang2023draft,zhao2023decomposing}. Results across different proof assistants are not comparable, so we only compare with existing work in Lean.
+
+
+\smallsec{ProofNet}
+We use the commit \href{https://github.com/zhangir-azerbayev/ProofNet/commit/e8645aa830ce17c33a8b8482a8195f0f97d6a74a}{e8645aa830ce17c33a8b8482a8195f0f97d6a74a} of ProofNet. {\name} can prove 48 out of 349 theorems, achieving a Pass@1 of 13.8\%, which is the first reported theorem proving result on ProofNet. Moreover, 39 out of the 48 proved theorems do not have existing Lean proofs (examples in Fig.~\ref{fig:proofnet}), and 3 of them can only be proved with the help of premise retrieval (Fig.~\ref{fig:proofnet_retrieval}).
+We have contributed the 39 new proofs to ProofNet, which helped them reveal and fix problems in the formalization of 7 theorems (details in our \href{https://github.com/zhangir-azerbayev/ProofNet/pull/14}{pull request}).
+
+
+
+\section{LeanDojo for Lean 4}
+\label{appendix:lean4}
+
+Lean 3 and Lean 4 are two incompatible major versions of Lean,\footnote{\url{https://leanprover.github.io/lean4/doc/lean3changes.html}} and both are widely used. Lean 3 was the latest stable version until recently (June 2023). Also, Lean 3 and Lean 4 have separate versions of mathlib. The Lean/mathlib community has recently finished porting theorems and proofs from mathlib 3 to mathlib 4~\cite{mathport}. Therefore, Lean 3 will gradually become deprecated, and future Lean projects will be using Lean 4. Therefore, it is important for LeanDojo to support Lean 4.
+
+Since Lean 4 is relatively new, we are not aware of any existing work on learning-based theorem proving in Lean 4. Furthermore, no existing tool is available for extracting data from Lean 4. LeanDojo fills in this gap and fully supports Lean 4. Given any repo in Lean 4, LeanDojo can extract data, including file dependencies, ASTs, proof states, tactics, and premise information. In addition, it enables the model to interact with Lean 4 through tactics, in the same way as Lean 3 (Sec.~\ref{sec:leandojo}). 
+
+Similar to constructing the Lean 3 version of LeanDojo Benchmark, we extract data from the commit \href{https://github.com/leanprover-community/mathlib4/commit/3ce43c18f614b76e161f911b75a3e1ef641620ff}{3ce43c18f614b76e161f911b75a3e1ef641620ff} of mathlib4 released on October 21, 2023. The resulting dataset is named LeanDojo Benchmark 4. It is released under the CC BY 2.0 license and hosted on \href{https://zenodo.org/}{zenodo.org} with DOI ``\texttt{10.5281/zenodo.8040109}''. LeanDojo Benchmark 4 consists of 102,514 theorems/proofs, 213,067 tactics, and 152,695 premises. We use 2,000 theorems for validation, 2,000 theorems for testing, and the rest for training. LeanDojo Benchmark 4 also has two different data splits: \texttt{random} and \texttt{novel\_premises}.
+
+We use LeanDojo Benchmark 4 to train and evaluate our method. The model architectures and experimental details are the same as those in Sec.~\ref{sec:experiments}. Results on premise selection are in Table~\ref{table:lean4_premise_selection_results}, and results on theorem proving are in Table~\ref{table:lean4_theorem_proving_results}. 
+
+
+\input{tables/lean4_premise_selection_results}
+
+\input{tables/lean4_theorem_proving_results}
+
+\section{ChatGPT Plugin for Theorem Proving}
+\label{appendix:chatgpt}
+
+LeanDojo provides a general tool for interacting with Lean programmatically. As a demo of how it might bridge LLMs and theorem proving, we build a ChatGPT plugin~\cite{chatgptplugin2023} enabling ChatGPT to prove theorems by interacting with Lean through LeanDojo. Plugin developers can wrap any software as a web service and describe its APIs to ChatGPT. Then, ChatGPT can automatically call the APIs and incorporate the results into the response to the user. Below is a summary of our API description corresponding to the interface in Sec.~\ref{sec:leandojo}.
+\begin{lstlisting}[language=json,numbers=none]
+Title: Lean
+
+Description: Plugin for proving user-specified theorems automatically by interacting with Lean. The user enters information of how to find a theorem (e.g., theorem name and file path). Based on the user's input, ChatGPT first initializes the proof search with the given theorem as the initial state. Then, ChatGPT will first explain the choice for the next tactic step using LaTeX and run that tactic step to the state. If the current state is not promising, ChatGPT can backtrack to previous states by decrementing the "state_id" parameter. If applying tactics to the current state specified by the "state_id" parameter returns an error message, ChatGPT should explain the error, and if repetitive errors occur, ChatGPT should decrement the "state_id" parameter and try a different approach on a previous state. The theorem is successfully proved if there are no unsolved goals in the current state.
+
+Endpoints:
+    initialize_proof_search: Given the theorem name and file path of a Lean theorem, initialize the proof search. The response includes the initial state and its state ID.
+    Args:
+        theorem_name (string): The name of the target theorem to prove.
+        theorem_file_path (string): The file path of the target theorem.
+        
+    run_tactic: Run a tactic on a state (specified by its state ID), assuming the proof search has been initialized and some state is available. The response is either the next state and its state ID or an error message, in which ChatGPT should explain the error and consider decrementing the "state_id".
+    Args:
+        state_id (string): The ID of the state on which to run the tactic.
+        tactic (string): The tactic to run on a state (specified by its state ID), assuming the proof search has been initialized.
+            
+\end{lstlisting}
+After exposing the APIs to ChatGPT, we can ask it to prove theorems by specifying the theorem's name and path in any public Lean repo on GitHub. Fig.~\ref{fig:chatgpt-1}--\ref{fig:chatgpt-8} show an example with the GPT-3.5 version of ChatGPT. And Fig.~\ref{fig:chatgpt4-1}--\ref{fig:chatgpt4-3} are the same example with the GPT-4 version. The captions provide detailed step-by-step explanations. 
+
+We highlight a few key strengths of ChatGPT observed in multiple examples we evaluated. First, unlike specialized methods for theorem proving (this paper and its prior works), ChatGPT interleaved informal mathematics with formal proof steps. This resembles how humans interact with proof assistants and opens up new avenues for integrating natural language and formal theorem proving. Second, ChatGPT demonstrated impressive capability in explaining error messages from Lean that are quite opaque even to humans. It was able to incorporate the error message to refine its proof strategy. Last, ChatGPT's behavior is more steerable than specialized provers. In Fig.~\ref{fig:chatgpt-1}, we simply gave it the theorem to prove, but we could also provide more detailed instructions. For example, we could say: ``Please describe a high-level proof plan before trying any tactic.'' This kind of steerability enables future research on prompt engineering for theorem proving, and we have already seen initial benefits in an ongoing work named Sagredo.\footnote{\url{https://www.youtube.com/watch?v=CEwRMT0GpKo}} 
+
+However, these strengths by no means imply ChatGPT can already solve theorem proving. In fact, it failed to find a proof for most theorems we tried. Hallucination was common. In Fig.~\ref{fig:chatgpt-8}, ChatGPT falsely asserted the theorem was proved, while we knew it was not, by looking at LeanDojo's response. This demonstrates the value of theorem proving as a rigorous benchmark for addressing LLMs' hallucination problem. Another key limitation of ChatGPT was its inability to search systematically in a large space. We frequently found it stuck to an unpromising path when the correct solution could be found by backtracking and exploring alternative paths. This behavior is consistent with the general observation that LLMs are weak at search and planning. Addressing this weakness is an active area of research~\cite{yao2023tree}.
+
+We emphasize a few caveats about our study of theorem proving with ChatGPT. First, data contamination is likely. Many theorems we evaluated have been publicly available on GitHub before ChatGPT's data cutoff date. Therefore, ChatGPT may have seen them in training. Second, our study is exploratory. A more detailed and quantitative study is needed to characterize ChatGPT's capability in theorem proving. Such a study with ChatGPT plugins is challenging, as plugins currently only support interaction through the browser. Also, OpenAI has taken measures to block automated access by bots. Using humans may be an option, but that is beyond the scope of this paper.
+
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-1.png}
+  \caption{(ChatGPT-3.5, 1/8) After receiving the theorem to prove, ChatGPT first called ``\texttt{initialize}'', which returned the initial state. Then it tried to interpret the theorem in natural language. Note that it made a mistake here. The theorem was about natural numbers ($\mathbb{N}$), not complex numbers ($\mathbb{C}$).}
+  \label{fig:chatgpt-1}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-2.png}
+  \caption{(ChatGPT-3.5, 2/8) ChatGPT tried to rewrite the goal using the lemma ``\texttt{b + c = c + b}''. This was a reasonable but incorrect move. After receiving the error message from Lean, ChatGPT explained the error in natural language. Here the explanation is quite accurate, which is impressive given that the error message looks opaque to anyone not familiar with Lean.}
+  \label{fig:chatgpt-2}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-3.png}
+  \caption{(ChatGPT-3.5, 3/8) Then it tried to prove the theorem using ``\texttt{ring}''. This was another good move. The \texttt{ring} tactic can prove this theorem, but Lean could not find it since it was not imported into the current file. Again, ChatGPT was able to interpret the error message correctly and concluded that \texttt{ring} was not available. Next, it tried another tactic but failed again.}
+  \label{fig:chatgpt-3}
+\end{figure*}
+
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-4.png}
+  \caption{(ChatGPT-3.5, 4/8) ChatGPT made another two failed attempts. Here, the second attempt had the same problem as in Fig.~\ref{fig:chatgpt-1} (``\texttt{+}'' is left associative).}
+  \label{fig:chatgpt-4}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-5.png}
+  \caption{(ChatGPT-3.5, 5/8) ChatGPT tried to simplify the goal using the \texttt{simp} tactic but failed. Then it tried the ``\texttt{rw add\_comm a b}'' tactic, which successfully rewrote the goal from ``\texttt{a + b + c = a + c + b}'' to ``\texttt{b + a + c = a + c + b}''.}
+  \label{fig:chatgpt-5}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-6.png}
+  \caption{(ChatGPT-3.5, 6/8) Then it successfully performed another rewrite from ``\texttt{b + a + c = a + c + b}'' to ``\texttt{b + a + c = c + a + b}''.}
+  \label{fig:chatgpt-6}
+\end{figure*}
+
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-7.png}
+  \caption{(ChatGPT-3.5, 7/8) Another rewrite tactic, transforming the goal to ``\texttt{a + b + c = c + a + b}''.}
+  \label{fig:chatgpt-7}
+\end{figure*}
+
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT-8.png}
+  \caption{(ChatGPT-3.5, 8/8) It performed one last rewrite, which brought the goal back to the original goal ``\texttt{a + b + c = a + c + b}''. At this point, ChatGPT went back to the starting point without making meaningful progress. However, it asserted that the theorem had been successfully proved, even though the response from LeanDojo clearly indicated ``\texttt{proof\_finished: False}''.}
+  \label{fig:chatgpt-8}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT4-1.png}
+  \caption{(ChatGPT-4, 1/3) The same theorem using the GPT-4 version of ChatGPT. Despite a minor error when interpreting the theorem (natural numbers, not integers), it generated a sensible tactic, rewriting the goal to ``\texttt{a + (b + c) = a + c + b}''.}
+  \label{fig:chatgpt4-1}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT4-2.png}
+  \caption{(ChatGPT-4, 2/3) A good move, rewriting the goal to ``\texttt{a + (c + b) = a + c + b}''.}
+  \label{fig:chatgpt4-2}
+\end{figure*}
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/ChatGPT4-3.png}
+  \caption{(ChatGPT-4, 3/3) It tried the \texttt{refl} tactic but failed. \texttt{refl} requires the goal to be an equation whose both sides are identical up to trivial transformations. However, ``\texttt{a + (c + b) = a + c + b}'' is not trivial since ``\texttt{+}'' is left associative. ChatGPT was able to interpret this error accurately and finish the proof using the correct premise ``\texttt{add\_assoc}''.}
+  \label{fig:chatgpt4-3}
+\end{figure*}
+
+
+
+\section{Limitations and Future Work}
+\label{appendix:limitations}
+
+
+Our work is one step toward unlocking the potential of LLMs for generating verifiable formal proofs, and we see abundant space for future exploration. A learning-based prover is a complex system consisting of multiple components: data extraction, interaction with proof assistants, model training, and proof search. While navigating the design space spanned by various components, we err on the side of simplicity and efficiency, instead of pushing performance to the limit. This helps us deliver a reliable, open, and accessible system, laying the foundation for further research. There are many directions in which the system can be improved, and we discuss a few of them here.\footnote{Additional limitations: \url{https://leandojo.readthedocs.io/en/latest/limitations.html}}
+
+
+\smallsec{Stronger LLMs}
+Our backbone model, ByT5~\cite{xue2022byt5}, was published in 2021 and has 299M parameters, which is not very large by today's standard. Recently, there have been a plethora of open-source LLMs demonstrating strong capabilities in writing code, e.g., CodeGen~\cite{nijkamp2022codegen},  StarCoder~\cite{li2023starcoder}, and CodeGeeX~\cite{zheng2023codegeex}. We are excited to see how they might impact theorem proving and, more generally, how far we can go by pushing the limit of the model/data scale. 
+
+ByT5's tokenizer-free nature helps us sidestep the difficulty with pretrained tokenizers that may not work well for Lean's Unicode-rich code. However, treating texts as raw bytes makes the sequence length much longer than necessary. Long sequences harm efficiency, as Transformers scale quadratically w.r.t. the sequence length, which may become a bigger problem when we further scale up the model. To solve the issue, it might be helpful to pretrain a customized tokenizer or adopt more advanced tokenizer-free models such as MegaByte~\cite{yu2023megabyte}.
+
+
+Our {\name} model is based on the pretraining-finetuning paradigm. Recent work on instruction-following LLMs such as GPT-4~\cite{openai2023gpt4} has led to successes in many applications by prompting the model without any finetuning. Our preliminary results show that GPT-4 and ChatGPT (Appendix~\ref{appendix:gpt-4} and \ref{appendix:chatgpt}) cannot solve theorem proving out of the box and are currently far behind finetuned models. However, the way we prompt these models is quite naive, and better strategies, such as Tree of Thoughts~\cite{yao2023tree}, may lead to further improvements. We consider theorem proving as a promising task for studying LLMs' capabilities in planning and search.
+
+
+\smallsec{Improving Premise Retrieval}
+{\name} uses DPR~\cite{karpukhin2020dense} to retrieve premises and fuses them with the current proof state by concatenation. This architecture is simple and effective but does not scale to a large number of retrieved premises. With a length limit of 2,300 tokens, we can fit only 10--15 premises into the input of the tactic generator. To mitigate the problem, we may need an architecture that fuses the retrieved premises in the hidden space, e.g., Fusion-in-Decoder~\cite{izacard2021leveraging}.
+
+In addition, one can also switch from DPR to radically different retrieval architectures. For example, generative retrieval~\cite{tay2022transformer,bevilacqua2022autoregressive,pradeep2023does} is a recent class of models performing retrieval by directly predicting the document IDs, which could be the premise names in our task.
+
+
+\smallsec{Limitations of Imitating Human-Written Proofs}
+Human-written proofs extracted by LeanDojo provide valuable data for training the prover. However, we have also observed limitations of using them as the sole training target:
+
+First, they are relatively scarce for today's data-hungry LLMs. LeanDojo Benchmark has {\numproofs} proofs, covering a large portion of available data in Lean (as of October 2023). The number of proofs in other proof assistants has the same order of magnitude (tens or hundreds of thousands). Due to limited data, we cannot constantly improve the performance simply by scaling up the model size. Second, theorem proving in proof assistants is an interactive process, but the proof only captures the final successful trajectory. Without the intermediate history of trial and error, it can be quite opaque how final proofs are derived. Therefore, tactics in human-written proofs can be difficult for the model to learn from. Third, models trained on proofs in one project often struggle to generalize to theorems in new domains~\cite{yang2019learning,first2023baldur}, e.g., from \texttt{mathlib} to MiniF2F and ProofNet (Appendix~\ref{appendix:experiments:minif2f}).
+
+
+To overcome these limitations, existing work has explored learning from auxiliary data or data collected via online interaction with the proof assistant. For example, Proof Artifact Co-Training (PACT) co-trains the tactic generator on nine auxiliary tasks, such as predicting types and theorem names~\cite{han2022proof}. MetaGen~\cite{wang2020learning} trains a neural network to generate synthetic theorems/proofs as training data in the Metamath proof assistant~\cite{megill2019metamath}. Polu~et~al.~\cite{polu2023formal} and Lample~et~al.~\cite{lample2022hypertree} improve the prover by training it on successful proofs found by itself. Incorporating these techniques into our system may lead to substantial improvements.
+
+
+

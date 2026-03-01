@@ -1,0 +1,73 @@
+\begin{table*}[htp]
+\setlength{\tabcolsep}{0.2in}
+\begin{center}
+% \vspace{0.5cm}
+\small
+\begin{tabular}{lcc}
+% \toprule
+\toprule
+    Method & Sample budget & miniF2F-test \\
+    \toprule
+    \multicolumn{3}{l}{\textit{Single-pass Whole-Proof Generation Methods}} \\
+    \midrule
+    TheoremLlama [\citenum{wang2024theoremllama}] & 128 & $33.6\%$ \\
+    \midrule
+    \multirow{2}{*}{\lastwork~[\citenum{xin2024deepseek}]} & $128$ & $46.1\%\pm 0.5\%$ \\
+     & $16\times 4096$ & $50.0\%$ \\
+    \midrule
+    \multirow{3}{*}{\thiswork-Base} & 128 & $29.7\%\pm 0.5\%$ \\
+    & 3200 & $39.2\%$ \\
+    & 6400 & $42.2\%$ \\
+    \midrule
+    \multirow{6}{*}{\thiswork-SFT} & 32 & $48.2\% \pm 0.6\%$ \\
+     & 64 & $49.6\% \pm 0.7\%$ \\
+     & $128$ & $50.4\% \pm 0.4\%$ \\
+     & $3200$ & $53.3\% \pm 0.5\%$ \\
+     & $4\times 6400$ & $55.8\% \pm 0.7\%$ \\
+     & $16\times 6400$ & $57.4\%$ \\
+    \midrule
+    \multirow{6}{*}{\thiswork-RL} & 32 & $50.0\%\pm 0.5\%$ \\
+     & 64 & $50.7\%\pm 0.4\%$ \\
+     & $128$ & $51.6\%\pm 0.5\%$ \\
+     & $3200$ & $54.9\%\pm 0.7\%$ \\
+     & $4\times 6400$ & $58.4\%\pm0.6\%$ \\
+     & $16\times 6400$ & $\mathbf{60.2\%}$ \\
+    \toprule
+    \multicolumn{3}{l}{\textit{Tree Search Methods}} \\
+    \midrule
+    COPRA (Code Llama) [\citenum{thakur2023language}] & $1\times 500$ & $5.7\%$ \\
+    COPRA (GPT-3.5) [\citenum{thakur2023language}] & $1\times 60$ & $9.0\%$ \\
+    COPRA (GPT-4) [\citenum{thakur2023language}] & $1\times 60$ & $26.6\%$ \\
+    Llemma-7B [\citenum{azerbayev2024llemma}] & $1\times 32\times 100$ & $26.2\%$ \\
+    Llemma-34B [\citenum{azerbayev2024llemma}] & $1\times 32\times 100$ & $25.8\%$ \\
+    ReProver [\citenum{yang2024leandojo}] & - & $26.5\%$ \\
+    LLMStep [\citenum{welleck23llmstep}] & $1\times 32\times 100$ & $27.9\%$ \\
+    GPT-f [\citenum{polu2022formal}] & $64\times 8\times 512$ & $36.6\%$\\
+    Hypertree Proof Search [\citenum{lample2022hypertree}] & $64\times 5000$ & $41.0\%$ \\
+    Lean-STaR [\citenum{lin2024lean}] & $64\times 1\times 50$ & $46.3\%$ \\
+    % \midrule
+    InternLM2-Math-7B [\citenum{ying2024internlm}] & $1\times 32\times 100$ & $30.3\%$ \\
+    InternLM2-Math-Plus-7B [\citenum{ying2024internlm}] & $1\times 32\times 100$ & $43.4\%$ \\
+    % \midrule
+    \multirow{2}{*}{InternLM2-StepProver [\citenum{wu2024lean}]} & $1\times 32\times 100$ & $48.8\%$ \\
+     & $64\times 32\times 100$ & $54.5\%$ \\
+    \midrule
+     \multirow{4}{*}{\thiswork-SFT + \treesearch} & $1\times 3200$ & $53.5\% \pm 0.4\%$ \\
+     & $4\times 6400$ & $56.3\% \pm 0.3\%$ \\
+     & $16\times 6400$ & $59.0\%$ \\
+     & $32\times 6400^\dag$ & $60.2\%$ \\
+    \midrule
+    \multirow{4}{*}{\thiswork-RL + \treesearch} & $1\times 3200$ & $55.0\%\pm 0.7\%$ \\
+     & $4\times 6400$ & $59.6\%\pm0.6\%$ \\
+     & $16\times 6400$ & $\mathbf{62.7\%}$ \\
+     & $32\times 6400^\dag$ & $\mathbf{63.5\%}$ \\
+    \bottomrule
+    % \bottomrule
+\end{tabular}
+\caption{
+Comparison with state-of-the-art methods on the miniF2F-test dataset. The notation $\mu\pm\sigma$ denotes the average accuracy $\mu$ and the standard deviation $\sigma$. Unless otherwise specified, \thiswork-Base results are based on 3-shot prompting, while \thiswork-SFT and RL employ CoT mode prompting. The symbol $\dag$ indicates performance using a mixture strategy with two guiding prompts (see Section~\ref{sec:large-train-eval} for details).
+}
+\label{tab:minif2f_results} % referenced
+\end{center}
+% \vspace{-0.2in}
+\end{table*}

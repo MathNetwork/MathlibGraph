@@ -1,0 +1,57 @@
+# MathlibGraph
+
+Code and data for analyzing the dependency structure of [Mathlib](https://github.com/leanprover-community/mathlib4), the largest unified library of formalized mathematics.
+
+## Quick Start
+
+Install dependencies and run basic statistics:
+
+```bash
+pip install datasets networkx pandas numpy matplotlib powerlaw python-louvain scikit-learn
+```
+
+```python
+from datasets import load_dataset
+
+nodes = load_dataset("MathNetwork/MathlibGraph",
+                     data_files="mathlib_nodes.csv", split="train").to_pandas()
+edges = load_dataset("MathNetwork/MathlibGraph",
+                     data_files="mathlib_edges.csv", split="train").to_pandas()
+
+nodes = nodes.drop_duplicates(subset="name", keep="first")
+print(f"Declarations: {len(nodes):,}, Edges: {len(edges):,}")
+# Declarations: 308,129, Edges: 8,436,366
+```
+
+## Three Graph Levels
+
+The analysis operates on three progressively finer dependency graphs:
+
+| Graph | Nodes | Edges | Granularity |
+|-------|-------|-------|-------------|
+| `G_module` | 7,563 modules | 23,570 imports | Source file dependencies |
+| `G_thm` | 308,129 declarations | 8,436,366 premises | Theorem/definition dependencies |
+| `G_ns^(k)` | ~6,300 namespaces (k=2) | ~92,000 edges | Namespace-aggregated dependencies |
+
+## Repository Structure
+
+```
+MathlibGraph/
+  paper/          LaTeX source for the paper
+    sections/     Individual .tex sections
+    analysis/     Generated PDF figures (module/decl/ns levels)
+    figures/      Community detection figures
+  src/            Data extraction and analysis code
+    parser/       Lean4 data extraction (lean4export + premises)
+    analysis/     Reusable analysis modules (structure, dynamics)
+    scripts/      Shared utilities (plot style, extraction shell script)
+    tests/        Unit tests for parsers
+    plot_*.py     Figure generation scripts
+    run_*.py      Single-task analysis runners
+  docs/           This documentation site
+```
+
+## Links
+
+- **Dataset**: [HuggingFace: MathNetwork/MathlibGraph](https://huggingface.co/datasets/MathNetwork/MathlibGraph)
+- **Source**: [GitHub: MathNetwork/MathlibGraph](https://github.com/MathNetwork/MathlibGraph)

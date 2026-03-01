@@ -1,0 +1,915 @@
+\chapter[Between the Engineer and the Kernel: Languages and\\ Automation]{Between the Engineer and the Kernel: Languages and Automation}
+\label{sec:prooflangs}
+
+At the core of every ITP that meets the de Bruijn criterion
+is a proof object that a small kernel can check. Directly constructing this proof object
+may be too low-level to provide for a positive user experience, and in some cases the proof object may not
+be exposed to the end-user at all. Typically, several layers of languages and automation
+act as an interface between the proof engineer and the kernel.
+%Figure~\ref{fig:automation-layers} illustrates the different layers of this interface. 
+
+%\begin{figure}[t]
+%[FIGURE GOES HERE]
+%\caption{Layers of languages for automation.}
+%\label{fig:automation-layers}  
+%\end{figure}
+
+Automation is all about finding a \textit{proof}---what the proof object (Section~\ref{sec:proof-objects}) is can differ by ITP.
+Because of this, and because of the different philosophies and needs of different communities,
+ITPs have different approaches to automation.
+We consider two commonly used ITPs as examples: Coq and Isabelle/HOL.
+
+In Coq, a proof is a term in the language Gallina, which the kernel type-checks.
+The Coq proof engineer can write proofs in Gallina directly, but it is common
+to write proofs using high-level \textit{tactics}, or proof search procedures. 
+In Coq, these tactics search for and ultimately produce a Gallina term, which the kernel then type-checks.
+Users can combine existing tactics, or write their own, either in the general-purpose programming language
+OCaml or in the tactic language Ltac. 
+
+In contrast, in Isabelle/HOL, a proof is a term in the language ML with
+a specific type, combined with the guarantee that this term must have been
+produced using the axioms of the logic.\footnote{It is possible to explicitly produce proof terms that can be checked
+with a small kernel using Isabelle/HOL-Proofs, but it is not common to explicitly do so.}
+It is not possible to directly write a term of this type, since correctness hinges on the guarantees
+about its construction. Instead, users commonly write proofs in Isabelle/Isar, which is a high-level \textit{proof language}:
+a language for structuring and composing propositions, facts, and proof goals. 
+
+Ltac and Isabelle/Isar are examples of two languages which embody different styles of automation.
+This chapter discusses these and other styles of automation (Section~\ref{sec:languagesforauto}),
+then concludes with a discussion of automation in practice (Section~\ref{sec:specializedauto}) built in these different styles.
+
+% TODO Talia: 4.3.1 needs a lot of elaboration and explicit LCF/Automation subheadings IMO
+
+%\section{What is a Proof?}
+%\label{sec:crisismaterial}
+
+%4.3.1 should handle this
+
+%\subsection{Automath Tradition}
+
+%\subsection{LCF Tradition}
+
+\section{Styles of Automation}
+\label{sec:languagesforauto}
+
+%\external{Jared}{I think it might be important to differentiate on reflection, computational reflection is different then say Agda, Idris or Lean which are closer to meta-programming.}
+Proof engineers can construct proofs of theorems in a wide variety of ways.
+There are three common styles of proof automation:
+writing sequences of proof search \textit{tactics} (which can be defined
+either using a \textit{metalanguage} like Standard ML or a specialized
+\textit{tactic language} like Ltac), writing high-level programs in a structured \textit{proof language},
+and using \textit{reflection} to write proof-checking procedures within the host language itself.
+When executed, all expressions or commands reduce to primitive
+inference rule applications in the proof-checking kernel.
+
+Ltac and Isabelle/Isar are examples of a tactic language and a proof language, respectively.
+Some proof assistants (for example, both Coq and Isabelle) have
+support for all three styles of automation, either natively or through
+extensions. However, not all do; Agda, for example,
+takes a minimilistic approach,
+supporting only reflection (it is possible to imitate tactics
+using reflection). Table~\ref{tab:styles}
+references examples of supported styles of automation for a sample of major proof assistants.
+
+\begin{table}
+  \begin{footnotesize}
+\centering
+\begin{tabular}{ |l|l|l|l|l| }
+\hline
+   & \multicolumn{2}{|c|}{\textbf{Tactics}} & &  \\ \hline
+   & \textbf{Metalanguage} & \textbf{Tactic Lang.} & \textbf{Proof Lang.} & \textbf{Reflection} \\ \hline
+  \textbf{Agda} & & & & Possible \\\hline
+  \textbf{Coq} & OCaml & Ltac & \ssreflect & Possible \\\hline
+  %\textbf{HOL Light} & OCaml & ? & Yes & Yes \\\hline
+  \textbf{Isabelle} & ML & Eisbach & Isar & Possible \\\hline
+  \textbf{Nuprl} & ML & & & Possible \\
+\hline
+\end{tabular}
+\caption{Examples of styles of automation a sample of major proof assistants support, including some external developments.}
+\label{tab:styles}
+\end{footnotesize}
+\end{table} % Talia: TODO Revisit, maybe cite specifics
+
+These styles often merge,
+and the lines between them can be blurry. It is possible, for example,
+to write proofs in the high-level proof language SSReflect in Coq, or to
+combine this language with Ltac tactics. It is possible to write ML tactics in Isabelle/HOL, and to write tactic-style proofs in
+Isabelle/HOL that look similar to Ltac proofs in Coq.
+
+This section explores the design space and uses in common proof assistants of languages for different styles of automation:
+Tactics and tactic languages (Section~\ref{sec:tactics}), proof languages (Section~\ref{sec:structuredprooflangs}), and
+reflection (Section~\ref{sec:refl}).
+It then concludes with a discussion of future styles of automation (Section~\ref{sec:futurestyle}).
+
+\subsection{Tactics \& Tactic Languages}
+\label{sec:tactics}
+
+LCF introduced the language ML (\textit{metalanguage}) to let users
+write high-level proof automation~\citep{Gordon1978}.
+In LCF, theorems are represented using the abstract type \lstinline{thm} in ML;
+the only way to construct an inhabitant of \lstinline{thm} is using the axioms and inference rules of the logic.
+A proof in LCF has the following type in ML:
+\begin{lstlisting}
+type proof = thm list $\rightarrow$ thm
+\end{lstlisting}
+In other words, a proof is a function that takes a list of hypotheses and, from them, proves the conclusion.
+
+A basic unit in LCF proof automation is the \lstinline{tactic}:
+%
+\begin{lstlisting}
+type tactic = goal $\rightarrow$ (goal list $\times$ proof)
+\end{lstlisting}
+%
+The \lstinline{goal} type (not shown) represents proof goals.
+Thus, a tactic is a function that takes a proof goal and then produces a list
+of new goals which the goal reduces to; such goals are conventionally called \emph{subgoals}.
+When no more goals remain, the tactic produces a value of type \lstinline{proof}.
+
+Based on this tactic definition, it is possible to define higher-order functions that take tactics as arguments
+and return new tactics. Milner called such functions \emph{tacticals}. For example, a collection
+of tactic combinators may include the tactical \lstinline{repeat} with type \lstinline{tactic $\rightarrow$ tactic},
+which repeatedly applies its argument tactic to the proof goal. In Coq, the composition tactical \lstinline{t1; t2}
+runs the first tactic \lstinline{t1}, then runs the second tactic on all goals
+produced by the first tactic \lstinline{t2}.
+
+% While using this on simpler proofs like
+%the one above is a matter of style, this tactical can be especially useful when
+%the tactic \lstinline{t1} produces multiple goals of which one or more can be discharged by \lstinline{t2}.
+
+However, the LCF representation of tactics means that, by definition, the outputted goals are mutually independent---a proof for one
+is unrelated to proofs for others. In practice, constraints during proof
+search can apply across subgoals~\citep{SpiwackTactic}. For this reason, Coq previously used, up to at least version 8.3 in 2010~\citep{Spiwack2010},
+a tactic type definition along the following lines: %, which can be viewed as the above definition written in the state monad:
+\begin{lstlisting}
+type proof = thm list $\rightarrow$ thm
+type tactic = goal $\times$ state $\rightarrow$ (goal list $\times$ state $\times$ proof)
+\end{lstlisting}
+Here, the state returned from a tactic call can be used to figure out dependencies between subgoals, such as shared variables.
+
+In the early days of proof assistants, users combined custom tactics written in an ML dialect with built-in tactics and tactical combinators to write custom 
+automation~\citep{Constable1986, cornes1995coq, paulson1988preliminary, paulson1983tactics}. This tradition for programming proof automation is the default workflow in the HOL4 and HOL Light proof assistants, and remains a possibility in Coq and Isabelle. However, Coq and Isabelle also support writing tactics in tactic languages rather than in the tool's implementation language.
+
+\subsubsection{Tactic-Based Proofs}
+
+The original proof development workflow in LCF was to write sequences of tactic calls until no proof goals were left. This style is still prevalent in modern proof assistants.
+%
+Consider an inductive proof of the theorem \lstinline{app_nil_r} in Coq,
+which states that appending the empty list to any list produces the original
+list. We can write this using tactics and tacticals:
+\begin{lstlisting}
+Theorem app_nil_r : forall (A : Type) (l : list A), l ++ [] = l.
+Proof.
+  intros. induction l; auto. simpl. rewrite IHl. auto.
+Qed.
+\end{lstlisting}
+Executing these tactics produces a Gallina proof term:
+\begin{lstlisting}
+(fun (A : Type) (l : list A) =>                         (* hypotheses *)
+  list_ind                                              (* induction principle for lists *)
+    (fun (l$_0$ : list A) => l$_0$ ++ [] = l$_0$)                (* motive to prove *)
+    eq_refl                                             (* base case (by reflexivity) *)
+    (fun (a : A) (l$_0$ : list A) (IHl : l$_0$ ++ [] = l$_0$) => 
+      (* inductive case (by rewriting) *)
+      eq_ind_r (fun (l$_1$ : list A) => a :: l$_1$ = a :: l$_0$) eq_refl IHl)
+    l)                                                  (* argument to induction *)
+: forall (A : Type) (l : list A), l ++ [] = l.          (* theorem type *)
+\end{lstlisting}
+%The core kernel then checks that proof term. The user, in the meantime,
+%never has to write proof terms directly. 
+
+There is an analogous in the Isabelle/HOL standard library:
+\begin{lstlisting}
+lemma append_Nil2 : "append xs [] = xs"
+by (induct xs) auto
+\end{lstlisting}
+While it is not typical to do so, using Isabelle/HOL-Proofs, it is possible to reconstruct and inspect a proof object
+for this proof.
+%Since it is more than 50 lines of code, we do not include it here.
+%As explained in Section~\ref{sec:proof-objects}, the large proof object
+%is a consequence of Isabelle's approach to rewriting and computation.
+
+%\paragraph{Ltac}
+%
+%In Isabelle, it is common to use a declarative proof language
+%rather than write tactic scripts; we discuss this later.
+%
+%Tactic languages go hand in hand with development environments.
+%Modern development environments
+%provide tooling to help the user write metaprograms in this fashion and
+%manage the context and goals.
+%
+%Tactics can provide a high level of abstraction for proof engineers. For example,
+%the \lstinline{omega} tactic in Coq is a decision procedure for quantifier-free Presburger 
+%arithmetic based on the Omega Test~\cite{Pugh1991}, an integer programming algorithm. 
+%It can automatically prove many mathematical statements that can be difficult for Coq users to
+%prove by hand.
+%
+%LCF also introduced the concept of a \textit{tactical}: a higher-order tactic
+%which operates on other tactics. For example, for the proof above,
+%the Coq user can discharge the base case immediately by writing
+%\lstinline{induction l; auto}:
+%
+%\begin{lstlisting}
+%Theorem app_nil_r :
+%  forall (A : Type) (l : list A),
+%    l ++ nil = l.
+%Proof.
+%  intros. induction l; auto.
+%  simpl. rewrite IHl. auto.
+%Qed.
+%\end{lstlisting}
+%
+%The composition tactical \lstinline{t1; t2}
+%first runs the first tactic \lstinline{t1}, then runs the second tactic on all goals
+%produced by the first tactic \lstinline{t2}. While using this on simpler proofs like
+%the one above is a matter of style, this tactical can be especially useful when
+%the tactic \lstinline{t1} produces multiple goals that can be discharged by \lstinline{t2}.
+%% TODO so maybe a tree-like example is better here 
+%
+%While LCF introduced simple tacticals like composition, 
+%modern proof assistants have added more advanced built-in tacticals.
+%For example, the \lstinline{try t} tactical in Coq tries to apply the tactic \lstinline{t},
+%but leaves the goal unchanged if the tactic produces an error.
+%Using \lstinline{try}, we can write our proof above as a single composition if we wish:
+%
+%\begin{lstlisting}
+%Theorem app_nil_r : forall (A : Type) (l : list A), l ++ nil = l.
+%Proof.
+%  intros. induction l; simpl; try rewrite IHl; auto.
+%Qed.
+%\end{lstlisting}
+%
+%In addition to using built-in tactics and tacticals, users can
+%extend these tactic languages with new tactics and tacticals. % TODO maybe show w/ an Ltac tactic that does induction and rewrites
+%The rest of this section details existing tactic languages as well as the
+%specialized tactics and proof procedures that have been implemented in them.
+
+\subsubsection{Tactic Languages}
+\label{sec:tacticlangs}
+
+%LCF introduced the Turing-complete programming language ML, which
+%proof engineers could use to write custom tactics for proof automation.
+%In the early days of proof assistants, users combined custom tactics written in an ML dialect
+%with built-in tactics and tactical combinators to write custom 
+%automation~\cite{Constable1986, cornes1995coq, paulson1988preliminary, paulson1983tactics};
+%many of the built-in tactics for common proof assistants are implemented this way,
+%and this is still the standard way to write automation in some proof assistants.
+%Even in proof assistants for which it is no longer the standard, it is sometimes still possible
+%to write custom tactics this way in several proof assistants,
+%including Isabelle using ML and Coq using OCaml.
+
+Tactic languages allow proof engineers to write custom tactics alongside specifications and proofs, rather than in an implementation language such as Standard ML.
+We describe two tactic languages---Ltac for Coq and Eisbach for Isabelle---in detail,
+then conclude with a brief discussion of other tactic languages. 
+
+\paragraph{Ltac}
+Nearly 20 years ago, Coq introduced the Ltac tactic language~\citep{Delahaye2000},
+which has since become the standard for tactic development in Coq.
+Ltac is an untyped domain-specific language with support for pattern
+matching on terms and goals, as well as writing custom tactics and tacticals.
+The Ltac manual can be found in the Coq documentation~\citep{ltac}.
+
+To understand Ltac, consider the \lstinline{break_match} tactic from the StructTact~\citep{structtact} library:
+\begin{lstlisting}
+Ltac break_match := break_match_goal || break_match_hyp.
+\end{lstlisting}
+This tactic breaks down match statements, both in goals:
+\begin{lstlisting}
+Ltac break_match_goal := match goal with
+  | [ |- context [ match ?X with _ => _ end ] ] =>
+    match type of X with
+      | sumbool _ _ => destruct X
+      | _ => destruct X eqn:?
+    end
+end.
+\end{lstlisting}
+and in hypotheses:
+\begin{lstlisting}
+Ltac break_match_hyp := match goal with
+  | [ H : context [ match ?X with _ => _ end ] |- _] =>
+    match type of X with
+      | sumbool _ _ => destruct X
+      | _ => destruct X eqn:?
+    end
+end.
+\end{lstlisting}
+Both tactics perform syntactic pattern matching
+over the goal, using the syntax \lstinline{name : cpattern |- cpattern}, where the 
+left \lstinline{cpattern} represents hypotheses and the right \lstinline{cpattern} represents the conclusion.
+In \lstinline{break_match_goal}, pattern matching looks only in the conclusion;
+in \lstinline{break_match_hyp}, pattern matching looks only in the hypotheses.
+Both tactics use the \lstinline{context} syntax to find all subterms of the term that are \lstinline{match} statements,
+then pattern match on the type of the result, using the \lstinline{destruct} tactic to break down those \lstinline{match} statements.
+
+The effect of \lstinline{break_match} is to simplify tedious but conceptually simple proofs by case analysis,
+and to do so without relying on the names of hypotheses, which can make proofs likely to break as specifications change~\citep{Woos2016}. 
+Consider, for example, an interpreter correctness proof:
+\begin{lstlisting}
+Lemma interp_eval : forall op v v', interp op v = Some v' -> eval op v v'.
+Proof.
+  unfold interp. intros. destruct op; destruct v; 
+  try discriminate; inversion H; constructor.
+Qed.
+\end{lstlisting}
+Here, the \lstinline{intros} tactic introduces hypotheses named \lstinline{op}, \lstinline{v}, \lstinline{v'}, and \lstinline{H}.
+The \lstinline{destruct op; destruct v} sequence of tactics then does case analysis on \lstinline{op} and \lstinline{v}.
+We can use \lstinline{repeat break_match} instead of \lstinline{destruct op; destruct v} to simplify this proof:
+\begin{lstlisting}
+Proof.
+  unfold interp. intros. repeat break_match;
+  try discriminate; inversion H; constructor.
+Qed.
+\end{lstlisting}
+The resulting proof is more concise. It is also less likely to break as specifications change,
+since it does not depend on the automatically generated names \lstinline{op} and \lstinline{v}, which may later change
+(Section~\ref{sec:des-scale}).
+
+Ltac was designed to
+achieve a balance between the flexibility of writing tactics in a powerful language like OCaml,
+and the ease of flexibility from using built-in combinators to write custom tactics
+directly inside of the Coq proof assistant.
+Like ML and OCaml, it is Turing-complete (see Chapter 16 of \cite{CPDT}). However, it gives proof engineers
+limited access to underlying features like environment management. This means that
+proof engineers do not have to deal with low-level issues in OCaml such as managing de Bruijn indexes;
+proof engineers who want that level of control may write plugins in OCaml.
+
+Ltac2~\citep{ltac2}, the next generation of Ltac, is in development.
+It comes full circle, returning to the ML family of languages. 
+
+\paragraph{Eisbach}
+
+The tactic language Eisbach~\citep{Matichuk2015EisbachAP} for Isabelle
+was inspired by Ltac. Eisbach is tactic language that is integrated
+into the proof language Isabelle/Isar. Using Eisbach, proof engineers 
+write tactics (called \textit{proof methods}) directly in Isar syntax.
+The Eisbach manual can be found in \cite{matichuk2015eisbach}.
+
+To understand Eisbach, consider an example proof method from the Eisbach manual for solving existentials:
+\begin{lstlisting}
+method solve_ex =
+  (match conclusion in $\exists$ x. Q x for Q $\Rightarrow$
+    <match premises in U : Q y for y $\Rightarrow$
+      <rule exI [where P = Q and x = y, OF U]>>)
+\end{lstlisting}
+This matches the current conclusion with the \lstinline{Q} in $\exists$ \lstinline{x. Q x},
+then looks in the hypotheses for a term that matches \lstinline{Q y} for the matched \lstinline{Q} and some \lstinline{y},
+and then calls the introduction rule for existentials with that hypothesis. 
+In other words,
+if some hypothesis is \lstinline{Q y} and the goal is $\exists$ \lstinline{x. Q x},
+then \lstinline{solve_ex} will automatically prove the goal from the hypothesis.
+The manual shows an example of calling this proof method to solve a proof:
+\begin{lstlisting}
+lemma halts p $\Rightarrow$ $\exists$ x . halts x
+  by solve_ex
+\end{lstlisting}
+
+Like Ltac, Eisbach provides limited access to low-level details.
+%For example, as in Ltac, the pattern matching in Eisbach is syntactic. % TODO is this true?
+% TODO describe the implications w/ the above example
+Isabelle proof engineers who want access to these details may write
+proof methods directly in Isabelle/ML. % TODO somewhere need to explain how Coq's plugin structure differs from Isabelle/ML
+
+% TODO From Isabelle mailing list response:
+% ``Note on Isar: well-structured proofs are not only better for the human
+%reader (and maintainer), but also for overall system performance. People
+%sometimes think that "declarative proof languages" are expensive
+%concerning automated proof search, but Isar is not called "declarative"
+%and its built-in automation is minimal: Isar means "Intelligible
+%semi-automated reasoning". Consequently, checking well-structured Isar
+%proofs is much faster than old-style "apply" scripts (this a minority
+%style in Isabelle applications, but a majority style in Coq applications).
+%
+%Note on Eisbach: this proof method language has been added in recent
+%years. Inspired by Ltac, it allows to define Isar proof methods in the
+%source notation of the proof language. Some Eisbach spin-off concepts
+%allow to structure old-style apply-scripts, e.g. the 'subgoal' command
+%(similar to Coq bullets, but leading to parallel proofs). Beyond that it
+%is easy to define proof methods in Isabelle/ML: unlike Coq with its
+%separate "plugin" concept, Isabelle tools are defined directly within
+%the theory source, and subject to the normal interaction model (and
+%Prover IDE support).''
+
+\paragraph{Other Tactic Languages}
+
+% TODO IsaPlanner?
+
+The untyped nature of languages like Ltac may make it difficult to
+debug custom automation and to provide strong guarantees on custom
+tactics. Typed tactic languages such as those of the
+Delphin~\citep{poswolsky2009system} and Beluga~\citep{pientka2008programming} logical frameworks, 
+the tactic language for VeriML~\citep{Stampoulis2010}, and
+Mtac~\citep{Ziliani2015} and Mtac2~\citep{Kaiser2018} in Coq
+address these problems.
+
+PSGraph~\citep{lin2016understanding} is a graphical tactic language which aims to make
+debugging and refactoring of tactics easier. In PSGraph, tactics are flow graphs for proof subgoals,
+and executing tactics amounts to following the flow graph directly. 
+
+The Matita~\citep{asperti2007user} proof assistant introduces
+a language of \textit{tinycals} to address some challenges that tacticals
+pose for user interaction. In particular, proof assistants traditionally execute tacticals
+atomically. This makes it difficult to communicate how the tactical is executed to the user,
+as well as to debug tacticals and provide useful error messaging when they fail.
+Tinycals, in contrast, act like traditional tacticals, except that they allow
+for more fine-grained execution.
+
+Some tactic languages merge the tactic approach with metaprogramming constructs,
+so that users can write tactics in the proof language itself.
+In Idris~\citep{brady2013idris}, it is possible to implement tactics using the elaboration monad, which exposes
+elaboration to users and enables metaprogramming within Idris~\citep{Christiansen2016}.
+Agda recently replaced its reflection mechanism
+with one based on Idris' elaborator reflection~\citep{agda-elab}.
+
+Similarly, Lean exposes several metaprogramming constructs (including a tactic monad),
+which enable users to write tactics in Lean itself, to access proof state, and to access
+internal methods in the underlying C++ codebase~\citep{Ebner2017};
+this enables proof engineers to write powerful procedures.
+
+Some tools merge the approach of proof by reflection
+with a tactic language; we discuss these in Section~\ref{sec:refl}.
+
+% TODO some of the CPP/CoqPL stuff, HOL & HOL Light, Matita, Isaplanner
+% TODO Ltac2
+
+%\section{Declarative Proof Languages}
+%
+%Declarative proof languages offer an alternative to applicative tactic languages
+%that emphasize readability and maintainability.
+%These languages are declarative in that proofs written in these languages
+%are sequences of statements of intermediate results, which are only then followed by
+%guidance to help the system prove those results.
+%
+%Languages following in this tradition are influenced by the language of the proof system Mizar~\cite{trybulec1985computer}.
+%Many proof assistants following the LCF tradition now have Mizar modes built on top of tactics.
+%Mizar modes have been implemented in HOL~\cite{harrison-mizar} and HOL light~\cite{wiedijk2001mizar},
+%as well as in Coq~\cite{giero2003mmode}.
+%Mizar also influenced other declarative proof languages,
+%such as Isar~\cite{wenzel1999isar} for Isabelle and 
+%Czar~\cite{Corbineau2008} for Coq. 
+%The Isabelle Mizar environment~\cite{Kaliszyk2016} builds on Isar.
+%
+%Declarative proof languages are especially well-suited for mathematical proofs,
+%since they mimic a common style that mathematicians use for paper proofs.
+%For example, the Isabelle/Isar manual~\cite{wenzel2004isabelle} contains a definition of a group
+%that assumes only a left identity element, along with the following proof
+%that for any group, the identity element of the group is a right identity:
+%
+%\begin{lstlisting}
+%theorem right_unit : x $\circ$ 1 = x
+%proof -
+%  have 1 = x$^{-1}$ $\circ$ x by (rule left_inv [symmetric])
+%  also have x $\circ$ $\ldots$ = (x $\circ$ x$^{-1}$) $\circ$ x by (rule assoc [symmetric])
+%  also have x $\circ$ x$^{-1}$ = 1 by (rule right_inv)
+%  also have $\ldots$ $\circ$ x = x by (rule left_unit)
+%  finally show x $\circ$ 1 = x.
+%qed
+%\end{lstlisting}
+%Translated directly into English, we can think of this as the following proof (with implicit symmetry of equality, since hand-written mathematical
+%proofs rarely make that explicit):
+%
+%\begin{theorem}[Right unit]
+%$x \circ 1 = x$
+%\end{theorem}
+%
+%\begin{proof}
+%By left inverse, we have that $1 = x^{-1} \circ x$. By associativity, we have that $x \circ (x^{-1} \circ x) = (x \circ x^{-1}) \circ x$.
+%By right inverse, we have that $x \circ x^{-1} = 1$. By left unit, we have that $1 \circ x = x$. Then by the above, $x \circ 1 = x$.
+%\end{proof}
+%Isabelle/Isar completes and checks this proof much like a human reader would, by making all of the appropriate substitutions.
+%We could render an alternate English proof with all of these substitutions explicit, rather than leaving them to the reader: 
+%
+%\begin{proof}
+%We can write $x \circ 1 = x$ as $x \circ (x \circ x^{-1}) = x$ by right inverse, which is $(x \circ x^{-1}) \circ x = x$ by associativity, which is $1 \circ x = x$ by left inverse,
+%which holds by left unit. Thus, $x \circ 1 = x$.
+%\end{proof}
+%At this point, we are much closer to a tactic-based proof. The key difference for readability is that the intermediate goals are explicit
+%in the declarative proof, so to reconstruct an English proof, the reader does not need to step through tactics one-by-one and track the transformation of the goal.
+%In a non-declarative tactic-based language, it is possible to force this effect by enforcing a specific style (for example, using \lstinline{assert} or \lstinline{cut} in Ltac), 
+%but without higher-level support for such a style, the result can be clunky.
+
+\subsection{Proof Languages}
+\label{sec:structuredprooflangs}
+
+A proof language is a mechanism for structuring and composing
+propositions, facts, and proof goals. Proof languages generally allow both
+\emph{backward} reasoning, going from the proof goal to a new set of goals,
+and \emph{forward} reasoning, where new facts are added to the proof context
+but the goal remains the same. When formulating reasoning steps in a proof language,
+procedures in lower-level languages, such as tactics, can be invoked explicitly
+or implicitly. In turn, these procedures can invoke specialized external proof search
+programs. In contrast to plain unstructured sequences of commands (``tactic soups''), proofs written in
+proof languages are usually meant to convey key proof ideas, i.e., to be understandable by humans.
+To ensure readability, proof languages take inspiration from
+traditional mathematical vernacular. We consider two proof languages---Coq/\ssreflect and Isabelle/Isar---in detail, and then briefly discuss other proof languages.
+
+\paragraph{Coq/\ssreflect}
+
+Coq/\ssreflect is a proof language for Coq that emphasizes reasoning by rewriting using equalities and proofs by computation via small-scale reflection~\citep{Gonthier2010}. It was originally developed by Gonthier in the context of his proof of the four-color theorem~\citep{Gonthier2008}. Idiomatic proofs in Coq/\ssreflect make use of ``bullets'' (\lstinline{-}, \lstinline{*}, or \lstinline{+}) to structure proofs similarly to how Isabelle/Isar uses indentation of blocks to indicate structure.
+
+The basis of Coq/\ssreflect is that a step in a proof is one of the following:
+\begin{itemize}
+\item a \emph{deduction step} that directly constructs parts of a proof, either by backwards or forwards reasoning;
+\item a \emph{bookkeeping step} that performs a management operation on the proof context, e.g., introducing or renaming assumptions;
+\item a \emph{rewriting step} that changes parts of the proof goal or some assumption, either by way of some equality lemma or by computation.
+\end{itemize}
+In idiomatic proofs, these kinds of steps are interleaved and tend to be used in equal proportions.
+
+The \emph{reflect} part of \ssreflect refers to the convention of performing deduction steps that translate between symbolic representations, such as expressions involving boolean functions, and logical representations, such as inductive predicates. For example, when a proof goal can be solved by reasoning in propositional logic, we can convert the proof goal to boolean form and perform computation in Coq's logic engine instead of applying multiple propositional derivations manually. In contrast to general proofs by reflection (Section~\ref{sec:refl}), which focus on computational efficiency and managing the sizes of proof objects, \ssreflect leverages reflection for convenience and user productivity. For example, a conjunct can be reflected to a boolean value that directly computes to \lstinline{true}, saving the manual effort of applying tactics.
+
+The proof language contains special syntax for translating between representations, which is called application of \emph{view lemmas}. Moreover, Coq users traditionally use different commands for rewriting, definition expansion, and partial evaluation. In Coq/\ssreflect, all of these tasks are performed via parameters to the \lstinline{rewrite} tactic. Rewriting operations can pinpoint specific subterms in the current proof goal through the use of \emph{pattern expressions}~\citep{Gonthier2012} that may mention some constant names for disambiguation but leave others implicit.
+
+Consider the following lemma from the Mathematical Components project whose proof is written in idiomatic \ssreflect:
+\begin{lstlisting}[language=Coq]
+Lemma edivnP : forall m d, edivn_spec m d (edivn m d).
+Proof.
+rewrite /edivn => m [|d] //=; rewrite -{1}[m]/(0 * d.+1 + m).
+elim: m {-2}m 0 (leqnn m) => [|n IHn] [|m] q //=; rewrite ltnS => le_mn.
+rewrite subn_if_gt; case: (ltnP m d) => [// | le_dm].
+rewrite -{1}(subnK le_dm) -addSn addnA -mulSnr; apply: IHn.
+apply: leq_trans le_mn; exact: leq_subr.
+Qed.
+\end{lstlisting}
+Here, the first rewrite unfolds the \lstinline{edivn} definition, while the last rewrite performs chained rewriting using facts arithmetic, such as that addition is associative (\lstinline{addnA}). Explicit names for quantified variables are given after the operator \lstinline{=>}, which reduces the chance of brittleness due to reliance of machine-generated variable names. The tactic \lstinline{elim} performs induction on the natural number \lstinline{m}.
+
+\paragraph{Isabelle/Isar}
+
+Isabelle/Isar is a proof language for Isabelle that aims for human readability while retaining some symbolism of formal deduction systems~\citep{Wenzel2007isar}. It is built on the Isabelle/Pure logic, which is an intuitionistic fragment of HOL. Isabelle/Isar can be understood as an interpreter for block-structured syntax capturing the flow of facts and proof goals~\citep{Wenzel2006}.
+
+As an example, the Isabelle/Isar manual~\citep{wenzel2004isabelle} contains a definition of a group
+that assumes only a left identity element, along with the following proof
+that for any group, the identity element of the group is a right identity (we expand the 
+\lstinline{term} $\ldots$ notation from the version in the reference manual for clarity):
+\begin{lstlisting}
+theorem right_unit : x $\circ$ 1 = x
+proof -
+  have 1 = x$^{-1}$ $\circ$ x by (rule left_inv [symmetric])
+  also have x $\circ$ (x$^{-1}$ $\circ$ x) = (x $\circ$ x$^{-1}$) $\circ$ x by (rule assoc [symmetric])
+  also have x $\circ$ x$^{-1}$ = 1 by (rule right_inv)
+  also have 1 $\circ$ x = x by (rule left_unit)
+  finally show x $\circ$ 1 = x.
+qed
+\end{lstlisting}
+Translated directly into English, we can think of this as the following proof (with implicit symmetry of equality):
+%
+\begin{theorem}[Right unit]
+$x \circ 1 = x$
+\end{theorem}
+%
+\begin{proof}
+By left inverse, $1 = x^{-1} \circ x$. By associativity, $x \circ (x^{-1} \circ x) = (x \circ x^{-1}) \circ x$.
+By right inverse, $x \circ x^{-1} = 1$. By left unit, $1 \circ x = x$. Then by the above, $x \circ 1 = x$.
+\end{proof}
+Isabelle/Isar completes and checks this proof much like a human reader would, by making all of the appropriate substitutions.
+We could render an alternate English proof with all of these substitutions explicit, rather than leaving them to the reader:
+%
+\begin{proof}
+We can write $x \circ 1 = x$ as $x \circ (x^{-1} \circ x) = x$ by left inverse,
+which is $(x \circ x^{-1}) \circ x = x$ by associativity,
+which is $1 \circ x = x$ by right inverse,
+which holds by left unit.
+Thus, $x \circ 1 = x$.
+\end{proof}
+%
+At this point, we are much closer to proof by a sequence of commands. The key difference for readability is that the intermediate goals are explicit
+in the proof language, so to reconstruct an English proof, the reader does not need to step through tactics one-by-one and track the transformation of the goal.
+
+%In a non-declarative tactic-based language, it is possible to force this effect by enforcing a specific style (for example, using \lstinline{assert} or \lstinline{cut} in Ltac), 
+%but without higher-level support for such a style, the result can be clunky.
+
+%\begin{lstlisting}
+%theorem Knaster_Tarski:
+%  fixes f :: "'a::complete_lattice ⇒ 'a"
+%  assumes "mono f"
+%  shows "∃a. f a = a"
+%proof
+%  let ?H = "{u. f u ≤ u}"
+%  let ?a = "⨅?H"
+%  show "f ?a = ?a"
+%  proof -
+%    {
+%      fix x
+%      assume "x ∈ ?H"
+%      then have "?a ≤ x" by (rule Inf_lower)
+%      with ‹mono f› have "f ?a ≤ f x" ..
+%      also from ‹x ∈ ?H› have "… ≤ x" ..
+%      finally have "f ?a ≤ x" .
+%    }
+%    then have "f ?a ≤ ?a" by (rule Inf_greatest)
+%    {
+%      also presume "… ≤ f ?a"
+%      finally (order_antisym) show ?thesis .
+%    }
+%    from ‹mono f› and ‹f ?a ≤ ?a› have "f (f ?a) ≤ f ?a" ..
+%    then have "f ?a ∈ ?H" ..
+%    then show "?a ≤ f ?a" by (rule Inf_lower)
+%  qed
+%qed  
+%\end{lstlisting}
+
+\paragraph{Other Proof Languages}
+
+Mathematically-inclined proof languages such as Isar for Isabelle and Czar for Coq~\citep{Corbineau2008} were influenced by the language of the Mizar proof system~\citep{trybulec1985computer}, which tilts more towards natural language than logical symbolism for representing deduction steps. Many proof assistants following the LCF tradition now have Mizar modes; for example, Mizar modes have been implemented in HOL~\citep{harrison-mizar} and HOL light~\citep{wiedijk2001mizar}, as well as in Coq~\citep{giero2003mmode}.
+
+Building a proof system specifically for human-readability means that there is less of a barrier for humans and computers to check the same proofs.
+Following in this spirit, the Formalized Mathematics journal consists entirely of mathematical properties and proofs in 
+Mizar that are automatically translated into English and generated as PDFs, such as the properties of sets~\citep{darmochwal1990finite},
+naturals~\citep{bancerek1990fundamental}, and reals~\citep{JFR1411}.
+
+While most proof languages were designed with mathematics in mind, their use has not been confined to mathematics.
+For example, using
+Isar %in particular has seen widespread use in the Isabelle community oustide of mathematics: It 
+is recommended style for submission to the Isabelle Archive of Formal Proofs~\citep{isabelleafp},
+which consists of more computer science than mathematics formalizations~\citep{Blanchette2015}.
+
+The language PSL~\citep{Nagashima2017} for Isabelle/HOL allows expressing high-level \emph{proof strategies}. PSL generates efficient Isar proof scripts
+from user-written strategies.
+
+%There is further potential for confusion concerning the syntactic (and conceptual) categories of language elements. Isabelle/Isar clearly distinguishes theorem attributes (for small forward rules or context declarations), proof methods (for structured backwards refinement), and proof commands (for primary proof structure).  In Coq, almost everything is just a ``tactic'', including apply-- but in Isabelle apply is a proof command to apply an arbitrary proof method in an unstructured situation.
+
+\subsection{Proofs by Reflection}
+\label{sec:refl}
+
+Writing proofs by reflection, that is, calling certified procedures within the host language itself~\citep{Allen1990}, can be viewed as an alternative to writing proofs in a proof language or using tactics. 
+
+Chapter 15 of CPDT~\citep{CPDT} illustrates this style of proof in Coq and demonstrates its benefits on a proof that a natural number is even;
+we present a slightly modified version of that example that is self-contained.
+Given some inductive predicate for evenness:
+\begin{lstlisting}
+Inductive isEven : nat -> Prop :=
+| Even_O : isEven O
+| Even_SS : forall n, isEven n -> isEven (S (S n)).
+\end{lstlisting}
+we construct a verified function to check evenness:
+\begin{lstlisting}
+Fixpoint check_even (n : nat) : option (isEven n) := match n with
+| 0 => Some Even_O
+| 1 => None
+| S (S n') => 
+    match check_even n' with
+    | Some p => Some (Even_SS n' p)
+    | _ => None
+    end
+end.
+\end{lstlisting}
+For a given \lstinline{n}, \lstinline{check_even} returns an optional a proof of \lstinline{isEven n} (\lstinline{None} when \lstinline{n}
+is not even). As CPDT notes, this type signature guarantees that it only returns a proof when \lstinline{n}
+actually is even. %If \lstinline{n} is \lstinline{0}, \lstinline{check_even} returns \lstinline{Even_0}, which proves that \lstinline{0}
+%is even. If \lstinline{n} is \lstinline{S (S n')} for some \lstinline{n'} that is also even, \lstinline{check_even}
+%returns \lstinline{Even_SS} applied to the proof that \lstinline{n'} is even, which proves that \lstinline{S (S n')} is even.
+%In all other cases, \lstinline{check_even} does not return a proof.
+
+Our goal is to write a tactic that uses \lstinline{check_even} to prove evenness.
+To write this tactic, we need to extract the proof from the \lstinline{option} type above 
+when possible. We define a dependently-typed function \lstinline{optionOut}
+that does this:
+\begin{lstlisting}
+Definition optionOutType (P : Prop) (o : option P) := 
+  match o with
+  | Some _ => P
+  | _ => True
+  end.
+
+Definition optionOut (P : Prop) (o : option P) : optionOutType P o := 
+  match o with
+  | Some pf => pf
+  | _ => I
+  end.
+\end{lstlisting}
+We then write a tactic that extracts the proof that \lstinline{check_even} returns:
+\begin{lstlisting}
+Ltac prove_even_reflective := 
+  match goal with
+  | [ |- isEven ?N] => exact (optionOut (isEven N) (check_even N))
+  end.
+\end{lstlisting}
+With this, the following proof goes through:
+\begin{lstlisting}
+Theorem even_256 : isEven 256.
+Proof.
+  prove_even_reflective.
+Qed.
+\end{lstlisting}
+and similarly for any other even number; the tactic fails (as expected) for odd numbers.
+As CPDT notes, the size of the resulting proof term is manageable even for large numbers.
+This is a particular advantage of this style of proof.
+
+The concept of computational reflection predates ITPs;
+an early history of reflection can be found in \cite{Demers95reflectionin},
+and an early history of its use in theorem proving can be found in \cite{harrison-reflection}.
+Accordingly, it is one of the oldest styles of proof automation.
+Its use in modern proof assistants with support for higher-order logics can be traced back to the 1990s, 
+starting with a proof of the existence of this class of proofs in Nuprl~\citep{Allen1990},
+and following soon after in other ITPs such as LEGO~\citep{Pollack1994} and Coq~\citep{Boutin1997}; 
+in Coq, this approach predates Ltac~\citep{Delahaye2000}. % TODO more history & citations, other proof assistants
+
+Idris recently replaced its specialized tactic language with a mechanism for reflection called \textit{elaborator reflection}~\citep{Christiansen2016}.
+This mechanism exposes Idris' elaborator directly to the programmer, 
+% TODO do we need to explain what an elaborator is, or can they just see the citation? maybe: leodemoura.github.io/files/elaboration.pdf?
+which allows for powerful proof automation. For example, \cite{Christiansen2016} demonstrates how to use
+elaborator reflection to write a \lstinline{mush} tactic, which can be used to dispatch many goals in the Idris standard library:
+\begin{lstlisting}
+mush : Elab ()
+mush =
+  do attack
+    x <- gensym "x"
+    intro x
+    try intros
+    induction (Var x) `andThen` auto
+    solve
+\end{lstlisting} % TODO explain maybe 
+
+% TODO lean stuff goes here somewhere
+
+Proof by reflection is also the dominant style of proof automation in Agda, which does not support tactics.
+\cite{van2012engineering} demonstrate the \lstinline{isEven} example from earlier using Agda's old mechanism for reflection.
+This mechanism was replaced in 2016 with a reflection mechanism based on Idris' elaborator reflection.
+Other proof assistants that support proofs by reflection include HOL4~\citep{fallenstein2015proof}, 
+Isabelle/HOL~\citep{chaieb2008proof}, and Milawa~\citep{Davis2015}. % TODO can list more if you want, inc HOL light (couldn't find a citation though)
+
+Nowadays, there is a trend of integrating the approach of proof by reflection with tactic languages.
+For example, Cybele~\citep{claret2013lightweight} is a plugin for writing reflective tactics in Coq, with support for effects and non-termination. %TODO does this belong w/ tactic languages?
+Rtac~\citep{Malecha2016} is a reflective tactic language for Coq, which contains specialized automation to make it simpler to write soundness proofs of 
+decision procedures when writing reflective tactics.
+These mixed approaches enable proof engineers to take advantage of the benefits of both approaches
+to more easily build efficient automation. % or something...
+
+\subsection{Future Styles of Automation} 
+\label{sec:futurestyle}
+
+One drawback of using tactics is that they can sometimes impede proof understanding. 
+In the future, we expect more tools
+for proof understanding (in addition to existing structured proof languages). For example, a tool could use tactics to find proofs,
+then simplify the result, or otherwise output a format that is easier to understand.
+
+Along those lines, debugging tactics and tacticals can be difficult,
+since the execution of tactics and tacticals often is not conducive to fine-grained debugging,
+and since fully informative debugging of tactics sometimes requires interfacing 
+with multiple languages (such as Ltac and OCaml).
+Future tactic languages should better support debugging. 
+The continued development of alternative tactic execution models
+as well as typed and graphical tactic languages may help with both of these problems.
+
+Another opportunity for improvement with existing automation is 
+improved performance of tactics and tactic languages.
+We expect more exploration of improving tactic performance, both by
+writing tactics differently and by improving the performance of the underlying
+engine.
+
+The continued development of tools that integrate several styles of automation may help
+proof engineers better take advantage of the benefits of each of these approaches.
+
+%\talia{add proof languages, reflection}
+
+\section{Automation in Practice}
+\label{sec:specializedauto}
+
+Both specialized and general-purpose automation help move the burden of proof away from the proof engineer and toward the tooling with which
+the proof engineer interacts. This section briefly discusses a non-exhaustive sample of automation procedures (Section~\ref{sec:autotactics}).
+%This sample is by no means exhaustive; it is meant to provide intuition for the kinds of automation that exist.
+It then concludes with a discussion of the future of automation (Section~\ref{sec:autofuture}).
+
+\subsection{Automation Procedures}
+\label{sec:autotactics}
+
+Automation can be built using any of the various styles of automation (Section~\ref{sec:languagesforauto});
+since these styles of automation overlap, we consider automation by what it achieves,
+rather than by the style of automation that it utilizes.
+
+\paragraph{Domain-Specific Automation} Domain-specific automation automates
+proofs within particular domains. For example, the
+\lstinline{omega}~\citep{coq-omega} tactic in Coq implements a decision procedure for quantifier-free Presburger 
+arithmetic based on the Omega Test~\citep{Pugh1991}, an integer programming algorithm.
+It can automatically prove mathematical statements that can be difficult for Coq users to
+prove by hand.
+%TODO if time: This same fragment of arithmetic is solved by the Isabelle \lstinline{presburger}~\revisit{(cite)} tactic,
+%and is reimplemented reflectively in Coq~\revisit{(cite)}.
+
+Some domains include verifying programs within specific languages~\citep{cao2015practical,Ricketts2014},
+writing mathematical proofs~\citep{nipkow1990, slind1994ac, Braibant2011, narboux2004, gregoire2005, agdasemiring}, 
+% TODO Isabelle linarith, arith
+deciding regular expressions~\citep{braibant2010}, and reasoning about embedded logics
+such as separation logic~\citep{appel2006tactics,mccreight2009practical, Krebbers-al:POPL17}.
+% TODO domain-specific libraries, more non-Coq examples
+
+\paragraph{General-Purpose Automation} 
+General-purpose automation is machinery that is useful across many domains.
+For example, the \lstinline{break_match} tactic that we used as an example for the Ltac tactic language (Section~\ref{sec:tacticlangs})
+contains useful machinery to make proofs by case analysis simpler and more robust.
+
+Many proof assistants ship with useful general-purpose automation;
+third-party tools may build on these.
+For example, many proof assistants come with automation for inversion and induction~\citep{nipkow1989term, mcbride1996inverting, cornes1995automating}. % TODO more, and check these
+Isabelle/Isar has special support for performing induction proofs~\citep{Wenzel2006}; besides specifying the variable to perform induction on, and the induction principle (rule) to use, a user can indicate that certain variables are to be \emph{arbitrary}, i.e., that they are not bound in the resulting assumptions and proof goals.
+%
+For example, the following clause opens a proof by strong induction for natural numbers on the expression $x - y$, where $x$ and some other variable $z$ from the previous context are arbitrary:
+\begin{lstlisting}
+proof (induct "x - y" arbitrary: z x rule:less_induct)
+\end{lstlisting}
+%
+In Coq, a similar proof requires building a custom induction principle as a separate lemma.
+
+Hint databases~\citep{coq-commands} in Coq store theorems 
+that its other tactics~\citep{coq-tactics} such as \lstinline{auto} and \lstinline{rewrite} can use as hints.
+For example, the tactic \lstinline{auto with arith} tells \lstinline{auto} to use the arithmetic theorems
+defined in the \lstinline{arith} database when it tries to solve the goal. Hints can help make proofs not only
+simpler, but more robust (see Chapter 3.8 of CPDT), though they may negatively impact proof search performance
+or even cause it not to terminate (see Chapter 13 of CPDT). 
+
+Some third-party libraries such the StructTact library~\citep{structtact}
+and the code distributed with CPDT and FRAP~\citep{FRAPBook} ship a variety of general-purpose automation
+that builds on the standard library packaged in one place.
+Automation from these libraries ranges from machinery to better handle induction such as \lstinline{prep_induction}~\citep{structtact}
+and \lstinline{induct}~\citep{FRAPBook} to powerful tactics like \lstinline{crush}~\citep{CPDT}, which can dispatch many proof obligations
+automatically. The \lstinline{agda-prelude}~\citep{agda-prelude} library provides efficient alternatives 
+to automation in the Agda standard library.
+% TODO find more general-purpose third-party libraries, especially in non-Coq languages
+
+\textit{Theory exploration}---the automatic discovery and sometimes proof of theorems for a given theory---is a form of 
+general-purpose automation that first arose in the context of automated theorem proving for 
+mathematics~\citep{buchberger2000theory}. This style of automation aims to mimic the way that
+mathematicians explore theories when writing proofs by hand.
+While theory exploration tooling began with the development of specialized tooling,
+specialized tools can be used in tandem with an ITP;
+\cite{dramnesc2015theory}, for example, uses the theory exploration tool \textit{Theorema}~\citep{buchberger2006theorema}
+in combination with Coq to explore the theory of binary trees.
+The tool Hipster~\citep{JohanssonRSC14, DBLP:journals/eceasst/ValbuenaJ15, Johansson2017} for Isabelle/HOL integrates
+theory exploration directly with an ITP.
+% so that the proof engineer does not need
+%to use specialized tooling outside of Isabelle/HOL.
+% TODO maybe more if it needs anything
+% TODO maybe also reference in mathematics section
+
+Other examples of useful general-purpose automation include simple general-purpose proof automation~\citep{coq-tactics, auto2, Lindblad2004},
+rewriting~\citep{coq-tactics, nipkow1989term}, % TODO more, and check these
+%solving existentials~\revisit{(cite, cite, cite)}, % TODO unification vs. eexists; eauto etc.
+and solving logical fragments~\citep{paulson1999generic, lescuyer2009improving, hurd2003first, kumar1991integrating, busch1994first, dahn1997integration, hurd1999integrating}, and techniques for reasoning about executable specficiations~\citep{barthe2002efficient},
+as well as an implementation of a generalization of congruence closure to dependent type theory~\citep{DBLP:journals/corr/SelsamM17}.
+In addition, Chapter~\ref{ch:organization} describes general-purpose automation and tooling for proof reuse (Section~\ref{sec:toolingreuse}),
+as well as general-purpose automation built on type classes and canonical structures (Section~\ref{sec:desabs}).
+
+% TODO admit as a proof engineering tool!
+
+\paragraph{Hammers}
+Hammers are systems for general reasoning over large libraries of formal proofs~\citep{Blanchette2016}.
+Like the verification language F*~\citep{Swamy2016} or the congruence closure algorithm~\citep{DBLP:journals/corr/SelsamM17} in Lean,
+hammers leverage automated theorem provers (ATPs) from within an ITP. Hammers leverage ATPs while preserving the small trusted bases of ITPs.
+They are able to learn from previous proof efforts.
+In proof assistants, a hammer is exposed as a collection of tactics that in effect comprise a brute-force method for discharging a proof goal.
+
+A hammer for a proof assistant typically has three components:
+\begin{enumerate}
+\item a \emph{premise selector} that selects facts (axioms) to be used by ATPs from the large library available to the proof assistant;
+\item a \emph{translator} that converts the selected facts and proof goal to the restricted logics of the ATPs;
+\item a \emph{proof reconstructor} that builds proofs accepted by the proof assistants from the evidence provided by the ATPs.
+\end{enumerate}
+
+The premise selector arguably has the most challenging task, since the database of facts can be large, and it is difficult to determine whether a fact is relevant to the given proof goal. The standard approach is to leverage machine learning techniques, such as naive Bayes and $k$-nearest neighbors~\citep{Blanchette2016,Czajka2018}.
+
+The translator must take into account the particular foundations and features of the proof assistant, such as polymorphic or dependent types, and provide faithful representation in target logics, which may have no types or only monomorphic types.
+
+The proof reconstructor, like the translator, is highly specific to the proof assistant. Reconstructors can use many different approaches of varying robustness, such as ATP proof replay, reflection, or proof assistant source generation, augmented by various heuristics. As a result, reconstruction may sometimes fail.
+
+Implementations of hammers include Sledgehammer for Isabelle/HOL~\citep{Blanchette2013}, HOL(y)Hammer for HOL Light and HOL4~\citep{Kaliszyk2014}, and CoqHammer for Coq~\citep{Czajka2018,coqhammer}. Invocations of hammers typically spawn many parallel instances of different ATPs, such as Z3, Vampire, the E theorem prover, and CVC4. Hammer services to proof assistants can also be provided remotely, overcoming local limitations on processing power and memory~\citep{Kaliszyk2015}.
+
+As an example of applying a hammer, consider a Coq lemma about lists from the StructTact library:
+\begin{lstlisting}
+Lemma app_cons_singleton_inv : forall A xs (y : A) zs w,
+ xs ++ y :: zs = [w] -> xs = [] /\ y = w /\ zs = [].
+\end{lstlisting}
+Invoking the CoqHammer \lstinline{hammer} tactic finds a proof via Z3:
+\begin{lstlisting}[language=sh]
+Extracting features...
+Running provers (using 8 threads)...
+Z3 (nbayes-32) succeeded
+- dependencies: List.app_eq_unit
+\end{lstlisting}
+The output also gives the following tactic call to replace the \lstinline{hammer} invocation, yielding a proof of the lemma without ATPs: 
+\begin{lstlisting}
+Proof. Reconstr.rcrush List.app_eq_unit Reconstr.Empty. Qed.
+\end{lstlisting}
+
+While CoqHammer generates sequences of calls to custom tactics for reconstruction, Isabelle's Sledgehammer typically results in calls to the built-in superposition prover \lstinline{metis}~\citep{Blanchette2011}, which works similarly to ATPs such as Vampire.
+
+The usual way to evaluate the effectiveness of a hammer for a particular proof assistant is to apply the hammer on a standard library by replacing proof scripts with invocations of hammer tactics. For example, CoqHammer was able to reprove 44.5\% of all results in the Coq standard library~\citep{Czajka2018}, which is in line with success rates for HOL Light benchmarks (40\%). Success rates for benchmarks in Isabelle/HOL can be as high as 70\%, for databases with upwards of 100,000 facts~\citep{Blanchette2016}. However, these rates do not reflect practical application of hammers in evolving projects, where proof goals may be reformulated based on manual exploration using certain proof strategies. 
+
+In contrast to property-based testing~\citep{Paraskevopoulou2015} and counterexample generators~\citep{Blanchette2010}, hammers do not give feedback when ATPs are unable to discharge a proof goal. Consequently, applying hammers does not necessarily lead to progress. On the other hand, hammers do not require decidable properties, generation of datatype instances, or domain knowledge.
+
+Augmentation of hammer components to increase effectiveness and success rates is an active research topic~\citep{Blanchette2016b,Wang2017,Peng2017}.
+
+\subsection{Future of Automation in Practice}
+\label{sec:autofuture}
+
+Hammers have been around in Isabelle for a long time, but until recently,
+it was not known if a hammer could be implemented for a dependent type theory.
+We expect more development to follow in the lines of CoqHammer.
+%The HOL(y) hammer~\citep{Kaliszyk2015} system is an online hammer
+%that uses machine-learning; while this is not yet a tactic, we expect
+%that more general-purpose tactics will explore the benefits of machine learning.
+
+The existence of third-party libraries for general-purpose proof automation in many ways mirrors
+the rise of third-party libraries for other programming languages which supplement
+the standard library; we expect more of these libraries to come into existence, and we expect
+existing libraries to grow in popularity.
+We also expect domain-specific tactics for common domains to continue to
+develop, and to cover new domains as they arise.    
+

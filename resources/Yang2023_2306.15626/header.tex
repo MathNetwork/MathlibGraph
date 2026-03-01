@@ -1,0 +1,104 @@
+\PassOptionsToPackage{numbers, compress}{natbib}
+\usepackage{cite}
+
+\usepackage[final]{neurips_data_2023}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[pagebackref]{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor,soul}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{dirtree}
+\usepackage{wrapfig}
+\usepackage{dirtree}
+\usepackage{listings}
+\usepackage{tocvsec2}
+
+
+\lstset{
+    escapeinside={(*@}{@*)},
+}
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+
+\author{%
+    Kaiyu Yang$^1$, Aidan M. Swope$^{2}$, Alex Gu$^{3}$, Rahul Chalamala$^1$, Peiyang Song$^4$, \\
+    \textbf{Shixing Yu$^5$, Saad Godil\thanks{Research conducted while Saad Godil was at NVIDIA.}, Ryan Prenger$^2$, Anima Anandkumar$^{1,2}$}\\
+    $^1$Caltech, $^2$NVIDIA, $^3$MIT, $^4$UC Santa Barbara, $^5$UT Austin \\
+    \weburl
+}
+
+
+\definecolor{mygreen}{RGB}{226, 240, 217}
+\definecolor{myblue}{RGB}{222, 235, 247}
+\definecolor{myorange}{RGB}{251, 229, 214}
+\definecolor{mygray}{RGB}{219, 219, 219}
+\DeclareRobustCommand{\hlgreen}[1]{{\sethlcolor{mygreen}\hl{#1}}}
+\DeclareRobustCommand{\hlblue}[1]{{\sethlcolor{myblue}\hl{#1}}}
+\DeclareRobustCommand{\hlorange}[1]{{\sethlcolor{myorange}\hl{#1}}}
+\DeclareRobustCommand{\hlgray}[1]{{\sethlcolor{mygray}\hl{#1}}}
+
+\newcommand{\weburl}{\url{https://leandojo.org}}
+\newcommand{\smallsec}[1]{\vspace{-1mm} \paragraph{#1.}}
+\newcommand\kaiyu[1]{\textcolor{red}{[Kaiyu: #1]}}
+\newcommand\new[1]{\textcolor{blue}{#1}}
+\newcommand\todo[1]{\textcolor{red}{TODO: #1}}
+\newcommand\tbd{\textcolor{red}{TBD }}
+\newcommand\tentative[1]{\textcolor{blue}{#1}}
+
+\newcommand\name{ReProver}
+\newcommand\numproofs{98,734}
+\newcommand\numpremises{130,262}
+\newcommand\numaccessiblepremises{33,160}
+\newcommand\numtraintheorems{94,734}
+\newcommand\numvaltheorems{2,000}
+\newcommand\numtesttheorems{2,000}
+\newcommand\numfiles{3,384}
+\newcommand\numtactics{217,776}
+\newcommand\numtacticswithpremises{129,243}
+\newcommand\avgnumpremises{2.13}
+
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}

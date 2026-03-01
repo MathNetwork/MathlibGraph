@@ -1,0 +1,228 @@
+\section{\large Illustrative Examples of Non-CoT and CoT Prompting for Proof Completion}
+\label{app:promt_examples}
+
+In this section, we present examples of non-CoT and CoT prompting and the generated proofs for $\mathtt{aime\_1983\_p9}$, a problem from the miniF2F benchmark~\citep{zheng2021minif2f}. For clarity, inline LaTeX expressions are utilized. Firstly, here is an example of whole-proof generation in non-CoT prompting mode:
+
+\noindent \textit{Input}:
+\begin{lstlisting}[frame=single]
+Complete the following Lean 4 code:
+
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+/-- Show that $\frac{9x^2\sin^2 x + 4}{x\sin x} \geq 12$ for $0 < x < \pi$.-/
+theorem aime_1983_p9 (x : ℝ) (h₀ : 0 < x ∧ x < Real.pi) :
+  12 ≤ (9 * (x ^ 2 * Real.sin x ^ 2) + 4) / (x * Real.sin x) := by
+\end{lstlisting}
+\noindent \textit{Output}:
+\begin{lstlisting}[frame=single]
+  rw [le_div_iff (mul_pos h₀.1 (Real.sin_pos_of_pos_of_lt_pi h₀.1 h₀.2))]
+  nlinarith [mul_self_nonneg (3 * x * Real.sin x - 2)]
+```
+\end{lstlisting}
+
+Next, here is an example of whole-proof generation in CoT prompting mode. This proof was found using a Monte-Carlo tree search with a truncate-and-resume mechanism (see Section~\ref{sec:tree-search} for details). The model receives a prompt including a proof code in progress, ending with a comment block containing the intermediate tactic state from the Lean 4 prover. The subsequent code is generated with guidance from this annotated code prefix.
+
+\noindent \textit{Input}:
+\begin{lstlisting}[frame=single]
+Complete the following Lean 4 code with explanatory comments preceding each line of code:
+
+```lean4
+import Mathlib
+import Aesop
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+/-- Show that $\frac{9x^2\sin^2 x + 4}{x\sin x} \geq 12$ for $0 < x < \pi$.-/
+theorem aime_1983_p9 (x : ℝ) (h₀ : 0 < x ∧ x < Real.pi) :
+  12 ≤ (9 * (x ^ 2 * Real.sin x ^ 2) + 4) / (x * Real.sin x) := by
+  /-
+  To find the minimum value of $\frac{9x^2\sin^2 x + 4}{x\sin x}$ for $0 < x < \pi$, we need to show that it is at least 12. We start by noting that the expression can be rewritten using the division property of inequalities. We then use the fact that $\sin x$ and $x$ are positive in the given range to establish the necessary inequalities. Finally, we apply these results to conclude that the minimum value is indeed 12.
+  -/
+  -- We start by ensuring that the product $x * \sin x$ is positive in the given range.
+  have h₁ : 0 < x * Real.sin x := by
+    apply mul_pos
+    -- $x$ is positive in the range $(0, \pi)$.
+    exact h₀.1
+    -- $\sin x$ is positive in the range $(0, \pi)$.
+    exact Real.sin_pos_of_pos_of_lt_pi h₀.1 h₀.2
+  -- Using the division property of inequalities, we rewrite the expression.
+  rw [le_div_iff h₁]
+  /- tactic state:
+    x : ℝ
+    h₀ : 0 < x ∧ x < π
+    h₁ : 0 < x * x.sin
+    ⊢ 12 * (x * x.sin) ≤ 9 * (x ^ 2 * x.sin ^ 2) + 4
+  -/
+\end{lstlisting}
+\noindent \textit{Output}:
+\begin{lstlisting}[frame=single]
+  -- This is equivalent to showing that $9x^2 \sin^2 x - 12x \sin x + 4 \geq 0$, and the left-hand side can be rewritten as a perfect square $(3x \sin x - 2)^2$.
+  -- We use the fact that $(3x \sin x - 2)^2$ is non-negative to establish this.
+  nlinarith [sq_nonneg (3 * x * Real.sin x - 2)]
+```
+\end{lstlisting}
+
+In this case, the proof completion model first extracts the goal expression from the tactic state, \ie, the inequality $12(x\sin x)\leq 9(x^2\sin^2 x) + 4$ at the last line of the comment block, and then arranges it into the form $9x^2 \sin^2 x - 12x \sin x + 4 \geq 0$ as part of the chain-of-thought process. Finally, the left-hand side is rewritten as a square term to establish non-negativity, closing the proof.
+
+% \newpage
+\section{Example Solutions to MiniF2F-test Problems} \label{apx:solutions}
+
+To illustrate the different advantages and complementary of non-CoT mode and CoT mode of prompting, we provide examples where non-CoT mode succeeds while CoT mode fails, and vice versa.
+
+\subsection{Problems that non-CoT outperforms CoT}
+
+\begin{lstlisting}[frame=single]
+theorem induction_pord1p1on2powklt5on2 (n : ℕ) (h₀ : 0 < n) :
+    ($\Pi$ k in Finset.Icc 1 n, 1 + (1 : ℝ) / 2 ^ k) < 5 / 2 := by
+  rw [Finset.Icc]
+  simp_all [Nat.succ_le_iff, Nat.one_le_iff_ne_zero]
+  have h₁ : 0 < 2 ^ k := by apply pow_pos <;> norm_num
+  norm_num
+  have h₂ : (2 : ℝ) ≠ 0 := by norm_num
+  field_simp
+  rw [div_lt_div_iff]
+  ring_nf
+  norm_cast
+  nlinarith
+  all_goals norm_cast
+  all_goals linarith
+\end{lstlisting}
+
+\begin{lstlisting}[frame=single]
+theorem imo_1960_p2 (x : ℝ) (h₀ : 0 ≤ 1 + 2 * x) (h₁ : (1 - Real.sqrt (1 + 2 * x)) ^ 2 ≠ 0)
+    (h₂ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9) : -(1 / 2) ≤ x ∧ x < 45 / 8 := by
+  norm_num at h₀ h₁ h₂
+  have h₃ : 0 ≤ 1 + 2 * x := by linarith
+  have h₄ : 0 < 1 + Real.sqrt (1 + 2 * x) := by
+    nlinarith [Real.sqrt_nonneg (1 + 2 * x)]
+  have h₅ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 < 2 * x + 9 := by linarith
+  have h₆ : 1 - Real.sqrt (1 + 2 * x) ≠ 0 := by
+    intro h
+    apply h₁
+    nlinarith
+  have h₇ : 4 * x ^ 2 / (1 - Real.sqrt (1 + 2 * x)) ^ 2 = (1 + Real.sqrt (1 + 2 * x)) ^ 2 := by
+    field_simp [h₆]
+    nlinarith [sq_sqrt (show 0 ≤ 1 + 2 * x by linarith)]
+  rw [h₇] at h₅
+  constructor <;> nlinarith [sq_sqrt (show 0 ≤ 1 + 2 * x by linarith)]
+\end{lstlisting}
+
+\subsection{Problems that CoT outperforms non-CoT}
+
+\begin{lstlisting}[frame=single]
+theorem mathd_algebra_459 (a b c d : ℚ) (h₀ : 3 * a = b + c + d) (h₁ : 4 * b = a + c + d)
+    (h₂ : 2 * c = a + b + d) (h₃ : 8 * a + 10 * b + 6 * c = 24) : ↑d.den + d.num = 28 := by
+  /-
+  Given the system of equations involving the times that Anna (a), Bertram (b), Carli (c), and David (d) can hold their breaths:
+  1. $ 3a = b + c + d $
+  2. $ 4b = a + c + d $
+  3. $ 2c = a + b + d $
+  4. $ 8a + 10b + 6c = 24 $
+  We need to find the sum of the numerator and the denominator of the fraction representing David's time in minutes, simplified to its lowest terms, and show that it is 28.
+  First, we solve the system of equations step by step:
+  - From the first equation, we can express $ d $ in terms of $ a, b, $ and $ c $:
+    $ d = 3a - b - c $
+  - Substitute $ d $ into the second equation:
+    $ 4b = a + c + (3a - b - c) $
+    Simplifying, we get:
+    $ 4b = 4a - b $
+    $ 5b = 4a $
+    $ b = \frac{4a}{5} $
+  - Substitute $ b $ into the third equation:
+    $ 2c = a + \frac{4a}{5} + (3a - b - c) $
+    Simplifying, we get:
+    $ 2c = a + \frac{4a}{5} + 3a - \frac{4a}{5} - c $
+    $ 2c = 4a - c $
+    $ 3c = 4a $
+    $ c = \frac{4a}{3} $
+  - Substitute $ b $ and $ c $ into the fourth equation:
+    $ 8a + 10 \left(\frac{4a}{5}\right) + 6 \left(\frac{4a}{3}\right) = 24 $
+    Simplifying, we get:
+    $ 8a + 8a + 8a = 24 $
+    $ 24a = 24 $
+    $ a = 1 $
+  Now, we find $ b $ and $ c $:
+  - $ b = \frac{4a}{5} = \frac{4}{5} $
+  - $ c = \frac{4a}{3} = \frac{4}{3} $
+  Finally, we find $ d $:
+  - $ d = 3a - b - c = 3 \cdot 1 - \frac{4}{5} - \frac{4}{3} = 3 - \frac{4}{5} - \frac{4}{3} = \frac{45}{15} - \frac{12}{15} - \frac{20}{15} = \frac{13}{15} $
+  The fraction $ \frac{13}{15} $ is already in its simplest form, and the sum of the numerator and the denominator is:
+  $ 13 + 15 = 28 $
+  -/
+  have h₄ : a = 1 := by
+    have h₅ : 8 * a + 10 * b + 6 * c = 24 := h₃
+    have h₆ : 24 * a = 24 := by
+      -- Solve the system of equations to find the value of a
+      linarith
+    exact mul_right_cancel₀ (show (24 : ℚ) ≠ 0 by norm_num) 
+      (by linarith)
+  have h₅ : b = 4 / 5 := by
+    -- Solve for b using the value of a
+    linarith
+  have h₆ : c = 4 / 3 := by
+    -- Solve for c using the value of a
+    linarith
+  have h₇ : d = 13 / 15 := by
+    -- Solve for d using the values of a, b, and c
+    linarith
+  -- Sum the numerator and the denominator of d
+  norm_num [h₇]
+  <;> rfl
+\end{lstlisting}
+
+\begin{lstlisting}[frame=single]
+theorem numbertheory_x5neqy2p4 (x y : ℤ) : x ^ 5 ≠ y ^ 2 + 4 := by
+  /-
+  To show that for any two integers $ x $ and $ y $, $ x^5 \neq y^2 + 4 $, we can use modular arithmetic to demonstrate that the equation $ x^5 \equiv y^2 + 4 \pmod{11} $ has no solutions. Specifically, we will consider the possible values of $ x $ and $ y $ modulo 11 and show that none of these combinations satisfy the equation.
+  -/
+  -- Use modular arithmetic to show that the equation has no solutions modulo 11.
+  have : ¬(x ^ 5 % 11 = (y ^ 2 + 4) % 11) := by
+    -- Consider all possible values of x modulo 11.
+    have : x % 11 = 0 ∨ x % 11 = 1 ∨ x % 11 = 2 ∨ x % 11 = 3 ∨ x % 11 = 4 ∨ x % 11 = 5 ∨
+        x % 11 = 6 ∨ x % 11 = 7 ∨ x % 11 = 8 ∨ x % 11 = 9 ∨ x % 11 = 10 := by
+      omega
+    -- Consider all possible values of y modulo 11.
+    have : y % 11 = 0 ∨ y % 11 = 1 ∨ y % 11 = 2 ∨ y % 11 = 3 ∨ y % 11 = 4 ∨ y % 11 = 5 ∨
+        y % 11 = 6 ∨ y % 11 = 7 ∨ y % 11 = 8 ∨ y % 11 = 9 ∨ y % 11 = 10 := by
+      omega
+    -- For each combination of x and y modulo 11, check if the equation holds.
+    rcases this with (h | h | h | h | h | h | h | h | h | h | h) <;>
+      rcases this with (h' | h' | h' | h' | h' | h' | h' | h' | h' | h' | h') <;>
+        simp [h, h', pow_succ, Int.mul_emod, Int.add_emod]
+  -- Use the result from modular arithmetic to conclude the theorem.
+  omega
+\end{lstlisting}
+
+\begin{lstlisting}[frame=single]
+theorem amc12_2000_p12 (a m c : ℕ) (h₀ : a + m + c = 12) :
+    a * m * c + a * m + m * c + a * c ≤ 112 := by
+  /-
+  Given nonnegative integers $A, M, $ and $ C $ such that $ A + M + C = 12 $, we need to find the maximum value of $ A \cdot M \cdot C + A \cdot M + M \cdot C + A \cdot C $.
+  To solve this, we can use the fact that the expression $ A \cdot M \cdot C + A \cdot M + M \cdot C + A \cdot C $ is a polynomial in terms of $ A, M, $ and $ C $. We can try different values of $ A, M, $ and $ C $ that sum to 12 and compute the value of the polynomial for each combination. The maximum value of the polynomial will then be the solution.
+  -/
+  -- We use a lemma that states if the sum of three numbers is less than or equal to a certain value, then the product of these numbers is also less than or equal to a certain value.
+  have h₁ : a ≤ 12 ∧ m ≤ 12 ∧ c ≤ 12 := by
+    constructor
+    · -- Since a + m + c = 12, a cannot be greater than 12.
+      omega
+    · constructor
+      · -- Similarly, m cannot be greater than 12.
+        omega
+      · -- And c cannot be greater than 12.
+        omega
+  -- Using the lemma, we compute the value of the polynomial for different values of a, m, and c that sum to 12.
+  cases' h₁ with h₁_left h₁_right
+  cases' h₁_right with h₁_middle h₁_right
+  -- We use interval_cases to try different values of a, m, and c.
+  interval_cases a <;> interval_cases m <;> interval_cases c <;>
+    -- For each combination, we compute the value of the polynomial and check if it is less than or equal to 112.
+    simp_all (config := {decide := true})
+\end{lstlisting}

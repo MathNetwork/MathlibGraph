@@ -1,0 +1,176 @@
+\documentclass[11pt, a4paper, logo, copyright, nonumbering]{deepseek}
+\usepackage[authoryear, compress, round]{natbib}
+\usepackage{dblfloatfix}
+\usepackage{ulem}
+\usepackage{caption}
+% \usepackage{subcaption}
+% \usepackage{listings}
+% \lstset{breaklines=true}
+\usepackage{dramatist}
+\usepackage{xspace}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\usepackage{multirow}
+\usepackage{tcolorbox}
+\usepackage{xltabular}
+\usepackage{longtable}
+\usepackage{hyperref}
+\interfootnotelinepenalty=10000
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{lineno}
+
+\usepackage[bottom]{footmisc}
+% \linenumbers
+
+\usepackage{CJKutf8}
+\usepackage{subfigure}
+\usepackage{setspace}
+
+% ***** added ****
+
+\definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
+\definecolor{tacticcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
+\definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+\definecolor{attributecolor}{rgb}{0.7, 0.1, 0.1} % red
+\usepackage{listings}
+\def\lstlanguagefiles{lstlean.tex}
+
+\lstset{
+    language=lean,
+    moredelim=[is][\colorbox{yellow}]{「}{」},
+}
+
+\makeatletter
+\def\@BTrule[#1]{%
+  \ifx\longtable\undefined
+    \let\@BTswitch\@BTnormal
+  \else\ifx\hline\LT@hline
+    \nobreak
+    \let\@BTswitch\@BLTrule
+  \else
+     \let\@BTswitch\@BTnormal
+  \fi\fi
+  \global\@thisrulewidth=#1\relax
+  \ifnum\@thisruleclass=\tw@\vskip\@aboverulesep\else
+  \ifnum\@lastruleclass=\z@\vskip\@aboverulesep\else
+  \ifnum\@lastruleclass=\@ne\vskip\doublerulesep\fi\fi\fi
+  \@BTswitch}
+\makeatother
+
+\addto\extrasenglish{
+    \def\chapterautorefname{Chapter}%
+    \def\sectionautorefname{Section}%
+    \def\paragraphautorefname{Section}
+    \def\subparagraphautorefname{Section}
+    \def\paragraphautorefname{Paragraph}%
+    \def\tableautorefname{Table}%
+    \def\equationautorefname{Equation}%
+}
+
+\newenvironment{indentchunk}[1]%
+ {\begin{list}{}%
+         {\setlength{\leftmargin}{#1}}%
+         \item[]%
+ }
+ {\end{list}}
+
+% \bibliographystyle{unsrtnat}
+% \bibliographystyle{plainnat}
+% \bibliography{main}
+\newcommand{\lastwork}{DeepSeek-Prover-V1}
+\newcommand{\thiswork}{DeepSeek-Prover-V1.5}
+\newcommand{\thisworkbase}{DeepSeek-Prover-V1.5-Base}
+\newcommand{\treesearch}{RMaxTS}
+
+\reportnumber{001} % Leave blank if n/a
+
+% \renewcommand{\today}{2021-12-08}
+\renewcommand{\today}{}
+
+\title{\centering \thiswork: Harnessing Proof Assistant Feedback \\ for Reinforcement Learning and Monte-Carlo Tree Search}
+
+\author[*]{
+\footnotesize
+Huajian Xin*, Z.Z. Ren*, Junxiao Song*, Zhihong Shao*, Wanjia Zhao, Haocheng Wang, Bo Liu, Liyue Zhang\newline
+Xuan Lu, Qiushi Du, Wenjun Gao, Qihao Zhu, Dejian Yang, Zhibin Gou, Z.F. Wu, 
+Fuli Luo, Chong Ruan
+
+\small
+DeepSeek-AI \\
+\small
+\url{https://github.com/deepseek-ai/DeepSeek-Prover-V1.5}
+\vspace{-0.2in}
+}
+\correspondingauthor{Core contributors}
+% \affil[*]{DeepSeek-AI}
+% \correspondingauthor{Authors are ordered alphabetically by the last name.}
+
+\input{commands.tex}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\newcommand{\zdaxie}[1]{\textcolor[rgb]{0.545,0,0.071}{#1}}
+
+\usepackage{thmtools}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\newtheorem{assumption}{Assumption}
+
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\eg}{\textit{e.g.}}
+\newcommand{\aka}{\textit{a.k.a.}}
+
+
+\begin{abstract}
+We introduce \thiswork, an open-source language model designed for theorem proving in Lean 4, which enhances \lastwork~by optimizing both training and inference processes. Pre-trained on DeepSeekMath-Base with specialization in formal mathematical languages, the model undergoes supervised fine-tuning using an enhanced formal theorem proving dataset derived from \lastwork. Further refinement is achieved through reinforcement learning from proof assistant feedback (RLPAF). Beyond the single-pass whole-proof generation approach of \lastwork, we propose \treesearch, a variant of Monte-Carlo tree search that employs an intrinsic-reward-driven exploration strategy to generate diverse proof paths. \thiswork~demonstrates significant improvements over \lastwork, achieving new state-of-the-art results on the test set of the high school level miniF2F benchmark (63.5\%) and the undergraduate level ProofNet benchmark (25.3\%).
+\end{abstract}
+
+\begin{document}
+\begin{CJK*}{UTF8}{gbsn}
+
+\maketitle
+
+\begin{figure}[h]
+   \centering
+   \includegraphics[width=\textwidth]{figures/performance.pdf}
+  \caption{Pass rates of models on formal theorem proving benchmarks in Lean 4: the high school level miniF2F-test benchmark~\citep{zheng2021minif2f} and the undergraduate level ProofNet benchmark~\citep{azerbayev2023proofnet}. We compare both the pre-trained and fine-tuned versions of \thiswork~with strong baselines.% other models at the same training stage.
+  }
+  \label{fig:performance}
+\end{figure}
+
+% \begin{spacing}{0.9}
+% \tableofcontents
+% \end{spacing}
+
+\newpage
+
+\input{sections/introduction}
+%\input{sections/abstraction}
+\input{sections/sft}
+\input{sections/mcts}
+\input{sections/experiments}
+\input{sections/conclusion}
+
+
+
+\setcitestyle{numbers}
+\bibliographystyle{abbrvnat}
+\bibliography{main}
+\setcitestyle{authoryear}
+
+\newpage
+\appendix
+
+\input{sections/appendix}
+
+
+\end{CJK*}
+\end{document} 

@@ -1,0 +1,78 @@
+\appendix
+
+\section{Dataset statistic for Mathlib~4}
+
+\begin{table}[H]
+\caption{Summary statistics of the augmented LeanDojo Mathlib~4 dependency graph, including node counts and edge types used for premise and state relations.}
+\label{tab:graph_stats}
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Node Statistic} & \textbf{Value} &  \\
+\midrule
+Total Number of Nodes & 440,487 & \\
+\quad Premise Nodes & 180,907 & \\
+\quad State Nodes & 259,580 & \\
+\midrule
+\textbf{Edge Statistics} & \textbf{Premise-to-Premise} & \textbf{Premise-to-State} \\
+\midrule
+
+Signature local hypotheses edges & 652,484 (36.9\%) & 2,670,304 (63.4\%) \\
+Signature goal edges & 626,318 (35.4\%) & 1,539,899 (36.6\%) \\
+Proof-dependency edges & 490,356 (27.7\%) & / \\
+Next tactic premise labels ($Y_S$) & / & 379861 \\
+\midrule
+Total Edges & 1,769,158 & 4,210,203 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Hyperparameters}
+\label{appendix:hyperparameters}
+
+\subsection{Hyperparameter tuning}
+The hyperparameters for our GNN retrieval model were determined through a two-stage search using the Optuna framework \citep{optuna}. The first stage focused on architectural choices, such as GNN layer type, hidden dimensions, learning rate, and model structure (e.g., separate vs. shared GNNs for premises and contexts). The objective was to maximize the Recall@10 metric on the \emph{training set for the first batch}.
+
+As the best model was prone to overfitting, we introduced a second stage, fixing the best architecture from the previous stage, and performed a fine-grained search for optimal regularization parameters. This included tuning the node feature dropout rate, the edge dropout rate, and the L2 weight decay for the optimizer. The objective in this case was to maximize the Recall@10 metric on the \emph{validation} set.
+
+\subsection{Model and training configuration}
+Table~\ref{tab:gnn_config} lists the final configuration of our best-performing model, obtained through a two-stage Optuna search described in the previous section. We train for 120 epochs and select the model with the best validation Recall@10 for evaluation on the test set.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Final model and training configuration for the GNN-augmented retrieval model.}
+\begin{tabular}{llr}
+\toprule
+\textbf{Category} & \textbf{Parameter} & \textbf{Value / Notes} \\
+\midrule
+\multirow{6}{*}{GNN} 
+ & number of layers & 2 \\
+ & hidden size & 1024 \\
+ & activation & ReLU \\
+ & dropout & 0.256 \\
+ & edge dropout & 0.142 \\
+ & residual connections & Used \\
+\midrule
+Loss & InfoNCE temperature & 0.0138 \\
+\midrule
+\multirow{2}{*}{Optimizer} 
+ & learning rate & 0.00499 \\
+ & weight decay & 2.359e-5 \\
+\midrule
+\multirow{2}{*}{Training} 
+ & batch size & 1024 \\
+ & gradient accumulation & 2 batches \\
+ & epochs & 120 \\
+\bottomrule
+\end{tabular}
+\label{tab:gnn_config}
+\end{table}
+
+
+\section{Resources}
+
+We ran all experiments on a cluster with three NVIDIA A6000 GPUs (48 GB each), two Intel Xeon Silver 4410Y CPUs (24 cores, 48 threads), and 512\,GB of RAM.
+
+The initial hyperparameter tuning stage, with reduced training epochs, took about one day, and the subsequent stage about. 12~hours. Final training of the ensemble of six independently trained models took roughly one day, with exponential moving average (EMA) optimization adding negligible time.

@@ -1,0 +1,45 @@
+\begin{table*}[t!]
+\setlength{\tabcolsep}{0.06in}
+\begin{center}
+% \vspace{0.5cm}
+\small
+\begin{tabular}{lcccc}
+% \toprule
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{Sample budget} & \multicolumn{3}{c}{ProofNet} \\
+ & & valid$^\ddag$ & test & all \\
+\toprule
+\multicolumn{4}{l}{\textit{Single-pass Whole-Proof Generation Methods}} \\
+\midrule
+\multirow{2}{*}{\thiswork-Base} & $128$ & $6.6\%\pm 0.9\%$ & $9.7\%\pm 0.7\%$ & $7.5\%\pm 0.7\%$ \\
+& $3200$ & $10.8\%$ & $15.6\%$ & $13.2\%$  \\
+\midrule
+\multirow{3}{*}{\thiswork-SFT} & $128$ & $19.9\% \pm 0.4\%$ & $15.9\% \pm 0.6\%$ & $17.9\% \pm 0.3\%$ \\
+& $3200$ & $20.7\% \pm 0.7\%$ & $21.0\% \pm 0.9\%$ & $20.9\% \pm 0.6\%$ \\
+& $4\times 6400$ & $22.2\%$ & $23.7\%$ & $22.9\%$ \\
+\midrule
+\multirow{3}{*}{\thiswork-RL} & $128$ & $20.1\%\pm 0.5\%$ & $18.2\%\pm0.5\%$ & $19.1\%\pm 0.4\%$ \\
+& $3200$ & $21.4\%\pm 0.3\%$ & $22.0\%\pm 0.5\%$ & $21.7\%\pm 0.4\%$ \\
+& $4\times 6400$ & $21.6\%$ & $23.7\%$ & $22.6\%$ \\
+\toprule
+\multicolumn{4}{l}{\textit{Tree Search Methods}} \\
+\midrule
+ReProver [\citenum{yang2024leandojo}] & - & - & - & $13.8\%$ \\
+% \midrule
+InternLM2-StepProver [\citenum{wu2024lean}] & $1\times 32\times 100$ & - & - & $18.1\%$ \\
+\midrule
+\multirow{2}{*}{\thiswork-SFT + \treesearch} & $1\times 3200$ & $22.2\% \pm 0.7\%$ & $21.6\% \pm 0.2\%$ & $21.9\% \pm 0.4\%$ \\
+ & $4\times 6400$ & $23.8\%$ & $\textbf{25.8\%}$ & $24.8\%$ \\
+\midrule
+\multirow{2}{*}{\thiswork-RL + \treesearch} & $1\times 3200$ & $22.0\%\pm 0.3\%$ & $21.5\%\pm0.8\%$ & $21.8\%\pm0.4\%$ \\
+ & $4\times 6400$ & $25.4\%$ & $\textbf{25.3\%}$ & $25.3\%$ \\
+\bottomrule
+% \bottomrule
+\end{tabular}
+\caption{\centering
+Comparing with state-of-the-arts on the ProofNet dataset. $^\ddag$ Note that the validation set of ProofNet is used to perform expert iteration in supervised fine-tuning.
+}
+\label{tab:proofnet_results} % referenced
+\end{center}
+% \vspace{-0.2in}
+\end{table*}

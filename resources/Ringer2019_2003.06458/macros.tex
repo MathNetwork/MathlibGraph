@@ -1,0 +1,72 @@
+\usepackage{listings}
+\usepackage{mathpartir}
+\usepackage{color,xcolor}
+\usepackage{xspace}
+
+\newcommand{\mute}[1]{{#1}}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\spec}[1]{\set{#1}}
+\newcommand{\revisit}[1]{\textbf{\textcolor{orange}{#1}}}
+\newcommand{\etc}{\emph{etc}}
+\newcommand{\ie}{\emph{i.e.}\xspace}
+\newcommand{\Ie}{\emph{I.e.}\xspace}
+\newcommand{\eg}{\emph{e.g.}\xspace}
+\newcommand{\Eg}{\emph{E.g.}\xspace}
+\newcommand{\vs}{\emph{vs.}\xspace}
+\newcommand{\etal}{\emph{et~al.}\xspace}
+\newcommand{\adhoc}{\emph{ad hoc}\xspace}
+\newcommand{\viz}{\emph{viz.}\xspace}
+\newcommand{\dom}[1]{\mathsf{dom}(#1)}
+\newcommand{\aka}{\textit{a.k.a.}\xspace}
+\newcommand{\cf}{\textit{cf.}\xspace}
+\newcommand{\wrt}{\emph{wrt.}\xspace}
+\newcommand{\Iff}{\emph{iff}\xspace}
+\newcommand{\loef}{L\"{o}f}
+\newcommand{\now}{\textsc{now}}
+\newcommand{\poplmark}{\textsc{POPLMark}\xspace}
+\newcommand{\code}[1]{\lstinline{#1}}
+\newcommand{\join}{\bullet}
+\newcommand{\ssreflect}{SSReflect\xspace}
+
+\newcommand{\talia}[1]{{\textcolor{red}{(Talia: {#1})}}}
+\newcommand{\karl}[1]{{\textcolor{green}{(Karl: {#1})}}}
+\newcommand{\ilya}[1]{{\textcolor{blue}{(Ilya: {#1})}}}
+\newcommand{\milos}[1]{{\textcolor{purple}{(Milos: {#1})}}}
+\newcommand{\external}[2]{{\textcolor{brown}{(External feedback from {#1}: {#2})}}}
+
+%\newcommand{\stackrel}[2]{\mathrel{\mathop{#2}\limits^{#1}}
+%\newcommand{\defeq}{\stackrel{\text{def}}{=}}
+\newcommand{\eqdef}{\triangleq}
+
+\makeatletter
+\newcommand{\defeq}{\mathrel{\aban@defeq}}
+\newcommand{\aban@defeq}{%
+  \vbox{\offinterlineskip\check@mathfonts
+    \ialign{\hfil##\hfil\cr
+      \fontsize{\ssf@size}{\z@}\normalfont def\cr
+      \noalign{\kern1\p@}
+      $\m@th=$\cr
+      \noalign{\kern-.5\fontdimen22\textfont2}
+    }%
+  }%
+}
+\makeatother
+
+%\newcommand{\defeq}{%
+%  \mathrel{\vbox{\offinterlineskip\ialign{%
+%    \hfil##\hfil\cr
+%    $\scriptscriptstyle\mathrm{def}$\cr
+%    %\noalign{\kern0ex}
+%    $=$\cr
+%}}}}
+
+\newcommand{\reducedstrut}{\vrule width 0pt height .9\ht\strutbox depth .9\dp\strutbox\relax}
+\newcommand{\codediff}[1]{%
+  \begingroup
+  \setlength{\fboxsep}{0pt}%  
+  \colorbox{orange!25}{\reducedstrut#1\/}%
+  \endgroup
+}
+
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+\def\cross{$\mathbin{\tikz [x=1.4ex,y=1.4ex,line width=.2ex] \draw (0,0) -- (1,1) (0,1) -- (1,0);}$}

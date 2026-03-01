@@ -1,0 +1,50 @@
+\section{LeanDojo: Toolkit and Benchmark}
+\label{sec:leandojo}
+
+LeanDojo serves two essential needs of learning-based theorem proving in Lean. First, it extracts training data from Lean, and we use this capability to construct a challenging theorem proving benchmark. Second, it enables the model to interact with Lean programmatically.
+
+\smallsec{Data Extraction}
+Lean repos (e.g., \href{https://github.com/leanprover-community/mathlib}{\texttt{mathlib}} or \href{https://github.com/leanprover-community/lean-liquid}{\texttt{lean-liquid}}) contain source code of human-written theorems/proofs. However, the raw code is unsuitable for training the prover. It lacks runtime information that humans can access when using Lean, such as intermediate states between proof steps. Therefore, LeanDojo extracts the following information not directly visible in the code:
+\begin{itemize}[leftmargin=*]
+
+\item \emph{File dependencies and abstract syntax trees (ASTs):} LeanDojo processes the repo to produce a directed acyclic graph whose nodes are files and edges are import relations between files. In addition, LeanDojo produces the AST of each file. File dependencies and ASTs are useful for program analysis, e.g., collecting theorems defined in a file or premises accessible to a theorem.
+
+\item \emph{States and tactics:} LeanDojo extracts all tactics in proofs. For each tactic, it also extracts the states before/after the tactic, which allows us to reconstruct the proof tree in Fig.~\ref{fig:overall} (\emph{Top left}).
+
+\item \emph{Premises:} For each premise, such as \hlorange{\texttt{mod\_self}} in Fig.~\ref{fig:lean_code}, LeanDojo records where it is defined (location in \texttt{data/nat/lemma.lean}) and where it is used (locations across many files). In addition, premises have unique fully qualified names (e.g., \hlorange{\texttt{nat.mod\_self}}) but are often used by ambiguous short names (\hlorange{\texttt{mod\_self}}), relying on Lean to perform name resolution. LeanDojo is capable of recording their full names.
+\end{itemize}
+
+Lean has basic support for exporting dependencies, ASTs, states, and tactics. However, it cannot resolve the premises' full names and locate their definitions. Therefore, we modify Lean to record this information (details in Appendix~\ref{appendix:leandojo:premises}). The modified Lean is used only for data extraction but not for evaluation, so we do not risk accidentally breaking Lean's logical soundness. 
+
+
+\smallsec{LeanDojo Benchmark}
+We construct a benchmark for premise selection and theorem proving, named \emph{LeanDojo Benchmark}. The data is extracted from \href{https://github.com/leanprover-community/mathlib}{mathlib},\footnote{We use the commit \href{https://github.com/leanprover-community/mathlib/tree/19c869efa56bbb8b500f2724c0b77261edbfa28c}{\texttt{19c869efa56bbb8b500f2724c0b77261edbfa28c}} released on October 11, 2023.} Lean's centralized math library covering diverse topics such as analysis, algebra, and geometry.\footnote{More details, statistics, and visualizations of \texttt{mathlib} can be found at \url{https://leanprover-community.github.io/mathlib_stats.html}.} LeanDojo Benchmark is one of the largest math-focused theorem proving datasets, consisting of {\numproofs} theorems from {\numfiles} Lean files. Unlike existing datasets in Lean~\cite{han2022proof}, LeanDojo Benchmark also contains the definitions of {\numpremises} premises, including not only theorems but also other definitions that can be used as premises (e.g., \hlblue{gcd} in Fig.~\ref{fig:lean_code}. Furthermore, the dataset has {\numtactics} tactics, {\numtacticswithpremises} of them with at least one premise. The average number of premises is {\avgnumpremises} among tactics with premises. 
+Appendix~\ref{appendix:benchmark} contains additional information on data format, datasheet~\cite{gebru2021datasheets}, hosting, and licensing.
+
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/quaternion.pdf}
+    \caption{Similar theorems/proofs are common. If splitting them randomly into training/testing, the model can prove testing theorems by memorization.}
+    \label{fig:quaternion}
+\end{figure*}
+
+LeanDojo Benchmark has {\numtraintheorems}/{\numvaltheorems}/{\numtesttheorems} theorems for training/validation/testing. It features a challenging data split for testing the prover's generalization in more realistic scenarios. Splitting theorems randomly can overestimate the prover's performance, by allowing it to prove many theorems through memorization. In human-written Lean code, a common idiom is to have a block of similar theorems/proofs for slightly different properties of the same math concept. For example, in Fig.~\ref{fig:quaternion}, the last two theorems not only look similar but have identical proofs. If one of them is in training, the model can easily prove the other one by memorization. This shortcut enables the model to prove seemingly nontrivial theorems, including those requiring premises to prove. 
+
+To mitigate this issue, besides the \texttt{random} split, we create a challenging data split named \texttt{novel\_premises}. It requires testing proofs to use at least one premise that has never been used in training. For example, the last two theorems in Fig.~\ref{fig:quaternion} both use the premise \hlgray{conj\_mul}. If one theorem is in the training set of the \texttt{novel\_premises} split, the other one must also be in training.
+
+
+\smallsec{Interacting with Lean}
+Another important function of LeanDojo is to interact with Lean programmatically. It turns Lean into a gym-like environment~\cite{brockman2016openai}, in which the prover can observe the proof state, run tactics to change the state, and receive feedback on errors or on proof completion. This environment is indispensable for evaluating/deploying the prover or training it through RL. 
+
+Below is LeanDojo's main interface for interacting with Lean through tactics. Lean also supports other proof styles not based on tactics. Although we only support tactic-style proofs, they are sufficiently general since any proof can be converted to a tactic-style proof.\footnote{Another common type of proofs is ``term-style proofs''. Any term-style proof ``\texttt{X}'' can always be converted into an equivalent tactic-style proof ``\texttt{exact X}'', though such conversion may lead to unidiomatic proofs.}
+\begin{itemize}[leftmargin=*]
+
+\item \texttt{initialize(theorem)}: Given the theorem to prove, LeanDojo returns the initial state. A valid state is a string representing current proof goals and local contexts (see the nodes in Fig.~\ref{fig:overall} \emph{Top left}). When there are multiple goals, their strings are concatenated.
+
+\item \texttt{run\_tac(state, tactic)}: Run a tactic on a given state and return the next state. The returned state will be an error state if the tactic execution is not successful, e.g., due to timeout or inapplicable tactic. If the input state is an error, the result can only be an error.
+
+\end{itemize}
+
+Building this environment is technically challenging, as Lean is designed for human users, not machines. LeanDojo is the first tool that can interact with Lean reliably. Existing tool~\cite{polu2023formal} is limited: 21.1\% of the ground truth proofs are misjudged as incorrect, due to issues with how they construct the proof environment, which distorts the reported performance and produces unreliable feedback when used in reinforcement learning. In contrast, LeanDojo reduces the number of misjudgments to 1.4\%. Details are in Appendix~\ref{appendix:leandojo:interaction}.
+

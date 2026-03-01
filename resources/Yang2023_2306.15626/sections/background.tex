@@ -1,0 +1,21 @@
+\section{Background: Theorem Proving in Lean}
+\label{sec:background}
+
+At a high level, Lean is a programming language that allows you to write not only conventional programs but also theorems and proofs. To that end, it provides two pieces of machinery: First, it provides a unified language for defining programs, mathematical objects, theorems, and proofs, based on functional programming with dependent types~\cite{christiansen2023functional}. Second, it provides a tactic system for constructing machine-checkable proofs semi-automatically. 
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/lean\_code.pdf}
+  \caption{Definition of greatest common divisor (\hlblue{\texttt{gcd}}) in Lean and two related theorems. The proof of \texttt{gcd\_self} (between ``\texttt{begin}'' and ``\texttt{end}'') relies on a premise \hlorange{\texttt{mod\_self}} imported from another file in the math library. Lean can run this proof to produce the proof tree in Fig.\ref{fig:overall} (\emph{Top left}).}
+  \label{fig:lean_code}
+\end{figure*}
+
+We use a simple example in Fig.~\ref{fig:lean_code} to illustrate how theorems are formalized and proved in Lean.\footnote{The process is similar in many other proof assistants, though they may have different logical foundations.} Here we want to formalize the greatest common divisor (\texttt{gcd}) of two natural numbers. First, we define \hlblue{\texttt{gcd}} as a recursive function, taking two natural numbers as parameters and returning their \texttt{gcd} via the Euclidean algorithm. Then, we state a lemma named \hlgreen{\texttt{gcd\_zero\_left}} that $\forall x \in \mathbb{N},~\texttt{gcd 0 x = x}$, which can be proved simply by the definition of \texttt{gcd}. Finally, we state our main theorem \texttt{gcd\_self} that $\forall n \in \mathbb{N},~\texttt{gcd n n = n}$, followed by its proof consisting of five tactics. In theorem proving, we are only concerned with generating the proof, i.e., the part between ``\texttt{begin}'' and ``\texttt{end}''; everything before ``\texttt{begin}'' is known, including other files imported.
+
+
+The syntax of tactics is quite expressive. They can take arguments and can be combined into compound tactics. You can think of tactics as programs in a domain-specific language (DSL). Users can extend the DSL by defining new tactics. This discrete, combinatorial, and unbounded action space makes theorem proving challenging for machine learning.
+
+
+Another challenge is premise selection. Premises are existing lemmas or definitions useful for proving a theorem. They are used as arguments in tactics. For example, in Fig.~\ref{fig:lean_code} and Fig.~\ref{fig:overall} (\emph{Top left}), the tactic ``\texttt{rewrite \hlorange{mod\_self}}'' rewrites the goal using the premise \hlorange{\texttt{mod\_self}}, which is defined in another file imported by the current file. Proofs cannot use premises that haven't been defined. For example, \texttt{gcd\_self} cannot be used to prove \hlgreen{\texttt{gcd\_zero\_left}}. In addition, they cannot use premises not imported to the current file. Still, premises come from a large math library containing hundreds of thousands of existing definitions and theorems, making it hard, for humans and machines alike, to select the right premises when generating a tactic. This is a key bottleneck in theorem proving and is what we aim to address through retrieval-augmented LLMs.
+
+

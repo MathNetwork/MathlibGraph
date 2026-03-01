@@ -1,0 +1,1398 @@
+\chapter{Proof Organization and Scalability}
+\label{ch:organization}
+
+As verification projects have grown in size, proof engineers have increasingly
+stressed strategies and tools for organizing large proof developments and for dealing
+with the challenges of scale.
+This section describes some of these strategies and tools:
+constructs for property specification and encodings (Section~\ref{sec:specenc}), proof design principles (Section~\ref{sec:proofdes}),
+high-level frameworks (Section~\ref{sec:frameworks}), and constructs and tools for proof reuse (Section~\ref{sec:proof-reuse}).
+
+% TODO Talia: If time, example with a big development like CompCert
+
+% Talia: Karl had this text, but I'm not sure what it's supposed to do since it's orphaned, so commenting out for now;
+% I assume if he wants it in this section, he'll add it back in
+%Essential foundations of practical program verification:
+%\begin{itemize}
+%\item pure, recursive, total functions
+%\item algebraic datatypes and pattern matching
+%\item higher-order logic specifications
+%\item reasoning by structural induction
+%\end{itemize}
+
+\section{Property Specification and Encodings}
+\label{sec:specenc}
+
+Proof engineers leverage many constructs and notations to express programs and their specifications. For example, Coq offers a single basic language called Gallina for both logical formulas and (computable) functions, while Isabelle offers both an object language (e.g., HOL) and a metalogic with different operators and quantifiers. The specification languages can be extended inside proof assistants by using \emph{notations}, which provides new syntax for existing concepts; this is crucial for emulating mathematical vernacular, which can aid understanding of formal definitions.
+
+On top of basic specification constructs, sophisticated properties can be expressed using inductive predicates via familiar definitional
+mechanisms (Section~\ref{sec:definitional}). These predicates can be interpreted as higher-order Prolog programs~\citep{CoqArt}. For generality and reuse, collections of such specifications can be abstracted over using mechanisms such as parametric polymorphism~\citep{Strachey2000}, modules, and type classes (Section~\ref{sec:proofdes}).
+
+\subsection{Domain-Specific Specification Languages}
+\label{sec:dsspec}
+
+\cite{Sewell2010} presented a domain-specific language called Ott for expressing inductive definitions and inductive properties over such definitions, suited in particular for formalizing programming language semantics. Ott files can be exported to Isabelle/HOL, Coq, and HOL4, using specific annotations for each proof assistant. For example, the regular expression datatype from Chapter~\ref{ch:ex} can be expressed in Ott as
+\begin{lstlisting}
+regexp :: regexp_ ::= {{ com regexp }} {{ coq-universe Type }}
+ | 0 :: :: zero | 1 :: :: unit | c :: :: char
+ | r + r' :: :: plus | r r' :: :: times | r * :: :: star
+\end{lstlisting}
+while the last matching rule for the Kleene star becomes
+\begin{lstlisting}
+s in L ( r )  s' in L ( r * )
+----------------------------- :: star_2
+s s' in L ( r * )
+\end{lstlisting}
+Note that the extra spacing is necessary for Ott's parser to properly disambiguate the syntax.
+
+The more general proof assistant-agnostic specification language Lem~\citep{Mulligan2014} also includes definition of recursive functions and other programming language constructs,
+as well as a standard library useful for semantic definitions. Ott files can be exported to Lem format and thus incorporated into larger definitions.
+
+%\talia{Karl will write a draft}
+%
+%\begin{itemize}
+%\item specification language constructs (quantifiers and connectives,
+%  functions, inductive datatypes and predicates, modules, type
+%  classes, ...)
+%\item data structure and property encodings
+%\item notations and custom operators
+%\item domain-specific specification languages (Ott, Lem, ...)
+%\item specification in high-level frameworks
+%\end{itemize}
+
+\subsection{Refinement of Programs, Data, and Proofs}
+\label{sec:refinement}
+
+Stepwise \textit{program refinement} is the construction of a program by a sequence of refinement steps,
+where each refinement step breaks the original problem into a subproblem~\citep{Wirth1971};
+these steps can be verified in an ITP.
+Each refinement can be a refinement of a program without changing the datatypes, or a refinement of
+the datatypes themselves (\textit{data refinement}~\citep{de1998data}).
+Via the principle of propositions-as-types, similar approaches can be used to develop proofs by stepwise \textit{proof refinement} of an existing
+specification.
+
+\paragraph{Program Refinement}
+A proof of refinement formally relates an abstract program to a concrete, refined version of that program.
+It establishes that all of the behaviors of the concrete program are contained in the set of behaviors of the abstract program~\citep{de1998data}.
+This relation can also be stated and proven in terms of the program specifications (as in the \textit{refinement calculus}~\citep{back1988calculus})
+or in terms of a simulation relation (Section~\ref{sec:techniques}).
+\cite{FRAPBook}	contains an overview of using program refinement to derive verified correct programs from their specificationss.
+
+\cite{back1991} formalized the refinement calculus in HOL.
+\cite{vonwright1994} presented a tool for verified program refinement using the refinement calculus in HOL.
+Since then, there have been a number of refinement tools in Isabelle/HOL with support for logic~\citep{hemer2001}, object-oriented~\citep{Liu2011},
+functional~\citep{lammich2013refinement}, and imperative~\citep{lammich2015refinement} programs.
+\cite{Cohen2013} developed a framework for Coq called CoqEAL which automates key steps of data refinement.
+\cite{Delaware2015} presented Fiat, a refinement framework for deductive synthesis of abstract data types in Coq.
+
+Proof engineers use proofs of program refinement to break down large proof developments or to compose modular proof developments,
+for example for the verification of storage systems~\citep{Chajed2019}, compilers~\citep{Leroy2009, Rizkallah16, Kumar2014}, and
+OS kernels~\citep{Klein2014micro, Gu-al:POPL15, Gu-al:OSDI16}.
+Refinement proofs can also help make proof developments robust to changes (Section~\ref{sec:des-scale}).
+
+\paragraph{Proof Refinement}
+Reasoning backwards in proof assistants, from goals to premises, can be viewed as a form of proof refinement~\citep{Bates1979, krafft1981},
+where the proof is the refinement of the specification. The idea of proof refinement is to refine the goal to proofs of subgoals, then refine
+those subgoals further.
+\cite{Bates1979}, for example, describes the rule for refining a conjunction \lstinline{A }$\land$ \lstinline{ B} given hypotheses \lstinline{S}:
+\begin{lstlisting}
+  S pr A $\land$ B by
+    S pr A
+    S pr B
+\end{lstlisting}
+In other words, \lstinline{A }$\land$ \lstinline{ B} follows from \lstinline{S} if each of \lstinline{A} and \lstinline{B} follow from \lstinline{S}.
+Each of \lstinline{A} and \lstinline{B} follow from \lstinline{S} if they can be refined using other rules.
+
+Refinement logics such as Nuprl~\citep{Constable1986} and RedPRL~\citep{angiuli2018} as well as other proof assistants following
+in the LCF tradition (Section~\ref{sec:early-history}) encourage this style of reasoning.
+\cite{SterlingH17} contains an overview of proof refinement.
+
+%\subsection{Proof System Styles}
+%
+%\talia{Karl will write a draft}
+%
+%proof system styles (forward vs. backward, tree vs. list, Gentzen vs. Fitch)
+
+\section{Proof Design Principles}
+\label{sec:proofdes}
+
+% TODO integrate
+%For example, there is growing interest in both domain-specific and general purpose proof design principles.
+%These design principles in many ways mimic software engineering design principles, helping proof engineers
+%write modular code and abstract away unecessary details. Some are even straightforward extensions of
+%software engineering design principles into the realm of proof engineering, like the use of interfaces to abstract code~\citep{Woos2016}.
+%Many, however, deal with challenges that are unique to or more common in proof engineering, such as the challenges
+%that arise from the presence of dependent types~\citep{CPDT}.
+
+Good design principles can make proofs easier to develop and maintain.
+These design principles mirror software engineering design principles
+in many ways, but also address challenges unique to proof
+engineering.
+
+Consider an example in Coq from \cite{Woos2016},
+which demonstrates a design principle that addresses challenges unique to proof engineering.
+In this example, we have a proof \lstinline{eg_proof} of a theorem \lstinline{eg},
+which shows that if two functions map equal inputs to equal outputs,
+then any proposition that holds on all outputs of \lstinline{g}
+must also hold on all outputs of \lstinline{f}:
+\begin{lstlisting}
+Definition eg : Prop :=
+  forall (A B : Type) (f g : A -> B) (P : B -> Prop),
+    (forall x, P (g x)) ->
+    (forall x, f x = g x) ->
+    (forall x, P (f x)).
+
+Lemma eg_proof : eg.
+Proof.
+  unfold eg. intros. rewrite H0. auto.
+Qed.
+\end{lstlisting}
+Suppose we later change \lstinline{eg} (using \codediff{orange} to show changes):
+\begin{lstlisting}
+Definition eg : Prop :=
+  forall (A B : Type) (f g : A -> B) (P $\codediff{Q}$ : B -> Prop),
+    (forall x, P (g x)) ->
+    $\codediff{(forall x, P (g x) -> Q (g x))}$ ->
+    (forall x, f x = g x) ->
+    (forall x, P (f x) /\ $\codediff{Q (f x)}$).
+\end{lstlisting} % TODO formatting forall above
+As the authors note, our proof \lstinline{eg_proof} no longer holds,
+since the automatically generated hypothesis name \lstinline{H0} is now called \lstinline{H1}.
+One way to address this is to change the hypothesis name in the proof as well:
+\begin{lstlisting}[language=Coq]
+Proof.
+  unfold eg. intros. $\codediff{rewrite H1.}$ auto.
+Qed.
+\end{lstlisting}
+But if we continue changing \lstinline{eg}, then we will need to keep making these kinds of changes.
+Instead, the authors advocate for using the tactic \lstinline{find_rewrite},
+since it does not depend on hypothesis names:
+\begin{lstlisting}[language=Coq]
+Proof.
+  unfold eg. intros. $\codediff{find\_rewrite.}$ auto.
+Qed.
+\end{lstlisting}
+This proof goes through for both definitions of \lstinline{eg}.
+
+The design principle from this example addresses a challenge unique to proof engineering, since it deals with the consequences of proof automation.
+Other proof engineering design principles mirror software engineering design principles.
+This section provides an overview of design principles for proof engineering, drawing
+parallels to software engineering when appropriate.
+It focuses on general-purpose design principles, and discusses domain-specific design principles (beyond those from Chapter~\ref{cha:appl-mech-proofs})
+only when relevant more broadly.
+% TODO Talia: Maybe note something about the organization here
+
+%Other domains that have contributed
+%proof engineering design principles include relational
+%databases~\citep{Malecha2010}, state machines~\citep{Rahli2017},
+%and randomized algorithms~\citep{Audebaud2009}.
+
+\subsection{Design Principles for Abstraction} % TODO Talia: maybe just ``interfaces''
+\label{sec:desabs}
+
+As in software engineering, design principles for proof engineers prevent changes in implementation
+from breaking dependencies that ought to rely only on specifications.
+For example, much like a software engineer may write an interface for a collection of functions so that he can
+switch out implementation details such as the underlying data structure % or database
+without breaking functionality that
+depends on those functions, so a proof engineer may write an interface for a collection of lemmas
+so that changes to the proofs of those lemmas do not break other lemmas and theorems that depend on those lemmas~\citep{Woos2016}.
+
+There are many ways to achieve this sort of abstraction in ITPs,
+some of which have different impliciations for proof automation. For example,
+in Coq, it is possible to write interfaces using modules, type classes, or canonical structures;
+Coq has special support for proof search for type classes~\citep{Sozeau2008} and canonical structures~\citep{Saibi:PhD}. % cite something about proof search in Coq for these
+This section describes some means of abstraction in an ITP.
+
+%\paragraph{Polymorphism}
+%Strachey identified two kinds of polymorphism for functions: parametric and ad-hoc~\cite{Strachey2000}. The former occurs when a function behaves essentially the same way for all types, %e.g., a function computing the number of elements in a list holding elements of a certain type. The latter occurs when behavior differs significantly depending on the type, e.g., when computing whether two elements of a type are equal (for some fixed notion of equality, not necessarily identity). The type systems of Standard ML and other functional languages such as OCaml provide a widely accepted solution to parametric polymorphism in the form of Hindley-Milner type inference~\cite{Damas1982}. On the other hand, solutions to ad-hoc polymorphism of functions have accrued a wider variety of solutions, of which the principal ones are \emph{modules} and \emph{type classes}.
+% Talia: I don't think this paragraph really fits anywhere or adds anything from a proof engineering perspective; maybe better for foundations
+
+\paragraph{Modules}
+Modules, as manifested in languages such as Standard ML~\citep{MacQueen1986} and proof assistants such as Coq~\citep{Chrzaszcz2003}, are collections of named components which may be types, values, or nested modules. A central property is the separation of module interfaces (signatures or module types) and module implementations (structures). The interface-implementation relation is many-to-many; one signature can be implemented by several structures, and one structure can implement several signatures. A structure can choose to hide all information not specified in the signatures it implements.
+
+%\talia{example goes here}
+
+Parametric modules, called functors, take structures that implement certain signatures as arguments. In proof assistants, functors can provide abstraction and reuse of both functions and proofs. This approach is taken to implement finite sets and maps in Coq using AVL trees~\citep{Filliatre2004}, and later to implement balanced binary search trees
+using red-black trees~\citep{Appel2011b}.
+
+\paragraph{Type Classes}
+Type classes were first implemented in the Haskell programming language~\citep{Wadler1989}.
+In a proof assistant context, type classes have notably been implemented for Coq~\citep{Sozeau2008} and Isabelle/HOL~\citep{Haftmann2006};
+instance arguments~\citep{Devriese2011} are a similar feature in Agda.
+Type classes can be viewed as a particular use of a module system as in Standard ML, and type classes can coexist with such a module system~\citep{Dreyer2007}.
+
+A type class can be viewed as an abstract data type that defines a collection of functions by their parameter types, while not fixing function implementations. The abstract data type can then be implemented in different ways for different parameter types. For example, Volume 4 of Software Foundations~\citep{Pierce-al:SF} describes an
+equality type class with a single function \texttt{eqb} which, when provided two arguments of the same type, returns a boolean:
+\begin{lstlisting}
+Class Eq A :=
+{
+  eqb: A -> A -> bool;
+}.
+\end{lstlisting}
+Different implementations (\emph{instances}) of this class can then be provided for different types;
+Software Foundations describes one for booleans:
+\begin{lstlisting}
+Instance eqBool : Eq bool :=
+{
+  eqb := fun (b c : bool) =>
+     match b, c with
+       | true, true => true
+       | true, false => false
+       | false, true => false
+       | false, false => true
+     end
+}.
+\end{lstlisting}
+and one for natural numbers:
+\begin{lstlisting}
+Instance eqNat : Eq nat :=
+{
+  eqb := Nat.eqb
+}.
+\end{lstlisting}
+A compiler can translate programs that use functions defined for type classes to programs that do not by looking up and applying the appropriate function instances, using information about function invocation types.
+
+A key use of type classes in Haskell programs is as a way to structure programs by abstracting certain code over appropriate type classes, and concretizing the abstracted code with appropriate type instances elsewhere, avoiding duplication and facilitating reuse;
+proof engineers can use type classes similary to achieve both code and proof reuse.
+However, type classes in ITPs also provide additional benefits beyond those that type classes in other languages such as Haskell provide.
+For example, one drawback of using only type classes for structuring programs in Haskell is that a type can implement a type class in exactly one way~\citep{HarperModules2011};
+it may be useful to define different type class instances for sorting of integers depending on the size of the input data, or use different orders on integers for sorting.
+Unlike in Haskell, type classes in Coq can support multiple instances.
+
+The Coq implementation of type classes is \emph{first-class}, meaning that it is a thin layer on top of existing functionality (specifically, implicit arguments and dependent records). In addition, \cite{Sozeau2008} added specific support for type class resolution into Coq's proof search mechanism. In contrast to Coq's type classes, the type classes of Isabelle/HOL are restricted to one type variable, and are not first-class. One particular advantage of type classes in proof assistants (as opposed to type classes in Haskell) is that propositions can be type class members, e.g., a type class for a monad can require witnesses (proofs) for the monad laws along with monad operations. By extension, this means that proofs in one type class instance can be derived partly from proofs in other type class instances (e.g., of some more general class). In contrast with Haskell,
+the type class instance resolution system in Coq can always be elided by manually passing implicit type class instances.
+
+Type classes have been used for abstraction and reuse in many proof developments.
+For example, \cite{Spitters2011} used type classes to represent a standard algebraic hierarchy in Coq, along with parts of category theory.
+\cite{Woos2016} used type classes to organize the correctness proof of the Raft consensus protocol in Coq, and for abstracting the Raft protocol implementation for replication over arbitrary state machines.
+
+Type classes are closely tied to other language features for abstraction.
+General parametrization of theories in Isabelle can be achieved via \emph{locales}~\citep{Kammueller1999,Ballarin2006}, which is the mechanism used to provide type class support~\citep{Haftmann2009}; a locale can be viewed as a persistent proof context that includes arbitrary variables and assumptions, and which can be instantiated in other proofs.
+
+% Talia: Punting on this because Ilya was working on it; maybe add a sentence or two about how they're different,
+% but TBH it seems like nobody really actually knows why it's better to use one or the other
+
+% Talia: Way too bottom-up, I think we want more on actually using these things and less on the details of how they work
+
+\paragraph{Canonical Structures}
+%
+In Coq, canonical structures~\citep{Mahboubi-Tassi:ITP13, Saibi:PhD} provide an alternative to type classes.
+Canonical structures are a mechanism to provide theory-specific dictionaries to datatypes, allowing for more
+flexible resolution strategy than more the more widely used type classes.
+
+To show their typical use, consider partial commutative monoids
+(PCMs); an algebraic structure which recurs in our current ongoing
+work on the verification of stateful and concurrent
+programs~\citep{Nanevski-al:ESOP14}. We implement PCMs using two of the
+Coq's native constructs: \emph{dependent records} and \emph{canonical
+  structures}.  We follow the established \ssreflect design pattern of
+defining algebraic data structures by means of \emph{mix-in}
+composition~\citep{Garillot:PhD}, whereby different dependent records
+formalize different algebraic properties, which can be combined using
+\emph{packed classes} mechanism. The latter also defines the field
+resolution strategy~\citep{Garillot-al:TPHOL09} in a case of
+overlapping names.
+%
+% \an{Hmm, what is field-resolution strategy?}
+%
+%\is{I clarified}
+%
+For instance, in Coq the \emph{mix-in} defining PCMs is represented by the
+following dependent record:
+\begin{lstlisting}
+Record mixin_of (T : Type) := Mixin {
+  valid : T -> bool;
+  join : T -> T -> T;
+  unit : T;
+  _ : commutative join;
+  _ : associative join;
+  _ : left_id unit join;
+  _ : forall x y, valid (join x y) -> valid x;
+  _ : valid unit }.
+\end{lstlisting}
+%
+The type \code{T} is the \emph{carrier type} of the structure. The
+field \code{valid} selects a subset of \code{T}, standing for the
+``defined'' elements. The invalid (or ``undefined'') elements help
+model partiality: a partial function over \code{T} will return some
+invalid element on an input on which it is mathematically undefined.
+\code{join} is the binary operation of the PCM, and \code{unit}
+is the unit element. The remaining five unnamed fields enumerate the
+axioms that have to be satisfied by each PCM instance.
+
+Next, the mix-in ``interface'' is packaged with a carrier type, into a
+dependent record type, which represents PCMs. We also introduce a
+coercion from the package to the underlying carrier type, so that the
+two can be conflated. This coercion essentially accounts for the
+delegation hierarchy from object-oriented languages.
+%
+\begin{lstlisting}
+Structure pcm : Type := Pack {type : Type; _ : mixin_of type}.
+Coercion type : pcm >-> Sortclass.
+\end{lstlisting}
+
+Next, we explain the mechanism of packaging all necessary definitions
+along with lemmas about data structures (such as \emph{join}'s
+commutativity and associativity in the case of PCMs) into a single
+module that should be imported by the clients of the algebraic
+structure.  For example, we introduce appropriate notation for the
+join operation, and specifically name and prove the lemmas that
+correspond to the PCM properties that we left unnamed in the mixin.
+\begin{lstlisting}
+Notation x \+ y := (join x y).
+Lemma joinC (U : pcm) (x y : U) : x \+ y = y \+ x.
+Lemma joinA (U : pcm) (x y z : U) :  x \+ y \+ z = x \+ (y \+ z).
+\end{lstlisting}
+%
+The lemmas such as \code{joinC} and \code{joinA} are proved by
+destructing the package \code{U}, but notice how the coercion allows
+conflating \code{U} with its carrier type. Also notice how the
+notation \code{\\+} allows the PCM \code{U} to be ommitted from
+the equations themselves, as the typechecker can infer it from the
+context.
+
+Algebraic structures can inherit the properties of other, more basic
+structures. Thus, we also require an analogue of object-oriented
+\emph{inheritance}. We illustrate how this can be done in Coq, by
+defining an interface for a \emph{cancellative} PCM, which inherits
+from an ordinary PCM. The cancellative PCM is defined as the following
+mix-in record:
+%
+\begin{lstlisting}
+Record mixin_of (U : pcm) := Mixin {
+  _ : forall a b c: U, valid (a \+ b) -> a \+ b = a \+ c -> b = c
+}.
+\end{lstlisting}
+%
+Notice that the dependent record \code{mixin_of} in this case is
+parametrized via the carrier PCM \code{U}, which is used as a target
+for a coercion whenever an instance of a plain PCM or a carrier type
+\code{U} is required, since coercions a transitive.
+
+Let us now \emph{instantiate} the definition of abstract structure
+with concrete datatypes. It turns out that it is insufficient to
+merely prove that a datatype satisfies the PCM axioms. To work
+comfortably with an algebraic structure in practice, one has to
+explicitly ``register'' the structure with the type inference engine.
+
+We first show what goes wrong if one doesn't perform the
+``registration.''  For instance, assume we first define an instance of
+a PCM for \code{nat} with addition, by proving that \code{+} with
+\code{0} satisfies the PCM axioms.  Then the following lemma which
+uses the generic notation \code{\\+} for the PCM operation, is
+considered ill-formed by Coq. The reason is that Coq cannot figure
+that there is a PCM associated with \code{nat}, and that the generic
+notation \code{\\+} should be resolved with addition. Indeed, we could
+have defined the PCM for \code{nat} via multiplication $(\times)$ with
+$1$, in which case \code{\\+} should be resolved by~$\times$.
+%
+\begin{lstlisting}
+Lemma add_perm (a b c : nat) : a \+ (b \+ c) = c \+ (b \+ a).
+\end{lstlisting}
+%
+In the above case, once a structure is registered as the default PCM
+for \code{nat}, the \code{add_perm} lemma can be proved by selective
+rewriting using the standard PCM properties.
+
+Some notable uses of canonical structures include telescopes~\citep{Garillot-al:TPHOL09} and
+higher-order tactics for separation logic~\citep{Gonthier2011}.
+% TODO reasoning about concurrent data strucutes~\citep{Nanevski2014}
+% the above citation is broken, not sure which paper it refers to, can't find anything about canonical structures in ESOP paper
+
+\subsection{Design Principles for Programming with Dependent Types}
+
+In order to use dependent types to their full extent, proof engineers have developed many
+paradigms to deal with the challenges they present.
+For example, using dependent types, we can define heterogenous lists and a selection function
+over hetereogenous lists. To write the selection function, however, we must first define
+the \textit{type} that it has, which depends on the case. \cite{CPDT} accomplishes this
+using a membership predicate:
+\begin{lstlisting}
+Section hlist.
+  Variable A : Type.
+  Variable B : A -> Type.
+
+  Inductive hlist {A : Type} {B : A -> Type} : list A -> Type :=
+  | HNil : hlist nil
+  | HCons : forall (x : A) (ls : list A), B x -> hlist ls -> hlist (x :: ls).
+
+  Variable elm : A.
+
+  Inductive member : list A -> Type :=
+  | HFirst : forall ls, member (elm :: ls)
+  | HNext : forall x ls, member ls -> member (x :: ls).
+
+  Fixpoint hget ls (mls : hlist ls) : member ls -> B elm :=
+    (* ... *)
+End hlist.
+\end{lstlisting}
+In other words, the type of \lstinline{hget} states that whenever \lstinline{elm} is a member of some list \lstinline{ls},
+then we can select some element of type \lstinline{B elm} from any \lstinline{mls : hlist ls}.
+This is one example of a common style of writing functions and proofs using dependent types,
+wherein the proof engineer first defines the type of the function or proof inductively,
+and then defines the function or proof that has that type.
+It is a powerful style that makes it possible to define very expressive types.
+
+\cite{CPDT} provides a comprehensive overview
+of dependently-typed programming in Coq with many more examples.
+%Users of the proof assistant Agda, which lacks a tactic language, make extensive use of design principles
+%for dependently-typed programming~\revisit{(cite)}.
+\cite{Tanter2015} outlines design principles for gradual verification in Coq,
+which may help reduce the burden of verification with dependent types and increase adoption. % TODO what does this do?
+
+\subsection{Design Principles for Scale}
+\label{sec:des-scale}
+
+The scale of programs verified in ITPs has increased over the years.
+In recent years, proof engineers have begun to look at how to address the challenges that come with this increase in scale.
+Proof engineering in the large~\citep{Kaivola2003}, for example, describes a methodology
+for verifying large-scale ciruits; it is among the earliest work
+noting that proof design for large verification projects is important.
+This section describes design principles dealing with the challenges of scale such as
+robustness in the face of changes, compositionality of components, and efficiency of code and proofs.
+In addition, Section~\ref{sec:proof-reuse} describes design principles for proof reuse.
+
+\paragraph{Design Principles for Robustness}
+A major source of inefficiency in verification is \textit{proof
+  brittleness}: Even a minor change to a single theorem or definition can break many
+dependent proofs. This makes proofs difficult to
+maintain~\citep{Woos2016, Aydemir2008, plse-coevolve-djg-fose14, Delaware2013ICFP}.
+Design principles help make proofs robust in the face of changes.
+This is one approach to proof evolution (Section~\ref{sec:evolve}).
+
+One approach to building robust proofs is to make use of proof automation (Chapter~\ref{sec:prooflangs}) to dispatch similar goals.
+Proof engineers who use the default tactics included in many proof assistants
+already take advantage of this, since the same tactic can discharge different goals.
+For example, a proof engineer who uses \lstinline{omega} in Coq or \lstinline{presburger} in
+Isabelle/HOL need not change the proof script as the goal changes, so long as the goal stays within
+the same fragment of arithmetic solved by those tactics.
+
+The degree to which proof engineers rely on automation varies by style.
+CPDT~\citep{CPDT}, for example, advocates for the heavy use of program-specific automation,
+noting that this makes proofs more robust; the tagless interpreter proofs from Chapter 8.3 of CPDT contain
+an example of automation of this kind.
+This style of development localizes the burden of change to the automation itself
+as opposed to the many proofs that use the automation.
+
+While automation can make proofs more robust, it can also be brittle in itself.
+For example, some Coq tactics automatically generate hypothesis names; small changes in specifications can
+cause proofs that rely on those names to break. One approach to this problem is to always explicitly specify hypothesis names,
+so that Coq never generates hypothesis names automatically; the IDE Company-Coq~\citep{CompanyCoq2016} provides some built-in
+support for this approach.
+Planning for Change~\citep{Woos2016} notes that, while this approach helps, it is still necessary to update
+those explicit names as specifications change. Instead, the authors advocate for the use of \textit{structural tactics}, or tactics that do not
+depend on hypothesis names and hypothesis ordering; many tactics of this style can be found in the associated
+StructTact~\citep{structtact} library.
+
+Planning for Change addresses design for robustness not only at the level of automation,
+but also at the level of specifications and proof objects. It presents a methodology
+for writing robust proofs independently of any domain or framework. This methodology
+is informed by a large proof engineering effort verifying the Raft consensus protocol.
+It is a set of five recommendations. Some of these recommendations draw on software engineering design principles.
+For example, the authors recommend using information hiding techniques similar to those used in software engineering to hide definitions.
+That way, the burden of change is localized to interface changes, and changes in only implementation do not cause
+breaking changes in dependencies. Other recommendations tackle challenges that are unique to proof engineering. For example, the authors
+advocate for the use of custom induction principles to capture common patterns in inductive proofs.
+
+Refinement (Section~\ref{sec:refinement}) can help make proofs robust to changes.
+For example, the proofs of the seL4 microkernel in Isabelle/HOL have evolved alongside the implementation for
+over eight years~\citep{Klein2014micro}.
+The proof development makes use of two layers of specifications: an \textit{abstract specification} which describes only behavior of
+the system, and an \textit{executable specification} which includes implementation details. These two layers are connected by
+a refinement proof.
+Using this approach, the authors found that both making low-level changes and adding new simple features were not very costly,
+though more complex changes that interacted with other parts of the code significantly were still costly.
+
+\paragraph{Design Principles for Compositionality}
+%Compositional verification is a thing a lot of people care about~\revisit{(cite a lot of things)}.
+CompCert (Section~\ref{sec:verified-compilers}) employs a compositional design for describing the different intermediate languages
+and how they interact with each other. Affinity lemmas from Planning for Change
+also capture this concept.
+%\talia{I don't know much about this, but this should be longer because it's a big thing.}
+The CertiKOS project introduces the idea of a \textit{deep specification}~\citep{Gu-al:POPL15} that makes
+compositional verification more tractable. DeepSpec~\citep{DeepSpec},
+an ongoing project, is addressing this problem more generally.
+Section~\ref{sec:frameworks} describes frameworks for compositional verification.
+
+\paragraph{Design Principles for Efficiency}
+Some proof assistants like Coq work by extraction (Section~\ref{sec:trust-programs}) from the core language into an executable language.
+The resulting extracted code can be slow, which can be a barrier for verifying a realistic system.
+\citet{CruzFilipe2003, CruzFilipe2006} describe proof design principles for optimizing the efficiency of extracted
+code.
+
+% Talia: What about efficiency of type-checking? And so on. Karl's paper could go here, for example
+
+\subsection{Style Guides and Proof Techniques}
+\label{sec:techniques}
+
+Style guides and proof techniques help
+guide proof engineers in dealing with common patterns to address common challenges.
+
+\paragraph{Style Guides}
+Section~\ref{sec:dsmathematics} described style guides in mathematics.
+A few general-purpose style guides exist.
+Gerwin's style guide~\citep{isabellestyle} for Isabelle, for example,
+is a set of guidelines that are used within Isabelle itself and in several
+large developments. The Isabelle Archive of Formal Proofs requires that submitted proofs
+follow some of these guidelines, and recommends others~\citep{isabelleafp}.
+The CoqStyle~\citep{coqstyle} style guide is a set of guidelines for Coq
+in the main Coq repository which is used within the standard library. % TODO add more
+
+\paragraph{Proof Techniques}
+Proof techniques are techniques that handle common classes of proofs, or that make it easier
+to write proofs in a particular style.
+For example, one widely-used proof technique is \textit{simulation}~\citep{Lynch1994};
+an overview of this technique can be found in \cite{FRAPBook}.
+This technique helps proof engineers prove that systems
+preserve liveness and safety properties.
+Refinement (Section~\ref{sec:refinement}) reduces to simulation~\citep{Klein2014micro}.
+
+One application of simulation is to show compiler correctness.
+CompCert~\citep{Leroy2009}, for example, uses this technique to show that the
+program transformations that the compiler makes are semantics-preserving.
+In the case of compiler correctness as in CompCert, both directions of simulation (\textit{forward simulation} and \textit{backward simulation})
+start with a source program $s$ and a target program $t$ that are related along some relation $r$.
+%
+%\begin{center}
+%\includegraphics[width=0.25\linewidth]{simdiag1.pdf}
+%\end{center}
+The forward simulation (Figure~\ref{fig:sim}, left) states that if $s$ steps to $s'$, then $t$ can step to some $t'$, where $s'$ and $t'$ are related by $r$.
+%That is, behavior present in the source program must also be present in the target program.
+Similarly, the backward simulation (Figure~\ref{fig:sim}, right) states that if $t$ steps to $t'$, then $s$ can step some $s'$, where $t'$ and $s'$ are related by $r$.
+%In other words, behavior that is present in the target program must have also been present in the source program.
+Intuitively,
+  a forward simulation shows that
+  ``anything the source program could do, the target program could do too,'' and
+  a backward simulation shows that
+  ``anything the target program could do, the source program could do too.''
+Together,
+  a forward and a backward simulation establish \textit{indistinguishability},
+  any entity restricted to only observe ``visible'' program transitions
+  (e.g., input and output) will never be able to determine if they
+  are interacting with the source or target program~\citep{Sangiorgi2011}.
+If the source language is deterministic, then the forward simulation follows from the backward simulation;
+if the target language is deterministic, then the backward simulation follows from the forward simulation~\citep{Leroy2009}.
+CompCert takes advantage of this to show backward simulation from only forward simulation and determinism of the target language.
+
+\begin{figure}
+    \begin{minipage}{0.48\textwidth}
+    \centering
+     \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
+                    semithick]
+  \tikzstyle{every state}=[fill=none,draw=none,text=black]
+
+  \node[state]         (A)              {$s$};
+  \node[state]         (B) [right of=A] {$t$};
+  \node[state]         (D) [below of=A] {$s'$};
+  \node[state]         (C) [below of=B] {$t'$};
+
+  \path (A) edge[-]             node {r} (B)
+        (B) edge[dotted]      node {} (C)
+        (C) edge[dotted, -]      node {r} (D)
+        (A) edge              node {} (D);
+\end{tikzpicture}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+    \centering
+    \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
+                    semithick]
+  \tikzstyle{every state}=[fill=none,draw=none,text=black]
+
+  \node[state]         (A)              {$s$};
+  \node[state]         (B) [right of=A] {$t$};
+  \node[state]         (D) [below of=A] {$s'$};
+  \node[state]         (C) [below of=B] {$t'$};
+
+  \path (A) edge[-]   node {r} (B)
+        (B) edge              node {} (C)
+        (C) edge[dotted, -]              node {r} (D)
+        (A) edge[dotted]              node {} (D);
+\end{tikzpicture}
+    \end{minipage}
+    \caption{Forward (left) and backward (right) simulation for compiler correctness.
+    Premises are show as solid lines and goals are shown as dashed lines.}
+    \label{fig:sim}
+\end{figure}
+
+Section~\ref{sec:languagesforauto} discusses some techniques for interacting with automation.
+Proof techniques can also help proof engineers reason within certain domains. \cite{bahr2015}, for example,
+describes a technique for deriving correct compilers from specifications in Coq.
+Section~\ref{sec:reas-about-imper} describes techniques for reasoning about imperative programs.
+%High-level proof languages such as Coq/\ssreflect~\citep{Gonthier2010}
+%and Isabelle/Isar~\citep{Wenzel2007isar} are often organized around a particular proof technique or style;
+%we discuss these in Section~\ref{sec:structuredprooflangs}.
+%There are also many techniques for writing proofs by reflection in different languages,
+%which we discuss in Section~\ref{sec:refl}.
+
+% Talia: needs work
+
+\subsection{Design Principles for Reasoning about Imperative Programs}
+\label{sec:reas-about-imper}
+
+When desigining a verification framework for imperative programs based on a dependently-typed
+proof assistant (\eg, Coq), the most common approach is to implement a
+version of a Floyd-Hoare style program
+logic~\citep{Floyd1967Flowcharts,Hoare:CACM69} in it. When doing so,
+the framework designer is faced with the following choices:
+
+\begin{itemize}
+\item How to embed, into a proof assistant, the language with the
+  features, which the \emph{host} language does not have (\eg, mutable
+  state and concurrency)?
+
+\item How to encode verification conditions for imperative programs
+  specified in Floyd-Hoare style, and implement the corresponding
+  reasoning principles in a proof assistant?
+\end{itemize}
+
+\noindent
+%
+Below, we elaborate on these two design choices and provide a survey
+of the most prominent approaches implementing them, both for
+sequential and concurrent reasoning about imperative programs.
+
+\subsubsection{On Shallow and Deep Embedding}
+\label{sec:embedding}
+An important design decision to take when designing a framework for
+verification of effectful (i.e., heap-manipulating or concurrent)
+programs on top of a general-purpose proof assistant is its use of
+shallow or deep embedding the language to be verified.
+
+\textit{Shallow embedding} is an approach of implementing programming
+languages, characterized by representation of the language of interest
+(usually called a \emph{domain-specific language} or DSL) as a subset
+of another general-purpose host language, so the programs in the
+former one are simply the programs in the latter one. The idea of
+shallow embedding originates at early '60s with the beginning of era
+of the Lisp programming language~\citep{Graham:BOOK}, which, thanks to
+its macro-expansion system, serves as a powerful platform to implement
+DSLs by means of shallow embedding (such DSLs are sometimes called
+internal or embedded).
+
+Shallow embedding in the world of practical programming is advocated
+for a high speed of language prototyping and the ability to reuse
+most of the host language infrastructure.  An alternative approach of
+implementing and encoding programming languages %in general and in Coq
+%in particular
+is called \textit{deep embedding}, and amounts to the
+implementation of a DSL from scratch, essentially,
+writing its parser, interpreter and type-checker in a general-purpose
+language. Deep embedding is preferable when the overall
+performance of the implemented language runtime is of more interest
+than the speed of DSL implementation, since then a lot of intermediate
+abstractions, which are artifacts of the host language, can be
+avoided.
+
+In the world of mechanized program verification, both deep and shallow
+embeddings have their own strengths and weaknesses.  Although
+implementations of deeply embedded languages and calculi naturally
+tend to be more verbose, design choices in them are usually simpler to
+explain and motivate. Moreover, the deep embedding approach makes the
+problem of name binding to be explicit, so it would be appreciated as
+an important aspect in the design and reasoning about programming
+languages~\citep{Aydemir2008,Weirich-al:ICFP11,Chargueraud2011}. We
+believe that these are the reasons why this approach is typically
+chosen as a preferable one when teaching program specification and
+verification in Coq~\citep{Pierce-al:SF}.
+
+Importantly, deep embedding gives the programming language implementor
+full control over its syntax and semantics.
+%
+In particular, the expressivity limits of a defined logic or a type
+system are not limited by expressivity of the host language's
+type system. Deep embedding makes it much more
+straightforward to reason about pairs of programs by means of defining
+the relations as propositions on pairs of syntactic trees, which are
+implemented as elements of corresponding datatypes.  This point
+becomes crucial when one needs to reason about the correctness of
+program transformations and optimizing compilers~\citep{Appel:BOOK14}.
+
+In contrast, the choice of shallow embedding, while sparing one the
+labor of implementing the parser, name binder and type checker, may
+limit the expressivity of the logical calculus or a type system to be
+defied. In the case of Hoare Type Theory~\citep{Nanevski-al:POPL10},
+for instance, it amounts to the impossibility to specify programs that
+store effectful functions and their specifications into a
+heap.\footnote{This limitation can be, however, overcome by
+  postulating necessary axioms.}
+
+In the past decade Coq has been used
+in a large number of projects targeting formalization of logics and
+type systems of various programming languages and proving their
+soundness, with most of them preferring the deep embedding approach to
+the shallow one. We believe that the explanation of this phenomenon is
+the fact that it is much more straightforward to define semantics of a
+deeply-embedded ``featherweight'' calculus~\citep{Igarashi-al:TOPLAS01}
+and prove soundness of its type system or program logic, given that it
+is the ultimate goal of the research project. However, in order to use
+the implemented framework to specify and verify realistic programs, a
+significant implementation effort is required to extend the deep
+implementation beyond the ``core language,'' which makes shallow
+embedding more preferable.
+
+\subsubsection{Encoding Verification Conditions}
+
+In a Floyd-Hoare style logic, specification of a program $c$ is given
+in a form of a \textrm{tiple} $\set{P}~c~\set{Q}$, where the
+assertions $P$ and $Q$ are referred to as the \emph{precondition} and
+the \emph{postcondition}, respectively. The standard semantics of
+the triple imposes that for any state, satisfying $P$, the final
+state, after $c$ terminates, satisfies $Q$.
+%
+This definition corresponds to termination-insensitive \emph{partial
+  correctness} (\ie, $c$ is allowing to not terminate at all, so any
+postcondition would hold). Some program logics impose a stronger
+semantics of \emph{total correctness}, requiring $c$ to terminate, in
+addition to the above~\citep{Dockins-Hobor:DS10}.
+
+This treatment of a Floyd-Hoare triple allows for verifying the
+programs by means of following the inference rules of a program
+logic, allowing to decompose the proof of $\set{P}~c~\set{Q}$ into the
+proofs about $c$'s sub-programs~\citep{Hoare:CACM69}.
+%
+While this style of reasoning seems natural and relatively easy to
+implement in a proof assistant, and is advocated by the most widely
+used tutorials~\citep{Pierce-al:SF}, it is not the most convenient to
+conduct the proofs in, due to the need of constantly discharge the
+\emph{weakening} obligations, required for ``massaging'' the
+verification goal, and represented by the following inference rule:
+%
+\begin{mathpar}
+\inferrule*[Right={(Weaken)}]
+ {P \Rightarrow P' \\
+  \spec{P'}~ c~ \spec{Q'}\\
+  Q' \Rightarrow Q}
+ {\spec{P}~ c~\spec{Q}}
+\end{mathpar}
+
+A more proof-assistant-friendly way to encode the Floyd-Hoare-style
+verification conditions, ``compressing'' the necessary applications of
+the weakening rule, is to use the idea of predicate transformer
+by~\citep{Dijkstra:CACM75} that can be used to compute a
+pre-condition for a computation, for any context in which that
+computation may be used.
+%
+This approach, dubbed the \emph{weakest precondition (WP) calculus} allows
+one to encode the meaning of a Floyd-Hoare triple (roughly) as
+follows:
+%
+\[
+  \set{P}~c~\set{Q} \eqdef P \Rightarrow \mathsf{wp}~c~\set{Q},
+\]
+%
+where $\mathsf{wp}~c~\set{Q}$ is the program $c$'s \emph{weakest}
+precondition \wrt the imposed postcondition $Q$, expressed as a
+logical formula.
+%
+Therefore, what is left to the designer of the mechanised program
+logic to do is to provide the implementation of the primitive
+$\mathsf{wp}$, which would ``compile'' a program and its postcondition
+to the logical assertion, which can be later discharged using the host
+proof assistant's machinery.
+
+The weakest precondition approach to encoding verification
+conditions for imperative programs is amazingly versatile, and, to the
+best our knowledge, has been adopted in most of the major
+implementations of program logics embedded into proof
+assistants~\citep{Nanevski2008,mccreight2009practical,Nanevski-al:POPL10,Chargueraud2010,Chlipala:PLDI11,Swamy-al:PLDI13,Appel:BOOK14,Krebbers-al:POPL17}.
+
+\subsubsection{Verifying sequential heap-manipulating programs}
+\label{sec:reas-about-heap}
+% TODO does this fit in design or frameworks?
+
+The main success in a program logic-based verification of
+heap-manipulating programs has been achieved with the discovery of
+Separation Logic~\citep{OHearn-al:CSL01,Reynolds:LICS02}.
+%
+It did not take long for Separation Logic to be mechanised in an ITP~\citep{Nanevski2008,Mehta-Nipkow:CADE03,mccreight2009practical},
+using both deep and shallow embedding.
+
+One of the most successful formalizations in Coq
+by means of shallow embedding is the series of work on Hoare Type Theory
+(HTT) by~\cite{Nanevski2008}, known as YNot. YNot has been used, among other things, in verifying
+a relational database system~\citep{Malecha2010} and a secure browser kernel~\citep{Jang2012}.
+%
+
+In addition to adopting the WP-calculus for expressing verification
+conditions in an embedding of Separation Logic into Coq, HTT first
+made active use of \emph{binary postconditions}, enabling a
+straightforward treatment of \emph{logical} variables, whose scope
+spans both pre- and postconditions of a Floyd-Hoare
+triple. Specifically, this has been achieved by making a postcondition
+$Q$ to be not of type $\mathsf{state} \to \mathsf{Prop}$ (\ie, unary,
+as suggested by the textbook expositions of program logics), but
+rather of type $\mathsf{state} \to \mathsf{state} \to \mathsf{Prop}$,
+\ie, constraining both the pre- and the post-state.
+%
+This style of specification has later been adopted by multiple other
+verification frameworks~\citep{Swierstra:TPHOLS09,Swamy-al:PLDI13}.
+%
+
+The \textsc{Sepref}~\citep{lammich2015refinement} tool
+for verifying imperative programs in Isabelle/HOL includes a separation logic
+framework built on top of Imperative HOL, which is built on top of Isabelle/HOL.
+\textsc{Sepref} uses refinement (Section~\ref{sec:refinement}) to derive an imperative heap-based program and
+correctness proof from a functional program and correctness proof.
+
+YNot~\citep{Nanevski2008} has implemented the \emph{heap disjointness},
+inherent to Separation Logic, by means of a deep embedding of logic
+reasoning principles.
+%
+Such an embedding of a domain-specific logic required a later
+development of a number of tactics for making large mechanised proofs
+tractable~\citep{Chlipala-al:ICFP09}.
+%
+In a later work,~\cite{Nanevski-al:POPL10} have shown shown how to
+achieve almost the same expressivity with very little domain-specific
+automation, by making reasoning about finite heaps decidable and
+leveraging the machinery of small-scale
+reflection~\citep{Gonthier2010}.
+
+Various successful deep embeddings of Floyd-Hoare style reasoning into
+Coq have been demonstrated viable for the sake of reasoning about
+low-level programs using different versions of Separation
+Logic~\citep{Chlipala-al:ICFP09,Chlipala:PLDI11,Chlipala2013,Chen2015,Cao2018}.
+%
+All those efforts came supplied with tailored libraries of
+domain-specific tactics, with those tactics automatically
+applying Separation Logic's \textsc{Frame} rule and thus progressively
+reducing the size of the verification goal.
+
+
+% One of the most prominent deeply embedded separation logics in Coq,
+% the Bedrock system~\cite{Chlipala:PLDI11}, has used an encoding style
+% for Hoare-Style triples, which solves the problem of scoping logical
+% variables, different from binary postconditions. Instead, in Bedrock
+
+
+\subsection{Future of Design}
+
+While we think that domain-specific design principles will always be important, %especially in fields like metatheory that make heavy use of proof assistants,
+we expect that there is a lot of potential for general-purpose design principles that frame proof engineering
+in the context of software engineering and make novel use of what we already know.
+Planning for Change investigates where
+proof engineering diverges from software engineering and where it calls for specialized techniques;
+continuing along these lines should drive more useful proof design techniques.
+% More about the future of design
+
+Compared to design principles for mathematics, current general-purpose design principles place
+little emphasis on proof understanding.  While this is
+an understandable difference in emphasis,
+his can inhibit collaboration for proof engineers as well. We expect more work on proof
+understanding to become common as collaboration between proof
+engineers increases with the growth in large-scale verification
+projects.
+
+Automation-heavy styles can help prevent breaking changes, but have
+drawbacks. Some of these drawbacks may be avoidable.  For example, one
+limitation is that proof checking of the large and complex terms
+these procedures produce can be slow.  Developments in proof checking such
+as term simplification could make this style more tractable. Debugging
+is also difficult; alleviating this concern could be as simple as
+better debugging tooling for tactics.
+
+%Finally, it is worth considering implementing new language features
+%that can improve design, such as ornaments~\citep{mcbride2010},
+%which describe relationships between types that preserve inductive structure.
+%While there is not yet a practical implementation of
+%these in a proof assistant, they may be useful one day.
+%We elaborate on ornaments and other language constructors
+%for proof reuse in Section~\ref{sec:languagereuse}.
+
+\section{High-Level Verification Frameworks}
+\label{sec:frameworks}
+
+% TODO this needs to move up before we ever talk about frameworks at all
+In the context of software engineering, a \textit{framework} is distinguished from a library or domain-specific language
+in that the client relinquishes control of execution to the framework. In practice,
+the concept of a framework often refers to some combination of design principles,
+libraries, and tooling that together give structure to code, often within a certain domain,
+regardless of control of execution. We use the latter term, as it is what is used most often
+in proof engineering papers, and as the concept of control of execution does not
+always make sense in the context of proof development.
+
+Several of the libraries and languages we have already discussed (for example, Bedrock~\citep{Chlipala2013})
+fit this definition of a framework. This section extends that discussion to cover frameworks
+for two common domains: concurrent applications (Section~\ref{sec:reas-about-conc}) and language design and metatheory (Section~\ref{sec:metaframe}).
+It then discusses frameworks for a few other domains (Section~\ref{sec:otherframe}), and concludes with
+a discussion of the future of frameworks (Section~\ref{sec:futureframe}) for proof engineering.
+
+\subsection{Frameworks for Verifying Concurrent Applications}
+\label{sec:reas-about-conc}
+
+Reasoning about concurrent programs brings new challenges into
+mechanising reasoning: due to the excessively large state-space of
+possible interactions between simultaneously executing processes or
+threads, simply enumerating them is no longer tractable.
+%
+However, since in most of the practical applications the interaction
+between processes on some sort of shared state happens only at
+dedicate program points, via specific programming primitives, a
+plausible way to reduce this complexity is to reduce \emph{concurrent}
+reasoning to a \emph{sequential} one.
+%
+This idea has been pioneered in the work on \emph{Concurrent
+  Separation Logic} by~\cite{ohearn07resources}, which
+provided a series of inference rules for compositional sequential and
+concurrent reasoning for shared-memory concurrency.
+
+Similarly to plain Separation Logic, variants of CSL have been
+implemented as both shallow and deep embedding with the corresponding
+benefits and drawbacks.
+
+The first \emph{shallow embedding} of Subjective Concurrent Separation
+Logic, a CSL-like logic for concurrency, was due
+to~\cite{LeyWild-Nanevski:POPL13}, who implemented it using Coq's
+indexed types. Unlike the prior work on Hoare Type
+Theory~\citep{Nanevski-al:POPL10}, in which Coq's dependent types were
+only capturing the effect of an imperative program on a state, in
+SCSL, the types were also carrying information about \emph{resource
+  invariants}, capturing the contract of a concurrent interaction
+between threads.
+%
+That work has been later extended to a more expressive
+\emph{Fine-Grained Concurrent Separation Logic} (FCSL)
+\citep{Nanevski-al:ESOP14,Sergey-al:PLDI15}, which provided a more
+general treatment of concurrent resources, incorporating ideas from
+both CSL and Rely-Guarantee-based verification
+methodologies~\citep{Jones:IFIP83,Feng:POPL09}, and implementing them
+in a form of a shallowly-embedded type theory for state.
+
+The main shortcoming of both SCSL and FCSL, both being
+shallowly-embedded type theories for state, are the limitations due to
+the limitations of Coq's model \wrt impredicativity.
+%
+At the time of this writing, FCSL did not support higher-order heaps
+(\ie, the possibility to reason about arbitrary storable effectful
+procedures). It was conjectured by FCSL's authors that this obstacle
+could be overcome by relying on the universe polymorphism feature
+introduced in Coq version~8.5~\citep{Sozeau-Tabareau:ITP14}.
+%
+An approach based on \emph{Rely-Guarantee references}, similar to FCSL
+in spirit, employed Coq as a host framework for implementing DSL (but
+not proving its soundness \wrt some semantics) for streamlining
+reasoning about certain concurrency
+patterns~\citep{Gordon-al:TOPLAS17}, allowed by considering
+Rely-Guarantee contracts, but without CSL-enabled proof modularity.
+
+Implementation of concurrent imperative programs in Coq by means of
+\emph{deep embedding} has been first considered in the context of
+verifying low-level code with dynamic thread creations in CAP and CCAP
+program logics~\citep{Yu-Shao:ICFP04,Feng-Shao:ICFP05}.
+%
+Targeting real architectures, those formal verification efforts
+required astonishingly high proof efforts and have been eventually
+superseded by a mechanized proof methodology based on \emph{certified
+  abstraction layers}, not grounded in any specific Hoare-style
+program logic~\citep{Gu-al:POPL15,Kim-al:APLAS17,Gu-al:PLDI18}.
+
+Iris is another CSL-inspired mechanised verification framework that
+has been in development in parallel with FCSL, with an aim to provide
+more uniform foundations for reasoning about concurrency~\citep{Jung-al:POPL15}.
+%
+Due to the chosen semantic foundations, allowing for impredicativity
+in the presence of mutable state (and hence, storable higher-order
+procedures)~\citep{Svendsen-Birkedal:ESOP14}, Iris could not have been
+implemented as a shallow embedding and, hence, has been encoded as a
+deeply-embedded logic.
+
+While that initially has been considered an significant obstacle for
+verifying large concurrent programs in Iris, due to a large proof
+overhead, the later introduction of Iris Proof Mode
+(IPM)~\citep{Krebbers-al:POPL17} fixed this shortcoming, significantly
+lowering the entrance threshold for conducting mechanised Iris
+proofs~\citep{iris-tutorial}.
+%
+This has been achieved in IPM by effectively leveraging Coq's
+extensible parsing and proof-by-reflection, and introducing a library
+of domain-specific tactics, mimicking, for the sake of an end user of
+the framework, standard CSL-style inference rules.
+%
+Due to its success, IPM itself has been later generalised to
+MoSeL---an extensible proof mode allowing for reasoning not just with
+Iris but with any separation-style program logics~\citep{Krebbers2018}.
+
+As frameworks implementing Hoare-style reasoning about concurrency
+with pre/postconditions, both FCSL and IPM follow the encoding style
+with Dijkstra-style weakest preconditions.
+%
+% While FCSL makes this encoding implicit in its implementation of
+% program semantics by shallow embedding,\footnote{See the sources
+% available at \url{http://software.imdea.org/fcsl}}
+% %
+% IPM makes it explicit in its lemmas/inference rules.
+
+\subsection{Frameworks for Language Design and Metatheory}
+\label{sec:metaframe}
+
+Several frameworks deal with the challenge of component reuse, one of the challenges from \poplmark (Section~\ref{sec:dsmetatheory}).
+Meta-Theory \`{a} la Carte (MTC)~\citep{Delaware2013POPL} is a framework and Coq library that builds
+on Data Types \`{a} la Carte~\citep{Swierstra2008} to address challenges in reuse:
+\textit{extensibility} of definitions and proofs through algebraic properties that provide
+control over the evaluation order, and \textit{modular reasoning} about partial definitions and proofs through algebraic combinators.
+Using MTC, the proof engineer can assemble a language from existing components.
+
+MTC does not address extensibility of languages with effects: adding
+new effects breaks existing proofs. Modular Monadic Meta-Theory (3MT)~\citep{Delaware2013ICFP}
+extends MTC with a methodology and monad library that includes monads
+for effects as well as algebraic laws. The methodology and library make
+proofs resilient to the addition of new effects to a language.
+MTC and 3MT both use algebraic properties to address difficulties with component reuse---algebra in many ways offers
+natural abstractions, and those techniques can apply more broadly outside of formal metatheory.
+%The remaining challenges in component reuse, which often deal with extending existing types, are not unique
+%to metatheory.
+
+Other notable frameworks for language design include the Fiat~\citep{Chlipala2017, Delaware2015} framework for Coq,
+as well as the Hybrid~\citep{felty2012hybrid} framework for
+Isabelle/HOL and Coq, which addresses the difficulties of using HOAS with inductive and
+coinductive proofs.
+
+\subsection{Frameworks for Other Domains}
+\label{sec:otherframe}
+
+Concurrent applications and language metatheory are just two domains for which
+verification frameworks are useful. Frameworks assist proof engineers in many other domains.
+For example, a few frameworks exist for verifying distributed systems.
+Verdi~\citep{Wilcox2015} is a framework for building verified distributed systems in Coq; % Talia: Just editing for flow, still could use more content
+it has been used to build and verify an implementation of the Raft consensus protocol~\citep{Woos2016}.
+Disel~\citep{Sergey2017} is a framework for compositional verification of distributed protocols.
+
+%Other domains for which frameworks have proven useful include verification of hardware components~\revisit{(cite Kami)},
+%voting systems~\revisit{(cite thing Milad sent)}, mathematics~\citep{GEUVERS2002271},
+%and crypto protocols~\citep{}. % Talia: Add a lot more here
+
+% Talia TODO:
+% Are rewriting systems~\revisit{\cite{Braibant2011}} frameworks?
+
+% Talia TODO:
+% Idioms from engineering with logic~\cite{Bishop2006} in Isabelle/HOL go somewhere, but maybe not in frameworks
+
+\subsection{Future Frameworks}
+\label{sec:futureframe}
+
+The expressiveness of the underlying logics of common proof assistants combined with their interactive natures
+makes it possible to develop useful frameworks for a variety of domains. We expect that proof engineers
+will continue to develop and improve on frameworks that tackle challenges associated with common domains,
+as well as build new frameworks to handle challenges associated with new domains for verification as they arise.
+In addition, we expect that frameworks will address challenges that current frameworks do not fully address,
+such as language extension and component reuse in metatheory. % \talia{Xavier example with GOTO and how monads don't address it.}
+
+While it is natural to apply frameworks to challenges within common domains, we also expect the development of
+more general-purpose frameworks building on common proof assistants to address challenges that proof engineers
+face independently of domain, or when following specific design principles.
+
+\section{Proof Reuse}
+\label{sec:proof-reuse}
+
+Large proof developments may involve redundant efforts that can be time-consuming.
+Proof reuse addresses this by repurposing existing proofs as much as possible,
+minimizing the amount of redundant work that proof engineers must do.'
+Early examples of proof reuse include \textit{proof by analogy}~\citep{curien1995},
+the technique of adapting a proof of a theorem to a proof of a related theorem,
+and \textit{proof generalization}~\citep{hasker1992generalization}, the technique of
+adapting a proof of a theorem to prove a more general theorem.
+
+Proof reuse is the proof engineering analogue to software reuse.
+Like software reuse, proof reuse leverages design principles (Section~\ref{sec:designreuse}) and language constructs (Section~\ref{sec:languagereuse}).
+In addition, the interactive nature of proof assistants naturally leads to a class of proof reuse technologies less explored
+in the software engineering world: automated tooling (Section~\ref{sec:toolingreuse}).
+This section samples these approaches.
+
+\subsection{Design Principles for Modularity and Reuse}
+\label{sec:designreuse}
+
+Good design principles can help maximize the reusability of existing proofs.
+Some of these design principles are natural generalizations of design principles
+for software reuse more generally, such as \textit{aspect-oriented software development} (AOSD),
+a programming approach that optimizes for separation of concern~\citep{Filman2004}.
+Others, like the affinity lemmas from Planning for Change (Section~\ref{sec:des-scale}) are unique to proof engineering.
+
+\paragraph{Design Principles from Software Engineering}
+In software engineering, encapsulating behavior can help not only protect
+against future changes, but can also help with reusing multiple implementations
+of interfaces with the same behavior. Likewise, the interfaces and information hiding recommendations form
+Planning for Change are useful not only to protect proofs against future changes, but also
+to switch between different datastructure implementations with the same high-level behavior.
+% TODO more encapsulation, like Appel's stuff
+
+% \ilya{Revise all of this, outlining the overall intuition for AOP and SPL.}
+% (Ilya never got to this, but if he gets back here and wants to fix this, he can; in the meantime I've added just a little on that point)
+The work by~\citet{Delaware2011} attacks the problem of language
+metatheory extension, along with the corresponding formalization in a
+proof assistant and changing the corresponding
+type safety proofs (i.e., progress and preservation theorems), from
+the perspective of Software Product Lines (SPL). SPL is an approach to AOSD
+that opportunistically reuses software by deriving many different pieces of software
+from a common producer. % if someone complains we'll cite it
+\citet{Delaware2011} starts from formalizing a core language, taking a ``core'' Featherweight Java
+(cFJ), and considering all further extensions to the language (casts,
+interfaces, generics) as features.
+
+What is inherent for the SPL approach is reasoning about composition
+and possible interaction between features, expressed by means of an
+algebra of feature operators: $\cdot$, $\#$, and $\times$. Introducing
+multiple features can lead to an exponential explosion of pairwise
+interaction, which, however, is rarely observed in practice, as most
+of the features are mutually independent.
+
+In order to enable feature-based decomposition of a language, all its
+components (syntax, dynamic semantics, safety proofs etc.) are written
+is specific languages, amenable for feature compostions. For instance,
+the language syntax and its semantic/typing rules can be extended by
+introducing the mechanism of \emph{variation points} (VPs) into the
+corresponding grammar productions, premises and conclusions, of the
+rules, reusing the intuition of SPL design.
+
+On the implementation side, the modularity of extensions is achieved
+by means of reusing Coq's capabilities for higher-order
+parametrization: language component definitions are parameterized by
+the corresponding variation point contexts. The crux of the technique
+is identifying the effect of the VPs to the safety proofs, which are
+conducted in a way, parametric with respect to the inductive cases to
+be considered. For each specific combination of the features, the
+top-level proof dispatches to the proofs from the corresponding
+feature module.
+
+The shortcoming of the approach is the requirement, for a core
+language, to have a significant foresight when identifying the
+appropriate VPs, which provide the opportunity for feature extensions.
+While the paper demonstrates how to do it in the context of a
+language, whose safety is formalised via the syntactic approach, it
+provides little guidance with respect to other ways of stating type
+soundness (e.g., via logical relations), neither does it consider
+other domains beyond PL design. Overall, the approach seems to be a
+bit ad-hoc, which is why further advances in this direction lead to
+the creation of the monadic MTC~\citep{Delaware2013POPL} and 3MT~\citep{Delaware2013ICFP} frameworks we have already discussed.
+%which leverage the well-studied insights between AOSD and
+%monadic structuring of libraries~\revisit{(cite)}.
+
+% TODO needs a lot more
+
+\paragraph{Beyond Software Engineering}
+Proof assistants in the LCF family are complex systems with multiple languages at different levels.
+Accordingly, reuse in these systems happens not only at the term level, but also at the tactic level.
+Designing powerful tactics can maximize reuse of proof scripts to prove different goals (Section~\ref{sec:des-scale}).
+
+Among the recommendations that Planning for Change makes
+is the use of \textit{affinity lemmas} that describe relationships between components.
+These lemmas show that properties that hold over one component also hold over another,
+which facilitates reuse of proofs across components.
+
+% TODO needs a lot more
+
+\subsection{Language Constructs for Organization and Reuse}
+\label{sec:languagereuse}
+
+As in software engineering, proof assistants often provide support for reuse at the language level.
+These range from entire languages optimized for reuse to useful constructs built
+on existing languages that make reuse easier.
+This section describes a sample of languages and language constructs for proof reuse.
+
+\paragraph{Languages for Reuse}
+Some languages are designed with the goal of optimizing for proof reuse.
+For example, \cite{Felty1994} describes an ITP that is optimized for reuse at the tactic level.
+
+In this system, reuse works by replaying tactics in a new proof setting.
+To make this possible, the system automatically generalizes proofs using metavariables.
+In contrast, the logical framework \textit{PR}~\citep{Caplan1995} optimizes for reuse at the level of the type theory.
+The framework builds on an embedded Hoare logic, adding constructs to the logic
+that aid in abstraction and reuse of proof terms.
+
+HoTT (introduced in Section~\ref{sec:equality}) has practical proof engineering applications.
+HoTT's univalence axiom gives rise to automatic \textit{transport} of functions and proofs
+across type equivalences: to write the same function or proof about two equivalent types, the proof engineer needs only to
+write the function or proof over one of these two types,
+and then show the equivalence between them.
+Cubical type theory~\citep{cohen2016cubical} provides
+a computational interpretation of HoTT's univalence, so that it is no longer an axiom.
+
+Proof assistants or extensions to proof assistants built on HoTT or cubical type theory
+include Cubical Agda~\citep{cubical-agda}, CoqHoTT~\citep{coq-hott}, and RedPRL~\citep{redprl}.
+While these ITPs are relatively new,
+we expect that reuse will be easier in these proof assistants.
+However, univalence is incompatible with the popular axiom UIP (Uniqueness of Identity Proofs, which states
+that all proofs of equality at a given type are equal),
+and univalent ITPs present their own difficulties,
+%\talia{I forget what they were; I should talk to James.}
+so these are not a catch-all solution.
+We discuss tooling for transport that does not rely on univalence
+at the level of the type theory in Section~\ref{sec:toolingreuse}.
+
+\paragraph{Language Constructs for Reuse}
+Even in languages that are not designed with the goal of proof reuse in mind, certain language features can help make proof reuse more tractable.
+The modules, type classes, and canonical structures discussed in Section~\ref{sec:desabs} are examples of these features, as are
+other mechanisms for inheritance.
+In addition, many proof assistants implement subtyping or type
+coercions~\citep{barthe1995implicit, aspinall1996subtyping, Saibi1997, luo1999coercive, asperti2007user, callaghan2001implementation, deMoura2015} in various forms,
+and these can also help make proof reuse more tractable.
+
+One recent development is the notion of an \textit{ornament}~\citep{mcbride2010}, a programming mechanism for describing relationships
+between inductive types that preserve inductive structure. That is, there is an ornament between natural numbers
+and lists, and between lists and length-indexed vectors; there is no ornament
+between lists and trees, since these types have different inductive structures.
+Ornaments allow for the derivation of new types from existing types, and for the automatic lifting of functions and proofs
+from each existing type to the corresponding new type. Lifting functions and proofs necessitates some additional automation beyond
+the addition of ornaments to a language.
+So far, ornaments exist in various forms as deep embeddings in Agda~\citep{Dagand17jfp, Williams2014, ko2016},
+and as tooling for proof reuse (Section~\ref{sec:toolingreuse}) in Coq.
+
+The language Cedille makes it possible to define combinators that allow for reuse of functions and proofs
+across certain related datatypes without any performance penalty~\citep{Diehl2018}.
+Like ornaments, these combinators facilitate reuse between unindexed and indexed versions of types
+like lists and vectors. They do not support incompletely determined relations that ornaments support,
+such as the ornament between natural numbers and lists (lists have a new element in the inductive case).
+Applications of these combinators definitionally reduce in such a way as to facilitate efficient reuse thanks to properties
+of the underlying type theory of Cedille.
+
+
+%they are not yet usable in a non-embedded dependently typed language.
+% TODO Talia: can cite generals report for WIP on ornaments if it's published by the time you send this
+% TODO can use for automation w/o building as a language feature, cite my pub if it gets in...
+% TODO can add a lot more info here if necessary, and cite more papers
+
+%\paragraph{Higher-order approaches for theorem reuse.}
+%\ilya{Explain the ``less ad-hoc''~\cite{Gonthier2011}, MTac~\cite{???}
+%  and VeriML~\cite{???}}.
+
+\subsection{Automated Tooling for Proof Reuse}
+\label{sec:toolingreuse}
+
+Since proof assistants typically involve a heavily interactive workflow like the REPL, they lend themselves naturally to automation.
+As such, in addition to the design principles and language features for proof reuse found in typical
+software engineering projects, there is a body of work that uses automated tooling
+to repurpose existing proofs. Section~\ref{sec:metaframe} decribes some frameworks
+for component reuse, a kind of proof reuse, in mechanized metatheory. This section describes
+other tooling for proof reuse.
+% TODO talk about how this is sort of a special thing that falls out of ITPs naturally
+
+\paragraph{Adapting Inductive Proofs} \cite{Boite2004} describes a tactic to adapt proof obligations
+to changes in inductive types. This technique constructs and analyzes a dependency graph to determine
+when reuse of existing proofs is possible, then reuses existing proofs when possible
+and generates new proof obligations for new branches of the proof. \cite{Mulhern06proofweaving} provides a high-level
+description of a possible method to synthesize missing proofs for those new obligations using a type reconstruction algorithm,
+though it is not currently implemented.
+
+\paragraph{Proof Planning} \textit{Proof planning}~\citep{Bundy1998} is a proof search technique
+that uses plans to guide search for proofs with similar structures.
+Proof planning can involve the use of \textit{critics}~\citep{ireland1996},
+which reuse information from failing proofs to guide search for correct proofs.
+While it was originally designed for use with automated theorem provers, it has also reached
+interactive theorem provers.
+For example, IsaPlanner~\citep{Dixon2003} is a proof planner for Isabelle with support
+for rippling~\citep{shah2005}, a technique for automatic induction.
+Rippling has also been implemented in an induction automation
+tool for Coq~\citep{wilson2010}.
+
+\paragraph{Proof Generalization} Proof generalization tools generalize proofs of a theorem
+to obtain proofs of more general theorems. Proof generalization first arose in
+the 1990s~\citep{hasker1992generalization, kolbe1998proof, pons1999conception}.
+A simple example of proof generalization
+is the Coq \lstinline{generalize} tactic, which does basic syntactic generalization.
+The Coq documentation demonstrates this tactic on the following proof state~\citep{coq-tactics}:
+\begin{lstlisting}
+x, y : nat
+============================
+0 <= x + y + y
+\end{lstlisting}
+Running \lstinline{generalize (x + y + y)} on this goal produces the following proof state:
+\begin{lstlisting}
+x, y : nat
+============================
+forall n : nat, 0 <= n
+\end{lstlisting}
+The final generated proof term proves the original goal by specialization of this generalized goal.
+
+The generalization technique implemented in Coq's \lstinline{generalize} tactic can handle only
+simple syntactic substitution. A few tools can handle more complex transformations.
+For example, \cite{Johnsen2004} presents a proof generalization tool for Isabelle
+with proof terms which can handle generalizing over dependencies on other theorems,
+as well as generalization over functions and types. % TODO check and elaborate
+The Coq proof repair tool \textsc{PUMPKIN PATCH} (Section~\ref{sec:repair}) includes an abstraction component
+which does not just syntactic generalization, but also type-driven generalization.
+%\textsc{PUMPKIN PATCH} also contains additional components that perform proof reuse, for example
+%by inverting a proof or by factoring a proof into several proofs of intermediate lemmas.
+
+\paragraph{Transport}
+\textit{Transport} (also known as \textit{transfer}) methods
+automatically adapt proofs along relations.
+These tools aim to mimic the experience of mathematical proofs on paper, in which simply stating a relation
+between two structures (such as an equivalence) can be
+enough use theorems about one structure as theorems about the other.
+
+This idea developed both as an extension to the language and as an approach
+to automation: \cite{Barthe2001} introduced an extension to dependent
+type theory with a computational intepretation of isomorphisms using
+rewrites. Around the same time, \cite{Magaud2002} introduced an
+automatic method for adapting proofs along binary and unary
+representations of the natural numbers.
+
+Since then, there have been many more transport tools handling more than just those two types,
+including the \textit{Transfer} and \textit{Lifting} packages~\citep{Huffman2013} for Isabelle/HOL,
+and a prototype Coq plugin for transporting proofs across ismorphisms and implications~\citep{ZimmermannH15}.
+
+\textit{Univalent transport} is the particular kind of transport across type equivalences that arises
+from HoTT's univalence axiom (see Sections~\ref{sec:equality} and~\ref{sec:languagereuse}).
+Equivalences for Free!~\citep{tabareau2018} uses insights from HoTT
+to develop and formalize a powerful tool for transporting proofs across equivalences in Coq.
+In many cases, it is possible to use this tool to port functions and proofs without any axiomatic dependencies;
+in some cases, the tool relies on the functional extensionality axiom.
+Thus far, the primary barriers to usability of the tool are the proof burden on the user to configure the automation,
+and the inefficiency of the generated functions. Nonetheless, this is a significant step toward
+a robust tool for automatic transport in a proof assistant that does not depend on univalence.
+
+The \textsc{DEVOID}~\citep{Ringer2019} Coq plugin automates transport across certain equivalences
+that correspond to algebraic ornaments, a particular class of ornaments (Section~\ref{sec:languagereuse}).
+\textsc{DEVOID} automatically discovers and proves the equivalences that correspond to these ornaments,
+and then transports functions and proofs across those equivalences using a program transformation. \textsc{DEVOID} handles a narrow class of equivalences
+relative to Equivalences for Free!, but the functions and proofs that it produces for the cases it can handle are small and efficient in comparison.
+
+\subsection{Packaging and Distributing Programs and Proofs}
+
+Proof assistants projects are software artifacts, and can thus be packaged and distributed in a similar way.
+For Isabelle/HOL, the venue for distribution is the Archive of Formal Proofs~\citep{isabelleafp,Blanchette2015}.
+Coq uses the OCaml infrastructure around the OPAM package manager to provide a similar collection of packages~\citep{CoqOPAM}.
+In principle, executable verified software can also be distributed on these platforms, but can also
+use conventional channels, which may raise issues of trust.
+
+\subsection{Future of Reuse}
+
+%Domain-specific frameworks are thriving, so much like in other areas,
+%we expect to see the development of more domain-specific frameworks
+%for reuse.
+Component reuse, a form of proof reuse, is an
+underaddressed tenant \poplmark. The solutions which do
+exist are able to take advantage of common proof structure within the
+domain of metatheory. We expect that similar common structure exists
+for proofs in other domains, and this area is ripe for the development
+of design principles, frameworks, and automated tooling to maximize
+reuse.
+
+More generally, we expect to see mainstream proof assistants continue
+to integrate language reuse constructs. For example, ornaments are a
+promising feature designed specifically for reuse in a dependently
+typed language, but most existing implementations require the user to write
+programs and proofs in a domain-specific deeply embedded logic.
+\textsc{DEVOID} takes some steps toward integrating ornaments into an existing ITP
+without an embedding, but it handles only a small class of ornaments and makes some additional
+restrictions beyond those that the original ornaments work assumes.
+We expect ornaments to integrate more smoothly with existing ITPs in the future. % TODO Talia: is this fair? This is my ongoing work lol
+
+We expect that recent developments in HoTT will
+fundamentally change how people view proof reuse, %In the past,
+%general-purpose languages for proof reuse did not take off, but there
+%is already significant interest in RedPRL. Even beyond that, it is
+and that concepts from HoTT will continue to influence the design of proof reuse
+tools for other languages. Approaches like Equivalences for Free! have the
+benefit of principled design of automation with guaranteed properties,
+but do not introduce univalence, and so are not incompatible with
+other assumptions that programmers may want in their type theories.
+These two views of univalent transport
+can continue to evolve alongside one another.
+
+
+% more generally, type theory can teach us a bunch about reuse even without explicit language support, which is cool
+
+% TODO other means of software reuse in SE, do they apply? What's the same, and what's different?
+

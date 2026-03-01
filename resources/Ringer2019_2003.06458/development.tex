@@ -1,0 +1,627 @@
+\chapter{Practical Proof Development and Evolution}
+\label{ch:development}
+
+As the scale of proof development grows, priorities change. Project management becomes more important, as does dealing
+gracefully with changes over time. These demands mirror the concerns the software community has addressed as 
+program development has scaled. The proof engineering community has responded similarly, with interfaces,
+environments, processes, and tools for effective development that scales.
+
+This section discusses developments in user interfaces and tooling (Section~\ref{sec:user}),
+proof evolution (Section~\ref{sec:evolve}), user productivity and cost estimation (Section~\ref{sec:productivity}),
+and mining proof repositories (Section~\ref{sec:mining}) that address these concerns.
+
+% TODO Talia: Sections 6 and 7 probably need some shuffling, since it's difficult to tell 
+% consistent stories about each of them right now
+
+\section{User Interfaces and Tooling for User Support}
+\label{sec:user}
+
+Most early proof assistants shipped with a very simple user
+interface: the Read-Eval-Print Loop (REPL). This interface reads in user-written
+expressions in the proof assistant language, evaluates those expressions,
+then prints a result or error for the user.
+
+User interfaces for proof assistants have come a long way from the 
+REPL. The support that these REPLs provide users is minimal, and so soon after
+their development, many techniques to ease interaction with REPLs arose.
+While the interfaces from earlier eras still see common use, we are now entering an era
+of interaction that emphasizes full integrated development environments (IDEs),
+with support for project management and for asynchronous development.
+
+In parallel to this evolution of user interfaces (Section~\ref{sec:uievolve}), we are seeing an increase
+in specalized interfaces (Section~\ref{sec:specialized}),
+usability analysis of user interfaces (Section~\ref{sec:usability}),
+and advanced tooling for user support (Section~\ref{sec:usersupport}).
+We expect these traditions will merge and drive the future of interaction (Section~\ref{sec:futureinterface}) 
+with proof assistants.
+
+\subsection{The Evolution of User Interfaces}
+\label{sec:uievolve}
+We can think of proof assistant user interfaces as evolving in three generations:
+
+\begin{enumerate}
+\item Generation I: The REPL
+\item Generation II: Separation of Concerns
+\item Generation III: Full IDEs
+\end{enumerate}
+
+\paragraph{Generation I: The REPL}
+
+%\begin{figure}
+%\begin{minipage}{0.45\textwidth}
+%\includegraphics[width=0.8\linewidth]{coqtop.pdf}
+%\end{minipage}
+%\hfill
+%\begin{minipage}{0.45\textwidth}
+%placeholder
+%\end{minipage}
+%\caption{Command line (left) and Emacs (right) interaction with the Coq REPL}
+%\label{fig:repl}
+%\end{figure}
+
+The REPL was the earliest form of interaction with the proof assistant.
+For example, the description of Stanford LCF~\citep{Milner1972b} calls the proof process a
+``conversation between the user and the computer.'' The LCF user writes commands,
+which the computer evaluates and replies to with feedback such as new goals.
+In part of the example from the LCF description, the user cuts an inline lemma:
+\begin{lstlisting}
+*****GOAL f $\subset$ g;
+\end{lstlisting}
+The computer then responds acknowledging the new goal:
+\begin{lstlisting}
+NEWGOAL #1 f $\subset$ g 
+\end{lstlisting}
+The user tells the computer to prove this goal inductively:
+\begin{lstlisting}
+*****TRY 1 INDUCT 1; 
+\end{lstlisting}
+The computer responds with two intermediate goals, a base case and an inductive case:
+\begin{lstlisting}
+NEWGOAL #1#1 UU $\subset$ g 
+NEWGOAL #1#2 fun(f1) $\subset$ g ASSUME f1$\subset$g 
+\end{lstlisting}
+The user then proves those subgoals, then uses the inline lemma to prove the original result.
+
+Many ITPs followed in this tradition and introduced command line REPLs.
+Examples of command line REPLs include the \lstinline{coqtop}~\citep{coq-commands} command for Coq and
+the \lstinline{hol}~\citep{hol-interact} command for HOL.		
+Some of these tools are still accessible even when graphical interfaces exist.
+For example, Coq still exposes its \lstinline{coqtop} command,
+in spite of the existence of the graphical interfaces CoqIDE~\citep{coqide} and Proof General~\citep{Aspinall2000}.
+
+\begin{figure}
+\center
+\includegraphics[width=0.7\linewidth]{agdaemacs.pdf}
+\caption{Agda Emacs mode (from \cite{barret-agda})}
+\label{fig:agda-modes}
+\end{figure}
+
+However, not all ITPs followed in this tradition.
+Nuprl, for example, was distributed with a graphical interface from the start~\citep{Constable1986}.
+Even those ITPs that followed in this tradition sometimes later diverged.
+For example, Agda's \lstinline{--interactive} option to interact with the REPL directly 
+is no longer supported; Agda interaction happens through an Emacs~\citep{emacs} or Atom~\citep{atom} mode which calls out directly to the 
+backend theorem prover~\citep{agda-editing}. Figure~\ref{fig:agda-modes} shows an examples of the Agda Emacs mode.
+Isabelle/HOL has recently done away with its REPL; the default interface is now Isabelle/jEdit~\citep{Wenzel2012},
+which instead builds on Isabelle/PIDE~\citep{Wenzel2014}.
+
+% TODO Talia also HOL Light but can't find stuff about that
+%\begin{figure}
+%placeholder
+%\caption{NuPRL text editor}
+%\label{fig:nuprltext}
+%\end{figure}
+
+\paragraph{Generation II: Separation of Concerns}
+
+The 1990s saw a surge in the release of interfaces for ITPs decoupled from the proof checker,
+typically communicating with the system through a protocol.
+In some ways, this was a natural path of evolution from the way that users
+typically interacted with the REPLs for existing ITPs.
+While the REPL was typically exposed through a command line tool,
+it was common to instead use multiple Emacs buffers, 
+one for development and for the proof assistant top-level,
+and to copy definitions between the two.
+This approach is still used in some modern proof assistants
+such as HOL~\citep{hol-tutorial}.
+
+This mode of interaction naturally led to the development of Emacs modes which interact with the REPL or theorem prover backend.
+For example, Isamode~\citep{isamode} for Isabelle99 was an Emacs mode for Isabelle which smoothed interaction with the REPL.
+The HOL4 Emacs mode~\citep{hol4-interact} is still used to this day.
+The Agda Emacs mode, which interacts with the Agda backend, is similar in spirit but contains more advanced functionality; 
+it allows the user to, for example, define holes in terms and fill those holes in later in development.
+Idris includes an Emacs mode~\citep{mehnert2014tool} for interacting with the REPL, which inspired by both the Agda Emacs mode and Proof General.
+
+Other interfaces beyond Emacs modes communicate with the backend theorem prover
+or REPL in this style. For example, ALF, a predecessor to Agda, included a window-based interface for communicating 
+with the backend~\citep{altenkirch1994user}. The lightweight interface 
+TkHOL~\citep{tkhol} for HOL also follows in this style.
+\cite{BERTOT1998} describes a generic approach for building an interface that communicates with
+the ITP using a protocol, inspired by the early Coq user interface \textsc{CtCoq}.
+
+\begin{figure}
+\begin{minipage}{0.45\textwidth}
+\includegraphics[width=1.0\linewidth]{proofgeneral.pdf}
+\end{minipage}
+\hfill
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1.0\linewidth]{coqide.pdf}
+\end{minipage}
+\caption{Proof General (left) and CoqIDE (right) for Coq}
+\label{fig:proofgeneral}
+\end{figure}
+
+In some cases, these interfaces were entirely
+independent of the underlying proof assistant.
+One notable example of such an interface from this generation is the Emacs extension 
+Proof General~\citep{Aspinall2000}, an
+interface for proof development that supports multiple 
+proof assistants. Proof General has seen widespread use,
+especially within the Coq community. %\talia{Why? And what about Isabelle?}
+While Proof General best supports Coq, it also has support for
+LEGO, PhoX, and an old version of Isabelle, as well as experimental support
+for other proof assistants~\citep{proofgeneralwebsite}.
+It is simple yet easily extensible, both to support new 
+proof assistants and to add new functionality for existing proof assistants. 
+Company-Coq~\citep{CompanyCoq2016} for example, 
+extends Proof General with many new features for Coq, including improved autocompletion, and integration of documentation. 
+% TODO need to talk about LEGO mode, Isamode, etc from website
+
+%\milos{Can we have a line plot to show how the number of users increases/decreases for each UI; any stats available?}
+% Talia: Not available, should talk about it in future work
+
+Following the success of Proof General, Coq released
+the lightweight interface CoqIDE~\citep{coqide} as part of Coq 8.0~\citep{coqide-commit}.
+Its main selling point was speed: It claimed to be faster than Proof General.
+In addition, CoqIDE's native support for Coq means that it is
+always maintained and distributed with new versions of Coq, imposing minimal overhead on
+users. Figure~\ref{fig:proofgeneral} shows CoqIDE and Proof General side-by-side for Coq.
+% TODO Talia: Does CoqIDE belong here? How does it work?
+
+Both third-party interfaces and native interfaces from this generation continue to be
+popular to this day. This separation of concerns has also inspired a new
+generation of specialized interfaces (Section~\ref{sec:specialized}) for proof assistants.
+%This generation of user interfaces will likely continue to inspire new developments and to see use and success.
+
+%\milos{Would it make sense to do some parallel comparison with what happened for example with IDEs for Java?  May be hard.}
+%TODO Talia: for now commenting out for readability; would be nice to have but not sure how to address
+
+% TODO maybe twitter pics
+
+\paragraph{Generation III: Full IDEs}
+
+The third generation of user interfaces coincides with the rise of proof development
+of large projects and the corresponding increase in concern for good proof engineering
+support. Interfaces from this generation focus on scaling to large developments.
+For example, early user interfaces did not support \textit{asynchronous development}: 
+they did not allow the user to run the proof checker on some proofs while modifying others.
+Early user interfaces also did not have support for project management, and so were
+not truly full-scale IDEs.
+
+\begin{figure}
+\center
+\includegraphics[width=0.7\linewidth]{Isabelle_jedit.pdf}
+\caption{Isabelle/jEdit (from \cite{isabelle-jedit})}
+\label{fig:pide}
+\end{figure}
+
+Many IDEs in the latest wave of development address these concerns.
+Coqoon~\citep{Faithfull2016}, for example, is an IDE for Coq built on Eclipse with support for both project management and asynchrony. 
+The PIDE framework, originally developed
+for use with the Isabelle IDE Isabelle/jEdit~\citep{Wenzel2014}, also supports asynchronous development;
+Isabelle/jEdit is shown in Figure~\ref{fig:pide}.
+
+PIDE is ultimately indifferent to the backend theorem prover;
+\cite{Wenzel2013} and \cite{Barras2015} describe interfaces built on PIDE for Coq.
+PIDE also has additional interfaces in Isabelle aside from the default
+Isabelle/jEdit, including Isabelle/VSCode~\citep{isabelle-vscode}, an Isabelle plugin for Visual Studio~\citep{vscode}.
+PIDE has seen enough success that Isabelle has done away with its REPL entirely.
+
+Like Isabelle, Lean also has an IDE implemented as a Visual Studio plugin~\citep{lean-vscode}.
+This IDE communicates with the Lean server, and supports 
+incremental compilation and proof checking, debugging, documentation, and batch execution.
+
+Many existing proof assistant interfaces have integrated features from this generation.
+For example, CoqIDE now supports asynchrony~\citep{coqide}. It remains
+to be seen to what extent full-scale IDEs for proof assistants will continue to evolve
+and to grow in popularity.
+
+%\external{Joomy}{Alfa} TODO iff time	
+
+\subsection{Specialized Interfaces}
+\label{sec:specialized}
+
+The separation of concern from Generation II interfaces for proof assistants inspired the development
+of specialized interfaces. For example, web-based interfaces require minimal setup and installation,
+and so are thought to be less intimidating to new users, especially students. 
+%Figure~\ref{fig:web-based} shows some examples of web-based interfaces for proof assistants.
+Many web-based interfaces are built with students as the key audience to address concerns students have about installing and using
+heavyweight IDEs. Examples of web-based interfaces for proof development include 
+ProofWeb~\citep{kaliszyk2007web}, jsCoq~\citep{Gallego2016}, and PeaCoq~\citep{peacoq}.
+The Lean 2 tutorial~\citep{lean-tutorial} uses the Lean.JS~\citep{lean-js} web interface for Lean to provide an interactive
+learning experience directly in the browser.
+% TODO: Should PeaCoq cite Val's thesis?
+% TODO is Lean JS citation right?
+
+Proof assistant users sometimes note that the experience of writing proofs has game-like elements.
+The interactive nature of a proof assistant, for example, is similar to interacting with an adversary in a game.
+There is some work on gamification of proofs that reifies this intuition into the interface itself.
+In these games, players can generate program annotations~\citep{dietl2012verification},
+write natural deduction proofs~\citep{lerner2015polymorphic},
+and identify inductive invariants~\citep{bounov2018inferring}, all the while having low-level details of these proofs
+abstracted away from them. While these games are not interfaces for well-known ITPs like Coq and Isabelle,
+they may help with tasks that can assist users in writing proofs, such as finding inductive invariants. Applying
+this same intuition to build new interfaces for commonly-used proof assistants may help make them more accessible
+to non-experts in the future.
+
+\subsection{Interface Usability Analysis}
+\label{sec:usability}
+
+Traditional software engineering tools and interfaces are often subject to usability analyses according to the conventions in human-computer interaction (HCI). There are some similar analyses related to proof assistants. \cite{Aitken1998} propose a three-layer model to account for user interaction with a proof assistant, and perform an empirical study which concludes that there is support for the view of ``proof as programming'' for proof assistant interaction, rather than ``proof by pointing''~\citep{Bertot1994} and ``proof as structure editing''. \cite{Kadoda1999} analyze the usability of theorem provers in a cognitive framework by using questionnaires. \cite{Aitken2000} analyze errors in proof attempts. \cite{HOFM2014raey} use focus groups to evaluate usability of proof assistants, finding that users prefer proof assistants that produce intuitive proofs, can present comprehensible proof steps, and provides a convenient interface.
+
+\subsection{Tooling for User Support}
+\label{sec:usersupport}
+
+%\talia{Clean-up pass left off here}
+
+In parallel with the evolution of user interfaces, recent years have seen
+an emphasis on tooling to help users
+with proof development. These features are more useful than ever because of the
+advent of Generation II user interfaces that are not tightly tied to the REPL.
+
+Many of the user support features that are now arising for proof engineering
+echo similar features that already exist in languages with more mature IDEs. 
+%For example, Isabelle comes with a standard command-line build tool; there are plans
+%to integrate this into the IDE PIDE, with hopes to free users from thinking
+%about the details of project managemet~\citep{build-pide}.
+%
+% full quote from Isabelle mailing list : In recent years there has been a tendency to integrate more and more
+%prover technology into the Prover IDE (according to its name and
+%principle). A notable exception is the "isabelle build" command-line
+%tool, but it will also move into the IDE eventually.
+%
+%The build tool understands the syntax of Isabelle theory sessions. This
+%is important for scaling, and "engineering" of large proof projects: the
+%system can impose certain policies according to the theory structure.
+%
+%Taking away the free choice of "make" tools from the user also means
+%that Isabelle projects can easily build on existing projects, without
+%having to worry about the underlying project management technology: it
+%is just standard Isabelle itself.''
+%
+% TODO more build and continuous integration
+%
+For example, languages with more mature IDEs often integrate refactoring tools into those IDEs;
+now that proof assistant interfaces are maturing, interfaces
+with refactoring support such %the verification platform Why3~\citep{Bobot2013}
+the Coq interface CoqPIE~\citep{Roe2016} are beginning to emerge.
+We discuss more refactoring tools in Section~\ref{sec:refactor}.
+
+In addition, new techniques are extending the reach of user support features to
+support the challenges particular to proof development. 
+For example, one common challenge in proof engineering is efficiently finding relevant datatypes and proofs
+%(to avoid confusion with proof search, we refer to this as \textit{indexing} datatypes and proofs).
+Many proof assistants distribute tools for this by default.
+For example, Coq includes the \lstinline{Search} command,
+which \ssreflect~\citep{Gonthier2010} extends;
+Isabelle includes the \lstinline{find_theorems} and \lstinline{find_consts} commands.
+This challenge has also inspired several external tools, including the web-based tool Whelp~\citep{asperti2004content} for Coq,
+upon which Matita builds~\citep{asperti2007user}.
+
+Machine-learning techniques can also help with challenges in proof developments, for example by suggesting hints to users.
+Recent tooling of this flavor includes the ML4PG~\citep{Komendantskaya2012} extension to Proof General, which
+uses machine learning to suggest hints during proof development,
+and ACL2(ml)~\citep{Heras2013}, which uses machine learning to suggest auxiliary lemmas
+for ACL2 development. Nagashima and He propose a proof method recommendation system for
+Isabelle/HOL based on machine learning, which is trained on large proof corpora~\citep{Nagashima2018}.
+
+Unlike traditional software development, proof development with ITPs
+often involves significant interaction with automation. Accordingly, one question that many tools
+explore is the ideal user experience for interacting with automation.
+The web-based IDE PeaCoq~\citep{peacoq}, for example, has extra support for tactic previews and context management.
+Matita~\citep{asperti2007user} includes special support for contextual term manipulation,
+and for understanding the execution of tactical-like chains of tactics.
+
+Another common problem in proof development is that the proof engineer may accidentally
+state a false theorem, or may be unsure if a stated theorem is true.
+When a stated theorem is false, it can be difficult to determine that the theorem is actually false;
+the proof engineer may instead think his inability to prove the theorem is due to his own shortcomings.
+Hammers and other general-purpose automation (Section~\ref{sec:autotactics}) can help a proof engineer discharge simple proof obligations
+and quickly determine that a theorem is true; the proof engineer can then reprove the theroem in a different way if desired.
+Property-based testing tools like Quickcheck for Isabelle~\citep{Bulwahn2012b} and QuickChick~\citep{lampropoulos2017generating, Paraskevopoulou2015} 
+for Coq can help users identify counterexamples to false properties.
+
+%These features are often independent of IDEs, but the increasing independence
+%of IDEs in recent years from the underlying language and from the tooling that
+%integrates with it mean that we may see these features gaining more widespread use.
+%\talia{This section lacks non-Coq references, and needs more in general.}
+
+% TODO iff time:
+%\external{Conor McBride}{Ideas from Epigram XEmacs: Everything meaningful had a bounding rectangle. Everything meaningful had nontrivial area you %could click on to select it. The 2d prettyprinter maintained some nice invariants to achieve the above. And then there was 2d parsing.}
+
+\subsection{Future of User Interfaces}
+\label{sec:futureinterface}
+
+Many of the Generation I interfaces
+still exist today. We expect some of these will continue to exist, since they are
+useful when resources are limited. However, there is a growing trend of moving away from the REPL in some ITPs
+such as Isabelle/HOL; perhaps more ITPs will move in that direction.
+
+The interactive nature of the REPL makes it simple to collect fine-grained data
+on how proof engineers develop code. For proof assistants that are backed by a REPL,
+collecting this data could help with the development of better tooling to support
+proof engineers during development.
+Similarly, while there is some empirical information on how proof engineers interact with different user interfaces,
+this is still a lot more ground to cover. Even collecting simple information like the number of users of each interface for each proof assistant over time may 
+help gauge the impacts of different design decisions.
+More user studies on interacting with proof assistants could also help pave the way for more useful interfaces.
+
+We expect that the separation of concerns emphasized with Generation II interfaces
+has had a strong influence and will likely continue to have a strong influence. 
+Separation of concerns and extensibility may be part of why
+Proof General has continued to be successful after so many years.
+% though the success may be also be due to familiarity of users with existing tools \milos{or maybe because people want to use Emacs?}. 
+In many ways, this mirrors the success
+that is seen in successful IDEs for software engineers, such
+as Eclipse~\citep{eclipse} or IntelliJ IDEA~\citep{intellij}. %We do not believe that proof engineering is 
+%especially unique here\milos{unique in what way? I do believe that some development in IDEs can happen because of uniqueness of proof assistants}. 
+We expect
+that future developments will continue to work on separation of concerns
+and extensibility, with better plugin systems for IDEs to support more features
+with minimal effort for the interface developer and for the proof engineer.
+
+Emacs has played a crucial role in the history of the development of IDEs for ITPs,
+with many early interfaces implemented as Emacs modes. Recent years have seen the development
+of IDEs as Visual Studio plugins for Isabelle/HOL and for Lean.
+In the future, perhaps more proof assistants will implement IDEs as plugins for existing IDEs such as
+Visual Studio and Eclipse, and perhaps these existing IDEs will play 
+a similar role to Emacs in the continued development of proof assistant IDEs.
+
+We also expect that project management will continue to grow in importance
+as large proof developments become more common. Few interfaces for proof assistants
+currently have strong support for project management; this is an area ripe for
+improvement. Better integration of build tools and continuous integration tools
+can greatly improve development experience. % I guess could mention travis and opam and so on somewhere
+
+Finally, we expect more productivity tools to emerge, like the refactoring
+tools that already exist, and for these tools to be integrated into IDEs. For example, most mature IDEs for existing languages 
+have strong support for debugging. Debugging tools for proof assistants, on the other hand,
+are few and far between.
+Better plugin systems for interfaces could help minimize the friction in supporting
+these features at the IDE level. 
+%there is already an ongoing effort for this in Coq~\revisit{(check, cite)}. 
+
+%\section{Proof Repair \& Evolution}
+\section{Proof Evolution}
+\label{sec:evolve}
+
+% TODO social processes quote would be fun here
+
+Programs change over time, and so proofs about programs must change with those programs.
+This concern is raised in the Social Processes~\citep{DeMillo1977} critique of program verification
+as a barrier for the verification of real programs. 
+This barrier has been realized in real developments; a review~\citep{Elphinstone2013} of the evolution of the seL4 verified 
+OS microkernel~\citep{Klein2009}, for example, notes that while
+customizing the kernel to different environments may be desirable, 
+``the formal verification of seL4 creates a powerful disincentive to changing the kernel.''
+\cite{leroy2012} motivates and describes updates to the initial CompCert memory model
+that include changes in specifications, automation, and proofs~\citep{leroy-mem-2010}.
+
+Changes in programs and proofs are not always in the proof engineer's control---
+updating a standard library, for example, can lead to proofs in client code failing
+during regression proof checking (Section~\ref{sec:regression}).
+\textit{Reactive} approaches to proof evolution address changes that occur outside of the proof engineer's control.
+These approaches contrast with and are complementary to \textit{proactive} approaches
+that address brittleness ahead of time, 
+such as the design principles discussed in Section~\ref{sec:proofdes}.
+
+Consider, for example, a Coq proof that uses the \lstinline{intros} tactic. If the user does not
+pass identifiers to \lstinline{intros}, then Coq automatically chooses hypothesis names. Small changes to the theorem statement or 
+to the proof can change the names of the hypotheses that Coq chooses, which can make proofs that refer to those hypotheses brittle.
+We briefly discussed two proactive approaches to this problem in Section~\ref{sec:des-scale}:
+explicitly choosing identifiers to pass to \lstinline{intros}, and writing tactics that do not refer to these hypotheses at all.
+In contrast with these proactive approaches,
+the IDE CoqPIE~\citep{Roe2016} automatically renames references to hypotheses in proofs to work
+around this problem reactively.
+
+The renaming functionality of CoqPIE is an example of proof refactoring (Section~\ref{sec:refactor}),
+a reactive approach to proof evolution. Proof repair (Section~\ref{sec:repair})
+is a similar reactive approach to proof evolution. The main distinction between these two approaches 
+is that proof refactoring is semantics-preserving, while proof repair need not be. 
+Nonetheless, these technologies often overlap.
+
+\subsection{Regression Proving}
+\label{sec:regression}
+
+Regression proving is the process of rechecking proofs after a change to a verification project, mirroring \emph{regression testing} for software projects. For large-scale projects, regression proving may require considerable machine time---from tens of minutes and hours up to several days. This can negatively affect the productivity of proof engineers. Absent domain- and context-specific knowledge, as in proof refactoring, the two main techniques to speed up regression proving are proof-checking parallelization~\citep{Wenzel2013MultiProcessing,Barras2013} and proof selection~\citep{Celik2017}.
+
+Support for parallelization varies in degree and kind among proof assistants. Isabelle leverages the support for threads in its host compiler, Poly/ML, to spawn proof checking tasks processed by parallel workers. Using a notion of \emph{proof promises}, proofs that require previous unfinished result can proceed normally and become finalized when extant tasks terminate~\citep{Wenzel2013}. Isabelle also includes a build system with integrated support for checking of proofs and management of parallel workers. The lack of native threads in OCaml prevents similar low-cost fine-grained parallelism for Coq. However, spawning parallel operating system processes is still possible, and such processes can be leveraged for both file-level parallelism and to check fine-grained proof tasks~\citep{Barras2015}. Lean supports fine-grained parallel proof checking~\citep{deMoura2015}. Compared to parallelization of test execution for software projects, checking a proof is deterministic and has no side-effects detrimental to checking other proofs. 
+
+A \emph{regression proof selection} (RPS) technique limits the scope of regression proving to those proofs that are affected by a change to a project. While selection at the file level (modulo file dependencies) is broadly supported via build systems such as \texttt{make}, only some proof assistants such as Isabelle and Coq supports selection of individual proofs; this is made possible by support for \emph{asynchronous} proof checking~\citep{Wenzel2014,Barras2015}. Celik~et~al. proposed an RPS technique for Coq that combines dependency analysis at the file and proof levels~\citep{Celik2017}; their tool implementation, dubbed iCoq, compares checksums of files, terms, and proof scripts to locate and run affected proofs sequentially. In an evaluation on the revision histories of several large-scale Coq projects, iCoq was up to 3 times faster than using conventional \texttt{make}-style checking with a persistent store, and up to 10 times faster than conventional checking when each revision is checked from a clean slate.
+
+\cite{Palmskog2018} defined a taxonomy of regression proving techniques for proof assistants that include both parallelism and selection. Along one axis, they consider parallelization at the file and proof granularity. Along the other axis, they consider selection of files and proofs. Their most sophisticated technique combines proof selection and fine-grained parallelization, and consisistently outperforms other techniques on the revision histories of several Coq large-scale projects.
+
+\cite{WenzelScalingIsabelle, WenzelFurtherScalingIsabelle} outlined how to scale Isabelle for large projects using both parallelism and other techniques.
+
+\subsection{Proof Refactoring}
+\label{sec:refactor}
+
+\textit{Refactoring} is the restructuring of code in a way that preserves semantics~\citep{opdyke1992};
+\textit{proof refactoring} is the refactoring of proofs~\citep{WhitesidePhD}.
+Proof refactoring tools help automate this process, propogating a single change throughout the proof development.
+Like program refactoring tools, proof refactoring tools can help keep developments
+maintainable as they change over time~\citep{Bourke12}. In that way, it is possible to consider refactoring tools 
+as both proactive and reactive approaches to proof evolution, though we consider them here through a reactive lens.
+
+Some proof assistants expose tactics (Section~\ref{sec:tactics}) or proof languages (Section~\ref{sec:structuredprooflangs})
+in which the proof engineer can write high-level proof scripts to guide proof search.
+Some proof refactoring tools refactor these proof scripts directly.
+One such tool is \textsc{POLAR}~\citep{Dietrich2013}, a generic framework for proof script refactoring. 
+\textsc{POLAR} is instantiated with two languages,
+both of which are based on Isabelle/Isar~\citep{Wenzel2007isar}:
+Hiscript~\citep{WhitesidePhD}, a language with support for refactoring,
+and $\Omega$\textsc{script}~\citep{dietrich2011}, a language with support for proof planning (Section~\ref{sec:toolingreuse}).
+Refactoring in \textsc{POLAR} works through a combination of rewrite rules that operate over
+a graph representation of the underlying language. % TODO elaborate
+\textsc{POLAR} implements ten kinds of refactorings by default,
+and also supports custom refactorings.
+It guarantees that all lemmas that go through before
+the refactoring continue to go though after the refactoring.
+
+Some proof refactoring tools focus on specific refactoring tasks that are common in proof development.
+For example, Levity~\citep{Bourke12} is a proof refactoring tool for an old version of Isabelle/HOL that automatically
+moves lemmas to maximize reuse. The design of Levity is informed by experiences with two large proof developments.
+Levity addresses problems that are especially pronounced in the domain of proof refactoring, such as the
+context-sensitivity of proof scripts. Tactician~\citep{adams2015} is a refactoring tool for proof scripts in HOL Light
+that focuses on refactoring proofs between sequences of tactics and tacticals.
+ 
+There is little work on refactoring proof terms (Section~\ref{sec:proof-objects}) directly. This is the main focus of Chick~\citep{robert2018}, 
+which refactors terms in a dependently-typed functional language similar to Gallina. To use Chick, the proof engineer applies some refactorings.
+Chick then uses a program differencing algorithm to determine the changes to make elsewhere in the program,
+then makes those changes. Chick supports insertion, deletion, modification, and permutation of subterms.
+Similarly, RefactorAgda~\citep{wibergh2019} is a refactoring tool for a subset of Agda that operates directly
+over Agda terms. RefactorAgda supports many changes, including changing indentation, renaming terms, moving terms, converting between implicit and
+explicit arguments, reordering subterms, and adding or removing constructors to or from types; 
+it also documents ideas for supporting other refactorings, such as adding and removing arguments and indicies to and from types. 
+
+For both Chick and RefactorAgda, only some of these changes are semantics-preserving. Adding a new index to a type, for example, does not preserve the 
+semantics of the original program. Accordingly, these tools can be viewed as both refactoring and repair tools,
+though the algorithms that they use are syntactic.
+
+A natural integration point for a proof refactoring tool is at the level of a platform or an IDE.
+The Coq IDE CoqPIE~\citep{Roe2016} for Coq takes this approach for refactoring proof scripts.
+CoqPIE includes a \textit{Replay} button which steps through the proof while renaming
+any changed hypothesis names. CoqPIE can also automatically split out intermediate goals from a proof into separate lemmas. 
+There are plans to support more refactoring functionality in CoqPIE in the future.
+
+\subsection{Proof Repair}
+\label{sec:repair}
+
+\textit{Program repair}~\citep{Monperrus2018} is the automatic patching of programs to fix bugs;
+\textit{proof repair} is program repair for proofs. Proof repair tools automatically fix broken proofs.
+Recent lessons from a review of a certain class of program repair tools~\citep{Qi2015}
+highlight why proof repair is a particularly good domain of program repair.
+The review demonstrates that many existing tools produce incorrect patches.
+Among the recommendations the authors make to remedy this is the suggestion that program repair tools
+make use of extra information such as specifications, code from other applications, or example patches when generating patches.
+
+In proof repair, a specification is always available: the theorem the repaired proof ought to prove.
+Some proof repair tools take this a step further and make use of additional extra information, such as examples patches.
+One such tool is \textsc{PUMPKIN PATCH}~\citep{Ringer2018}, a proof repair tool for Coq that generalizes example patches. 
+\textsc{PUMPKIN PATCH} takes as inputs an old proof and a new proof that addresses some change in specification.
+From those, it identifies a reusable patch that describes the change in specification;
+for the kinds of changes \textsc{PUMPKIN PATCH} can currently handle, this patch is a Gallina function.
+The proof engineer can then use this patch to patch other proofs broken by the change in specification.
+\textsc{PUMPKIN PATCH} has only preliminary tooling~\citep{pumpkin-git} for applying patches automatically,
+and currently handles only simple changes.
+
+Chick~\citep{robert2018} was developed in parallel to \textsc{PUMPKIN PATCH}, and has a similar workflow:
+Chick takes a set of example changes supplied by the programmer,
+and uses a program differencing algorithm to determine the changes to make elsewhere.
+Unlike \textsc{PUMPKIN PATCH}, Chick also applies the changes it finds.
+However, Chick does this using a syntactic algorithm that handles only simple transformations;
+for this reason, it presents itself primarily as a refactoring tool, even though the changes it makes may
+not preserve semantics. The refactoring tool RefactorAgda~\citep{wibergh2019} similarly decribes some semantics-changing
+repairs for a subset of Agda.
+
+While proof repair is analogous to program repair, it was born out of traditional proof reuse (Section~\ref{sec:proof-reuse}).
+For example, \textsc{PUMPKIN PATCH} discovers patches which help adapt a proof of a theorem to a proof of a related theorem,
+and can so be thought of as a tool to assist in proof by analogy~\citep{curien1995}.
+Similarly, the proposed proof weaving~\citep{Mulhern06proofweaving} method to automatically satisfy new obligations 
+generated in response to changes in inductive types can be viewed as a proof repair technique.
+Proof planning critics~\citep{ireland1996} can also be viewed as a technique for proof repair.
+
+New technologies continue to make proof repair more feasible.
+GALILEO~\citep{chan2011galileo} is a tool build on Isabelle for identifying and repairing faulty ontologies in response to contradictory
+evidence; it has been applied to repair faulty physics ontologies, and may have applications more generally for mathematical proofs.
+GALILEO uses repair plans to determine when to trigger a repair, as well as how to repair the ontology.
+
+Knowledge sharing methods~\citep{gauthier2014} match concepts across
+different proof assistants with similar logics and identify isomorphic types,
+and may have implications for proof repair.
+Later work uses these methods in combination with HOL(y)Hammer to
+reprove parts of the standard library of HOL4 and HOL Light using combined knowledge 
+from the two proof assistants~\citep{Gauthier2015}. 
+More recently, this approach has been used to identify similar concepts
+across libraries in proof assistants with different logics~\citep{gauthier2017}.
+These methods combined with automation like hammers may help the proof engineer 
+adapt proofs between isomorphic types, and may have applications
+when repairing proofs even within the same logic, using information from different 
+libraries, different commits, or different representations of similar types.
+
+%use the techniques from Chick when improving \pumpkin\
+%and handle a larger class of changes, and take advantage of some of the differences between the tool.
+
+% TODO Talia if room: TacticToe, Transport stuff
+
+\subsection{Future of Proof Evolution}
+
+There is a lot of room for work in proof evolution---only a few techniques exist so far, 
+many of which emerged in parallel. We expect these reactive approaches to continue to evolve alongside proactive
+approaches like design principles, as the two approaches are complementary.
+Proof evolution can help with changes that occur outside of the programmer's control,
+such as changes in dependencies (examples of this can be found in \cite{Ringer2018}) and changes that are difficult to protect against
+even with informed design (examples of this can be found in \cite{Klein2014}).
+
+Ideally, proof evolution tools ought to integrate naturally with the workflows of proof engineers,
+for example through integration with existing tactic or proof languages, or through IDE or continuous integration support.
+While some proof evolution tools focus on this already and can offer useful insights, this can be challenging.
+For example, refactoring Ltac proof scripts can be difficult, since the semantics of Ltac are not well-defined;
+Ltac2~\citep{ltac2} may simplify this in the future.
+\cite{robert2018} discusses the challenges involved in refactoring proof scripts in more detail.
+\cite{Ringer2018} also discusses the challenges of workflow integration, along with other open problems in proof repair.
+We expect to see more emphasis on addressing these challenges in the future.
+
+There is only preliminary work exploring how much of the work from existing refactoring and repair tools
+for programming carries over to the domain of proof assistants. It is worth exploring in more detail
+which challenges are unique to this domain. For example, \cite{Qi2015} provides several recommendations 
+for how program repair tools can make use of extra information such as examples to make searching for patches
+more feasible; \textsc{PUMPKIN PATCH} and machine learning tools use examples for this purpose already.
+Future proof refactoring and repair tools can similarly learn from those recommendations.
+
+One tempting use case for proof refactoring and repair tools is when a library changes a specification
+that breaks proofs in client code that uses those libraries. Current refactoring and repair tools,
+however, rely each individual client to determine the appropriate refactors and repairs to make
+to fix those proofs. To better address this problem, future refactoring and repair tools
+can provide support at the level of library design.
+A library designer may, for example, specify how something has changed to a tool;
+the tool may then apply this information in client code automatically. 
+Some program repair tools already support library-provided patches~\citep{Monperrus2018};
+we expect to see this extend to proof refactoring and repair tools in the future.
+
+One barrier to useful refactoring and repair tools for proof engineers is the lack of information
+on the kinds of changes that proof engineers make in practice. Collecting data on the changes
+that proof engineers make and classifying it could help guide refactoring and repair tools
+to handle classes of changes that matter in practice, and could also help machine learning tools
+gather both positive and negative examples. Similarly, collecting the benchmarks and examples from
+both proactive and reactive approaches to proof evolution such as Planning for Change, seL4, iCoq, and \textsc{PUMPKIN PATCH} 
+can help drive the development of future proof evolution tools and measure their success meaningfully.
+
+\section{User Productivity and Cost Estimation}
+\label{sec:productivity}
+
+\cite{Bourke12} outline challenges in large-scale verification projects using proof assistants: (1) new proof engineers joining the project, (2) expert proof engineering during main development, (3) proof maintenance, and (4) social and management aspects. They highlight three lessons: (1) proof automation is crucial, (2) using introspective tools for quickly finding facts in large databases gain importantance for productivity, and (3) tools that shorten the edit-check cycle increase productivity, even when sacrificing soundness.
+
+\cite{Zhang2012} present a simulation model of the process of verifying the operating system kernel seL4. Their model is expressed as a software process using the tool Vensim. \cite{Andronick2012} describe the development process and management issues in verifying seL4. They conclude that formal verification, and re-verification, for systems requiring in the order of 10,000 LOC is feasible using a proof assistant. \cite{Staples2013} studied the relationships between sizes of artifacts in seL4. They find that the formal specifications have a significant relationship with the the size of the verified executable code. \cite{Staples2014} study the \emph{proof productivity} problem in the context of seL4; they find that effort is correlated linearly with proof size. \cite{Matichuk2015} analyze the Isabelle/HOL specifications and proof scripts from the seL4 project, and find a quadratic relationship between the size of a formal property and the proof script required to prove it.
+
+\cite{Jeffery2015} identify 30 research questions about productivity in application of formal methods, such as verification using proof assistants. \cite{Klein2015} outline the benefits of trustworthy systems.
+
+\section{Mining and Learning from Proof Repositories}
+%\section{Mining Proof Repositories}
+\label{sec:mining}
+
+Mining software repositories is an emerging field that analyzes software repositories to yield actionable information about software systems and their development and evolution. We describe similar forms of analysis that have been carried out for repositories with proof assistant code.
+
+\cite{Wiedijk2009} compared statistics for standard libraries of several proof assistants for versions available around 2009, including Isabelle/HOL, Coq, and HOL Light. For each library, he reports the number of lines of comments, proofs, definitions, etc. Despite foundational differences, the numbers are similar, with HOL Light having the smallest number of lines for definitions. For example, the LOC shares of theorem statements, definitions, and proof in the Coq version 8.1 standard library were 11\%, 8\%, and 53\%, respectively. Wiedijk argues informally that fewer definitions per proof means higher trustworthiness, since having proofs of relevant properties yield higher confidence in the adequacy of definitions.
+
+\cite{Blanchette2015} investigated Isabelle's Archive of Formal Proofs (AFP), analyzing among other properties the number and sizes of proofs, interdependencies between projects, and number of authors. For the AFP in aggregate, the LOC shares of theorem statements, definitions, and proofs were 19\%, 8\%, and 58\%, respectively. They found that the Isabelle Sledgehammer tool for proof automation~\citep{Blanchette2013} could prove about 60\% of all theorems in the AFP.
+
+Software metrics provide quantitative ways to describe software artifacts and processes and discover new properties. \cite{Aspinall2016} first considered analogous metrics for formal proofs. More specifically, they define an abstract model of formal proofs and a set of proof metrics for this model, which they implement for three different proof assistants (Isabelle, Mizar, and HOL Light) and apply to several large proof corpora.
+
+\cite{Komendantskaya2012} used machine learning with clustering algorithms to identify patterns in large collections of Coq tactic sequences and proof trees, e.g., to find structural similarities between lemmas, and \cite{Heras2013b,Heras2014} highlighted how statistical patterns in proofs can be leveraged during interactive proof development. \cite{Aspinall2016b} used machine learning, in the form of a $k$-nearest-neighbor classifier, to learn and suggest theorem names in HOL Light projects that accurately reflect their property definitions.
+
+\cite{Muller2017} proposed a format and database for capturing and leveraging \emph{alignments} between concepts in different proof assistants, e.g., between natural numbers in Coq on one hand and Isabelle/HOL on the other. One of the basic assumptions in alignment is that concepts have syntactic and semantic similarities across environments, consistent with repetitiveness assumptions in naturalness. \cite{gauthier2017} proposed an algorithm based on heuristics for generating alignments given two proof assistant libraries, and evaluated it on libraries from six proof assistants. For example, by evaluating a library against itself for alignment, duplicated concepts can be found.
+
+\cite{Kaliszyk2017b} leveraged statistical machine learning techniques in a tool that automatically translates (``formalizes'') mathematical texts to proof assistant code. Their approach and evaluation is based on learning and cross-validation using a corpus with established alignments between English texts and HOL Light documents, based on the Flyspeck project~\citep{Hales2017}. They find that the number of correct translations among the top 20 is 64\%.
+
+There are many recent lines of work that learn from large proof assistant corpora to directly perform various automated reasoning tasks~\citep{Kuhlwein2012,Kuhlwein2013,Kaliszyk2014,Irving2016,Loos2017,Peng2017}; the HOLStep dataset~\citep{Kaliszyk2017} is designed as a benchmark for training and evaluating such techniques in a proof assistant context. \cite{Gauthier2017b,Gauthier2018} proposed a technique for learning from HOL4 tactic sequences and proof states and automatically suggest tactic-based proofs of theorems. They achieved around 66\% success rate on the HOL4 standard library, and by also incorporating the automated E prover into the toolchain, they raised the success rate to 69\%. \cite{Huang2018} similarly learn from tactics and proof states, but in the context of Coq and for a limited set of algebraic proof goals. \cite{Yang2019} proposed a more general tactic-based approach for learning and automatic proof suggestion for Coq, which achieved around 12\% success rate on proofs from a large dataset of 123 Coq projects. \cite{Nagashima2018} used custom encodings of proof state in Isabelle/HOL for learning in order to predict suitable proof methods (essentially powerful domain-specific proof tactics) to apply. \cite{Bansal2019} presented a learning environment for HOL Light.

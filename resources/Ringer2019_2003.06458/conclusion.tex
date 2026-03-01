@@ -1,0 +1,97 @@
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+%\section{State of the Art}
+
+%The engineering discipline for producing software with machine-checked proofs of correctness
+Proof engineering has come far since its infancy in the 1970s~\citep{Milner1972b,Milner1972}, drawing on hundreds of years of foundational ideas in mathematics and logic. Researchers and proof engineers have used proof assistants to build software artifacts spanning hundreds of thousands of lines of code~\citep{Leroy2009,Klein2009}. % I ran sloccount on each of these, and neither are in the millions
+A growing fraction of these artifacts are executable on real hardware, and of these, some are verified down to machine code for verified hardware.
+Verified artifacts have shown themselves to be more reliable~\citep{Yang2011}, and are beginning to see 
+industrial applications~\citep{CompCert-ERTS-2018, Erbsen2019}.
+
+Compared to most research software, widely used proof assistants such as Coq and Isabelle/HOL are mature and well-maintained tools, with large communities, large software ecosystems, wide selections of support tools, and sophisticated interfaces.
+Interest in verification across academia and industry builds additional momentum for proof assistant development.
+Interest in formal proofs among mathematicians, for example, results in rich libraries~\citep{UniMath, Bauer2017}, foundational advances~\citep{univalent2013homotopy}, 
+and tooling~\citep{Braibant2011} useful for verifying software.
+Advances in automated theorem proving reach proof engineers through tools like hammers~\citep{Blanchette2016},
+which allow them to benefit from cutting-edge research without increasing the trusted computing base.
+Adaptations of research on programming practices and developer support tools and systems from software engineering
+help proof engineers continually increase productivity.
+
+We are living in the age of ``big verification''~\citep{popl-time}.
+A new generation of computer science students are learning to use proof assistants in undergraduate and graduate courses~\citep{coq-classroom},
+entering the workforce equipped with the skills to verify software. As the scale of that verified software continues to grow,
+the challenges of proof engineering will continue to grow more 
+significant and salient. This survey concludes with a discussion of five of the opportunities to address high-level challenges that remain.
+
+\paragraph{Opportunity 1: Adapting Tools and Ideas from Software Engineering} % TODO may move maintainence somewhere
+%Compared to traditional programming languages, systems, and environments, proof assistants are young.
+Development processes, build workflows, and support infrastructure for proof assistants are far behind those for traditional software development, and proof engineer productivity is consequently far from its potential. Communities and ecosystems are small compared to those for traditional software.
+Many features of and tools for proof assistants are not adequately documented, and proof engineers struggle to develop and maintain verified software in the face
+of evolving proof assistants, libraries, and requirements~\citep{Bourke12}.
+Domains may lack usable frameworks and libraries to build on, forcing time-consuming development from scratch.
+Interfaces may lack in usability and key features, and may become unmaintained and obsolete.
+Results in one proof assistant cannot be readily used in another, except in special cases.
+%Low-level proof guidance by engineers
+%complemented by some ad-hoc automation is still the norm in many
+%verification projects, and development and maintainability costs are
+%high as a result. 
+Proof engineering is particularly far behind software engineering with respect to maintenance, disincentivizing experts~\citep{Elphinstone2013}
+from changing the system once it has been verified.
+
+Proof engineering has already benefited from traditional software engineering, for example through many of
+the design principles discussed in Chapter~\ref{ch:organization}. It can continue to draw on tools and ideas from software engineering 
+when applicable. The surveyed work suggests that it is sometimes necessary to adapt these tools and ideas,
+both to address challenges unique to or especially pronounced in proof engineering (such as brittleness), and to fully take advantage of
+the opportunities that proof engineering presents (such as the availability of full specifications).
+Continuing to transfer ideas and tools from software engineering to proof engineering with these differences in mind may help close the gap between the two disciplines. Ideas and tools ripe for transfer include improved continuous integration systems, 
+package systems, source code hosting, graphical interfaces, error messaging, debugging tools, and development processes.
+
+\paragraph{Opportunity 2: Making Proof Assistants More Accessible}
+Compared to traditional programming languages, systems, and environments, proof assistants can be hard for non-experts to understand.
+Their foundational bases in logic, mathematics, and type theory, which have served to maintain trust, may also deter potential users due to perceived complexity.
+Omissions in and misunderstandings of specifications may lead to lowered expectations and negative perceptions of formally verified software.
+An overwhelming majority of large successful software verification projects using proof assistants are carried out and maintained by small teams of highly specialized and trained researchers, frequently with close ties to the institutions where the corresponding proof assistant is developed~\citep{Gonthier2013}. 
+
+Some of this inaccessibility may dissipate over time, as students become more familiar with concepts like
+inductive or dependent types through the use of interactive theorem provers in computer science courses,
+or through the availability of online books and tutorials.
+Some may inspire new abstractions around concepts that are not accessible to the average programmer.
+For example, new abstractions may help non-experts more easily interface with unification algorithms and existential variables.
+The interactive theorem proving community can continue to draw on automated theorem proving to help make interactive theorem proving more accessible and increase its reach and impact, not just through hammers, but also as part of counterexample generators and similar tools~\citep{Blanchette2010}.
+Techniques from the broader formal methods community can even be certified in proof assistants, and then applied inside them. 
+
+\paragraph{Opportunity 3: Understanding and Evaluating Development Processes}
+It is difficult to improve the state of the art in proof engineering without understanding the status quo.
+The surveyed work suggests that little work has been done to understand and assess the current development processes of proof engineers,
+and that some of the work that has been done in this direction has been inconclusive.
+
+Thousands of proof assistant software verification projects are publicly available on platforms such as GitHub for study, reuse, and as research subjects; curated collections such as Isabelle's Archive of Formal Proofs~\citep{isabelleafp} and Coq's OPAM package index~\citep{CoqOPAM} provide high-quality projects with extensive metadata, guaranteed to work with certain proof assistant versions. These codebases can be investigated empirically, learned from, 
+and used to construct benchmarks when evaluating new proof engineering techniques. Collecting and analyzing data from other points in the development
+process, such as interaction with the IDE, may further facilitate in these processes, as may user studies and community-wide retrospective discussions
+of influential work.
+
+\paragraph{Opportunity 4: End-to-End Verification}
+Bugs affecting the soundness of a proof assistant with respect to its foundations, although rare, threaten to undermine trustworthiness.
+\cite{coq-critical}, for example, contains preliminary documentation of 23 (now fixed) critical bugs in the history of stable releases of Coq. Of the bugs listed,
+only 1 (fixed in 2015) was assessed as likely to be exploited by chance, but the risk of others was not determined.
+Extensions to proof assistant kernels may further cloud understanding of the implemented metatheory. 
+
+The wide availability of verified systems software provides the basis of a fully verified software ecosystem, with all-encompassing end-to-end guarantees for both functional and non-functional properties for a wide range of practical software. This could rule out many recently discovered critical bugs and even many prevalent security flaws~\citep{Chlipala2018}. Proof assistant self-verification projects and certified compilers for proof assisants, although still emerging and used by few, promise to eventually make the trusted computing base of verified ecosystems minimal. One important step towards a verified ecosystem is to formalize additional practical programming languages and their semantics and runtime environments.
+
+\paragraph{Opportunity 5: Looking to New Applications}
+In the Social Processes critique of program verification, \cite{DeMillo1977} wrote that:
+
+\begin{quote}
+We believe that, in the end, it is a social process that determines whether mathematicians feel confident about a theorem--and we believe that, because no comparable social process can take place among program verifiers, program verification is bound to fail. We can't see how it's going to be able to affect anyone's confidence about programs.
+\end{quote}
+The authors of this survey find it surprising with this in mind that \cite{Leroy:POPL06, Leroy2009} put years of effort into verifying
+an optimizing C compiler, with little precedent to suggest that such a project could succeed.
+But it did succeed, and in so doing increased confidence in both the compiler itself~\citep{Yang2011}
+and in the compiled software~\citep{CompCert-ERTS-2018}.
+
+As proof engineers and researchers like \cite{Leroy:POPL06} stretch the boundaries of current proof engineering
+techniques on new and interesting domains, proof engineering research can continue to grow to support
+the new needs that arise. This cycle can help build a world with, for example, safer transportation systems or more reliable medical devices.
+It can help build a world that is a bit more trustworthy.
+
