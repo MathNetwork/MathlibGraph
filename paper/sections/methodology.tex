@@ -92,7 +92,7 @@ The module tree encodes the human cognitive classification of mathematics: top-l
 \end{figure}
 
 \subsection{The module graph $G_{\mathrm{module}}$}
-Each Lean source file begins with \texttt{import} statements that declare its dependencies. Lean~4 supports both \texttt{import} and \texttt{public import}; for the purposes of the module graph, both forms create an edge.
+Each Lean source file begins with \texttt{import} statements that declare its dependencies. Lean~4 supports both \texttt{import} and \texttt{public import}; for the purposes of the module graph, both forms create an edge. After defining the base graph, we introduce three refinements: the visibility graph $G_{\mathrm{mod}}^{\mathrm{pub}}$ (which distinguishes public from private imports), import utilization $\mathrm{util}(m_i, m_j)$ (which measures how much of an imported module is actually used), and the build graph $G_{\mathrm{build}}$ (which augments the module graph with compilation cost).
 
 \begin{definition}[Import set]
 \label{def:import-set}
@@ -349,9 +349,10 @@ Each node carries two attributes: its \emph{kind} (one of eight declaration type
 \label{fig:thm-fragment}
 \end{figure}
 
-The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices.
+The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices. We organize these into three groups: edge-level decompositions that partition $E_{\mathrm{thm}}$ by the origin of each dependency (\S\ref{sec:stmt-proof}--\S\ref{sec:typeclass-synth}), subgraph constructions that isolate specific language mechanisms such as typeclass synthesis and coercions (\S\ref{sec:typeclass-synth}), and node-level enrichments that attach metadata---attributes, definitional height, tactic usage---to each declaration (\S\ref{sec:decl-attributes}).
 
 \subsubsection{Statement and proof decomposition}
+\label{sec:stmt-proof}
 Every declaration $d$ has a type~$\tau$ (the statement) and optionally a proof term~$\pi$; an edge may originate from either or both.
 
 \begin{definition}[Statement and proof dependency]\label{def:stmt-proof-dep}
@@ -419,8 +420,9 @@ The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S =
 \label{fig:stmt-proof-decomp}
 \end{figure}
 
-\subsubsection{Typeclass instance graph and synthesized edges}
-Lean's typeclass mechanism automatically synthesizes algebraic structure, producing dependency edges invisible in the source code.
+\subsubsection{Typeclass instance graph, coercions, and synthesized edges}
+\label{sec:typeclass-synth}
+Lean's typeclass mechanism automatically synthesizes algebraic structure, producing dependency edges invisible in the source code. This subsection defines three related constructions: the typeclass instance graph $G_{\mathrm{tc}}$, the synthesized/explicit edge partition, and two complementary subgraphs---the coercion graph $G_{\mathrm{coe}}$ and the structure inheritance graph $G_{\mathrm{ext}}$---that together capture the main mechanisms by which Lean's type system silently inflates the dependency graph.
 
 \begin{definition}[Typeclass instance graph]\label{def:tc-graph}
 Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations and $\mathcal{I} \subset \mathcal{D}$ the set of all instance declarations. For each instance $i \in \mathcal{I}$, let $\mathrm{target}(i) \in \mathcal{C}$ be the class it provides and $\mathrm{requires}(i) \subseteq \mathcal{C}$ the classes it depends on as preconditions. The \emph{typeclass instance graph} is
@@ -516,7 +518,8 @@ where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} dec
 \end{figure}
 
 \subsubsection{Declaration attributes and node-level metadata}
-Lean's attribute system tags declarations with metadata that guides automation and reflects proof strategy choices.
+\label{sec:decl-attributes}
+Beyond graph topology, each declaration carries metadata that enriches $G_{\mathrm{thm}}$ with node-level features. We define four groups: the attribute function $\alpha(d)$ with derived measures of proof complexity and universe polymorphism; the definitional height $\delta(d)$, which captures implicit coupling through the kernel's unfolding mechanism; the tactic usage profile $\tau(d)$, which records proof strategy choices; and the auto-derived instance edges $E_{\mathrm{auto}}$, which isolate the purely tool-generated fragment of the dependency graph.
 
 \begin{definition}[Declaration attributes]\label{def:decl-attributes}
 The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})$ maps each declaration to its set of Lean attributes, where $\mathcal{A} = \{\texttt{simp},\, \texttt{ext},\, \texttt{to\_additive},\, \texttt{instance},\, \texttt{reducible},\, \texttt{inline},\, \ldots\}$. In particular:
