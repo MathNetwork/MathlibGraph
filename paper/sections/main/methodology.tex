@@ -832,20 +832,20 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
   % Frequency bar (mini)
   \node[font=\tiny\sffamily, text=gray!60, anchor=north west] at (0.2, -0.1)
     {Top tactics:};
-  \fill[violet!30] (0.2, -0.65) rectangle (2.8, -0.45);
+  \fill[violet!30] (0.2, -0.65) rectangle (2.9, -0.45);
   \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.55)
-    {\texttt{rw}\hspace{4pt}15.2\%};
-  \fill[violet!25] (0.2, -1.0) rectangle (2.5, -0.8);
+    {\texttt{rw}\hspace{4pt}16.9\%};
+  \fill[violet!25] (0.2, -1.0) rectangle (2.4, -0.8);
   \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.9)
-    {\texttt{exact}\hspace{4pt}12.8\%};
-  \fill[violet!20] (0.2, -1.35) rectangle (2.2, -1.15);
+    {\texttt{simp}\hspace{4pt}11.2\%};
+  \fill[violet!20] (0.2, -1.35) rectangle (2.3, -1.15);
   \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -1.25)
-    {\texttt{simp}\hspace{4pt}10.6\%};
+    {\texttt{exact}\hspace{4pt}10.4\%};
 \end{tikzpicture}
 \caption{$G_{\mathrm{thm}}$ with \textcolor{violet!70!black}{tactic tags}; bottom: aggregate $\mathrm{freq}(t)$.}
 \label{fig:tactic-graph}
 \end{subfigure}
-\caption{Tactic usage profile (Definition~\ref{def:tactic-usage}). (a)~From \module{Mathlib.Algebra.Group.Defs} (line 1056): \decl{mul\_div\_assoc} is proved by a single \textcolor{violet!70!black}{\texttt{rw}} invocation with three lemma arguments. The tactic profile $\tau(d)$ captures which tactics are used. (b)~The declaration node annotated with its tactic tag; the bar chart shows preliminary library-wide tactic frequencies (extracted via \texttt{jixia}~\cite{jixia2024}).}
+\caption{Tactic usage profile (Definition~\ref{def:tactic-usage}). (a)~From \module{Mathlib.Algebra.Group.Defs} (line 1056): \decl{mul\_div\_assoc} is proved by a single \textcolor{violet!70!black}{\texttt{rw}} invocation with three lemma arguments. The tactic profile $\tau(d)$ captures which tactics are used. (b)~The declaration node annotated with its tactic tag; the bar chart shows library-wide tactic frequencies over $79{,}910$ tactic-mode proofs (extracted via \texttt{jixia}~\cite{jixia2024}).}
 \label{fig:tactic-usage}
 \end{figure}
 
