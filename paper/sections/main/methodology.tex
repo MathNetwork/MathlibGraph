@@ -429,7 +429,7 @@ Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations a
 
 \begin{figure}[!htb]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.30\textwidth}
 \centering
 \vspace{0pt}
 \raggedright\scriptsize\ttfamily
@@ -439,56 +439,86 @@ Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations a
 \textbf{class} \textcolor{red!70!black}{MulOneClass} ($\alpha$)\\
 \hspace{1em}\textbf{extends} \textcolor{teal}{Mul} $\alpha$, \textcolor{teal}{One} $\alpha$\\[3pt]
 \textbf{class} \textcolor{red!70!black}{Monoid} ($\alpha$)\\
-\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Semigroup} $\alpha$, \textcolor{red!70!black}{MulOneClass} $\alpha$\\[3pt]
+\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Semigroup} $\alpha$,\\
+\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{MulOneClass} $\alpha$\\[3pt]
 \textbf{class} \textcolor{red!70!black}{CommMonoid} ($\alpha$)\\
-\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Monoid} $\alpha$, \textcolor{red!70!black}{CommSemigroup} $\alpha$\\[6pt]
-\textnormal{\sffamily Lean auto-generates forgetful instances:}\\[2pt]
-\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!60}{%
-\texttt{[Monoid $\alpha$] : Semigroup $\alpha$}\\
-\hspace{1em}\texttt{[Monoid $\alpha$] : MulOneClass $\alpha$}\\
-\hspace{1em}\texttt{[CommMonoid $\alpha$] : Monoid $\alpha$}\\
-\hspace{1em}\texttt{...}}}
-\caption{Source: each \texttt{extends} generates forgetful instances that create edges in~$G_{\mathrm{tc}}$.}
-\label{fig:tc-instance-source}
+\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Monoid} $\alpha$,\\
+\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{CommSemigroup} $\alpha$
+\caption{Source: each \texttt{extends} creates an edge in $G_{\mathrm{ext}}$ and auto-generates a forgetful instance in~$G_{\mathrm{tc}}$.}
+\label{fig:tc-ext-source}
 \end{subfigure}%
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.33\textwidth}
 \centering
 \vspace{0pt}
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
-  tc/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
-    font=\tiny\ttfamily, text=red!70!black, inner sep=3pt, minimum height=14pt},
-  leaf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
-    font=\tiny\ttfamily, text=teal!70!black, inner sep=3pt, minimum height=14pt},
-  tcedge/.style={->, >=Stealth, red!60!black, semithick},
+  scale=0.82, every node/.style={transform shape},
+  nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+  lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
+    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+  edg/.style={->, >=Stealth, red!60!black, semithick},
 ]
-  % Top
-  \node[tc] (cm) at (2.0, 4.2) {CommMonoid};
-  % Second row
-  \node[tc] (mon) at (0.5, 2.8) {Monoid};
-  \node[tc] (cs) at (3.5, 2.8) {CommSemigroup};
-  % Third row
-  \node[tc] (sg) at (-0.3, 1.4) {Semigroup};
-  \node[tc] (moc) at (2.0, 1.4) {MulOneClass};
-  % Leaves
-  \node[leaf] (mul) at (0.5, 0.0) {Mul};
-  \node[leaf] (one) at (2.8, 0.0) {One};
-  % Edges (required → target, i.e., strong → weak)
-  \draw[tcedge] (cm) -- (mon);
-  \draw[tcedge] (cm) -- (cs);
-  \draw[tcedge] (mon) -- (sg);
-  \draw[tcedge] (mon) -- (moc);
-  \draw[tcedge] (cs) -- (sg);
-  \draw[tcedge] (sg) -- (mul);
-  \draw[tcedge] (moc) -- (mul);
-  \draw[tcedge] (moc) -- (one);
+  \node[nd] (cm) at (1.6, 4.5) {CommMonoid};
+  \node[nd] (mon) at (0.2, 3.2) {Monoid};
+  \node[nd] (cs) at (3.0, 3.2) {CommSemi.};
+  \node[nd] (sg) at (0.0, 1.9) {Semigroup};
+  \node[nd] (moc) at (2.2, 1.9) {MulOneCl.};
+  \node[lf] (mul) at (0.5, 0.6) {Mul};
+  \node[lf] (one) at (2.6, 0.6) {One};
+  \draw[edg] (cm) -- (mon);
+  \draw[edg] (cm) -- (cs);
+  \draw[edg] (mon) -- (sg);
+  \draw[edg] (mon) -- (moc);
+  \draw[edg] (cs) -- (sg);
+  \draw[edg] (sg) -- (mul);
+  \draw[edg] (moc) -- (mul);
+  \draw[edg] (moc) -- (one);
 \end{tikzpicture}
-\caption{$G_{\mathrm{tc}}$: edges point from required class to provided class (forgetful direction).}
-\label{fig:tc-instance-graph}
+\caption{$G_{\mathrm{ext}}$: \texttt{extends} edges only (8 edges).}
+\label{fig:ext-graph}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.33\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  scale=0.82, every node/.style={transform shape},
+  nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+  lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
+    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+  edg/.style={->, >=Stealth, red!60!black, semithick},
+  extra/.style={->, >=Stealth, blue!60!black, thick},
+]
+  \node[nd] (cm) at (1.6, 4.5) {CommMonoid};
+  \node[nd] (mon) at (0.2, 3.2) {Monoid};
+  \node[nd] (cs) at (3.0, 3.2) {CommSemi.};
+  \node[nd] (sg) at (0.0, 1.9) {Semigroup};
+  \node[nd] (moc) at (2.2, 1.9) {MulOneCl.};
+  \node[lf] (mul) at (0.5, 0.6) {Mul};
+  \node[lf] (one) at (2.6, 0.6) {One};
+  % Same G_ext edges (thin, subdued)
+  \draw[edg, thin, red!30] (cm) -- (mon);
+  \draw[edg, thin, red!30] (cm) -- (cs);
+  \draw[edg, thin, red!30] (mon) -- (sg);
+  \draw[edg, thin, red!30] (mon) -- (moc);
+  \draw[edg, thin, red!30] (cs) -- (sg);
+  \draw[edg, thin, red!30] (sg) -- (mul);
+  \draw[edg, thin, red!30] (moc) -- (mul);
+  \draw[edg, thin, red!30] (moc) -- (one);
+  % Additional G_tc edges (blue, highlighted)
+  \draw[extra, bend right=25] (cm) to (sg);
+  \draw[extra, bend left=20] (cm) to (moc);
+  \draw[extra, bend left=25] (cs) to (mul);
+  \draw[extra, bend right=15] (cm) to (mul);
+  \draw[extra, bend left=15] (cm) to (one);
+\end{tikzpicture}
+\caption{$G_{\mathrm{tc}}$: adds \textcolor{blue!60!black}{5 transitive} forgetful instance edges.}
+\label{fig:tc-graph}
 \end{subfigure}
-\caption{Typeclass instance graph (Definition~\ref{def:tc-graph}). (a)~The algebraic hierarchy in \module{Mathlib.Algebra.Group.Defs} (lines 173--759): each \texttt{extends} clause generates forgetful instances that create edges in~$G_{\mathrm{tc}}$. (b)~A fragment of~$G_{\mathrm{tc}}$: \textcolor{red!70!black}{red nodes} are typeclasses; \textcolor{teal!70!black}{teal nodes} are base classes (\texttt{Mul}, \texttt{One}). An edge $(C_1, C_2)$ means an instance provides~$C_2$ from~$C_1$. The diamond between \decl{Semigroup}, \decl{MulOneClass}, and \decl{Monoid} arises because \texttt{Monoid extends Semigroup, MulOneClass}.}
-\label{fig:tc-instance}
+\caption{$G_{\mathrm{ext}}$ vs.\ $G_{\mathrm{tc}}$ (Definitions~\ref{def:tc-graph} and~\ref{def:extends-graph}), from \module{Mathlib.Algebra.Group.Defs} (lines 173--759). (a)~Source: each \texttt{extends} creates a field inheritance edge. (b)~$G_{\mathrm{ext}}$: edges from \texttt{extends} only. (c)~$G_{\mathrm{tc}}$: the same nodes, but Lean auto-generates transitive forgetful instances (\textcolor{blue!60!black}{blue}), e.g.\ \texttt{CommMonoid} directly provides \texttt{Semigroup} without going through \texttt{Monoid}. Thus $G_{\mathrm{ext}} \subset G_{\mathrm{tc}}$.}
+\label{fig:tc-ext}
 \end{figure}
 
 \begin{definition}[Synthesized vs.\ explicit edge partition]\label{def:synth-partition}
@@ -575,68 +605,7 @@ Lean structures may extend other structures via the \texttt{extends} keyword, in
 where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} declarations. This graph encodes the algebraic hierarchy's inheritance lattice---a tool-mediated organizational layer that shapes which instances need to be defined and which are inherited automatically.
 \end{definition}
 
-\begin{figure}[!htb]
-\centering
-\begin{subfigure}[t]{0.44\textwidth}
-\centering
-\vspace{0pt}
-\raggedright\scriptsize\ttfamily
-\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}\\[2pt]
-\textbf{class} \textcolor{red!70!black}{Semigroup} ($\alpha$)\\
-\hspace{1em}\textbf{extends} Mul $\alpha$\\[2pt]
-\textbf{class} \textcolor{red!70!black}{CommSemigroup} ($\alpha$)\\
-\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Semigroup} $\alpha$\\[2pt]
-\textbf{class} \textcolor{red!70!black}{Monoid} ($\alpha$)\\
-\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Semigroup} $\alpha$,\\
-\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{MulOneClass} $\alpha$\\[2pt]
-\textbf{class} \textcolor{red!70!black}{CommMonoid} ($\alpha$)\\
-\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Monoid} $\alpha$,\\
-\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{CommSemigroup} $\alpha$\\[2pt]
-\textbf{class} \textcolor{red!70!black}{Group} ($\alpha$)\\
-\hspace{1em}\textbf{extends} DivInvMonoid $\alpha$\\[2pt]
-\textbf{class} \textcolor{red!70!black}{CommGroup} ($\alpha$)\\
-\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Group} $\alpha$,\\
-\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{CommMonoid} $\alpha$
-\caption{Source: each \texttt{extends} clause creates an edge in~$G_{\mathrm{ext}}$.}
-\label{fig:ext-source}
-\end{subfigure}%
-\hfill
-\begin{subfigure}[t]{0.52\textwidth}
-\centering
-\vspace{0pt}
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
-  st/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
-    font=\tiny\ttfamily, text=red!70!black, inner sep=3pt, minimum height=14pt},
-  ext/.style={->, >=Stealth, red!60!black, semithick},
-]
-  % Top
-  \node[st] (cg) at (2.5, 5.2) {CommGroup};
-  % Row 2
-  \node[st] (g) at (0.5, 3.8) {Group};
-  \node[st] (cmn) at (4.5, 3.8) {CommMonoid};
-  % Row 3
-  \node[st] (mon) at (1.5, 2.4) {Monoid};
-  \node[st] (csg) at (4.0, 2.4) {CommSemigroup};
-  % Row 4
-  \node[st] (sg) at (1.0, 1.0) {Semigroup};
-  \node[st] (moc) at (3.2, 1.0) {MulOneClass};
-  % Edges (child → parent, i.e., extends direction)
-  \draw[ext] (cg) -- (g);
-  \draw[ext] (cg) -- (cmn);
-  \draw[ext] (g.south) -- (mon);
-  \draw[ext] (cmn) -- (mon);
-  \draw[ext] (cmn) -- (csg);
-  \draw[ext] (mon) -- (sg);
-  \draw[ext] (mon) -- (moc);
-  \draw[ext] (csg) -- (sg);
-\end{tikzpicture}
-\caption{$G_{\mathrm{ext}}$: edges point from child to parent (\texttt{extends}).}
-\label{fig:ext-graph}
-\end{subfigure}
-\caption{Structure inheritance graph (Definition~\ref{def:extends-graph}). (a)~The multiplicative algebraic hierarchy in \module{Mathlib.Algebra.Group.Defs} (lines 173--1249): each \texttt{extends} clause declares field inheritance. (b)~A fragment of~$G_{\mathrm{ext}}$. The lattice structure (e.g., \decl{CommMonoid} extending both \decl{Monoid} and \decl{CommSemigroup}) is a tool-mediated organizational choice: Lean's \texttt{extends} mechanism shapes which typeclass instances are inherited automatically.}
-\label{fig:extends}
-\end{figure}
+% Figure for G_ext merged into Figure~\ref{fig:tc-ext} above.
 
 \begin{figure}[!htb]
 \centering
@@ -690,9 +659,9 @@ where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} dec
   \draw[slink] (thm) -- (ofnat);
 \end{tikzpicture}
 \caption{$E_{\mathrm{thm}} = \textcolor{red!70!black}{E_{\mathrm{explicit}}} \sqcup \textcolor{gray!50}{E_{\mathrm{synth}}}$.}
-\label{fig:tc-graph}
+\label{fig:synth-graph}
 \end{subfigure}
-\caption{Synthesized vs.\ explicit edge partition (Definitions~\ref{def:tc-graph},~\ref{def:synth-partition}). (a)~In the source for \decl{add\_zero} (from \module{Mathlib.Algebra.Group.Defs}, line 637), only \decl{AddMonoid.add\_zero} is an explicit reference; the notation~\texttt{+} and literal~\texttt{0} each trigger typeclass instance synthesis, silently inserting \textcolor{gray!50}{synthesized edges}. (b)~The subgraph of $G_{\mathrm{thm}}$: \textcolor{red!70!black}{solid} = explicit, \textcolor{gray!50}{dashed} = synthesized. The two zones separate mathematical content from language infrastructure (Remark~\ref{rem:two-layers}). Hub nodes such as \decl{OfNat.ofNat} (in-degree $89{,}936$) accumulate high centrality primarily through synthesized edges.}
+\caption{Synthesized vs.\ explicit edge partition (Definition~\ref{def:synth-partition}). (a)~In the source for \decl{add\_zero} (from \module{Mathlib.Algebra.Group.Defs}, line 637), only \decl{AddMonoid.add\_zero} is an explicit reference; the notation~\texttt{+} and literal~\texttt{0} each trigger typeclass instance synthesis, silently inserting \textcolor{gray!50}{synthesized edges}. (b)~The subgraph of $G_{\mathrm{thm}}$: \textcolor{red!70!black}{solid} = explicit, \textcolor{gray!50}{dashed} = synthesized. The two zones separate mathematical content from language infrastructure (Remark~\ref{rem:two-layers}). Hub nodes such as \decl{OfNat.ofNat} (in-degree $89{,}936$) accumulate high centrality primarily through synthesized edges.}
 \label{fig:synth-partition}
 \end{figure}
 
@@ -889,38 +858,37 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
   humanedge/.style={->, >=Stealth, red!70!black, semithick},
   autoedge/.style={->, >=Stealth, gray!40, semithick, dashed},
 ]
+  % Auto-generated instances (tool layer) — draw background first
+  \fill[gray!8, rounded corners=3pt] (-0.8, -1.6) rectangle (4.8, 0.6);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (2.0, 0.4) {$E_{\mathrm{auto}}$: tool-generated};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instRepr}]
+    (r) at (0.0, -0.2) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instInhab.}]
+    (i) at (1.5, -0.2) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instDecEq}]
+    (d) at (3.0, -0.2) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instHash.}]
+    (h) at (4.5, -0.2) {};
   % The inductive type (human-written)
   \node[human, label={[font=\tiny\ttfamily, red!70!black]above:Stained}]
     (st) at (2.0, 3.5) {};
   \node[human, label={[font=\tiny\ttfamily, red!70!black]left:Stained.name}]
-    (sn) at (0.0, 2.2) {};
-  \node[human, label={[font=\tiny\ttfamily, red!70!black]right:Stained.goal}]
-    (sg) at (2.0, 2.2) {};
+    (sn) at (-0.2, 2.0) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]left:Stained.goal}]
+    (sg) at (1.2, 2.0) {};
   \node[human, label={[font=\tiny\ttfamily, red!70!black]right:Stained.wildcard}]
-    (sw) at (4.0, 2.2) {};
-  % Human edges
-  \draw[humanedge] (sn) -- (st);
-  \draw[humanedge] (sg) -- (st);
-  \draw[humanedge] (sw) -- (st);
-  % Auto-generated instances (tool layer)
-  \fill[gray!8, rounded corners=3pt] (-0.8, -1.6) rectangle (4.8, 0.8);
-  \node[font=\tiny\sffamily\itshape, gray!50] at (2.0, 0.6) {$E_{\mathrm{auto}}$: tool-generated};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instRepr}]
-    (r) at (0.0, 0.0) {};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instInhab.}]
-    (i) at (1.5, 0.0) {};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instDecEq}]
-    (d) at (3.0, 0.0) {};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instHash.}]
-    (h) at (4.5, 0.0) {};
-  % Auto edges (dashed gray)
+    (sw) at (4.2, 2.0) {};
+  % Auto edges (dashed gray) — draw before human edges so human edges render on top
   \draw[autoedge] (r) -- (st);
   \draw[autoedge] (i) -- (st);
   \draw[autoedge] (d) -- (st);
   \draw[autoedge] (h) -- (st);
-  % Auto edges to constructors
   \draw[autoedge] (d) -- (sn);
   \draw[autoedge] (d) -- (sg);
+  % Human edges — drawn last, on top
+  \draw[humanedge] (sn) -- (st);
+  \draw[humanedge] (sg) -- (st);
+  \draw[humanedge] (sw) -- (st);
 \end{tikzpicture}
 \caption{\textcolor{red!70!black}{$\bullet$}\,human, \textcolor{gray!40}{$\bullet$}\,auto: $E_{\mathrm{auto}}$ edges are \textcolor{gray!40}{dashed}.}
 \label{fig:auto-graph}
