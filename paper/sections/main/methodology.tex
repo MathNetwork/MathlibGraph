@@ -541,6 +541,8 @@ Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations a
 \label{fig:tc-ext}
 \end{figure}
 
+In a traditional mathematical paper, a proof's dependencies are exactly what the author explicitly cites: if a proof invokes the intermediate value theorem, that citation is visible on the page.  In Lean, the situation is radically different.  When a mathematician writes \texttt{a + 0 = a}, the elaborator silently resolves \texttt{+} to a specific addition operation (via \texttt{HAdd}), interprets \texttt{0} as \texttt{OfNat.ofNat 0} for the relevant type, and synthesizes the required algebraic instances---each resolution creating a dependency edge that appears nowhere in the source code.  In Mathlib, $74.2\%$ of all dependency edges are synthesized in this way, meaning that the ``visible'' mathematical content accounts for barely a quarter of the actual dependency graph.
+
 \begin{definition}[Synthesized vs.\ explicit edge partition]\label{def:synth-partition}
 For each edge $(a, b) \in E_{\mathrm{thm}}$, define
 \[
@@ -552,6 +554,8 @@ For each edge $(a, b) \in E_{\mathrm{thm}}$, define
 \]
 This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
 \end{definition}
+
+In traditional mathematics, a statement like ``let $n \in \mathbb{R}$'' where $n$ is a natural number requires no explanation---the canonical embedding $\mathbb{N} \hookrightarrow \mathbb{R}$ is universally understood.  In Lean, this embedding must be explicitly registered as a chain of \emph{coercion instances} ($\mathbb{N} \to \mathbb{Z} \to \mathbb{Q} \to \mathbb{R}$), and every use silently inserts the entire chain into the dependency graph.
 
 \begin{definition}[Coercion graph]\label{def:coercion-graph}
 Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} is
@@ -698,9 +702,11 @@ In particular:
 \begin{itemize}
   \item The \emph{proof complexity} $\kappa(d) = |\{\text{Expr nodes in } d.\pi\}|$ measures proof term size.
   \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.
-  \item Two declarations satisfy $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs.
+  \item In traditional mathematics, a textbook proves a theorem for groups (multiplicative notation) and then writes ``similarly for the additive case''---a single sentence suffices because the reader understands the notational isomorphism.  In Lean, this shortcut is unavailable: the compiler requires a separate declaration with a distinct name, distinct type signature, and distinct proof term for the additive version.  The \texttt{@[to\_additive]} attribute automates this duplication: it instructs a metaprogram to generate the additive mirror of each marked multiplicative declaration.  Formally, $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs---declarations that carry no new mathematical content but are necessary for the formal system.
 \end{itemize}
 \end{definition}
+
+Mathematicians never ask ``how many definitions must be unfolded to type-check this statement.'' The concept has no traditional analogue because human verification does not proceed by mechanical reduction.  In Lean, however, the kernel must decide whether two types are \emph{definitionally equal} by unfolding chains of definitions, and the depth of this chain---the \emph{definitional height}---directly governs compilation cost.  A change to a single low-level definition can silently break type-checking for hundreds of downstream declarations, even when their explicit premise sets are unchanged.
 
 \begin{definition}[Definitional height]\label{def:def-height}
 For each definition $d \in \mathcal{D}$ with \texttt{DefinitionVal}, Lean computes a \emph{definitional height} $\delta(d)$ stored in the \texttt{ReducibilityHints} field:
@@ -837,6 +843,8 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
 \caption{Tactic usage profile (Definition~\ref{def:tactic-usage}). (a)~From \module{Mathlib.Algebra.Group.Defs} (line 1056): \decl{mul\_div\_assoc} is proved by a single \textcolor{violet!70!black}{\texttt{rw}} invocation with three lemma arguments. The tactic profile $\tau(d)$ captures which tactics are used. (b)~The declaration node annotated with its tactic tag; the bar chart shows library-wide tactic frequencies over $79{,}910$ tactic-mode proofs (extracted via \texttt{jixia}~\cite{jixia2024}).}
 \label{fig:tactic-usage}
 \end{figure}
+
+A traditional mathematician never needs to declare that ``equality on the integers is decidable'' or that ``finite groups have a printable representation''---these are meta-level properties that the mathematical community takes for granted.  In Lean, such properties must be explicitly witnessed as typeclass instances.  The \texttt{deriving} mechanism automates this: writing \texttt{deriving DecidableEq, Repr} after an inductive type instructs the compiler to generate the corresponding instances automatically, creating declarations and dependency edges that encode no mathematical content but are required for the type to interoperate with Lean's computational infrastructure.
 
 \begin{definition}[Auto-derived instance edges]\label{def:deriving-edges}
 Lean's \texttt{deriving} mechanism automatically generates typeclass instances (e.g., \texttt{Repr}, \texttt{DecidableEq}, \texttt{BEq}) for inductive types. Let $\mathcal{H} \subset \mathcal{A}$ be the set of registered \texttt{deriving} handlers. Each handler $h \in \mathcal{H}$ applied to a type $T$ produces a set of auto-generated declarations $\mathrm{derived}(h, T) \subset \mathcal{D}$, contributing edges in $G_{\mathrm{thm}}$ that were never written by a human. The set $E_{\mathrm{auto}} = \bigcup_{h, T} \{(d', d) : d \in \mathrm{derived}(h, T),\, d' \in \mathrm{refs}(d.\pi)\}$ captures the purely tool-generated fragment of the dependency graph.
