@@ -522,7 +522,11 @@ where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} dec
 Beyond graph topology, each declaration carries metadata that enriches $G_{\mathrm{thm}}$ with node-level features. We define four groups: the attribute function $\alpha(d)$ with derived measures of proof complexity and universe polymorphism; the definitional height $\delta(d)$, which captures implicit coupling through the kernel's unfolding mechanism; the tactic usage profile $\tau(d)$, which records proof strategy choices; and the auto-derived instance edges $E_{\mathrm{auto}}$, which isolate the purely tool-generated fragment of the dependency graph.
 
 \begin{definition}[Declaration attributes]\label{def:decl-attributes}
-The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})$ maps each declaration to its set of Lean attributes, where $\mathcal{A} = \{\texttt{simp},\, \texttt{ext},\, \texttt{to\_additive},\, \texttt{instance},\, \texttt{reducible},\, \texttt{inline},\, \ldots\}$. In particular:
+The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})$ maps each declaration to its set of Lean attributes, where
+\[
+  \mathcal{A} = \{\texttt{simp},\, \texttt{ext},\, \texttt{to\_additive},\, \texttt{instance},\, \texttt{reducible},\, \texttt{inline},\, \ldots\}.
+\]
+In particular:
 \begin{itemize}
   \item The \emph{proof complexity} $\kappa(d) = |\{\text{Expr nodes in } d.\pi\}|$ measures proof term size.
   \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.

@@ -1,0 +1,29 @@
+\section{Our Contribution}
+\label{sec:contribution}
+
+We mathematically define a family of dependency graphs from \module{Mathlib} and analyze them as a multi-layer network. At the primary level:
+\begin{itemize}
+    \item the module import graph~$G_{\mathrm{module}}$ (Definition~\ref{def:module-graph}), a DAG whose nodes are source files and whose edges are \texttt{import} statements;
+    \item the declaration dependency graph~$G_{\mathrm{thm}}$ (Definition~\ref{def:thm-graph}), a DAG whose nodes are theorems and definitions and whose edges are premise invocations;
+    \item the namespace graphs~$G_{\mathrm{ns}}^{(k)}$ (Definition~\ref{def:ns-graph}), obtained by aggregating declaration-level edges at varying namespace depth;
+\end{itemize}
+together with the module tree~$T$ derived from the dot-separated file hierarchy (Definition~\ref{def:module-tree}). Each raw graph, however, entangles both inherited mathematical structure and human organizational process. To disentangle them, we define a suite of graph decompositions (\S\ref{sec:definitions}):
+\begin{itemize}
+    \item the statement/proof decomposition ($E_S \sqcup E_P \sqcup E_{SP}$), separating what a theorem asserts from how it is proved;
+    \item the explicit/synthesized partition ($E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$), separating edges the mathematician wrote from edges the elaborator inserted;
+    \item the typeclass instance graph~$G_{\mathrm{tc}}$ and its finer projections---the coercion graph~$G_{\mathrm{coe}}$, the structure inheritance graph~$G_{\mathrm{ext}}$, and auto-derived instance edges~$E_{\mathrm{auto}}$---isolating the tool-infrastructure layer by mechanism;
+    \item the visibility graph~$G_{\mathrm{mod}}^{\mathrm{pub}}$, build graph~$G_{\mathrm{build}}$, and import utilization, decomposing the module layer by API design, compilation cost, and coupling efficiency;
+    \item declaration attributes~($\alpha$)---including definitional height, tactic usage profiles, and universe polymorphism---enriching nodes with metadata spanning both dimensions.
+\end{itemize}
+This formalization treats \module{Mathlib} as a graph-theoretic object in which the inherited/organizational distinction is not merely an interpretive lens but a measurable, decomposable structure. The decompositions convert the conceptual framework of \S\ref{sec:conceptual-framework} into falsifiable hypotheses about which edges and which topological features belong to each dimension.
+
+We provide a quantitative characterization of \module{Mathlib}'s dependency structure across all three layers---degree distributions (\S\ref{sec:sa-degree}), DAG depth profiles (\S\ref{sec:dag-depth}), transitive redundancy (\S\ref{sec:transitive-reduction}), containment curves (\S\ref{sec:containment-decay}), centrality rankings (\S\ref{sec:sa-centrality}), community structure (\S\ref{sec:sa-community}), and robustness under node removal (\S\ref{sec:sa-robustness})---aiming to establish a preliminary empirical baseline (\S\ref{sec:structural-analysis}) and derive actionable implications for library maintenance, AI-driven formalization, and tooling (\S\ref{sec:conclusion}).
+
+Comparing layers reveals that \textbf{organization diverges from dependency}: the module and namespace communities align with each other (NMI\,$=$\,0.71; Definition~\ref{def:nmi}, \S\ref{sec:sa-community}) but poorly with the declaration-level structure (NMI\,$=$\,0.34). The module layer compresses ${\sim}40\times$ in nodes and ${\sim}360\times$ in edges relative to the declaration layer (\S\ref{sec:module-declaration}), acting as a compressed interface shaped by tooling, while declaration-level dependencies encode the organizational habits of traditional mathematics under the constraint of logical consistency. At the same time, \textbf{17.5\% of module imports are logically redundant} yet structurally essential (\S\ref{sec:transitive-reduction}), even after Mathlib's \texttt{shake} linter has pruned certain redundant imports; these links serve development ergonomics by easing refactoring and ensuring transitive visibility for future extensions.
+
+The three layers also \textbf{exhibit markedly different topologies}: the module graph forms a 153-layer deep funnel (\S\ref{sec:dag-depth}), the declaration graph is shallow and top-heavy (84 layers, 38.8\% at layer~0; \S\ref{sec:thm-dag-depth}), and the namespace graph is nearly flat (8 layers after SCC condensation; \S\ref{sec:ns-dag-depth}). This inversion---human-organized structure being deepest, logical structure being shallowest---is compounded by a flattening of traditional semantic distinctions: formalization preserves labels like `theorem' and `lemma' but erodes their meaning, while automation tools inflate the library with mirrored results sharing identical logical structure (\S\ref{sec:thm-vs-lemma}).
+
+Based on these findings, we discuss concrete implications for library maintenance, compilation optimization, language design, and AI training data curation in \S\ref{sec:practice}.
+
+\paragraph{Data and code availability.}
+To support reproducibility and downstream research, we release the complete extraction pipeline and graph datasets. The raw graph data---including the module import graph, the declaration dependency graph, and all namespace-level aggregations---are published as a HuggingFace dataset at \texttt{MathNetwork/MathlibGraph}\footnote{\url{https://huggingface.co/datasets/MathNetwork/MathlibGraph}}, enabling independent analysis without requiring a local Lean~4 installation. The extraction and analysis code is available on GitHub at \texttt{MathNetwork/MathNetwork}\footnote{\url{https://github.com/MathNetwork/MathNetwork}}.
