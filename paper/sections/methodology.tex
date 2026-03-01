@@ -124,6 +124,14 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 
 \noindent Our snapshot captures a transitional state in which most imports are still \texttt{public}; as private imports are adopted, $G_{\mathrm{mod}}^{\mathrm{pub}}$ will become a proper subgraph of $G_{\mathrm{module}}$, reducing transitive visibility and reshaping redundancy (\S\ref{sec:transitive-reduction}).
 
+\begin{definition}[Import utilization]\label{def:import-util}
+For each import edge $(m_i, m_j) \in E_{\mathrm{mod}}$, the \emph{import utilization} is
+\[
+  \mathrm{util}(m_i, m_j) = \frac{|\mathrm{refs}(m_i) \cap \mathcal{D}_{m_j}|}{|\mathcal{D}_{m_j}|},
+\]
+where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined in module~$m_j$ and $\mathrm{refs}(m_i) = \bigcup_{d \in \mathcal{D}_{m_i}} \mathrm{refs}(d.\pi)$ is the set of all premises invoked by declarations in~$m_i$. A low utilization indicates that $m_i$ imports $m_j$ for a small fraction of its exports, suggesting the module boundary is too coarse.
+\end{definition}
+
 \begin{figure}[!htb]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
@@ -343,7 +351,7 @@ Each node carries two attributes: its \emph{kind} (one of eight declaration type
 
 The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices.
 
-\paragraph{Statement and proof decomposition.}
+\subsubsection{Statement and proof decomposition}
 Every declaration $d$ has a type~$\tau$ (the statement) and optionally a proof term~$\pi$; an edge may originate from either or both.
 
 \begin{definition}[Statement and proof dependency]\label{def:stmt-proof-dep}
@@ -411,7 +419,7 @@ The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S =
 \label{fig:stmt-proof-decomp}
 \end{figure}
 
-\paragraph{Typeclass instance graph and synthesized edges.}
+\subsubsection{Typeclass instance graph and synthesized edges}
 Lean's typeclass mechanism automatically synthesizes algebraic structure, producing dependency edges invisible in the source code.
 
 \begin{definition}[Typeclass instance graph]\label{def:tc-graph}
@@ -431,6 +439,22 @@ For each edge $(a, b) \in E_{\mathrm{thm}}$, define
   \end{cases}
 \]
 This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
+\end{definition}
+
+\begin{definition}[Coercion graph]\label{def:coercion-graph}
+Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} is
+\[
+  G_{\mathrm{coe}} = (\mathcal{T},\, E_{\mathrm{coe}}), \quad (T_1, T_2) \in E_{\mathrm{coe}} \iff \exists\, k \in \mathcal{K} : k \text{ coerces } T_1 \to T_2.
+\]
+Long coercion chains (paths of length $\ge 3$) degrade compilation performance; the diameter of $G_{\mathrm{coe}}$ measures this fragility. Together with $G_{\mathrm{tc}}$, the coercion graph captures the two main mechanisms by which Lean's type system silently inflates the dependency graph.
+\end{definition}
+
+\begin{definition}[Structure inheritance graph]\label{def:extends-graph}
+Lean structures may extend other structures via the \texttt{extends} keyword, inheriting their fields. The \emph{structure inheritance graph} is
+\[
+  G_{\mathrm{ext}} = (\mathcal{S},\, E_{\mathrm{ext}}), \quad (S_1, S_2) \in E_{\mathrm{ext}} \iff S_1 \texttt{ extends } S_2,
+\]
+where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} declarations. This graph encodes the algebraic hierarchy's inheritance lattice---a tool-mediated organizational layer that shapes which instances need to be defined and which are inherited automatically.
 \end{definition}
 
 \begin{figure}[!htb]
@@ -491,7 +515,7 @@ This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synt
 \label{fig:synth-partition}
 \end{figure}
 
-\paragraph{Declaration attributes.}
+\subsubsection{Declaration attributes and node-level metadata}
 Lean's attribute system tags declarations with metadata that guides automation and reflects proof strategy choices.
 
 \begin{definition}[Declaration attributes]\label{def:decl-attributes}
@@ -501,6 +525,31 @@ The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})
   \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.
   \item Two declarations satisfy $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated additive counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as mirrored multiplicative/additive pairs.
 \end{itemize}
+\end{definition}
+
+\begin{definition}[Definitional height]\label{def:def-height}
+For each definition $d \in \mathcal{D}$ with \texttt{DefinitionVal}, Lean computes a \emph{definitional height} $\delta(d)$ stored in the \texttt{ReducibilityHints} field:
+\[
+  \delta(d) =
+  \begin{cases}
+    h \in \mathbb{N} & \text{if } d \text{ is \emph{regular} (semireducible), where } h \text{ counts unfolding steps},\\
+    \bot_{\mathrm{abbrev}} & \text{if } d \text{ is an \emph{abbreviation} (always unfolded)},\\
+    \bot_{\mathrm{opaque}} & \text{if } d \text{ is \emph{opaque} (never unfolded)}.
+  \end{cases}
+\]
+Declarations with high~$\delta$ are brittle: changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged. This quantity is invisible in $G_{\mathrm{thm}}$---it does not appear in $\mathrm{refs}(d.\pi)$---yet it constitutes a form of \emph{implicit coupling}.
+\end{definition}
+
+\begin{definition}[Tactic usage profile]\label{def:tactic-usage}
+For each declaration $d \in \mathcal{D}$ whose proof is written in tactic mode (i.e., $d.\pi$ begins with \texttt{by}), define the \emph{tactic profile}
+\[
+  \tau(d) = (t_1, t_2, \ldots, t_k),
+\]
+where each $t_i \in \mathcal{T}_{\mathrm{tac}}$ is a tactic name invoked in the proof script, preserving multiplicity and order. The aggregate tactic frequency $\mathrm{freq}(t) = |\{(d, i) : t_i = t\}|$ over all tactic-mode proofs measures the prevalence of each proof strategy across the library. Per-namespace distributions enable Jensen--Shannon divergence analysis of proof methodology variation across mathematical domains.
+\end{definition}
+
+\begin{definition}[Auto-derived instance edges]\label{def:deriving-edges}
+Lean's \texttt{deriving} mechanism automatically generates typeclass instances (e.g., \texttt{Repr}, \texttt{DecidableEq}, \texttt{BEq}) for inductive types. Let $\mathcal{H} \subset \mathcal{A}$ be the set of registered \texttt{deriving} handlers. Each handler $h \in \mathcal{H}$ applied to a type $T$ produces a set of auto-generated declarations $\mathrm{derived}(h, T) \subset \mathcal{D}$, contributing edges in $G_{\mathrm{thm}}$ that were never written by a human. The set $E_{\mathrm{auto}} = \bigcup_{h, T} \{(d', d) : d \in \mathrm{derived}(h, T),\, d' \in \mathrm{refs}(d.\pi)\}$ captures the purely tool-generated fragment of the dependency graph.
 \end{definition}
 
 \begin{figure}[!htb]
@@ -699,7 +748,7 @@ The dependency graphs defined above are not pure embodiments of mathematical log
 
 \begin{table}[!htb]
 \centering
-\caption{Tool-mediated decompositions of the dependency graphs. Each row identifies a Lean language mechanism, the corresponding graph decomposition or projection, and the dimension it isolates. Rows above the mid-rule are formally defined in this paper (\S\ref{sec:definitions}); rows below are described in \S\ref{sec:future-graphs} and deferred to future work.}
+\caption{Tool-mediated decompositions of the dependency graphs. Each row identifies a Lean language mechanism, the corresponding graph decomposition or projection, and the dimension it isolates. Rows above the mid-rule have been extracted and analyzed; rows below are deferred to future work.}
 \label{tab:decompositions}
 \footnotesize
 \begin{tabular}{@{}lllrl@{}}
@@ -717,19 +766,21 @@ Attributes \& metadata & $\alpha(d)$, $\kappa(d)$, $\upsilon(d)$ & Proof complex
 \multicolumn{5}{@{}l}{\textit{Refinements of $G_{\mathrm{module}}$}} \\[3pt]
 Public/private imports & $G_{\mathrm{mod}}^{\mathrm{pub}}$ & Intentional API vs.\ all imports & $45{,}289$ / $1{,}912$ & Def.~\ref{def:visibility-graph} \\
 Compilation cost & $G_{\mathrm{build}}$ & Engineering bottlenecks & $47{,}201$ edges & Def.~\ref{def:build-graph} \\
+Import utilization & $\mathrm{util}(m_i, m_j)$ & Module granularity & median $1.6\%$ & Def.~\ref{def:import-util} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Additional subgraphs of $G_{\mathrm{thm}}$}} \\[3pt]
+Coercion insertion & $G_{\mathrm{coe}}$ & Implicit type conversion paths & $256$ coercions & Def.~\ref{def:coercion-graph} \\
+Structure inheritance & $G_{\mathrm{ext}}$ & \texttt{extends} hierarchy & $1{,}535$ edges & Def.~\ref{def:extends-graph} \\
+\texttt{deriving} handlers & $E_{\mathrm{auto}}$ & Auto-generated instances & $15$ handlers & Def.~\ref{def:deriving-edges} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Additional node-level enrichment of $G_{\mathrm{thm}}$}} \\[3pt]
+Tactic usage & $\tau(d)$ & Proof strategy selection & top: \texttt{rw}, \texttt{exact}, \texttt{simp} & Def.~\ref{def:tactic-usage} \\
+Definitional height & $\delta(d)$ & Kernel-level implicit coupling & median $7$, max $60$ & Def.~\ref{def:def-height} \\
 \midrule
 \multicolumn{5}{@{}l}{\textit{Planned decompositions (future work)}} \\[3pt]
-Coercion insertion & $G_{\mathrm{coe}}$ & Implicit type conversion paths & $256$ coercions & \S\ref{sec:typeclass-graph} \\
-Structure inheritance & $G_{\mathrm{ext}}$ & \texttt{extends} hierarchy & $1{,}535$ edges & \S\ref{sec:typeclass-graph} \\
-\texttt{deriving} handlers & $E_{\mathrm{auto}}$ & Auto-generated instances & $15$ handlers & \S\ref{sec:decl-metadata} \\
-Tactic usage & $G_{\mathrm{tac}}$ & Proof strategy selection & --- & \S\ref{sec:decl-metadata} \\
-Definitional height & $\delta(d)$ & Kernel-level implicit coupling & median $7$, max $60$ & \S\ref{sec:decl-metadata} \\
-Import utilization & $\mathrm{util}(m_i, m_j)$ & Module granularity & median $1.6\%$ & \S\ref{sec:visibility-graph} \\
 File co-modification & $G_{\mathrm{co}}$ & Social/development coupling & --- & \S\ref{sec:co-edit-graph} \\
 Temporal evolution & $G^{(t)}$ & Structural stability over time & --- & \S\ref{sec:temporal-graphs} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent These decompositions collectively operationalize the paper's central distinction. Each row acts as a \emph{projection} that isolates one dimension---inherited mathematical structure or human organizational process---from the entangled raw graph. The ``Scale'' column reports the footprint of each mechanism at our snapshot, extracted programmatically from Lean's \texttt{Environment} API across all $499{,}732$~Mathlib constants. Three findings stand out. First, the synthesis ratio $\sigma = 74.2\%$ means nearly three quarters of all dependency edges are inserted by Lean's elaborator rather than written by the mathematician. Second, the statement/proof partition reveals that only $8.1\%$ of edges are purely statement-level ($E_S$), while $43.9\%$ are proof-only ($E_P$) and $48.0\%$ appear in both; the proof dimension thus dominates the dependency structure. Third, $95.9\%$ of module import edges are public ($45{,}289$ of $47{,}201$), indicating that import visibility currently plays a minor architectural role. Fourth, import utilization is strikingly low: the median module uses only $1.6\%$ of an imported module's declarations, and $37\%$ of import edges have zero direct utilization (\S\ref{sec:visibility-graph}). The decompositions above the mid-rule are formally defined and, where data is available, empirically analyzed in this paper; those below the mid-rule are formally specified in the appendix (\S\ref{sec:future-graphs}) and deferred to future empirical work.
+\noindent These decompositions collectively operationalize the paper's central distinction. Each row acts as a \emph{projection} that isolates one dimension---inherited mathematical structure or human organizational process---from the entangled raw graph. The ``Scale'' column reports the footprint of each mechanism at our snapshot, extracted programmatically from Lean's \texttt{Environment} API across all $499{,}732$~Mathlib constants. Three findings stand out. First, the synthesis ratio $\sigma = 74.2\%$ means nearly three quarters of all dependency edges are inserted by Lean's elaborator rather than written by the mathematician. Second, the statement/proof partition reveals that only $8.1\%$ of edges are purely statement-level ($E_S$), while $43.9\%$ are proof-only ($E_P$) and $48.0\%$ appear in both; the proof dimension thus dominates the dependency structure. Third, $95.9\%$ of module import edges are public ($45{,}289$ of $47{,}201$), indicating that import visibility currently plays a minor architectural role. Fourth, import utilization is strikingly low: the median module uses only $1.6\%$ of an imported module's declarations, and $37\%$ of import edges have zero direct utilization (\S\ref{sec:visibility-graph}). All decompositions above the mid-rule have been extracted and, where applicable, empirically analyzed in this paper; the two remaining rows (file co-modification and temporal evolution) require additional data sources and are deferred to future work (\S\ref{sec:future-graphs}).
 

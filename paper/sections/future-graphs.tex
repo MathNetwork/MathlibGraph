@@ -167,10 +167,13 @@ Lean's type checker relies on \emph{definitional equality}: to verify that two t
 
 We extracted $\delta(d)$ for all $101{,}021$ Mathlib definitions via the \texttt{DefinitionVal.hints} API. Of these, $53{,}962$ are \emph{regular} (semireducible) with a numeric height, $42{,}786$ are \emph{abbreviations} (always unfolded, no height), and $4{,}273$ are \emph{opaque} (never unfolded). Among regular definitions, the height distribution has median~$7$, mean~$10.1$, IQR~$[4, 14]$, and a maximum of~$60$. The distribution is roughly log-normal: $58\%$ of definitions have height $< 10$, while a tail of $13.5\%$ has height $\ge 20$. This confirms that most definitions sit at shallow depth, but a non-trivial fraction involves long unfolding chains that may contribute to elaboration and compilation bottlenecks.
 
-\paragraph{Planned analyses.}
-Correlate $\kappa(d)$ with topological depth $\mathrm{depth}(d)$ and in-degree $\deg^{-}(d)$. Test whether universe-polymorphic declarations ($\upsilon(d) \ge 1$) have systematically higher in-degree. Precisely count \texttt{to\_additive} mirrors to quantify semantic flattening. Compute tactic usage distributions per top-level namespace and measure proof methodology variation across mathematical domains via Jensen--Shannon divergence. Correlate $\delta(d)$ with compilation time to test whether unfolding depth is a significant contributor to build bottlenecks.
+\paragraph{Tactic usage.}
+To extract per-declaration tactic usage, we employ \texttt{jixia}~\cite{jixia2024}, a static analysis tool for Lean~4 developed at BICMR, Peking University (see also~\cite{gao2025herald}). Running \texttt{jixia}'s declaration plugin over all $7{,}563$ Mathlib source files yields the pretty-printed proof term for each declaration, from which we parse tactic names. Preliminary results show that \texttt{rw} (rewrite), \texttt{exact}, and \texttt{simp} are the three most frequently invoked tactics, together accounting for over $35\%$ of all tactic steps. Detailed per-namespace distributions and Jensen--Shannon divergence analysis of proof methodology variation across mathematical domains are in preparation.
 
-\emph{Definitional heights have been extracted (Table~\ref{tab:decompositions}); the remaining analyses (tactic usage distributions, compilation-time correlations, universe polymorphism patterns) require additional data sources and are deferred to future work.}
+\paragraph{Planned analyses.}
+Correlate $\kappa(d)$ with topological depth $\mathrm{depth}(d)$ and in-degree $\deg^{-}(d)$. Test whether universe-polymorphic declarations ($\upsilon(d) \ge 1$) have systematically higher in-degree. Precisely count \texttt{to\_additive} mirrors to quantify semantic flattening. Correlate $\delta(d)$ with compilation time to test whether unfolding depth is a significant contributor to build bottlenecks.
+
+\emph{Definitional heights have been extracted (Table~\ref{tab:decompositions}); tactic usage has been extracted via \texttt{jixia}~\cite{jixia2024}; the remaining analyses (compilation-time correlations, universe polymorphism patterns) require additional data sources and are deferred to future work.}
 
 \subsubsection{Temporal Graph Sequences}
 \label{sec:temporal-graphs}
