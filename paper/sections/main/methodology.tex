@@ -345,6 +345,137 @@ Each node carries two attributes: its \emph{kind} (one of eight declaration type
 \label{fig:thm-fragment}
 \end{figure}
 
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.36\textwidth}
+\centering
+\vspace{0pt}
+\begin{forest}
+  for tree={
+    font=\scriptsize\ttfamily,
+    text=blue!60!black,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, black, \forestoption{edge}]
+        (!u.south west) +(7.5pt,0) |- (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1 {insert before={[,phantom]}} {}
+    },
+    fit=band,
+    before computing xy={l=12pt},
+  }
+[Data/
+  [Nat/
+    [Basic.lean
+      [\textcolor{red!70!black}{add\_comm}]
+      [\textcolor{red!70!black}{add\_left\_comm}]
+    ]
+    [Defs.lean
+      [\textcolor{red!70!black}{succ\_eq\_add\_one}]
+      [\textcolor{red!70!black}{zero\_add}]
+    ]
+  ]
+]
+\end{forest}
+\caption{File-system hierarchy~$T$ (\textcolor{blue!60!black}{blue}), extended to the declaration level.}
+\label{fig:tree-view}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.60\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize
+\textsf{\bfseries\color{blue!60!black}Basic.lean}\\[2pt]
+\ttfamily
+\textbf{import} \textcolor{blue!60!black}{Init.Prelude}\\[3pt]
+\textbf{theorem} \textcolor{red!70!black}{add\_comm} (n m : Nat)\\
+\hspace{1.5em}: n + m = m + n := \textbf{by}\\
+\hspace{1.5em}induction n <;> simp [\textcolor{red!70!black}{Eq.refl}]\\[3pt]
+\textbf{theorem} \textcolor{red!70!black}{add\_left\_comm} (n m k : Nat)\\
+\hspace{1.5em}: n + (m + k) = m + (n + k) := \textbf{by}\\
+\hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; simp [\textcolor{red!70!black}{Eq.refl}]\\[6pt]
+\textsf{\bfseries\color{blue!60!black}Defs.lean}\\[2pt]
+\ttfamily
+\textbf{import} \textcolor{blue!60!black}{Data.Nat.Basic}\\
+\textbf{import} \textcolor{blue!60!black}{Init.Prelude}\\[3pt]
+\textbf{theorem} \textcolor{red!70!black}{succ\_eq\_add\_one} (n : Nat)\\
+\hspace{1.5em}: succ n = n + 1 := \textbf{by}\\
+\hspace{1.5em}rw [\textcolor{red!70!black}{add\_comm}]; exact \textcolor{red!70!black}{Eq.refl} \_\\[3pt]
+\textbf{theorem} \textcolor{red!70!black}{zero\_add} (n : Nat)\\
+\hspace{1.5em}: 0 + n = n := \textbf{by}\\
+\hspace{1.5em}induction n <;> exact \textcolor{red!70!black}{Eq.refl} \_
+\caption{Proof source code: each \textcolor{red!70!black}{red identifier} in a proof term generates a dependency edge in~(c).}
+\label{fig:source-view}
+\end{subfigure}
+
+\par\vspace{4pt}
+
+\begin{subfigure}[b]{\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  modimp/.style={->, >=Stealth, blue!60!black, thick},
+]
+  \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
+    (0.2,4.7) -- (10.2,4.7) -- (11.4,5.09) -- (1.4,5.09) -- cycle;
+  \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
+    (0.2,4.7) -- (10.2,4.7) -- (10.2,4.57) -- (0.2,4.57) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
+    {\textnormal{\module{Data.Nat.Defs}}};
+  \node[dot] (sea) at (3.5,4.88) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
+  \node[dot] (za)  at (7.5,4.88) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.6,4.88) {zero\_add};
+  \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
+    (0,2.5) -- (10.0,2.5) -- (11.2,2.89) -- (1.2,2.89) -- cycle;
+  \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
+    (0,2.5) -- (10.0,2.5) -- (10.0,2.37) -- (0,2.37) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
+    {\textnormal{\module{Data.Nat.Basic}}};
+  \node[dot] (ac)  at (3.3,2.68) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
+  \node[dot] (alc) at (7.3,2.68) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
+  \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
+    (1.0,0.15) -- (8.0,0.15) -- (8.9,0.46) -- (1.9,0.46) -- cycle;
+  \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
+    (1.0,0.15) -- (8.0,0.15) -- (8.0,0.03) -- (1.0,0.03) -- cycle;
+  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (8.2,0.09)
+    {\textnormal{\module{Init.Prelude}}};
+  \node[dot] (er)  at (4.8,0.3) {};
+  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
+  \draw[blue!50, semithick]
+    (-0.2,2.37) -- (-0.5,2.37) -- (-0.5,5.09) -- (-0.2,5.09);
+  \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
+    at (-0.75,3.73) {namespace \textnormal{\ns{Data.Nat}}};
+  \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (md) at (9.8, 4.88) {};
+  \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (mb) at (10.0, 2.68) {};
+  \node[circle, fill=blue!60!black, minimum size=5.5pt, inner sep=0pt] (mo) at (7.2, 0.3) {};
+  \draw[modimp] (md) to[out=-85,in=85] (mb);
+  \draw[modimp] (mb) to[out=-70,in=40] (mo);
+  \draw[modimp] (md) to[out=-50,in=55] (mo);
+  \draw[dep] (alc) -- (ac);
+  \draw[depext] (sea) to[out=-88,in=92] (ac);
+  \draw[depext] (ac)  to[out=-88,in=105] (er);
+  \draw[depext] (alc) to[out=-88,in=60] (er);
+  \draw[depext] (sea) to[out=-85,in=120] (er);
+  \draw[depext] (za)  to[out=-85,in=45] (er);
+\end{tikzpicture}
+\caption{$G_{\mathrm{thm}}$ layered by module. \textcolor{blue!60!black}{Blue cards} = modules; \textcolor{red!70!black}{red arrows} = dependency edges (solid: intra-module; dashed: cross-module). \textcolor{blue!60!black}{Blue arrows} at right show module-level imports.}
+\label{fig:dep-view}
+\end{subfigure}
+\caption{Three views of the same declarations. Throughout this paper, \textcolor{red!70!black}{red} denotes declaration-level structure and \textcolor{blue!60!black}{blue} denotes module-level structure. (a)~File-system hierarchy. (b)~Source code. (c)~$G_{\mathrm{thm}}$ layered by module: of six edges, only one is intra-module (solid). All names have the \texttt{Nat.}\ prefix removed.}
+\label{fig:module-region}
+\end{figure}
+
 The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices. We organize these into three groups: edge-level decompositions that partition $E_{\mathrm{thm}}$ by the origin of each dependency (\S\ref{sec:stmt-proof}--\S\ref{sec:typeclass-synth}), subgraph constructions that isolate specific language mechanisms such as typeclass synthesis and coercions (\S\ref{sec:typeclass-synth}), and node-level enrichments that attach metadata---attributes, definitional height, tactic usage---to each declaration (\S\ref{sec:decl-attributes}).
 
 \subsubsection{Statement and proof decomposition}
@@ -1083,11 +1214,161 @@ where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set o
 
 \noindent At $k=1$, the $3{,}184$ coarse namespaces correspond roughly to mathematical topics; at $k=6$, the $15{,}456$ fine-grained namespaces approach the resolution of individual naming scopes. The aggregation process is illustrated in Figure~\ref{fig:ns-aggregation}.
 
-% Duplicate namespace aggregation figure removed; see Figure~\ref{fig:ns-aggregation} in the Introduction.
-% Label kept for backward compatibility with appendix references.
-\phantomsection\label{fig:ns-aggregation-app}
+\begin{figure}[!htb]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depx/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10},
+  agg/.style={->, >=Stealth, gray!50, very thick, dashed, shorten <=2pt, shorten >=2pt},
+]
+  \fill[blue!6, rounded corners=3pt] (-0.3,-2.1) rectangle (2.5,1.8);
+  \fill[blue!6, rounded corners=3pt] (3.5,-0.6) rectangle (5.6,1.8);
+  \fill[green!8, rounded corners=3pt] (0.0,-0.15) rectangle (5.3,1.25);
+  \fill[green!8, rounded corners=2pt] (0.0,-1.75) rectangle (2.2,-0.55);
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-2.1) rectangle (2.5,1.8);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (-0.2,1.75) {\textnormal{\module{Data.Nat.Basic}}};
+  \draw[blue!50!black, rounded corners=3pt, thick, dashed]
+    (3.5,-0.6) rectangle (5.6,1.8);
+  \node[font=\tiny\sffamily\bfseries, blue!60!black, anchor=north west]
+    at (3.6,1.75) {\textnormal{\module{Data.Nat.Defs}}};
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (0.0,-0.15) rectangle (5.3,1.25);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,1.3) {\ns{Nat}};
+  \draw[green!50!black, rounded corners=2pt, thick, dashed]
+    (0.0,-1.75) rectangle (2.2,-0.55);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=south west]
+    at (0.1,-0.5) {\ns{Nat.Primrec}};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_comm}]
+    (ac) at (1.8,0.9) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:add\_left\_comm}]
+    (alc) at (0.5,0.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:Primrec.zero}]
+    (prz) at (0.6,-1.15) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:succ\_eq\_one}]
+    (sea) at (4.1,0.8) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:zero\_add}]
+    (za) at (4.1,0.2) {};
+  \draw[dep] (alc) -- (ac);
+  \draw[dep, dashed] (sea) to[out=175,in=10] (ac);
+  \draw[dep, dashed] (za) to[out=175,in=-10] (alc);
+  \draw[dep, densely dotted, thick] (prz) to[out=70,in=-100] (ac);
+  \draw[->, >=Stealth, blue!60!black, thick]
+    (3.5,1.55) -- node[above, font=\tiny\sffamily, text=blue!60!black] {\texttt{import}} (2.5,1.55);
+  \node[font=\small\sffamily, anchor=north] at (2.6,-2.5) {(a) $G_{\mathrm{thm}}$};
+  \draw[agg] (5.9,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    node[below, font=\tiny\sffamily, text=gray!60] {depth $2$} (7.3,-0.1);
+  \node[nsbox, minimum width=2.2cm, minimum height=1.1cm]
+    (nat2) at (8.8,0.55) {};
+  \node[font=\small\sffamily\bfseries, green!50!black] at (8.8,0.75) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (8.8,0.3) {4 declarations};
+  \node[nsbox, minimum width=2.2cm, minimum height=0.85cm]
+    (npr2) at (8.8,-1.15) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.8,-0.97) {\ns{Nat.Primrec}};
+  \node[font=\tiny\sffamily, text=gray] at (8.8,-1.35) {1 declaration};
+  \draw[->, >=Stealth, green!50!black, thick] (npr2) --
+    node[right, font=\tiny, text=green!50!black] {$w\!=\!1$} (nat2);
+  \node[font=\tiny\itshape, text=gray, align=center] at (8.8,-2.0)
+    {\decl{Primrec.zero} $\to$ \decl{add\_comm}};
+  \draw[green!50!black, ->, >=Stealth, thin, opacity=0.35]
+    ([xshift=-4pt]nat2.north) to[out=130,in=50,looseness=6]
+    ([xshift=4pt]nat2.north);
+  \node[font=\tiny, text=green!40!black] at (8.8,1.75) {$3$ internal};
+  \node[font=\small\sffamily, anchor=north] at (8.8,-2.5) {(b) $G_{\mathrm{ns}}^{(2)}$};
+  \draw[agg] (10.3,-0.1) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    node[below, font=\tiny\sffamily, text=gray!60] {depth $1$} (11.7,-0.1);
+  \node[nsbox, minimum width=2.2cm, minimum height=2.2cm]
+    (nat1) at (13.0,-0.1) {};
+  \node[font=\small\sffamily\bfseries, green!50!black] at (13.0,0.4) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (13.0,0.05) {5 declarations};
+  \node[font=\tiny\sffamily, text=gray] at (13.0,-0.3) {4 internal edges};
+  \node[font=\tiny\itshape, text=red!50!black] at (13.0,-0.7) {contain.\,$=100\%$};
+  \node[font=\small\sffamily, anchor=north] at (13.0,-2.5) {(c) $G_{\mathrm{ns}}^{(1)}$};
+\end{tikzpicture}
+\caption{Aggregation from $G_{\mathrm{thm}}$ to $G_{\mathrm{ns}}^{(k)}$. (a)~Declarations in~$G_{\mathrm{thm}}$; \textcolor{green!40!black}{green} = namespace boundaries, \textcolor{blue!60!black}{blue} = module boundaries. (b)~Depth-$2$ namespaces. (c)~Depth~$1$. All names have the \texttt{Nat.}\ prefix removed.}
+\label{fig:ns-aggregation}
+\label{fig:ns-aggregation-app}
+\end{figure}
 
-% Duplicate namespace aggregation figure removed; see Figure~\ref{fig:ns-aggregation} in the Introduction.
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt, semithick},
+]
+  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (defs) at (2.1,3.0) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,3.7) {\module{Data.Nat.Defs}};
+  \node[dot] (sea) at (1.0,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.2,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (basic) at (2.1,1.2) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,1.9) {\module{Data.Nat.Basic}};
+  \node[dot] (ac) at (1.0,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.2,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+  \node[modbox, minimum width=2.4cm, minimum height=0.8cm] (init) at (2.1,-0.6) {};
+  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,0.0) {\module{Init.Prelude}};
+  \node[dot] (er) at (2.1,-0.6) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+  \draw[dep] (alc) -- (ac);
+  \draw[depext] (sea) -- (ac);
+  \draw[depext] (ac) -- (er);
+  \draw[depext] (alc) to[out=-60,in=30] (er);
+  \draw[depext] (sea) to[out=-120,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=45] (er);
+\end{tikzpicture}
+\caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
+\label{fig:ns-vs-mod-module}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  depext/.style={->, >=Stealth, red!70!black, semithick, dashed},
+  nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
+]
+  \node[nsbox, minimum width=4.6cm, minimum height=3.2cm] (nat) at (2.1,2.1) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,3.9) {\ns{Nat}};
+  \node[dot] (sea) at (1.0,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.2,3.0) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+  \node[dot] (ac) at (1.0,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.2,1.2) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+  \node[nsbox, minimum width=2.4cm, minimum height=0.8cm] (eq) at (2.1,-0.6) {};
+  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,0.0) {\ns{Eq}};
+  \node[dot] (er) at (2.1,-0.6) {};
+  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (sea) -- (ac);
+  \draw[depext] (ac) -- (er);
+  \draw[depext] (alc) to[out=-60,in=30] (er);
+  \draw[depext] (sea) to[out=-120,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=45] (er);
+\end{tikzpicture}
+\caption{Grouped by \textcolor{green!50!black}{namespace}. $2$ of $6$ edges are intra-namespace (solid); $4$ are cross-namespace (dashed). Containment~$\approx 22.2\%$.}
+\label{fig:ns-vs-mod-namespace}
+\end{subfigure}
+\caption{The same five declarations (\textcolor{red!70!black}{red dots}) and six dependency edges (\textcolor{red!70!black}{red arrows}), grouped by \textcolor{blue!60!black}{module}~(a) vs.\ \textcolor{green!50!black}{namespace}~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries capture more intra-group dependencies than file boundaries.}
+\label{fig:ns-vs-mod}
+\end{figure}
 
 \subsection{Summary of tool-mediated decompositions}
 \label{sec:decomposition-summary}
