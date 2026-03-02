@@ -39,14 +39,15 @@ The analysis operates on three progressively finer dependency graphs:
 MathlibGraph/
   paper/          LaTeX source for the paper
     sections/     Individual .tex sections
-    analysis/     Generated PDF figures
+    analysis/     Generated PDF figures (module/decl/ns levels)
     figures/      Community detection figures
-  src/
-    parser/       Lean4 data extraction
-    analysis/     Reusable analysis modules
-    plots/        Figure generation scripts + shared style
-    scripts/      Analysis, data builders, and computation runners
-    tests/        Unit tests
+  src/            Data extraction and analysis code
+    parser/       Lean4 data extraction (lean4export + premises)
+    analysis/     Reusable analysis modules (structure, dynamics)
+    scripts/      Shared utilities (plot style, extraction shell script)
+    tests/        Unit tests for parsers
+    plot_*.py     Figure generation scripts
+    run_*.py      Single-task analysis runners
   docs/           This documentation site
 ```
 

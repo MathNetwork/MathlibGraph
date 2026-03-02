@@ -36,7 +36,6 @@ output/
 
 # Large data files (keep locally, exclude from git/Overleaf)
 data/mechanisms.ndjson
-data/tactic_usage.ndjson
 data/jixia_decls/
 jixia/
 
@@ -47,9 +46,6 @@ jixia/
 node_modules/
 .next/
 docs/out/
-
-# Stray LaTeX files
-texput.log
 
 # OS
 .DS_Store

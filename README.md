@@ -11,17 +11,17 @@ MathlibGraph/
 ├── paper/                         # LaTeX paper
 │   ├── main.tex                   # Entry point
 │   ├── sections/                  # Paper sections
-│   ├── analysis/                  # Generated analytical figures (PDF)
-│   └── figures/                   # Community detection figures (PDF)
+│   └── figures/                   # Generated figures (PDF)
 ├── src/                           # Analysis code
+│   ├── analysis/                  # Analysis modules
+│   │   ├── import_graph.py        # Module import graph analysis
+│   │   └── import_graph_utils.py  # Utility functions
 │   ├── parser/                    # Data extraction
 │   │   ├── from_lean4export.py    # NDJSON → nodes.csv
 │   │   ├── from_premises.py       # premises → edges.csv
 │   │   └── merge.py               # Validation & statistics
-│   ├── analysis/                  # Reusable analysis modules
-│   ├── plots/                     # Figure generation scripts + shared style
-│   ├── scripts/                   # Analysis, data builders, and runners
-│   └── tests/                     # Unit tests
+│   ├── tests/                     # Tests
+│   └── output/                    # Analysis output (JSON)
 └── docs/                          # Documentation site (Nextra)
 ```
 

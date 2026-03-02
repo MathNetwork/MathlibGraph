@@ -11,5 +11,3 @@ The three layers also \textbf{exhibit markedly different topologies}: the module
 
 Based on these findings, we discuss concrete implications for library maintenance, compilation optimization, language design, and AI training data curation in \S\ref{sec:practice}.
 
-\paragraph{Data and code availability.}
-To support reproducibility and downstream research, we release the complete extraction pipeline and graph datasets. The raw graph data---including the module import graph, the declaration dependency graph, and all namespace-level aggregations---are published as a HuggingFace dataset at \texttt{MathNetwork/MathlibGraph}\footnote{\url{https://huggingface.co/datasets/MathNetwork/MathlibGraph}}, enabling independent analysis without requiring a local Lean~4 installation. The extraction and analysis code is available on GitHub at \texttt{MathNetwork/MathNetwork}\footnote{\url{https://github.com/MathNetwork/MathNetwork}}.

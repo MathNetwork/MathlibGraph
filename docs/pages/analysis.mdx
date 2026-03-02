@@ -13,7 +13,7 @@ This produces a markdown report in `src/output/full_analysis_report.md` and all 
 For a quick check without expensive computations (no betweenness, no robustness):
 
 ```bash
-python src/scripts/analyze_quick_stats.py
+python src/quick_stats.py
 ```
 
 ## Single-Task Runners
@@ -22,14 +22,14 @@ Each runner focuses on one analysis. Useful for re-running specific computations
 
 | Script | What it computes | Output |
 |--------|-----------------|--------|
-| `scripts/run_pagerank_community.py` | PageRank, HITS, Louvain communities | `pagerank_top50.csv`, `hits_top50.csv`, `communities.csv` |
-| `scripts/run_betweenness.py` | Betweenness centrality (sampled, k=500) | `betweenness_top50.csv` |
-| `scripts/run_degree_fit.py` | Power-law fitting for degree distributions | `powerlaw_fit_results.csv` |
-| `scripts/run_cascade_robustness.py` | Cascade impact + robustness curves | `cascade_top30.csv`, `robustness_data.csv` |
+| `run_pagerank_community.py` | PageRank, HITS, Louvain communities | `pagerank_top50.csv`, `hits_top50.csv`, `communities.csv` |
+| `run_betweenness.py` | Betweenness centrality (sampled, k=500) | `betweenness_top50.csv` |
+| `run_degree_fit.py` | Power-law fitting for degree distributions | `powerlaw_fit_results.csv` |
+| `run_cascade_robustness.py` | Cascade impact + robustness curves | `cascade_top30.csv`, `robustness_data.csv` |
 
 ```bash
 # Example: run just the centrality analysis
-python src/scripts/run_pagerank_community.py
+python src/run_pagerank_community.py
 ```
 
 ## Reusable Analysis Modules
@@ -99,25 +99,25 @@ These standalone scripts compute cross-level metrics:
 
 | Script | What it measures | Key metric |
 |--------|-----------------|------------|
-| `scripts/analyze_module_cohesion.py` | Fraction of edges staying within modules | Cohesion = 0.107 |
-| `scripts/analyze_namespace_depth.py` | Containment at each namespace depth | Containment decay curve |
-| `scripts/analyze_module_containment.py` | Containment at file-system levels | Top-dir: 48.9%, file: 15.6% |
-| `scripts/analyze_namespace_vs_module.py` | NMI between namespace and module partitions | NMI = 0.71 |
-| `scripts/analyze_namespace_module_cross.py` | Cross-tabulation of namespaces x modules | NMI, ARI scores |
-| `scripts/analyze_namespace_structure.py` | Full analysis of G_ns^(2) | Degree, PageRank, communities, robustness |
-| `scripts/build_namespace_graph.py` | Build and compare G_ns, G_file, G_import | Edge counts, overlap statistics |
-| `scripts/build_file_mapping.py` | Scan Mathlib source for declaration-to-file mapping | `declaration_to_file_module.csv` |
-| `scripts/analyze_import_vs_usage_depth.py` | Compare import chain depth vs actual usage depth | Per-module depth comparison |
-| `scripts/analyze_theorem_vs_lemma.py` | Compare theorem vs lemma citation rates | Theorems cited 1.47x more |
-| `scripts/analyze_supplementary.py` | Degree by kind, NMI, edge breakdown, zero-citation | `supplementary_stats.txt` |
-| `scripts/build_cooccurrence.py` | Premise co-occurrence statistics | `cooccurrence_stats.txt` |
+| `module_cohesion.py` | Fraction of edges staying within modules | Cohesion = 0.107 |
+| `namespace_graph.py` | Containment at each namespace depth | Containment decay curve |
+| `module_containment_decay.py` | Containment at file-system levels | Top-dir: 48.9%, file: 15.6% |
+| `namespace_vs_module.py` | NMI between namespace and module partitions | NMI = 0.71 |
+| `namespace_module_cross.py` | Cross-tabulation of namespaces x modules | NMI, ARI scores |
+| `namespace_full_analysis.py` | Full analysis of G_ns^(2) | Degree, PageRank, communities, robustness |
+| `build_namespace_graph.py` | Build and compare G_ns, G_file, G_import | Edge counts, overlap statistics |
+| `build_file_mapping.py` | Scan Mathlib source for declaration-to-file mapping | `declaration_to_file_module.csv` |
+| `import_depth_vs_usage_depth.py` | Compare import chain depth vs actual usage depth | Per-module depth comparison |
+| `theorem_vs_lemma.py` | Compare theorem vs lemma citation rates | Theorems cited 1.47x more |
+| `supplementary_analysis.py` | Degree by kind, NMI, edge breakdown, zero-citation | `supplementary_stats.txt` |
+| `build_cooccurrence.py` | Premise co-occurrence statistics | `cooccurrence_stats.txt` |
 
 ```bash
 # Example: compute module cohesion
-python src/scripts/analyze_module_cohesion.py
+python src/module_cohesion.py
 
 # Example: full namespace-level analysis
-python src/scripts/analyze_namespace_structure.py
+python src/namespace_full_analysis.py
 ```
 
 ## Tests
