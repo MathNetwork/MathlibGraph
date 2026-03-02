@@ -302,6 +302,7 @@ The $17.5\%$ transitively redundant imports (\S\ref{sec:transitive-reduction}) a
 \end{remark}
 
 \subsection{The declaration graph $G_{\mathrm{thm}}$}
+\label{sec:declaration-graph}
 When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's elaborator inserts automatically.
 
 \begin{definition}[Declaration graph]
