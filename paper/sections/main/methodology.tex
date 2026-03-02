@@ -1,7 +1,7 @@
 \section{Methodology}
 \label{sec:definitions}
 
-We define the dependency graphs and organizational structures extracted from \module{Mathlib} that form the objects of study for this paper. All statistics refer to commit \texttt{534cf0b} (2 February 2026). Extended examples and illustrative figures appear in the appendix (\S\ref{sec:module-import}--\S\ref{sec:future-graphs}).
+We define the dependency graphs and organizational structures extracted from \module{Mathlib} that form the objects of study for this paper. All statistics refer to commit \texttt{534cf0b} (2 February 2026). Each definition is accompanied by worked examples, code excerpts, and illustrative figures; extended statistical analyses (degree distributions, centrality rankings, robustness curves, heatmaps) appear in the supplementary appendices (\S\ref{app:module-detail}--\S\ref{app:ns-detail}).
 
 \subsection{Modules and the module tree}
 
@@ -9,6 +9,16 @@ We define the dependency graphs and organizational structures extracted from \mo
 A \emph{module} in \module{Mathlib} is identified by a dot-separated sequence of identifiers, such as $\module{Mathlib.Algebra.Group.Defs}$. Each module corresponds to a \texttt{.lean} source file, with dots replacing path separators. We write $\mathcal{M}$ for the set of all modules in \module{Mathlib}; at our snapshot, $|\mathcal{M}| = 7{,}563$.
 The \emph{depth} of a module $c_1.c_2.\cdots.c_k$ is~$k$, the number of dot-separated components.
 \end{definition}
+
+\begin{example}
+\leavevmode
+\begin{itemize}
+  \item $\module{Mathlib}$ has depth~$1$.
+  \item $\module{Mathlib.Algebra}$ has depth~$2$.
+  \item $\module{Mathlib.Algebra.Group.Defs}$ has depth~$4$.
+\end{itemize}
+The maximum depth in \module{Mathlib} is~$7$.\footnote{Attained by, e.g., \module{Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Kernels}.}
+\end{example}
 
 We say $m$ is a \emph{prefix} of $m'$ if $m'$ extends $m$ by additional components. For example, \module{Mathlib.Algebra} is a prefix of \module{Mathlib.Algebra.Group.Defs}.
 
@@ -21,6 +31,8 @@ Its leaves are modules (source files); its internal nodes are shared prefixes of
 \end{definition}
 
 The module tree encodes the human cognitive classification of mathematics: top-level directories like \module{Algebra}, \module{Analysis}, and \module{Topology} reflect disciplinary boundaries established long before formalization.
+This hierarchy is distinct from Lean~4's \texttt{namespace} mechanism: the \texttt{namespace} keyword creates a naming scope that need not align with file boundaries---a single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}). The two often coincide in practice, since \module{Mathlib}'s top-level directories serve as both directory names and the primary organizational categories.
+The top-level directories (children of the root) include \module{Algebra} (1257 files), \module{CategoryTheory} (982 files), \module{Analysis} (755 files), etc.
 
 \begin{figure}[H]
 \centering
@@ -92,6 +104,7 @@ The module tree encodes the human cognitive classification of mathematics: top-l
 \end{figure}
 
 \subsection{The module graph $G_{\mathrm{module}}$}
+\label{sec:import-graph}
 Each Lean source file begins with \texttt{import} statements that declare its dependencies. Lean~4 supports both \texttt{import} and \texttt{public import}; for the purposes of the module graph, both forms create an edge. After defining the base graph, we introduce three refinements: the visibility graph $G_{\mathrm{mod}}^{\mathrm{pub}}$ (which distinguishes public from private imports), import utilization $\mathrm{util}(m_i, m_j)$ (which measures how much of an imported module is actually used), and the build graph $G_{\mathrm{build}}$ (which augments the module graph with compilation cost).
 
 \begin{definition}[Import set]
@@ -106,7 +119,51 @@ The \emph{module graph} of \module{Mathlib} is $G_{\mathrm{module}} = (\mathcal{
 \]
 \end{definition}
 
-\noindent At our snapshot, $|E_{\mathrm{module}}| = 23{,}235$. The module graph is a DAG. Unlike the module tree, which records cognitive organization, the module graph records compiler-enforced dependencies; import edges frequently cross directory boundaries.
+\noindent At our snapshot, $|E_{\mathrm{module}}| = 23{,}570$.
+
+For example, the file \module{Mathlib/Data/Nat/Notation.lean} contains:
+
+\begin{codebox}
+\textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Init}
+\end{codebox}
+
+\noindent
+This file depends on exactly one other module: \module{Mathlib.Init}.
+A file with more dependencies is \module{Mathlib/Algebra/Group/Defs.lean}, which imports nine modules (shown here in abbreviated form):
+
+\begin{codebox}
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Batteries.Logic}\\
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Algebra.Notation.Defs}\\
+\textbf{public import} \textcolor{blue!60!black}{Mathlib.Algebra.Regular.Defs}\\
+\hspace{1.5em}\textit{\color{gray}-- \ldots\ 6 more imports}
+\end{codebox}
+
+\noindent
+Each \texttt{import} statement is a directed edge from the importing module to the imported module.
+Since \module{Mathlib/Data/Nat/Notation.lean} contains \texttt{public import Mathlib.Init}, we have the edge $(\module{Data.Nat.Notation},\; \module{Init}) \in E_{\mathrm{module}}$:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+]
+  \node[dot, label=above:{Init}]              (b) at (0,0) {};
+  \node[dot, label=above:{Data.Nat.Notation}] (a) at (4,0) {};
+  \draw[dep] (a) -- (b);
+\end{tikzpicture}
+\caption{The simplest import edge: \module{Data.Nat.Notation} imports \module{Init}. The arrow points from the importing module to the imported module. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:single-import-edge}
+\end{figure}
+
+\noindent\textbf{Note.}
+The module tree $T$ and the module graph $G_{\mathrm{module}}$ are distinct structures on the same vertex set $\mathcal{M}$. In $T$, edges connect a module to its prefix parent in the directory hierarchy; in $G_{\mathrm{module}}$, edges reflect explicit \texttt{import} dependencies. Import edges need not respect the directory hierarchy.
+The contrast between these two structures is conceptually significant. The module tree $T$ encodes a \emph{cognitive} organization of mathematics: its top-level directories---\module{Algebra}, \module{Analysis}, \module{Topology}---reflect a classification that mathematicians established long before formalization. The module graph $G_{\mathrm{module}}$, by contrast, encodes \emph{logical} dependencies that need not respect this classification. The extent to which $G_{\mathrm{module}}$ deviates from $T$---edges that cross directory boundaries, dependencies that link distant branches of the tree---reveals the internal structure of mathematics that no human taxonomy fully captures (see Figure~\ref{fig:import-subgraph}).
+
+The module graph $G_{\mathrm{module}}$ is a DAG: we verified this by computing a topological ordering of all $7{,}563$ modules using the \texttt{importGraph} tool~\cite{importgraph}.\footnote{The \texttt{importGraph} tool outputs edges in the reverse direction (imported $\to$ importing). Our definition follows the standard dependency convention (importing $\to$ imported); acyclicity is invariant under edge reversal.}
 
 Since November 2025, Lean~4's module system~\cite{lean4modules} distinguishes \texttt{public import} from \texttt{import} (private), allowing modules to selectively limit transitive visibility. This distinction refines the module graph:
 
@@ -207,6 +264,77 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 \label{fig:import-subgraph}
 \end{figure}
 
+\paragraph{Transitive Reduction and Redundant Imports}
+\label{sec:transitive-reduction}
+
+Since $G_{\mathrm{module}}$ is a DAG, it has a unique \emph{transitive reduction}~\cite{ahu1972}: the smallest subgraph $G_{\mathrm{module}}^{-} \subseteq G_{\mathrm{module}}$ with the same reachability relation. An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{transitively redundant} if $m_2$ is reachable from $m_1$ via a path of length $\ge 2$ in $G_{\mathrm{module}}$---that is, the dependency is already implied by other imports.
+
+\begin{definition}[Transitive reduction]
+The \emph{transitive reduction} of $G_{\mathrm{module}}$ is $G_{\mathrm{module}}^{-} = (\mathcal{M}, E_{\mathrm{module}}^{-})$ where
+\[
+  E_{\mathrm{module}}^{-} = E_{\mathrm{module}} \setminus \{(m_1, m_2)\in E_{\mathrm{module}} \mid \exists\, \text{path } m_1 \to \cdots \to m_2 \text{ in } G_{\mathrm{module}} \text{ of length} \ge 2\}.
+\]
+\end{definition}
+
+\begin{definition}[Redundancy rate]
+\label{def:redundancy-rate}
+The \emph{redundancy rate} of $G_{\mathrm{module}}$ is the fraction of edges removed by transitive reduction:
+\[
+  r \;=\; \frac{|E_{\mathrm{module}} \setminus E_{\mathrm{module}}^{-}|}{|E_{\mathrm{module}}|}.
+\]
+\end{definition}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.42\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize\ttfamily, inner sep=1pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, blue!60!black},
+  redundant/.style={->, >=Stealth, orange!80!red, dashed, thick},
+]
+  \node[dot, label=above:{Init}]                (d) at (0,0) {};
+  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.2,-1.2) {};
+  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.2,-1.2) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-2.4) {};
+
+  \draw[dep] (a) -- (b);
+  \draw[dep] (a) -- (c);
+  \draw[dep] (b) -- (d);
+  \draw[dep] (c) -- (d);
+  \draw[redundant] (a) -- (d);
+\end{tikzpicture}
+\caption{Subgraph of $G_{\mathrm{module}}$}
+\label{fig:tr-graph-app}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\vspace{0pt}\raggedleft
+\scriptsize\ttfamily
+\begin{tabular}[t]{@{}l@{}}
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Data/Int/Notation.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Init} \\[6pt]
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Data/Nat/Notation.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Init} \\[6pt]
+  \textnormal{\sffamily\bfseries\color{blue!60!black} Algebra/Group/Defs.lean} \\[1pt]
+  \hspace{1em}public import \textcolor{blue!60!black}{Data.Int.Notation} \\
+  \hspace{1em}public import \textcolor{blue!60!black}{Data.Nat.Notation} \\
+  \hspace{1em}\textcolor{orange!80!red}{public import \textcolor{blue!60!black}{Init}}
+    \textnormal{\sffamily\color{orange!80!red} $\leftarrow$ would be redundant} \\
+\end{tabular}
+\caption{Source file headers}
+\label{fig:tr-source-app}
+\end{subfigure}
+\caption{Illustrating transitive redundancy on the diamond from Figure~\ref{fig:import-subgraph}. If \module{Algebra.Group.Defs} were to import \module{Init} directly (\textcolor{orange!80!red}{dashed orange} edge), that edge would be transitively redundant: \module{Init} is already reachable via both \module{Data.Int.Notation} and \module{Data.Nat.Notation}. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:transitive-reduction-app}
+\end{figure}
+
+The raw module graph has $|E_{\mathrm{module}}| = 23{,}570$ edges. After transitive reduction, $|E_{\mathrm{module}}^{-}| = 19{,}448$ edges, removing $4{,}122$ redundant edges ($17.5\%$). These redundant imports are syntactically present in the source files but logically unnecessary: the Lean compiler resolves them through transitive dependencies regardless. Importantly, Mathlib's CI runs the \texttt{shake} linter, which automatically removes certain types of redundant imports; the $17.5\%$ we measure is therefore the residual redundancy \emph{after} \texttt{shake}---imports that \texttt{shake} intentionally preserves (e.g., because they bring needed typeclass instances or notations into scope) or that \texttt{shake} does not target. The raw developer-written redundancy would be higher. These redundant edges are not accidents of careless coding. Developers commonly import umbrella modules---such as importing all of group theory rather than a single lemma---for development ergonomics: the imports ease future refactoring (if a file later needs a lemma from the umbrella, the import is already there), simplify adding new theory to a file, and ensure that typeclass instances and notation remain available. The redundancy reflects the gap between what the compiler requires and what facilitates ongoing library development.
+
+The \texttt{importGraph} tool applies transitive reduction by default when generating its output. We verified (via our own parser) that its reduced graph ($20{,}881$ edges including the umbrella root \module{Mathlib}) agrees exactly with our independently computed reduction on the shared $7{,}563$ modules: all $19{,}448$ edges in $G_{\mathrm{module}}^{-}$ appear in the tool's output, and the $1{,}433$ additional edges in the tool's output are precisely the edges from the umbrella module \module{Mathlib} to its direct children.
+
 A complementary refinement augments the module graph with compilation cost:
 
 \begin{definition}[Build graph]\label{def:build-graph}
@@ -301,6 +429,55 @@ maximized over all directed paths~$\gamma$ from a source to a sink. The modules 
 The $17.5\%$ transitively redundant imports (\S\ref{sec:transitive-reduction}) admit finer analysis along three axes: \emph{structural redundancy} (reachability---an upper bound, since adopting private imports will break some transitive chains), \emph{content redundancy} (import utilization, Definition~\ref{def:import-util}: median $1.6\%$), and \emph{build impact} (whether a redundant edge lies on the critical path of $G_{\mathrm{build}}$).
 \end{remark}
 
+\paragraph{Module Containment Decay}
+\label{sec:module-containment}
+
+The module graph's relationship to the module hierarchy $T$ can be quantified at every depth of the hierarchy, not only at the top level. At each depth~$k$, we truncate both endpoints of every import edge to their first~$k$ dot-separated components and measure the proportion of edges whose truncated endpoints match.
+
+\begin{definition}[Module containment at depth~$k$]
+\label{def:module-containment}
+For each depth $k \ge 1$, let $\mathrm{trunc}_k(m)$ denote the first~$k$ components of module~$m$. For example,
+\[
+  \mathrm{trunc}_2(\module{Mathlib.Algebra.Group.Defs}) = \module{Mathlib.Algebra}.
+\]
+The \emph{module containment ratio at depth~$k$} is
+\[
+  \mathrm{contain}_{\mathrm{mod}}(k) \;=\; \frac{|\{(m_1,m_2) \in E_{\mathrm{module}} \mid \mathrm{trunc}_k(m_1) = \mathrm{trunc}_k(m_2)\}|}{|E_{\mathrm{module}}|}.
+\]
+\end{definition}
+
+Module depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$ and a maximum of~$7$. Containment decays steeply: at depth~$1$ ($13$ top-level packages), $97.5\%$ of import edges stay within the same package; by depth~$4$, containment has fallen to~$8.8\%$ (Table~\ref{tab:module-containment} in Appendix~\ref{app:module-detail}). The steep collapse reveals that, within a discipline, dependencies routinely cross subdirectory boundaries. The containment curve for declaration-level dependencies (\S\ref{sec:containment-decay}) starts from a much lower baseline ($48.9\%$ at the top-level directory) but exhibits the same qualitative pattern.
+
+\paragraph{Cross-Directory Dependencies}
+\label{sec:cross-namespace}
+
+\begin{definition}[Top-level directory]
+For a module $m = \module{Mathlib.}X.Y.\cdots$, the \emph{top-level directory} is $\mathrm{dir}(m) = X$, the first directory component under the \module{Mathlib/} root.
+\end{definition}
+
+\begin{definition}[Intra-/inter-directory edge]
+An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{intra-directory} if $\mathrm{dir}(m_1) = \mathrm{dir}(m_2)$ and \emph{inter-directory} otherwise. For example, the edge
+\[
+  (\module{Mathlib.Algebra.Group.Defs},\;\; \module{Mathlib.Algebra.Notation.Defs})
+\]
+is intra-directory (both have $\mathrm{dir} = \module{Algebra}$), while
+\[
+  (\module{Mathlib.Algebra.Group.Defs},\;\; \module{Mathlib.Order.Defs})
+\]
+is inter-directory.
+\end{definition}
+
+\noindent
+In $G_{\mathrm{module}}$, $14{,}464$ edges ($61.4\%$) are intra-directory and $9{,}106$ ($38.6\%$) are inter-directory. In $G_{\mathrm{module}}^{-}$, the proportions are similar: $12{,}226$ ($62.9\%$) intra and $7{,}222$ ($37.1\%$) inter.
+
+The cross-directory heatmaps (Appendix~\ref{app:module-heatmaps}) confirm that while the diagonal dominates---most imports stay within the same top-level directory---significant off-diagonal traffic exists. The strongest inter-directory dependency is \module{RingTheory} $\to$ \module{Algebra} ($485$ edges), followed by \module{Data} $\to$ \module{Algebra} ($377$) and \module{Algebra} $\to$ \module{Data} ($318$).
+
+Degree distribution, DAG depth, centrality, and robustness analyses for the module graph are reported in Appendix~\ref{app:module-detail}.
+
+\noindent\textbf{Language contingency.}
+\label{rem:language-contingency}
+Note that the module graph's topology is shaped not only by mathematical dependencies but by Lean~4's specific compilation model: its prohibition of cyclic imports, its transitive visibility semantics, and the \texttt{public import} mechanism that allows selective re-export. Design choices such as fine-grained incremental compilation, selective re-export at the declaration level, or explicit interface files would alter the structure of $G_{\mathrm{module}}$ even for identical mathematical content. For instance, Huch and Wenzel~\cite{huch2024} show how the Isabelle AFP's theory DAG structure enables distributed parallel build scheduling with ${>}100\times$ speedup, directly illustrating how compilation model shapes graph topology. The structural statistics reported in this section---$17.5\%$ redundancy (measured after the \texttt{shake} linter), DAG depth~$153$, mean out-degree~$3.1$---should be understood as properties of formalized mathematics \emph{in Lean~4}, not of formalized mathematics in general. Moreover, Lean's module system (introduced November 2025) distinguishes \texttt{public import} from \texttt{import}, a language-level mechanism designed to reshape exactly the graph we analyze. Our snapshot still has mostly \texttt{public} imports; as private imports are adopted, transitive visibility will shrink, redundancy rates will change, and the funnel topology may flatten. This makes our snapshot a baseline of the pre-module-system era.
+
 \subsection{The declaration graph $G_{\mathrm{thm}}$}
 \label{sec:declaration-graph}
 When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's elaborator inserts automatically.
@@ -315,6 +492,72 @@ Each node carries two attributes: its \emph{kind} (one of eight declaration type
 \end{definition}
 
 \noindent At our snapshot, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$. Where the module graph captures the \emph{architecture} of the library, the declaration graph captures the \emph{reasoning structure} of mathematics itself.
+
+\paragraph{What is a premise?}
+Consider a simple example:
+
+\begin{codebox}
+\textit{\color{gray}-- Tactic proof (what the mathematician writes):}\\
+\textbf{theorem} \textcolor{red!70!black}{Nat.succ\_pos} (n : Nat) : 0 < n + 1 :=\\
+\hspace{1.5em}\textcolor{red!70!black}{Nat.zero\_lt\_succ} n\\[3pt]
+\textit{\color{gray}-- The proof term contains:}\\
+\textit{\color{gray}--\hspace{0.5em}Nat.zero\_lt\_succ\hspace{1em}(named constant from environment $\to$ premise)}\\
+\textit{\color{gray}--\hspace{0.5em}n\hspace{6.3em}(local variable, bound by theorem $\to$ NOT a premise)}
+\end{codebox}
+
+\noindent
+The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
+
+The eight declaration kinds are Lean~4's fundamental building blocks: theorems ($79.1\%$), definitions ($15.8\%$), abbreviations ($2.2\%$), constructors ($1.5\%$), inductive types ($1.2\%$), and three minor kinds (Table~\ref{tab:kind-overview} in Appendix~\ref{app:decl-detail}). We highlight two structural extremes below.
+
+\paragraph{Theorems as edge producers; axioms as pure sinks.}
+In $G_{\mathrm{thm}}$, a declaration is an \emph{edge producer} if it has high out-degree (its proof invokes many premises) and a \emph{pure sink} if it has zero or near-zero out-degree but is cited by many others (high in-degree). Theorems constitute $79.1\%$ of all declarations and are the primary edge producers. A theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it. At the opposite extreme, \module{Mathlib} rests on exactly three axioms---\decl{propext} (propositional extensionality), \decl{Classical.choice} (the axiom of choice), and \decl{Quot.sound}---which have near-zero out-degree but are transitively required by all $308{,}129$ declarations. Among the three, \decl{propext} alone accounts for $23{,}226$ incoming edges.
+
+\paragraph{Abbreviations as invisible hubs.}
+Abbreviations (\texttt{abbrev}) are definitionally transparent shorthands that the elaborator always unfolds, acting as notational glue---typically wrapping typeclass projections or operator notation:
+
+\begin{codebox}
+\textbf{abbrev} \textcolor{red!70!black}{OfNat.ofNat} (n : Nat) [inst : OfNat a n] : a := inst.ofNat
+\end{codebox}
+
+\noindent
+The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it. Because the elaborator inserts these references automatically, abbreviations have the most extreme in-degree distribution among non-axiom types---their citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning. By contrast, the most-cited \emph{inductive types}---\decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{Module} ($23{,}404$)---form a layer of mathematical infrastructure whose centrality reflects genuine mathematical importance.
+
+\paragraph{Edge directionality.}
+Not all declaration kinds participate equally in $G_{\mathrm{thm}}$. An edge $(d_1, d_2)$ means that $d_1$'s proof or body \emph{cites} $d_2$; it does not imply an edge in the reverse direction. For example, the theorem \decl{Nat.lt\_irrefl} proves the irreflexivity of strict ordering on natural numbers: no $n$ satisfies $n < n$.
+
+\begin{codebox}
+\textit{\color{gray}-- Irreflexivity of < on natural numbers}\\
+\textbf{theorem} \textcolor{red!70!black}{Nat.lt\_irrefl} (n : Nat) : Not (n < n) :=\\
+\hspace{1.5em}\textcolor{red!70!black}{Nat.not\_succ\_le\_self} n
+\end{codebox}
+
+\noindent
+The proof invokes \decl{Nat.not\_succ\_le\_self}, which establishes that $n + 1 \le n$ is impossible. The kernel also records two infrastructure premises: \decl{LT.lt}, the abbreviation that provides the $<$~notation, and \decl{instLTNat}, the typeclass instance that connects $<$ to \decl{Nat}. This gives three edges:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, red!70!black},
+]
+  % Premises (cited) at top
+  \node[dot, label={[align=center]above:{not\_succ\_le\_self\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}theorem}}}] (thm) at (-3.2,0) {};
+  \node[dot, label={[align=center]above:{LT.lt\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}abbrev}}}]              (ab)  at (0,0) {};
+  \node[dot, label={[align=center]above:{instLTNat\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}definition}}}]       (def) at (3.2,0) {};
+  % Citing theorem at bottom
+  \node[dot, label=below:{Nat.lt\_irrefl}] (t) at (0,-1.8) {};
+  \draw[dep] (t) -- (thm);
+  \draw[dep] (t) -- (ab);
+  \draw[dep] (t) -- (def);
+\end{tikzpicture}
+\caption{Premise edges for the theorem \decl{Nat.lt\_irrefl}: the mathematical premise \decl{not\_succ\_le\_self} (a theorem) and two infrastructure premises \decl{LT.lt} (an abbreviation providing $<$ notation) and \decl{instLTNat} (a typeclass instance). The edges are directed: none of the three premises cites \decl{lt\_irrefl} in return.}
+\label{fig:thm-single-edge}
+\end{figure}
+
+\noindent
+The eight kinds arrange into a clear hierarchy of edge production and consumption (Table~\ref{tab:inter-kind-flow} in Appendix~\ref{app:decl-detail}). Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing definitions and abbreviations---the computational and notational infrastructure on which proofs are built. Axioms and quotients are near-pure sinks (combined out-degree $= 3$). The graph is nearly acyclic; the only bidirectional edges ($4{,}713$ pairs) link inductive types to their own constructors (e.g., \decl{Nat}~$\leftrightarrow$~\decl{Nat.succ}).
 
 \begin{figure}[H]
 \centering
@@ -477,6 +720,69 @@ Each node carries two attributes: its \emph{kind} (one of eight declaration type
 \label{fig:module-region}
 \end{figure}
 
+\medskip
+\noindent
+The \decl{Nat.lt\_irrefl} example above showed a single theorem's premises; we now turn to a \emph{pair} of theorems to illustrate how shared premises create the hub structure that dominates $G_{\mathrm{thm}}$. Consider \decl{Nat.add\_left\_comm}, which proves $a + (b + c) = b + (a + c)$ for natural numbers. The extracted premises are:
+
+\smallskip
+\begin{center}
+\small
+\begin{tabular}{ll}
+\textit{Mathematical premises:} & \decl{Nat.add\_comm}, \decl{Nat.add\_assoc} \\
+\textit{Equality infrastructure:} & \decl{Eq.refl}, \decl{Eq.symm}, \decl{Eq.mpr} \\
+\textit{Typeclass instances:} & \decl{instHAdd}, \decl{HAdd.hAdd}, \decl{instAddNat}
+\end{tabular}
+\end{center}
+\smallskip
+
+\noindent
+A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \decl{Eq.refl}---a constructor with in-degree $69{,}580$---is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
+
+\noindent\textbf{Note.}
+The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$.
+
+The graph is almost entirely connected: $308{,}054$ of $308{,}129$ nodes ($99.98\%$) belong to a single weakly connected component. The remaining $75$ nodes distribute across $71$ tiny components, of which $69$ are singletons.
+
+\paragraph{Declaration Types as Structural Strata}
+\label{sec:thm-types}
+
+The eight declaration kinds occupy distinct structural niches in $G_{\mathrm{thm}}$ (Table~\ref{tab:thm-kind-degree} in Appendix~\ref{app:decl-detail}). The pattern is systematic: axioms sit at the absolute bottom of the dependency chain with the highest average in-degree ($7{,}823$) and near-zero out-degree; theorems occupy the opposite pole with low in-degree (mean~$5.5$) but the highest out-degree (mean~$30.8$, max~$522$). Among the three axioms, \decl{propext} (propositional extensionality) accounts for $23{,}226$ incoming edges---it is invoked in roughly one out of every thirteen declarations. \decl{Classical.choice} ($169$) and \decl{Quot.sound} ($73$) are invoked far less frequently, suggesting that the vast majority of \module{Mathlib}'s reasoning is constructive at the proof-term level, with classical logic concentrated in specific branches.
+
+Inductive types have high in-degree (mean~$273$, median~$31$) and very low out-degree (mean~$4.1$). These are the structural skeletons of mathematics: type definitions that many theorems depend on but that themselves depend on little. Their in-degree top~$10$ reads as a catalogue of core mathematical concepts: \decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{TopologicalSpace} ($25{,}310$), \decl{CategoryTheory.Functor} ($24{,}295$), \decl{Module} ($23{,}404$), \decl{CommRing} ($20{,}837$).
+
+Theorems occupy the opposite pole: low in-degree (mean~$5.5$, median~$1$) and the highest out-degree (mean~$30.8$, max~$522$). Theorems are \emph{consumers} of dependencies, not providers. The few high-in-degree theorems are not deep mathematical results but equality reasoning lemmas: \decl{Eq.trans} ($58{,}686$), \decl{of\_eq\_true} ($48{,}801$), \decl{congrFun'} ($45{,}516$), \decl{Eq.symm} ($42{,}542$). These are workhorses of Lean's elaborator and tactic framework---proof infrastructure, not mathematical content.
+
+Abbreviations (\texttt{abbrev}) have the most extreme in-degree distribution among non-axiom types: mean~$438$, maximum~$89{,}936$ (\decl{OfNat.ofNat}). These are type-class coercion paths that the elaborator inserts automatically during type-checking. Their high citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning. As Baanen et al.~\cite{baanen2022} analyze, typeclass design choices (bundled vs.\ unbundled) shape \module{Mathlib}'s dependency structure; the same authors~\cite{baanen2025} report that unbundling gave $6$--$19\%$ compilation speedups, explaining why these language-infrastructure nodes dominate our hub structure.
+
+\noindent\textbf{Two infrastructure layers.}
+\label{rem:two-layers}
+The degree-by-kind analysis reveals that the hub structure of $G_{\mathrm{thm}}$ decomposes into two distinct infrastructure layers:
+\begin{enumerate}
+\item \textbf{Language infrastructure.} The highest-cited declarations---\decl{OfNat.ofNat} ($89{,}936$), \decl{Eq.refl} ($69{,}580$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.mpr} ($62{,}942$)---are artifacts of Lean's type system: numeral coercions, equality constructors, function-like coercions. Their prominence is determined by the design of the proof assistant, not by the logical structure of mathematics. These nodes are invisible in $G_{\mathrm{module}}$ (which treats entire modules as atoms) and constitute the first layer of process-trace in the product.
+
+\item \textbf{Mathematical infrastructure.} The highest-cited \emph{inductive types}---\decl{CategoryTheory.Category}, \decl{Real}, \decl{TopologicalSpace}, \decl{Module}, \decl{CommRing}---are core mathematical concepts. Their prominence reflects the logical structure of the formalized mathematics itself: category theory, analysis, and algebra are genuinely foundational in the dependency sense. This layer is the product's own structure, free of proof-assistant artifacts.
+\end{enumerate}
+The module graph of \S\ref{sec:import-graph} conflates these two layers (a module contains both language infrastructure and mathematical content). The theorem--premise graph separates them, enabling the analyst to distinguish what belongs to mathematics from what belongs to its medium of expression.
+
+\paragraph{The Leaf Theorem Phenomenon}
+\label{sec:thm-leaves}
+
+Of the $243{,}725$ theorems in $G_{\mathrm{thm}}$, $109{,}088$ ($44.8\%$) have in-degree zero: they are never cited by any other declaration. These \emph{leaf theorems} form the outermost surface of the library---the boundary where formalized knowledge meets the external world. The zero-citation rate varies dramatically across namespaces (Table~\ref{tab:thm-leaves} in Appendix~\ref{app:decl-detail}): namespaces generated by \texttt{@[to\_additive]} reach $80$--$92\%$, while analysis workbench namespaces (\ns{Primrec}, \ns{AnalyticAt}, \ns{HasFDerivWithinAt}) stay below $18\%$---nearly every theorem in these feeds into downstream proofs.
+
+\noindent\textbf{Leaf theorems as API surface.}
+\label{rem:leaf-theorems}
+The $44.8\%$ zero-citation rate means that nearly half of all theorems in $G_{\mathrm{thm}}$ are leaves. These leaves constitute the \emph{API surface} of \module{Mathlib}---the interface through which the library's knowledge is consumed by external users (mathematicians applying results, AI systems selecting premises, downstream projects building on Mathlib). Their existence is not waste but function: a library that formalized only internally-reused lemmas would be useless to its consumers.
+
+The dichotomy between high-zero-rate namespaces (systematically generated mirrored API) and low-zero-rate namespaces (hand-crafted building blocks) reveals a second process-trace in the product. The \texttt{@[to\_additive]} machinery leaves a distinctive structural fingerprint---entire subtrees of leaf theorems that inflate the graph's surface area without deepening its logical content.
+
+\paragraph{Cross-Namespace Flow}
+\label{sec:thm-cross-namespace}
+
+We decompose the $8{,}436{,}366$ edges of $G_{\mathrm{thm}}$ into three tiers based on the relationship between the source and target declarations' names. Only $9.6\%$ of edges remain within the same module file, and another $9.6\%$ cross module boundaries while staying within the same top-level namespace. The majority---$50.9\%$---cross namespace boundaries entirely (Table~\ref{tab:thm-edge-breakdown} in Appendix~\ref{app:decl-detail}). In $G_{\mathrm{module}}^{-}$, $62.9\%$ of edges stay within the same namespace (\S\ref{sec:cross-namespace}); in $G_{\mathrm{thm}}$, at most $19.2\%$ do. This threefold increase in cross-namespace density arises because module imports package many individual dependencies into a single edge. The module boundary acts as a cognitive container that conceals the true extent of cross-disciplinary dependency.
+
+The strongest cross-namespace coupling is \ns{AlgebraicGeometry} $\leftrightarrow$ \ns{CategoryTheory} ($38{,}042$ edges), followed by \ns{MeasureTheory} $\leftrightarrow$ \ns{Real} ($15{,}668$ edges); a full ranking is given in Table~\ref{tab:thm-cross-ns-pairs} in Appendix~\ref{app:decl-detail}.
+
+\medskip
 The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices. We organize these into three groups: edge-level decompositions that partition $E_{\mathrm{thm}}$ by the origin of each dependency (\S\ref{sec:stmt-proof}--\S\ref{sec:typeclass-synth}), subgraph constructions that isolate specific language mechanisms such as typeclass synthesis and coercions (\S\ref{sec:typeclass-synth}), and node-level enrichments that attach metadata---attributes, definitional height, tactic usage---to each declaration (\S\ref{sec:decl-attributes}).
 
 \subsubsection{Statement and proof decomposition}
@@ -1202,7 +1508,50 @@ where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined
 \end{figure}
 
 \subsection{The namespace graphs $G_{\mathrm{ns}}^{(k)}$}
-Each declaration carries a fully qualified name (e.g., \decl{Nat.Prime.dvd\_mul}) whose dot-separated components form a hierarchy determined by \texttt{namespace} blocks in the source code, not by the file path. Truncating names to varying depths yields an intermediate family of graphs between the coarse module level and the fine declaration level.
+Each declaration carries a fully qualified name (e.g., \decl{Nat.Prime.dvd\_mul}) whose dot-separated components form a hierarchy determined by \texttt{namespace} blocks in the source code, not by the file path. The following example illustrates how Lean's naming mechanisms determine fully qualified names:
+
+\begin{codebox}
+\textit{\color{gray}-- \textbf{Namespace blocks} determine the declaration's qualified name:}\\
+\textbf{namespace} \textcolor{green!50!black}{Nat}\\
+\hspace{1.5em}\textbf{theorem} \textcolor{red!70!black}{add\_comm} (a b : Nat) : a + b = b + a := \ldots\\
+\hspace{1.5em}\textit{\color{gray}-- fully qualified name: \textcolor{red!70!black}{Nat.add\_comm} \quad(depth 1)}\\[3pt]
+\hspace{1.5em}\textbf{namespace} \textcolor{green!50!black}{Prime}\\
+\hspace{3em}\textbf{theorem} \textcolor{red!70!black}{dvd\_mul} (hp : Prime p) : p | a * b $\to$ \ldots\ := \ldots\\
+\hspace{3em}\textit{\color{gray}-- fully qualified name: \textcolor{red!70!black}{Nat.Prime.dvd\_mul} \quad(depth 2)}\\
+\hspace{1.5em}\textbf{end} \textcolor{green!50!black}{Prime}\\
+\textbf{end} \textcolor{green!50!black}{Nat}\\[6pt]
+\textit{\color{gray}-- \textbf{File path} determines the module name (a separate hierarchy):}\\
+\textit{\color{gray}-- File:}\quad \textcolor{blue!60!black}{Mathlib/Data/Nat/Prime/Basic.lean}\\
+\textit{\color{gray}-- Module:}\quad \textcolor{blue!60!black}{Mathlib.Data.Nat.Prime.Basic}
+\end{codebox}
+
+\noindent
+Each declaration's fully qualified name is a dot-separated sequence determined by its enclosing \texttt{namespace} blocks (\textcolor{green!50!black}{green}), not by the file path. The file path determines the \emph{module} name (\textcolor{blue!60!black}{blue}), which governs \texttt{import} visibility but does not affect qualified names. In practice, \module{Mathlib} conventions strongly correlate the two hierarchies---declarations in \ns{Nat.Prime} typically live in modules under \module{Mathlib.Data.Nat.Prime}---but the correlation is a social convention, not a language rule. A single namespace may span many files, and a single file may contribute declarations to multiple namespaces (\S\ref{sec:ns-mod-cross}).
+
+Truncating names to varying depths yields an intermediate family of graphs between the coarse module level and the fine declaration level.
+
+The $308{,}129$ declarations in \module{Mathlib} span six depth levels. Table~\ref{tab:ns-depth-count} shows how the number of distinct namespaces grows with truncation depth.
+
+\begin{table}[ht]
+\centering
+\caption{Number of distinct namespaces at each truncation depth~$k$.}
+\label{tab:ns-depth-count}
+\begin{tabular}{cr}
+\toprule
+Depth $k$ & $|\mathcal{N}_k|$ \\
+\midrule
+1          & $3{,}184$ \\
+2          & $10{,}097$ \\
+3          & $13{,}785$ \\
+4          & $15{,}198$ \\
+5          & $15{,}443$ \\
+6 (max)    & $15{,}456$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Growth saturates rapidly: $90\%$ of all namespaces are distinguished by depth~$3$. Declarations with names of the form $X.y$ (a single namespace component plus a short name) account for $67\%$ of all declarations; only $10\%$ have depth $\ge 4$. The naming convention of \module{Mathlib} is, in practice, shallow.
 
 \begin{definition}[Namespace graph at depth~$k$]
 \label{def:ns-graph}
@@ -1370,6 +1719,103 @@ where $\mathcal{N}_k = \{\mathrm{ns}_k(d) \mid d \in \mathcal{D}\}$ is the set o
 \caption{The same five declarations (\textcolor{red!70!black}{red dots}) and six dependency edges (\textcolor{red!70!black}{red arrows}), grouped by \textcolor{blue!60!black}{module}~(a) vs.\ \textcolor{green!50!black}{namespace}~(b). The edge \decl{succ\_eq\_add\_one}~$\to$~\decl{add\_comm} crosses a \textcolor{blue!60!black}{module boundary} (dashed in~a) but stays within the \textcolor{green!50!black}{\ns{Nat}} namespace (solid in~b). Namespace boundaries capture more intra-group dependencies than file boundaries.}
 \label{fig:ns-vs-mod}
 \end{figure}
+
+\noindent\textbf{Cycles in the namespace graph.}
+\label{rem:ns-cycles}
+Unlike $G_{\mathrm{module}}$ and $G_{\mathrm{thm}}$, which are directed acyclic graphs---the compiler and the type-checker respectively forbid circular dependencies---the namespace graph $G_{\mathrm{ns}}^{(k)}$ can contain directed cycles. Two namespaces may depend on each other: namespace~$A$ contains a declaration that cites a declaration in namespace~$B$, while $B$ contains a different declaration that cites one in~$A$. The underlying declaration-level graph remains acyclic, but the aggregation into namespaces collapses the strict topological ordering.
+
+At depth~$2$, $G_{\mathrm{ns}}^{(2)}$ contains $38$ strongly connected components with more than one node, the largest comprising $5{,}899$ namespaces---$58\%$ of all depth-$2$ namespaces. This giant component reflects the deeply interconnected core of Mathlib: most mathematical sub-disciplines at this granularity depend mutually on one another. This structural difference---DAGs at the module and declaration levels, cyclic graphs at the namespace level---reflects the fact that namespace boundaries, unlike file boundaries, are not constrained by a compiler-enforced import ordering.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+  nsbox/.style={rounded corners=5pt, draw=green!50!black, thick, fill=green!10,
+                minimum width=2.8cm, minimum height=1.6cm},
+  agg/.style={->, >=Stealth, gray!50, very thick, dashed,
+              shorten <=2pt, shorten >=2pt},
+]
+  % ============ Panel (a): Declaration level ============
+  \node[font=\small\sffamily, anchor=south] at (2.0,2.5) {(a) $G_{\mathrm{thm}}$ (acyclic)};
+  % Namespace boxes
+  \fill[green!8, rounded corners=3pt] (-0.3,-0.3) rectangle (2.0,2.2);
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (-0.3,-0.3) rectangle (2.0,2.2);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (-0.2,2.15) {\ns{Nat}};
+
+  \fill[green!8, rounded corners=3pt] (2.5,-0.3) rectangle (4.8,2.2);
+  \draw[green!50!black, rounded corners=3pt, thick, dashed]
+    (2.5,-0.3) rectangle (4.8,2.2);
+  \node[font=\tiny\sffamily\bfseries, green!40!black, anchor=north west]
+    at (2.6,2.15) {\ns{Int}};
+
+  % Declarations
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black, align=center]below:prime\_iff\_\\[-1pt]prime\_int}]
+    (npip) at (1.0,1.4) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:lcm}]
+    (nlcm) at (1.0,0.3) {};
+
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:dvd\_natAbs}]
+    (idna) at (3.5,1.4) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:lcm\_neg}]
+    (ilcm) at (3.5,0.3) {};
+
+  % Declaration-level edges (no cycle!)
+  \draw[dep] (npip) -- (idna);
+  \draw[dep] (ilcm) -- (nlcm);
+
+  % ============ Arrow a → b ============
+  \draw[agg] (5.3,0.95) -- node[above, font=\tiny\sffamily, text=gray!60] {aggregate}
+    (7.0,0.95);
+
+  % ============ Panel (b): Namespace level ============
+  \node[font=\small\sffamily, anchor=south] at (9.5,2.5) {(b) $G_{\mathrm{ns}}^{(2)}$ (cyclic)};
+  \node[nsbox, minimum width=1.6cm, minimum height=1.3cm] (ns_nat) at (8.0,0.95) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (8.0,1.1) {\ns{Nat}};
+  \node[font=\tiny\sffamily, text=gray] at (8.0,0.7) {2 decls};
+
+  \node[nsbox, minimum width=1.6cm, minimum height=1.3cm] (ns_int) at (11.0,0.95) {};
+  \node[font=\scriptsize\sffamily\bfseries, green!50!black] at (11.0,1.1) {\ns{Int}};
+  \node[font=\tiny\sffamily, text=gray] at (11.0,0.7) {2 decls};
+
+  % Namespace-level edges: cycle!
+  \draw[->, >=Stealth, green!50!black, thick]
+    ([yshift=2pt]ns_nat.north east) to[out=30,in=150]
+    node[above, font=\tiny, text=green!40!black] {$w\!=\!1$}
+    ([yshift=2pt]ns_int.north west);
+  \draw[->, >=Stealth, green!50!black, thick]
+    ([yshift=-2pt]ns_int.south west) to[out=210,in=330]
+    node[below, font=\tiny, text=green!40!black] {$w\!=\!1$}
+    ([yshift=-2pt]ns_nat.south east);
+\end{tikzpicture}
+\caption{How aggregation creates cycles. (a)~At the declaration level, two edges cross the \ns{Nat}--\ns{Int} boundary in opposite directions: \decl{Nat.prime\_iff\_prime\_int} cites \decl{Int.dvd\_natAbs}, and \decl{Int.lcm\_neg} cites \decl{Nat.lcm}. No cycle exists among these four declarations. (b)~After aggregation to depth-$2$ namespaces, both edges collapse to namespace-level edges, creating a directed cycle \ns{Nat} $\to$ \ns{Int} $\to$ \ns{Nat}. The declaration-level DAG property is lost.}
+\label{fig:ns-cycle-example}
+\end{figure}
+
+\paragraph{Containment Decay}
+\label{sec:containment-decay}
+
+We now quantify how namespace containment erodes as the grouping becomes finer.
+
+\begin{definition}[Containment ratio]
+\label{def:containment}
+The \emph{containment ratio at depth~$k$} is the proportion of edges in $G_{\mathrm{thm}}$ whose endpoints share the same depth-$k$ namespace:
+\[
+  \mathrm{contain}(k) \;=\; \frac{|E_{\mathrm{intra}}^{(k)}|}{|E_{\mathrm{thm}}|},
+  \qquad
+  E_{\mathrm{intra}}^{(k)} = \{(d_1,d_2) \in E_{\mathrm{thm}} \mid \mathrm{ns}_k(d_1) = \mathrm{ns}_k(d_2)\}.
+\]
+\end{definition}
+
+\noindent
+This definition parallels the module containment ratio (Definition~\ref{def:module-containment}), which measures the same concept at a coarser granularity: there, the denominator is $|E_{\mathrm{module}}|$ (import edges between modules) and the grouping is by dot-separated module path; here, the denominator is $|E_{\mathrm{thm}}|$ (all declaration-level dependency edges) and the grouping is by namespace truncation. The two metrics are thus not directly comparable in magnitude, since they operate on different edge sets.
+
+A containment ratio of $1$ would mean all dependencies stay within namespace boundaries; $0$ would mean every edge crosses a boundary. The decay is steep (Table~\ref{tab:containment-decay} and Figure~\ref{fig:containment-curve} in Appendix~\ref{app:ns-detail}): at the top-level directory ($32$ units), containment is $48.9\%$; by namespace depth~$1$ ($3{,}184$ units) it drops to $22.2\%$; and by depth~$2$ ($10{,}097$ units) it saturates at ${\sim}14\%$, with further refinement adding almost nothing. The steepest single drop occurs at the discipline--sub-discipline transition, where a single step costs $26.7$ percentage points. File-level containment ($15.6\%$) falls between depth~$1$ and depth~$2$, offering no advantage beyond that of a mid-level namespace.
+
+Degree distribution, centrality, community detection, and robustness analyses for the namespace graph are reported in Appendix~\ref{app:ns-detail}.
 
 \subsection{Summary of tool-mediated decompositions}
 \label{sec:decomposition-summary}
