@@ -1200,6 +1200,8 @@ Declarations with high~$\delta$ are brittle: changes to any definition along the
 \label{fig:def-height}
 \end{figure}
 
+\noindent Of the $101{,}021$ definitions with reducibility hints, $53{,}962$ are regular (semireducible), $42{,}786$ are abbreviations (always unfolded), and $4{,}273$ are opaque (never unfolded). Among regular definitions, $\delta$ has median~$7$, mean~$10.1$, and maximum~$60$, with $90\%$ of values below~$23$. The distribution is concentrated at low depths ($27.8\%$ in the range $5$--$9$) but has a long tail: the ten highest-$\delta$ declarations all belong to \ns{MeasureTheory} (conditional expectation, Bochner integral, $L^p$ spaces), reflecting deep unfolding chains through the measure-theoretic hierarchy.
+
 \begin{definition}[Tactic usage profile]\label{def:tactic-usage}
 For each declaration $d \in \mathcal{D}$ whose proof is written in tactic mode (i.e., $d.\pi$ begins with \texttt{by}), define the \emph{tactic profile}
 \[
