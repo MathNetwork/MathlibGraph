@@ -425,6 +425,8 @@ maximized over all directed paths~$\gamma$ from a source to a sink. The modules 
 \label{fig:build}
 \end{figure}
 
+\noindent Using \texttt{.olean} file size as a proxy for per-module compilation cost, the critical path of $G_{\mathrm{build}}$ traverses $161$ modules and accounts for $80$\,MB of the total $1{,}792$\,MB, yielding a theoretical parallelism ratio of $22.4\times$. The heaviest module on the critical path is \module{Mathlib.Tactic.Ring.Basic} ($5.9$\,MB); the path runs from \module{Tactic.Simproc.ExistsAndEq} to \module{AlgebraicGeometry.AffineTransitionLimit}.
+
 \begin{remark}[Dimensions of import redundancy]\label{rem:redundancy-dimensions}
 The $17.5\%$ transitively redundant imports (\S\ref{sec:transitive-reduction}) admit finer analysis along three axes: \emph{structural redundancy} (reachability---an upper bound, since adopting private imports will break some transitive chains), \emph{content redundancy} (import utilization, Definition~\ref{def:import-util}: median $1.6\%$), and \emph{build impact} (whether a redundant edge lies on the critical path of $G_{\mathrm{build}}$).
 \end{remark}
@@ -976,6 +978,8 @@ For each edge $(a, b) \in E_{\mathrm{thm}}$, define
 This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
 \end{definition}
 
+\noindent At our snapshot, $\sigma = 74.2\%$: $6{,}257{,}832$ edges are synthesized and $2{,}178{,}534$ are explicit. The ``visible'' mathematical reasoning thus accounts for barely a quarter of the actual dependency graph.
+
 \begin{definition}[Coercion graph]\label{def:coercion-graph}
 Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} is
 \[
@@ -1040,6 +1044,8 @@ Long coercion chains (paths of length $\ge 3$) degrade compilation performance; 
 \label{fig:coercion}
 \end{figure}
 
+\noindent At our snapshot, $|\mathcal{K}| = 256$ registered coercions with diameter~$4$ (the number tower $\mathbb{N} \to \mathbb{Z} \to \mathbb{Q} \to \mathbb{R} \to \mathbb{C}$). The most-cited coercion node, \decl{DFunLike.coe} (in-degree $65{,}437$), mediates function-like coercions across the library; \decl{SetLike.coe} ($9{,}519$) is the second hub.
+
 \begin{definition}[Structure inheritance graph]\label{def:extends-graph}
 Lean structures may extend other structures via the \texttt{extends} keyword, inheriting their fields. The \emph{structure inheritance graph} is
 \[
@@ -1047,6 +1053,8 @@ Lean structures may extend other structures via the \texttt{extends} keyword, in
 \]
 where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} declarations. This graph encodes the algebraic hierarchy's inheritance lattice---a tool-mediated organizational layer that shapes which instances need to be defined and which are inherited automatically.
 \end{definition}
+
+\noindent At our snapshot, $|E_{\mathrm{ext}}| = 1{,}535$ \texttt{extends} edges among $|\mathcal{S}|$ structures. The most-extended structures---at the top of the algebraic hierarchy---are the same inductive types that dominate $G_{\mathrm{thm}}$'s in-degree: \decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{TopologicalSpace} ($25{,}310$), \decl{Module} ($23{,}404$), \decl{CommRing} ($20{,}837$).
 
 % Figure for G_ext merged into Figure~\ref{fig:tc-ext} above.
 
@@ -1124,6 +1132,8 @@ In particular:
   \item The \texttt{@[to\_additive]} attribute instructs a metaprogram to generate the additive mirror of each marked multiplicative declaration. Formally, $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as such mirrored pairs.
 \end{itemize}
 \end{definition}
+
+\noindent At our snapshot, $32.9\%$ of declarations carry at least one attribute. The most prevalent are \texttt{@[simp]} ($40{,}223$ declarations, $17.1\%$), \texttt{@[to\_additive]} ($13{,}664$, $5.8\%$), and \texttt{@[simps]} ($6{,}830$, $2.9\%$). The flattening ratio is $\phi = 13{,}664 / 235{,}586 = 5.8\%$; including the generated mirrors, \texttt{@[to\_additive]} accounts for roughly $11.6\%$ of the library. A total of $105$ distinct attribute types are registered.
 
 Lean's kernel decides definitional equality by unfolding chains of definitions; the depth of this chain---the \emph{definitional height}---governs compilation cost and constitutes a form of implicit coupling invisible in $G_{\mathrm{thm}}$.
 
@@ -1263,6 +1273,8 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
 \label{fig:tactic-usage}
 \end{figure}
 
+\noindent Across $79{,}896$ tactic-mode proofs ($325{,}454$ tactic invocations, $7{,}053$ distinct tactics), the top three tactics---\texttt{rw} ($16.9\%$), \texttt{simp} ($11.2\%$), \texttt{exact} ($10.4\%$)---account for $38.5\%$ of all invocations. Per-namespace profiles reveal systematic variation: \texttt{Algebra} proofs favor \texttt{rw} ($20\%$) while \texttt{CategoryTheory} proofs favor \texttt{simp} ($13\%$); \texttt{MeasureTheory} has the highest \texttt{exact} rate ($13\%$) and \texttt{have} rate ($10\%$), reflecting a more lemma-chaining proof style.
+
 Lean's \texttt{deriving} mechanism automates the generation of meta-level typeclass instances (e.g., \texttt{DecidableEq}, \texttt{Repr}) that traditional mathematics takes for granted, creating declarations and dependency edges required for computational infrastructure.
 
 \begin{definition}[Auto-derived instance edges]\label{def:deriving-edges}
@@ -1343,6 +1355,8 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
 \caption{Auto-derived instance edges (Definition~\ref{def:deriving-edges}). (a)~From \module{Mathlib.Tactic.Linter.FlexibleLinter} (line 190): the \texttt{deriving} clause on \decl{Stained} instructs Lean to auto-generate four typeclass instances. (b)~In $G_{\mathrm{thm}}$, \textcolor{red!70!black}{solid} edges are human-written (constructors $\to$ type); \textcolor{gray!40}{dashed} edges belong to $E_{\mathrm{auto}}$---the auto-generated instances reference both the type and its constructors, but no human ever wrote these dependencies.}
 \label{fig:auto-derived}
 \end{figure}
+
+\noindent At our snapshot, $|\mathcal{H}| = 15$ registered \texttt{deriving} handlers produce $1{,}515$ auto-derived declarations and $34{,}090$ edges in $G_{\mathrm{thm}}$ ($0.40\%$ of $|E_{\mathrm{thm}}|$). While this fraction is small, these declarations are structurally distinctive: they have uniform dependency patterns (each references the parent type and its constructors) and inflate the graph's surface without contributing mathematical content.
 
 \begin{figure}[!htb]
 \centering
