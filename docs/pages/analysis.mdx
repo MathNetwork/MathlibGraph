@@ -13,23 +13,23 @@ This produces a markdown report in `src/output/full_analysis_report.md` and all 
 For a quick check without expensive computations (no betweenness, no robustness):
 
 ```bash
-python src/quick_stats.py
+python src/scripts/quick_stats.py
 ```
 
 ## Single-Task Runners
 
-Each runner focuses on one analysis. Useful for re-running specific computations:
+Located in `src/scripts/`, each runner focuses on one analysis:
 
 | Script | What it computes | Output |
 |--------|-----------------|--------|
-| `run_pagerank_community.py` | PageRank, HITS, Louvain communities | `pagerank_top50.csv`, `hits_top50.csv`, `communities.csv` |
-| `run_betweenness.py` | Betweenness centrality (sampled, k=500) | `betweenness_top50.csv` |
-| `run_degree_fit.py` | Power-law fitting for degree distributions | `powerlaw_fit_results.csv` |
-| `run_cascade_robustness.py` | Cascade impact + robustness curves | `cascade_top30.csv`, `robustness_data.csv` |
+| `scripts/run_pagerank_community.py` | PageRank, HITS, Louvain communities | `pagerank_top50.csv`, `hits_top50.csv`, `communities.csv` |
+| `scripts/run_betweenness.py` | Betweenness centrality (sampled, k=500) | `betweenness_top50.csv` |
+| `scripts/run_degree_fit.py` | Power-law fitting for degree distributions | `powerlaw_fit_results.csv` |
+| `scripts/run_cascade_robustness.py` | Cascade impact + robustness curves | `cascade_top30.csv`, `robustness_data.csv` |
 
 ```bash
 # Example: run just the centrality analysis
-python src/run_pagerank_community.py
+python src/scripts/run_pagerank_community.py
 ```
 
 ## Reusable Analysis Modules
@@ -93,9 +93,20 @@ robustness = robustness_analysis(G, pagerank, output_dir="output/")
 # Robustness: random vs targeted (by PageRank) node removal
 ```
 
+### `analysis.import_graph`
+
+Module import graph analysis: builds the import graph from Mathlib source, computes transitive reduction, and analyzes structural properties:
+
+```python
+from analysis.import_graph import build_import_graph, transitive_reduction
+
+G_module = build_import_graph("mathlib4/Mathlib")
+G_tr = transitive_reduction(G_module)
+```
+
 ## Namespace and Module Analysis
 
-These standalone scripts compute cross-level metrics:
+Standalone scripts in `src/scripts/` compute cross-level metrics:
 
 | Script | What it measures | Key metric |
 |--------|-----------------|------------|
@@ -114,18 +125,18 @@ These standalone scripts compute cross-level metrics:
 
 ```bash
 # Example: compute module cohesion
-python src/module_cohesion.py
+python src/scripts/module_cohesion.py
 
 # Example: full namespace-level analysis
-python src/namespace_full_analysis.py
+python src/scripts/namespace_full_analysis.py
 ```
 
 ## Tests
 
-Parser unit tests using pytest:
+Parser and analysis unit tests using pytest:
 
 ```bash
 pytest src/tests/
 ```
 
-Covers `from_lean4export.py`, `from_premises.py`, and `merge.py`.
+Covers `from_lean4export.py`, `from_premises.py`, `from_mechanisms.py`, `import_graph.py`, and `merge.py`.

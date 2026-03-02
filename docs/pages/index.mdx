@@ -37,18 +37,18 @@ The analysis operates on three progressively finer dependency graphs:
 
 ```
 MathlibGraph/
-  paper/          LaTeX source for the paper
-    sections/     Individual .tex sections
-    analysis/     Generated PDF figures (module/decl/ns levels)
-    figures/      Community detection figures
-  src/            Data extraction and analysis code
-    parser/       Lean4 data extraction (lean4export + premises)
-    analysis/     Reusable analysis modules (structure, dynamics)
-    scripts/      Shared utilities (plot style, extraction shell script)
-    tests/        Unit tests for parsers
-    plot_*.py     Figure generation scripts
-    run_*.py      Single-task analysis runners
-  docs/           This documentation site
+  paper/              LaTeX source for the paper
+    sections/         Individual .tex sections (main/ and appendix/)
+    analysis/         Generated PDF figures (module/decl/ns levels)
+    figures/          Community detection figures
+  src/                Data extraction and analysis code
+    parser/           Lean4 data extraction (lean4export, premises, jixia, mechanisms)
+    analysis/         Reusable analysis modules (structure, dynamics, import graph)
+    plots/            Figure generation scripts (plot_*.py, regen_figures.py)
+    scripts/          Analysis runners, standalone scripts, shell scripts
+    tests/            Unit tests for parsers and analysis modules
+    main.py           Full pipeline entry point
+  docs/               This documentation site (Nextra/Next.js)
 ```
 
 ## Links

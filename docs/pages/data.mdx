@@ -1,6 +1,6 @@
 # Data Pipeline
 
-The dataset is extracted from Mathlib4 commit [`534cf0b`](https://github.com/leanprover-community/mathlib4/commit/534cf0b) (2 Feb 2026) using two external tools, then merged and uploaded to HuggingFace.
+The dataset is extracted from Mathlib4 commit [`534cf0b`](https://github.com/leanprover-community/mathlib4/commit/534cf0b) (2 Feb 2026) using multiple extraction tools, then merged and uploaded to HuggingFace.
 
 ## Extraction Tools
 
@@ -33,7 +33,21 @@ This produces a text file listing, for each declaration, the premises it invokes
 # Output: edges.csv (source, target, is_explicit, is_simplifier)
 ```
 
-### 3. Merge and validate
+### 3. Mechanism extraction with `jixia`
+
+[jixia](https://github.com/xinzeli-cs/jixia) extracts fine-grained dependency mechanisms from the Lean environment, including typeclass instances, coercions, structure inheritance, and tactic usage:
+
+```python
+# src/parser/from_jixia.py
+# Input:  jixia NDJSON output
+# Output: mechanism-annotated declaration data
+
+# src/parser/from_mechanisms.py
+# Input:  Lean environment data
+# Output: mechanism decomposition (explicit/synthesized, statement/proof, etc.)
+```
+
+### 4. Merge and validate
 
 ```python
 # src/parser/merge.py
@@ -88,11 +102,18 @@ edges = edges_ds.to_pandas()
 
 ## Building the Module Import Graph
 
-The module graph is built by scanning Mathlib source files directly (not from HuggingFace), since it requires parsing `import` statements:
+The module graph is built by scanning Mathlib source files directly (not from HuggingFace), since it requires parsing `import` statements. A reusable implementation is provided in `src/analysis/import_graph.py`:
 
 ```python
-# Used in: plot_dag_depth.py, plot_robustness_curves.py, plot_community_figures.py
+from analysis.import_graph import build_import_graph
 
+G_module = build_import_graph("mathlib4/Mathlib")
+# Result: 7,563 nodes, 23,570 edges
+```
+
+Or manually:
+
+```python
 from pathlib import Path
 import re, networkx as nx
 
