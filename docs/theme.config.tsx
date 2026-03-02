@@ -5,12 +5,14 @@ export default {
   },
   docsRepositoryBase: 'https://github.com/MathNetwork/MathlibGraph/tree/main/docs',
   footer: {
-    text: (
-      <span>
-        Apache 2.0 © 2026 MathNetwork
-      </span>
-    ),
+    component: null,
   },
+  gitTimestamp: ({ timestamp }) => (
+    <span style={{ fontSize: '0.75rem', color: '#888' }}>
+      Last updated on {timestamp.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      {' · '}Apache 2.0 © 2026 MathNetwork
+    </span>
+  ),
   feedback: {
     content: null,
   },
