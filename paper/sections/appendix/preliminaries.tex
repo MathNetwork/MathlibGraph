@@ -19,14 +19,16 @@ A directed graph~$G$ is \emph{strongly connected} if for every pair of vertices~
 \subsection{Network-Analytic Methods}
 \label{sec:prelim-network}
 
+We employ three families of network-analytic tools: \emph{centrality measures} (\S\ref{sec:prelim-centrality}) that quantify the structural importance of individual nodes, \emph{community detection and partition comparison} (\S\ref{sec:prelim-community}) that reveal and evaluate mesoscale structure, and \emph{heavy-tailed distribution fitting} (\S\ref{sec:prelim-powerlaw}) that characterizes degree heterogeneity.
+
 \subsubsection{Centrality Measures}
 \label{sec:prelim-centrality}
 
-We use three centrality measures, each capturing a different notion of structural importance.
+We use three centrality measures, each capturing a different notion of structural importance. For textbook treatments, see Newman~\cite[\S\S7.1, 7.4, 7.7]{newman2010}.
 
-\emph{In-degree} $\deg^{-}(v)$ counts how many other vertices point to~$v$. It is the simplest measure of direct importance.
+\emph{In-degree} $\deg^{-}(v)$ counts how many other vertices point to~$v$. It is the simplest measure of direct importance~\cite[\S7.1]{newman2010}.
 
-\begin{definition}[PageRank~\cite{brin1998}]
+\begin{definition}[PageRank~\cite{brin1998}; see also {\cite[\S7.4]{newman2010}}]
 \label{def:pagerank}
 The \emph{PageRank} of a vertex~$v$ in a directed graph is the stationary probability of~$v$ under a random walk that, at each step, follows an outgoing edge uniformly at random with probability~$\alpha$ (the \emph{damping factor}, typically $\alpha = 0.85$) and jumps to a uniformly random vertex with probability $1 - \alpha$.  Equivalently, PageRank is the unique solution to
 \[
@@ -37,7 +39,7 @@ where $N$ is the number of vertices and $\deg^{+}(u)$ is the out-degree of~$u$.
 
 PageRank measures \emph{recursive} importance: a vertex ranks high not merely because many others point to it, but because \emph{important} others point to it. It identifies the deep foundations on which large subgraphs transitively rest.
 
-\begin{definition}[Betweenness centrality~\cite{freeman1977}]
+\begin{definition}[Betweenness centrality~\cite{freeman1977}; see also {\cite[\S7.7, Eq.~(7.36)]{newman2010}}]
 \label{def:betweenness}
 The \emph{betweenness centrality} of a vertex~$v$ is
 \[
@@ -51,7 +53,7 @@ Betweenness identifies \emph{bridge} vertices: those that sit on many shortest p
 \subsubsection{Community Detection and Partition Comparison}
 \label{sec:prelim-community}
 
-\begin{definition}[Modularity~\cite{newman2004}]
+\begin{definition}[Modularity~\cite{newman2004}; see also {\cite[\S11.6]{newman2010}}]
 \label{def:modularity}
 Given an undirected graph with adjacency matrix~$A$, total edge weight $m = \frac{1}{2}\sum_{ij} A_{ij}$, and a partition assigning each vertex~$i$ to community~$c_i$, the \emph{modularity} is
 \[
@@ -73,7 +75,7 @@ The two phases alternate until modularity converges. The result is a hierarchica
 
 To compare two partitions of the same vertex set---for example, a community assignment and a namespace labeling---we use two standard measures.
 
-\begin{definition}[Shannon Entropy]
+\begin{definition}[Shannon Entropy~{\cite[Ch.~2]{cover1991}}]
 \label{def:shannon-entropy}
 Given a partition $\mathcal{A} = \{A_1, \ldots, A_k\}$ of a finite set~$V$, the \emph{Shannon entropy} is
 \[
@@ -82,7 +84,7 @@ Given a partition $\mathcal{A} = \{A_1, \ldots, A_k\}$ of a finite set~$V$, the 
 It measures the uncertainty in a randomly chosen element's cluster assignment: $H = 0$ when all elements belong to a single cluster, and $H = \log k$ when elements are uniformly distributed.
 \end{definition}
 
-\begin{definition}[Mutual Information]
+\begin{definition}[Mutual Information~{\cite[Ch.~2]{cover1991}}]
 \label{def:mutual-information}
 Given two partitions $\mathcal{A} = \{A_1, \ldots, A_k\}$ and $\mathcal{B} = \{B_1, \ldots, B_l\}$ of~$V$, the \emph{mutual information} is
 \[
@@ -91,7 +93,7 @@ Given two partitions $\mathcal{A} = \{A_1, \ldots, A_k\}$ and $\mathcal{B} = \{B
 with the convention $0 \log 0 = 0$. It quantifies how much knowing one partition reduces uncertainty about the other.
 \end{definition}
 
-\begin{definition}[Normalized Mutual Information (NMI)]
+\begin{definition}[Normalized Mutual Information (NMI)~{\cite[\S3, Eq.~(2)]{danon2005}}]
 \label{def:nmi}
 Given two partitions $\mathcal{A}$ and $\mathcal{B}$ of a set~$V$, the \emph{normalized mutual information} is
 \[
@@ -100,7 +102,7 @@ Given two partitions $\mathcal{A}$ and $\mathcal{B}$ of a set~$V$, the \emph{nor
 where $I$ and $H$ are defined above. NMI ranges from~$0$ (independent) to~$1$ (identical partitions).
 \end{definition}
 
-\begin{definition}[Adjusted Rand Index (ARI)]
+\begin{definition}[Adjusted Rand Index (ARI)~{\cite[\S2.1, Eq.~(4)--(5)]{hubert1985}}]
 \label{def:ari}
 Given two partitions $\mathcal{A}$ and $\mathcal{B}$ of~$V$, consider all $\binom{|V|}{2}$ pairs of elements. Each pair is classified as:
 \begin{itemize}
@@ -119,7 +121,7 @@ where the expectation is over random partitions with the same cluster-size distr
 \subsubsection{Heavy-Tailed Distributions}
 \label{sec:prelim-powerlaw}
 
-\begin{definition}[Degree Distribution]
+\begin{definition}[Degree Distribution~{\cite[\S8.3]{newman2010}}]
 \label{def:degree-distribution}
 The \emph{degree distribution} of a graph $G = (V, E)$ is the function
 \[
