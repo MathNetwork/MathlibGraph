@@ -192,10 +192,10 @@ def robustness_analysis(G, pagerank, max_frac=0.20, step=0.01):
     ax.plot(fracs * 100, results_targeted, c=GOLD, linewidth=2,
             label="Targeted removal (by PageRank)", marker="s", markersize=3)
 
-    ax.set_xlabel("Fraction of nodes removed (%)", fontsize=12)
-    ax.set_ylabel("Largest WCC / Total nodes", fontsize=12)
-    ax.set_title("Network Robustness: Random vs Targeted Attack", fontsize=14, color=INDIGO)
-    ax.legend(fontsize=11)
+    ax.set_xlabel("Fraction of nodes removed (%)")
+    ax.set_ylabel("Largest WCC / Total nodes")
+    ax.set_title("Network Robustness: Random vs Targeted Attack", color=INDIGO)
+    ax.legend()
     ax.grid(True, alpha=0.3)
     ax.set_xlim(0, max_frac * 100)
     ax.set_ylim(0, 1.02)

@@ -130,9 +130,9 @@ def plot_distributions(G, fit_in, fit_out):
         ax.scatter(x_vals, y_vals, c=color, alpha=0.5, s=15, zorder=2, label="Data")
         ax.set_xscale("log")
         ax.set_yscale("log")
-        ax.set_xlabel("Degree (k)", fontsize=12)
-        ax.set_ylabel("Frequency", fontsize=12)
-        ax.set_title(title, fontsize=14, color=INDIGO)
+        ax.set_xlabel("Degree (k)")
+        ax.set_ylabel("Frequency")
+        ax.set_title(title, color=INDIGO)
 
         # Power law fit line
         x_fit = np.array([k for k in x_vals if k >= fit.xmin])
@@ -145,7 +145,7 @@ def plot_distributions(G, fit_in, fit_out):
             ax.axvline(fit.xmin, color=CORAL, linestyle="--", alpha=0.6,
                        label=f"xmin={fit.xmin}")
 
-        ax.legend(fontsize=10)
+        ax.legend()
         ax.grid(True, alpha=0.2)
 
     plt.tight_layout()
@@ -170,8 +170,8 @@ def plot_distributions(G, fit_in, fit_out):
                                     label="Lognormal fit")
         except Exception:
             pass
-        ax.set_title(title, fontsize=14, color=INDIGO)
-        ax.legend(fontsize=10)
+        ax.set_title(title, color=INDIGO)
+        ax.legend()
         ax.grid(True, alpha=0.2)
 
     plt.tight_layout()

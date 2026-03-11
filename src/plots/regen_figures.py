@@ -3,12 +3,10 @@
 Regenerate 4 figures to match unified plot style.
 """
 
-import sys
 import time
 from pathlib import Path
 from collections import Counter
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 
 COLORS = setup_style()
@@ -19,7 +17,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from datasets import load_dataset
 
-OUTPUT_DIR = Path(__file__).resolve().parent.parent / "paper" / "analysis"
+OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 
 
 def load_and_build():
@@ -58,8 +56,6 @@ def plot_degree_distribution(G, alpha_in, xmin_in, alpha_out, xmin_out):
     out_degrees = [d for _, d in G.out_degree() if d > 0]
 
     fig, axes = plt.subplots(1, 2, figsize=FIGSIZE_DOUBLE)
-    title_fs, label_fs, tick_fs, legend_fs = 14, 12, 11, 11
-
     # Both panels use red (secondary) for declaration-level G_thm
     for ax, degrees, title, alpha, xmin, alpha_scatter in [
         (axes[0], in_degrees, "In-degree distribution", alpha_in, xmin_in, 0.7),
@@ -75,12 +71,11 @@ def plot_degree_distribution(G, alpha_in, xmin_in, alpha_out, xmin_out):
 
         # Fix labels
         if "In" in title:
-            ax.set_xlabel("In-degree", fontsize=label_fs)
+            ax.set_xlabel("In-degree")
         else:
-            ax.set_xlabel("Out-degree", fontsize=label_fs)
-        ax.set_ylabel("Count", fontsize=label_fs)
-        ax.set_title(title, fontsize=title_fs)
-        ax.tick_params(labelsize=tick_fs)
+            ax.set_xlabel("Out-degree")
+        ax.set_ylabel("Count")
+        ax.set_title(title)
 
         # Power law reference line
         k_arr = np.array(degs, dtype=float)
@@ -92,7 +87,7 @@ def plot_degree_distribution(G, alpha_in, xmin_in, alpha_out, xmin_out):
             ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linestyle="--",
                     linewidth=1, alpha=0.6,
                     label=f"$k^{{-{alpha:.2f}}}$")
-            ax.legend(fontsize=legend_fs)
+            ax.legend()
 
         ax.grid(True, alpha=0.3, which="both")
 
@@ -102,13 +97,9 @@ def plot_degree_distribution(G, alpha_in, xmin_in, alpha_out, xmin_out):
     print("  Saved: thm_degree_distribution.pdf")
 
 
-def plot_robustness(csv_path):
+def plot_robustness_from_df(df):
     """Robustness curve -- matching unified style."""
-    df = pd.read_csv(csv_path)
-
     fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
-    title_fs, label_fs, tick_fs, legend_fs = 14, 12, 11, 11
-
     ax.plot(df["fraction_removed"] * 100, df["random_wcc_ratio"],
             "o-", color=COLORS["secondary"], markersize=4, linewidth=1.5,
             label="Random removal")
@@ -116,11 +107,10 @@ def plot_robustness(csv_path):
             "s--", color=COLORS["secondary"], markersize=4, linewidth=1.5, alpha=0.5,
             label="Targeted removal (by PageRank)")
 
-    ax.set_xlabel("Fraction of nodes removed (%)", fontsize=label_fs)
-    ax.set_ylabel("Largest WCC / Total nodes", fontsize=label_fs)
-    ax.set_title(r"Network robustness: $G_{\mathrm{thm}}$", fontsize=title_fs)
-    ax.tick_params(labelsize=tick_fs)
-    ax.legend(fontsize=legend_fs)
+    ax.set_xlabel("Fraction of nodes removed (%)")
+    ax.set_ylabel("Largest WCC / Total nodes")
+    ax.set_title(r"Network robustness: $G_{\mathrm{thm}}$")
+    ax.legend()
     ax.grid(True, alpha=0.3)
     ax.set_ylim(0, 1.05)
 
@@ -134,21 +124,29 @@ def main():
     start = time.time()
     OUTPUT_DIR.mkdir(exist_ok=True)
 
-    # Read fit parameters
-    fit_df = pd.read_csv(Path(__file__).parent.parent / "output" / "powerlaw_fit_results.csv")
-    in_row = fit_df[fit_df["distribution"] == "in_degree"].iloc[0]
-    out_row = fit_df[fit_df["distribution"] == "out_degree"].iloc[0]
+    # Power-law fit parameters (from paper appendix-decl.tex)
+    alpha_in, xmin_in = 1.78, 20
+    alpha_out, xmin_out = 2.5, 50  # out-degree is sharply bounded; reference line only
 
     # Load graph and plot degree distribution
     G = load_and_build()
     print("\nGenerating degree distribution plot...")
-    plot_degree_distribution(G, in_row["alpha"], in_row["xmin"],
-                            out_row["alpha"], out_row["xmin"])
+    plot_degree_distribution(G, alpha_in, xmin_in, alpha_out, xmin_out)
 
-    # Plot robustness from existing CSV
+    # Compute and plot robustness (instead of reading CSV)
     print("Generating robustness plot...")
-    robustness_csv = Path(__file__).parent.parent / "output" / "robustness_data.csv"
-    plot_robustness(robustness_csv)
+    from plot_robustness_curves import robustness_curve
+    fractions = [0.01, 0.02, 0.03, 0.05, 0.07, 0.10, 0.13, 0.15, 0.17, 0.20,
+                 0.25, 0.30, 0.40, 0.50]
+    random_gcc, targeted_gcc = robustness_curve(G, fractions)
+    x = [0.0] + list(fractions)
+    df = pd.DataFrame({
+        "fraction_removed": x,
+        "random_wcc_ratio": random_gcc,
+        "targeted_wcc_ratio": targeted_gcc,
+    })
+    df.to_csv(OUTPUT_DIR.parent.parent / "src" / "output" / "robustness_data.csv", index=False)
+    plot_robustness_from_df(df)
 
     print(f"\nDone in {time.time() - start:.1f}s")
 

@@ -7,12 +7,10 @@ Output:
 """
 
 import re
-import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 
 COLORS = setup_style()
@@ -21,7 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
 
-OUTDIR = Path(__file__).resolve().parent.parent / "paper" / "analysis"
+OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -81,18 +79,16 @@ def robustness_curve(G, fractions, seed=42):
 def plot_robustness(fractions, random_gcc, targeted_gcc, title, out_path, color):
     """Plot robustness curves using the level color."""
     x = [0.0] + list(fractions)
-    title_fs, label_fs, tick_fs, legend_fs = 14, 12, 11, 11
     fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
     ax.plot(np.array(x) * 100, random_gcc, "o-", color=color,
             markersize=5, linewidth=1.5, label="Random removal")
     ax.plot(np.array(x) * 100, targeted_gcc, "s--", color=color, alpha=0.5,
             markersize=5, linewidth=1.5, label="Targeted removal (by PageRank)")
-    ax.set_xlabel("Fraction of nodes removed (%)", fontsize=label_fs)
-    ax.set_ylabel("Largest WCC / Total nodes", fontsize=label_fs)
-    ax.set_title(title, fontsize=title_fs)
-    ax.tick_params(labelsize=tick_fs)
+    ax.set_xlabel("Fraction of nodes removed (%)")
+    ax.set_ylabel("Largest WCC / Total nodes")
+    ax.set_title(title)
     ax.set_ylim(0, 1.05)
-    ax.legend(fontsize=legend_fs)
+    ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
     fig.savefig(out_path, bbox_inches="tight")

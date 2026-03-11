@@ -136,7 +136,6 @@ results["degree_distribution"] = {"raw": raw_deg_stats, "transitive_reduction": 
 
 # Degree distribution plots (log-log)
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-title_fs, label_fs, tick_fs, legend_fs = 13, 11, 10, 10
 
 for col, (in_vals, out_vals, label) in enumerate([
     (raw_in, raw_out, r"$G_{\mathrm{module}}$"),
@@ -160,13 +159,12 @@ for col, (in_vals, out_vals, label) in enumerate([
         ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linestyle="--",
                 linewidth=1, alpha=0.6,
                 label=rf"$k^{{-{gamma:.2f}}}$")
-        ax.legend(loc="upper right", fontsize=legend_fs)
+        ax.legend(loc="upper right")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("In-degree", fontsize=label_fs)
-    ax.set_ylabel("Count", fontsize=label_fs)
-    ax.set_title(f"In-degree distribution ({label})", fontsize=title_fs)
-    ax.tick_params(labelsize=tick_fs)
+    ax.set_xlabel("In-degree")
+    ax.set_ylabel("Count")
+    ax.set_title(f"In-degree distribution ({label})")
     ax.grid(True, alpha=0.3, which="both")
 
     # Out-degree (log-log) — blue for module level (darker shade)
@@ -186,13 +184,12 @@ for col, (in_vals, out_vals, label) in enumerate([
         ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linestyle="--",
                 linewidth=1, alpha=0.6,
                 label=rf"$k^{{-{gamma_out:.2f}}}$")
-        ax.legend(loc="upper right", fontsize=legend_fs)
+        ax.legend(loc="upper right")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Out-degree", fontsize=label_fs)
-    ax.set_ylabel("Count", fontsize=label_fs)
-    ax.set_title(f"Out-degree distribution ({label})", fontsize=title_fs)
-    ax.tick_params(labelsize=tick_fs)
+    ax.set_xlabel("Out-degree")
+    ax.set_ylabel("Count")
+    ax.set_title(f"Out-degree distribution ({label})")
     ax.grid(True, alpha=0.3, which="both")
 
 plt.tight_layout()
@@ -250,21 +247,18 @@ results["dag_structure"] = {"raw": raw_dag_stats, "transitive_reduction": tr_dag
 
 # DAG layer width plots — blue for module level
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
-dag_title_fs, dag_label_fs, dag_tick_fs = 14, 12, 11
 
 ax1.bar(range(len(raw_layers)), raw_layers, color=COLORS["primary"], edgecolor="none", width=1.0)
-ax1.set_xlabel("Topological layer", fontsize=dag_label_fs)
-ax1.set_ylabel("Number of modules", fontsize=dag_label_fs)
-ax1.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)", fontsize=dag_title_fs)
+ax1.set_xlabel("Topological layer")
+ax1.set_ylabel("Number of modules")
+ax1.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)")
 ax1.set_xlim(-1, len(raw_layers))
-ax1.tick_params(labelsize=dag_tick_fs)
 
 ax2.bar(range(len(tr_layers)), tr_layers, color=COLORS["primary"], edgecolor="none", width=1.0, alpha=0.7)
-ax2.set_xlabel("Topological layer", fontsize=dag_label_fs)
-ax2.set_ylabel("Number of modules", fontsize=dag_label_fs)
-ax2.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)", fontsize=dag_title_fs)
+ax2.set_xlabel("Topological layer")
+ax2.set_ylabel("Number of modules")
+ax2.set_title(rf"DAG width by topological layer ($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)")
 ax2.set_xlim(-1, len(tr_layers))
-ax2.tick_params(labelsize=dag_tick_fs)
 
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "dag_structure.pdf", bbox_inches="tight")
@@ -341,11 +335,11 @@ for ns_matrix, label, fname in [
     im = ax.imshow(np.log1p(matrix), cmap="Blues", aspect="auto")
     ax.set_xticks(range(len(all_ns)))
     ax.set_yticks(range(len(all_ns)))
-    ax.set_xticklabels(all_ns, rotation=90, fontsize=11)
-    ax.set_yticklabels(all_ns, fontsize=11)
-    ax.set_xlabel("Imported namespace", fontsize=14)
-    ax.set_ylabel("Importing namespace", fontsize=14)
-    ax.set_title(f"Namespace import counts ({label}, log scale)", fontsize=15)
+    ax.set_xticklabels(all_ns, rotation=90)
+    ax.set_yticklabels(all_ns)
+    ax.set_xlabel("Imported namespace")
+    ax.set_ylabel("Importing namespace")
+    ax.set_title(f"Namespace import counts ({label}, log scale)")
     plt.colorbar(im, ax=ax, label="log(1 + count)", shrink=0.8)
     plt.tight_layout()
     fig.savefig(OUTPUT_DIR / fname, bbox_inches="tight")
@@ -399,7 +393,6 @@ tr_cent_stats, tr_pr, tr_bc, tr_in_deg = centrality_analysis(G_tr, "TR")
 results["centrality"] = {"raw": raw_cent_stats, "transitive_reduction": tr_cent_stats}
 
 # Centrality scatter plots — all blue, 3 separate full-width files
-cent_title_fs, cent_label_fs, cent_tick_fs = 14, 12, 11
 
 # 1. In-degree vs PageRank (Raw)
 fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
@@ -407,10 +400,9 @@ nodes = list(raw_pr.keys())
 x = [raw_in_deg[n] for n in nodes]
 y = [raw_pr[n] for n in nodes]
 ax.scatter(x, y, s=3, alpha=0.3, color=COLORS["primary"])
-ax.set_xlabel("In-degree", fontsize=cent_label_fs)
-ax.set_ylabel("PageRank", fontsize=cent_label_fs)
-ax.set_title(r"In-degree vs PageRank ($G_{\mathrm{module}}$)", fontsize=cent_title_fs)
-ax.tick_params(labelsize=cent_tick_fs)
+ax.set_xlabel("In-degree")
+ax.set_ylabel("PageRank")
+ax.set_title(r"In-degree vs PageRank ($G_{\mathrm{module}}$)")
 ax.set_xscale("log"); ax.set_yscale("log")
 ax.grid(True, alpha=0.3, which="both")
 plt.tight_layout()
@@ -423,10 +415,9 @@ fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
 x = [raw_in_deg[n] for n in nodes]
 y = [raw_bc[n] for n in nodes]
 ax.scatter(x, y, s=3, alpha=0.3, color=COLORS["primary"])
-ax.set_xlabel("In-degree", fontsize=cent_label_fs)
-ax.set_ylabel("Betweenness", fontsize=cent_label_fs)
-ax.set_title(r"In-degree vs Betweenness ($G_{\mathrm{module}}$)", fontsize=cent_title_fs)
-ax.tick_params(labelsize=cent_tick_fs)
+ax.set_xlabel("In-degree")
+ax.set_ylabel("Betweenness")
+ax.set_title(r"In-degree vs Betweenness ($G_{\mathrm{module}}$)")
 ax.set_xscale("log"); ax.set_yscale("symlog", linthresh=1e-5)
 ax.grid(True, alpha=0.3, which="both")
 plt.tight_layout()
@@ -439,10 +430,9 @@ fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
 x = [raw_bc[n] for n in nodes]
 y = [raw_pr[n] for n in nodes]
 ax.scatter(x, y, s=3, alpha=0.3, color=COLORS["primary"])
-ax.set_xlabel("Betweenness", fontsize=cent_label_fs)
-ax.set_ylabel("PageRank", fontsize=cent_label_fs)
-ax.set_title(r"Betweenness vs PageRank ($G_{\mathrm{module}}$)", fontsize=cent_title_fs)
-ax.tick_params(labelsize=cent_tick_fs)
+ax.set_xlabel("Betweenness")
+ax.set_ylabel("PageRank")
+ax.set_title(r"Betweenness vs PageRank ($G_{\mathrm{module}}$)")
 ax.set_xscale("symlog", linthresh=1e-5); ax.set_yscale("log")
 ax.grid(True, alpha=0.3, which="both")
 plt.tight_layout()

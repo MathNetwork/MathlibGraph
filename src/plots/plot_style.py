@@ -1,7 +1,8 @@
 """Unified plotting style for all paper figures.
 
-Usage in any script under src/plots/:
+Usage in any script under src/plots/ or src/scripts/:
     from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
+    from plot_style import TITLE_FS, LABEL_FS, TICK_FS, LEGEND_FS, ANNOT_FS
 """
 
 import matplotlib
@@ -17,12 +18,24 @@ COLORS = {
     "grey": "#888888",          # grey        (baselines, annotations)
 }
 
+# ── Unified font sizes (single source of truth) ─────────────────────
+TITLE_FS = 18       # axes / figure titles
+LABEL_FS = 16       # axis labels (xlabel, ylabel)
+TICK_FS = 14        # tick labels
+LEGEND_FS = 14      # legend text
+ANNOT_FS = 11       # heatmap cell annotations
+
+# Larger sizes for heatmaps (bigger figures, scaled down more in LaTeX)
+HEATMAP_TITLE_FS = 38
+HEATMAP_LABEL_FS = 22
+HEATMAP_TICK_FS = 15
+
 # ── Standard figure sizes (width, height) in inches ──────────────────
 FIGSIZE_SINGLE = (6, 4)        # single-column / standalone
 FIGSIZE_DOUBLE = (12, 5)       # double-column / two subplots side by side
 FIGSIZE_TRIPLE = (15, 4.5)     # three subplots side by side
-FIGSIZE_HEATMAP = (12, 5.5)    # heatmap (needs room for labels)
-FIGSIZE_HEATMAP_WIDE = (24, 11)  # side-by-side heatmaps
+FIGSIZE_HEATMAP = (14, 10)     # heatmap (needs room for labels)
+FIGSIZE_HEATMAP_WIDE = (28, 14)  # side-by-side heatmaps
 
 
 def setup_style():
@@ -35,13 +48,13 @@ def setup_style():
     plt.rcParams["mathtext.fontset"] = "stix"
     plt.rcParams["text.usetex"] = False
 
-    # ── Font sizes (consistent across all figures) ──
+    # ── Font sizes (driven by module-level constants) ──
     plt.rcParams["font.size"] = 10
-    plt.rcParams["axes.titlesize"] = 11
-    plt.rcParams["axes.labelsize"] = 10
-    plt.rcParams["xtick.labelsize"] = 9
-    plt.rcParams["ytick.labelsize"] = 9
-    plt.rcParams["legend.fontsize"] = 9
+    plt.rcParams["axes.titlesize"] = TITLE_FS
+    plt.rcParams["axes.labelsize"] = LABEL_FS
+    plt.rcParams["xtick.labelsize"] = TICK_FS
+    plt.rcParams["ytick.labelsize"] = TICK_FS
+    plt.rcParams["legend.fontsize"] = LEGEND_FS
 
     # ── Figure output defaults ──
     plt.rcParams["figure.dpi"] = 150

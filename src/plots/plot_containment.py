@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Generate containment decay curve for the paper."""
 
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE
 
 COLORS = setup_style()
@@ -22,7 +20,7 @@ file_containment   = 15.6   # 7,225 file modules
 # Declaration-level baseline (from §4 Table 5: 9.6% same-module)
 decl_baseline = 9.6
 
-OUTDIR = Path(__file__).resolve().parent.parent / "paper" / "analysis"
+OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)

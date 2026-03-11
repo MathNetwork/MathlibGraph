@@ -36,7 +36,6 @@ At depth~$1$, half of all namespaces appear in exactly one file---for these, nam
 
 The two directions of misalignment reflect distinct engineering pressures. When a namespace spans many files (namespace~$>$~module), a single conceptual domain has been partitioned into multiple compilation units---typically to manage build times. When a file contains many namespaces (module~$>$~namespace), related concepts from different naming domains have been gathered in one place for cognitive convenience. Both patterns are rational organizational decisions; they produce NMI~$\approx 0.7$ rather than~$1.0$ because the two pressures---compilation efficiency and cognitive proximity---do not always agree.
 
-\noindent\textbf{Note.}
 \label{rem:two-pressures}
 The NMI of~$0.71$ between namespaces and modules is \emph{twice} the NMI of~$0.34$ between namespaces and dependency-based Louvain communities (\S\ref{sec:thm-community}). Human organizational decisions---naming and filing---agree with each other far more than either agrees with the logical structure of the dependency graph. This is unsurprising: both naming and filing are human decisions, often made by the same contributor, while the dependency structure is determined by mathematical necessity.
 
@@ -199,7 +198,7 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region-app} illustra
 \label{fig:module-region-app}
 \end{figure}
 
-\begin{definition}[Module cohesion (restated)]
+\begin{definition}[Module cohesion]\label{def:cohesion}
 The \emph{cohesion} of a module~$m$ is
 \[
   \mathrm{coh}(m) = \frac{|E_{\mathrm{int}}(m)|}{|E_{\mathrm{int}}(m)| + |E_{\mathrm{ext}}(m)|},
@@ -226,14 +225,11 @@ Modules with $\mathrm{coh} = 0$ & $584$ / $6{,}993$ ($8.4\%$) \\
 
 Module cohesion is low throughout: the mean is~$0.107$ and the median is~$0.074$ (Table~\ref{tab:cohesion-global}). Internal edges constitute only about $10\%$ of a typical module's total connectivity. If module boundaries reflected logical structure, cohesion would cluster near~$1$; the observed value indicates that file boundaries and dependency structure are only weakly aligned.
 
-\noindent\textbf{Note.}
 \label{rem:zero-cohesion}
 Among the $584$ modules ($8.4\%$) with zero cohesion, most are \emph{lemma collections}: declarations grouped by concept rather than by logical interdependence. Developers place ``all lemmas about~$X$'' in one file for discoverability, even when these lemmas depend on definitions across the library. Zero cohesion is not a defect but the structural signature of cognitive organization.
 
-\paragraph{Import edges vs.\ declaration-level dependencies.}
 \label{sec:import_vs_declaration}
-
-\noindent Aggregating $G_{\mathrm{thm}}$ to the module level yields the \emph{file-aggregated graph}~$G_{\mathrm{file}}$, in which an edge $m_1 \to m_2$ exists whenever some declaration in~$m_1$ cites one in~$m_2$ ($m_1 \neq m_2$). The gap is striking: $G_{\mathrm{file}}$ has $215{,}211$ edges versus $23{,}235$ in~$G_{\mathrm{module}}$---a $9.1\times$ amplification.
+Aggregating $G_{\mathrm{thm}}$ to the module level yields the \emph{file-aggregated graph}~$G_{\mathrm{file}}$, in which an edge $m_1 \to m_2$ exists whenever some declaration in~$m_1$ cites one in~$m_2$ ($m_1 \neq m_2$). The gap is striking: $G_{\mathrm{file}}$ has $215{,}211$ edges versus $23{,}235$ in~$G_{\mathrm{module}}$---a $9.1\times$ amplification.
 
 \begin{table}[ht]
 \centering
@@ -257,14 +253,10 @@ Category & Edges & Percentage \\
 
 From the import side, $72.1\%$ of import edges are \emph{active}---the importing file's declarations actually cite the imported module (Table~\ref{tab:import-vs-file}). The remaining $27.9\%$ provide transitive visibility only. (These ``unused'' imports overlap with what Mathlib's \texttt{shake} linter targets for removal; some may be intentionally preserved by \texttt{shake} for instance or notation availability, while others represent residual redundancy.) From the declaration side, only $7.8\%$ of cross-file dependencies correspond to a direct import; the remaining $92.2\%$ are reached through transitive chains. The module graph functions as a sparse gateway: each file declares a handful of direct imports (mean out-degree $3.1$ in $G_{\mathrm{module}}$), but through transitivity these few edges open access to a vast dependency space (mean out-degree $30.8$ in $G_{\mathrm{file}}$).
 
-\noindent\textbf{Relationship to transitive redundancy.}
 \label{rem:unused-vs-redundant}
 Section~\ref{sec:transitive-reduction} found $17.5\%$ of import edges transitively redundant; here, $27.9\%$ are unused. Both figures are measured after the \texttt{shake} linter. The gap ($27.9\% > 17.5\%$) has a precise interpretation: $78.4\%$ of unused imports are graph-theoretically essential---the sole path for transitive visibility---while $21.6\%$ are both unused and redundant.
 
-\paragraph{Import utilization.}
 The binary active/unused classification above treats all active imports equally. Import utilization (Definition~\ref{def:import-util}) refines this to a continuous measure: for each import edge $(m_i, m_j)$, what fraction of $m_j$'s declarations does $m_i$ actually reference? We computed $\mathrm{util}(m_i, m_j)$ for all $30{,}793$ import edges between modules that define at least one declaration, cross-referencing the $499{,}732$ declaration-to-module mappings from Lean's \texttt{Environment} API with the $8.4$M declaration-level edges. The distribution is heavily right-skewed: the median utilization is $1.6\%$, the mean is $5.1\%$, and the inter-quartile range spans $[0\%, 5.7\%]$. Strikingly, $11{,}410$ import edges ($37\%$) have \emph{zero} utilization---the importing module does not directly reference any declaration from the imported module, relying entirely on transitive re-exports. These findings complement the cohesion analysis: cohesion measures how much traffic stays \emph{inside} a module boundary ($10.7\%$), while utilization measures how much of what crosses the boundary is actually \emph{consumed} ($1.6\%$ median). Both are low, confirming from opposite directions that module boundaries are a coarse organizational overlay on the fine-grained dependency structure.
-
-\paragraph{Import depth vs.\ usage depth.}
 
 The preceding edge-count comparison treats all cross-module dependencies uniformly. We now refine the analysis by comparing the \emph{depth} of modules that a file directly imports in $G_{\mathrm{module}}$ with the depth of modules whose declarations it actually cites in $G_{\mathrm{thm}}$. For each module~$A$, let $\overline{d}_{\mathrm{imp}}(A)$ be the mean module depth of $A$'s direct imports and $\overline{d}_{\mathrm{use}}(A)$ the mean depth of the modules containing declarations cited by $A$'s own declarations. The \emph{depth difference} is $\Delta(A) = \overline{d}_{\mathrm{use}}(A) - \overline{d}_{\mathrm{imp}}(A)$.
 
@@ -401,9 +393,7 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
 \label{fig:ns-vs-mod-cross}
 \end{figure}
 
-\paragraph{Depth asymmetry.}
 \label{sec:depth-asymmetry}
-
 \noindent The $9.1\times$ edge amplification measures the \emph{quantitative} gap between $G_{\mathrm{module}}$ and declaration-level dependencies. A complementary analysis of naming depth reveals a \emph{directional} gap. For each module in $G_{\mathrm{module}}$, the \emph{module depth} is the number of dot-separated components (e.g., \module{Mathlib.Data.Nat.Basic} has depth~$4$). For each declaration in $G_{\mathrm{thm}}$, the \emph{declaration depth} is the number of namespace components (e.g., \decl{Nat.add\_comm} has depth~$1$). Table~\ref{tab:depth-asymmetry} compares the depth patterns of edges in the two graphs.
 
 \begin{table}[ht]
@@ -447,20 +437,13 @@ Module vs.\ declaration          & Cohesion     & $0.107$ & Low: files $\neq$ lo
 \end{tabular}
 \end{table}
 
-Three findings emerge.
+Table~\ref{tab:three-layers-app} reveals a striking contrast: the two human organizational systems---naming and filing---largely agree with each other (NMI~$0.71$), but neither aligns well with the logical dependency structure. The problem is not that humans organize the library poorly---their internal consistency is high---but that mathematical logic does not respect human cognitive categories. The $99.1\%$ of same-namespace declaration pairs that reside in different files illustrates this tension: large namespaces like \ns{CategoryTheory} are partitioned across hundreds of compilation units.
 
-\paragraph{Human coherence.} The NMI of~$0.71$ between namespaces and modules confirms that the two human organizational systems---naming and filing---largely agree. Developers who choose a file name and a namespace for a set of declarations are, in the majority of cases, making consistent decisions. The coherence is real but imperfect: $99.1\%$ of same-namespace declaration pairs reside in different files, because large namespaces like \ns{CategoryTheory} are partitioned across hundreds of compilation units.
+The depth asymmetry analysis (\S\ref{sec:depth-asymmetry}) reveals a further subtlety. At the declaration level, $37.6\%$ of edges flow from deeper to shallower namespaces (mean depth difference~$+0.36$), reflecting the gravitational pull of infrastructure definitions. At the module level, import edges are nearly symmetric (mean depth difference~$+0.03$). Transitivity compresses the vertical dependency structure into a lateral peer-to-peer pattern: $69.3\%$ of edges from deep declarations ($\mathrm{depth} \ge 2$) target shallow infrastructure ($\mathrm{depth} \le 1$), but the module graph hides this asymmetry behind a few peer-level \texttt{import} statements. The module graph is not merely sparse---it is \emph{depth-compressed}.
 
-\paragraph{Human--logic divergence.} Every measure of alignment between human organizational process and inherited mathematical structure is low. Namespace vs.\ Louvain community: NMI~$= 0.34$. Namespace containment at depth~$1$: $22.2\%$. Module cohesion: $0.107$. The logical communities discovered by Louvain decomposition (\S\ref{sec:thm-community}) bear only moderate resemblance to the naming hierarchy, and both module boundaries and namespace boundaries fail to contain more than a fraction of the dependency traffic. The problem is not that humans organize the library poorly---their internal consistency (NMI~$0.71$) is high---but that mathematical logic does not respect human cognitive categories.
+The cross-level analysis also implicitly rests on a design parameter that is itself a process-trace: the granularity of modules. \module{Mathlib}'s $6{,}993$ modules contain $308{,}129$ declarations, yielding a mean of approximately $44$ declarations per module. This ratio is not determined by mathematics---it is determined by the cognitive capacity of human developers to manage a coherent unit of code in a single file. Two thought experiments illuminate the point.
 
-\paragraph{Depth compression.} The depth asymmetry analysis (\S\ref{sec:depth-asymmetry}) adds a directional dimension to this picture. At the declaration level, $37.6\%$ of edges flow from deeper to shallower namespaces (mean depth difference~$+0.36$), reflecting the gravitational pull of infrastructure definitions. At the module level, import edges are nearly symmetric (mean depth difference~$+0.03$). Transitivity compresses the vertical dependency structure into a lateral peer-to-peer pattern: $69.3\%$ of edges from deep declarations ($\mathrm{depth} \ge 2$) target shallow infrastructure ($\mathrm{depth} \le 1$), but the module graph hides this asymmetry behind a few peer-level \texttt{import} statements. The module graph is not merely sparse---it is \emph{depth-compressed}.
-
-\paragraph{The central tension, quantified.} The cross-level analysis makes the central tension of this paper precise. The deterministic product---the dependency graph---records the logical structure of mathematics, which is inherently cross-cutting: a lemma about natural numbers may depend on ring theory, order theory, and decidability infrastructure. The human process---organizing declarations into files and namespaces---imposes boundaries that are cognitively useful but logically porous. The coherence of human decisions (NMI~$0.71$) and the incoherence of human--logic alignment (NMI~$0.34$, cohesion~$0.107$) together show that the divergence is systematic, not accidental: it arises from the fundamental mismatch between the hierarchical nature of human organizational process and the cross-cutting nature of inherited mathematical structure.
-
-\paragraph{The granularity equilibrium.}
-The cross-level analysis implicitly rests on a design parameter that is itself a process-trace: the granularity of modules. \module{Mathlib}'s $6{,}993$ modules contain $308{,}129$ declarations, yielding a mean of approximately $44$ declarations per module. This ratio is not determined by mathematics---it is determined by the cognitive capacity of human developers to manage a coherent unit of code in a single file. Two thought experiments illuminate the point.
-
-At one extreme, if each declaration occupied its own module, the module graph would coincide with the declaration graph: $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$. Module cohesion would be trivially~$1.0$ (every module has no internal edges to lose), but the graph would have $308{,}129$ nodes and be unnavigable by humans. At the other extreme, if all declarations were placed in a single module, the module graph would collapse to a single vertex: no import structure, no compilation parallelism, no organizational signal. The current equilibrium---approximately $44$ declarations per module, cohesion~$0.107$, $9.1\times$ edge amplification---represents a compromise shaped by human cognitive constraints: the largest unit a developer can hold in working memory while writing and reviewing proofs. Figure~\ref{fig:granularity-spectrum} illustrates the three regimes.
+At one extreme, if each declaration occupied its own module, $G_{\mathrm{module}} \cong G_{\mathrm{thm}}$---$308{,}129$ nodes, unnavigable. At the other extreme, a single module collapses the graph to one vertex with no organizational signal. The current equilibrium (${\sim}44$ declarations per module) represents the largest unit a developer can hold in working memory while writing and reviewing proofs. Figure~\ref{fig:granularity-spectrum} illustrates these three regimes.
 
 \begin{figure}[ht]
 \centering
@@ -556,8 +539,7 @@ At one extreme, if each declaration occupied its own module, the module graph wo
 
 As AI systems become primary contributors to formal libraries, this equilibrium may shift. An AI author is not subject to the same working-memory constraint; it could operate productively with finer-grained modules optimized for compilation parallelism, or with coarser modules optimized for logical coherence. The direction of the shift---toward machine-optimal granularity rather than human-optimal granularity---would alter every cross-level metric reported in this section: cohesion, containment, edge amplification, and depth compression would all change, not because the mathematics changed, but because the production process changed. Tracking these metrics longitudinally as AI contributions grow will distinguish intrinsic mathematical structure from artifacts of the human production mode.
 
-\paragraph{The namespace granularity spectrum.}
-A parallel thought experiment applies to the \emph{namespace} axis. \module{Mathlib}'s $15{,}456$ leaf namespaces contain $308{,}129$ declarations, yielding a mean of approximately $20$ declarations per namespace. Again, this ratio is a product of human naming conventions, not of mathematical necessity.
+A parallel thought experiment applies to the namespace axis. \module{Mathlib}'s $15{,}456$ leaf namespaces contain $308{,}129$ declarations, yielding a mean of approximately $20$ declarations per namespace. Again, this ratio is a product of human naming conventions, not of mathematical necessity.
 
 At one extreme, if each declaration occupied its own namespace (flat naming: \ns{add\_comm}, \ns{dvd\_mul}, \ldots), containment at depth~$1$ would be trivially $0\%$---no two declarations could share a namespace boundary---and the naming hierarchy would carry no organizational information. At the other extreme, if all declarations shared a single namespace, containment would be trivially $100\%$ but the hierarchy would provide no finer-than-global grouping. The current Mathlib equilibrium---$6$ depth levels, $22.2\%$ containment at depth~$1$, rising to $86.9\%$ at depth~$3$---reflects a naming convention that balances logical grouping against navigational convenience. Figure~\ref{fig:ns-granularity-spectrum} illustrates these three regimes.
 
@@ -655,3 +637,5 @@ At one extreme, if each declaration occupied its own namespace (flat naming: \ns
 \end{figure}
 
 Figures~\ref{fig:granularity-spectrum} and~\ref{fig:ns-granularity-spectrum} together reveal that library organization is a \emph{two-dimensional} design choice: module granularity (how many declarations per file) and namespace granularity (how many declarations per naming group) are independently adjustable parameters. \module{Mathlib} currently occupies one point in this design space---${\sim}44$ declarations per module, ${\sim}20$ per leaf namespace---but alternative design points are entirely feasible, and each would produce different cross-level statistics. The product (mathematical dependency) constrains neither axis; only the process (human or machine authorship) does.
+\label{sec:structural-overview}
+\label{sec:cross-level-summary}

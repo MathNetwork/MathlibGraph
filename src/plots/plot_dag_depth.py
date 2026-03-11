@@ -10,12 +10,10 @@ Output:
 """
 
 import re
-import sys
 import time
 from collections import Counter, defaultdict, deque
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE, FIGSIZE_HEATMAP, FIGSIZE_HEATMAP_WIDE
 
 COLORS = setup_style()
@@ -23,7 +21,7 @@ COLORS = setup_style()
 import matplotlib.pyplot as plt
 import numpy as np
 
-OUTDIR = Path(__file__).resolve().parent.parent / "paper" / "analysis"
+OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -121,16 +119,13 @@ def main():
 
     # Plot
     fig, ax = plt.subplots(figsize=FIGSIZE_DOUBLE)
-    title_fs, label_fs, tick_fs = 14, 12, 11
     ax.bar(range(len(thm_widths)), thm_widths,
            color=COLORS["secondary"], edgecolor="none", width=1.0)
-    ax.set_xlabel("Topological layer", fontsize=label_fs)
-    ax.set_ylabel("Number of declarations", fontsize=label_fs)
+    ax.set_xlabel("Topological layer")
+    ax.set_ylabel("Number of declarations")
     ax.set_title(rf"DAG width by topological layer "
-                 rf"($G_{{\mathrm{{thm}}}}$, {len(thm_widths)} layers)",
-                 fontsize=title_fs)
+                 rf"($G_{{\mathrm{{thm}}}}$, {len(thm_widths)} layers)")
     ax.set_xlim(-1, len(thm_widths))
-    ax.tick_params(labelsize=tick_fs)
     plt.tight_layout()
     fig.savefig(OUTDIR / "thm_dag_structure.pdf", bbox_inches="tight")
     plt.close()
@@ -308,28 +303,21 @@ def main():
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
 
-    # Larger fonts for two-subplot layout
-    title_fs, label_fs, tick_fs = 14, 12, 11
-
     ax1.bar(range(len(raw_layers)), raw_layers,
             color=COLORS["primary"], edgecolor="none", width=1.0)
-    ax1.set_xlabel("Topological layer", fontsize=label_fs)
-    ax1.set_ylabel("Number of modules", fontsize=label_fs)
+    ax1.set_xlabel("Topological layer")
+    ax1.set_ylabel("Number of modules")
     ax1.set_title(rf"DAG width by topological layer "
-                  rf"($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)",
-                  fontsize=title_fs)
+                  rf"($G_{{\mathrm{{module}}}}$, {len(raw_layers)} layers)")
     ax1.set_xlim(-1, len(raw_layers))
-    ax1.tick_params(labelsize=tick_fs)
 
     ax2.bar(range(len(tr_layers)), tr_layers,
             color=COLORS["primary"], edgecolor="none", width=1.0, alpha=0.7)
-    ax2.set_xlabel("Topological layer", fontsize=label_fs)
-    ax2.set_ylabel("Number of modules", fontsize=label_fs)
+    ax2.set_xlabel("Topological layer")
+    ax2.set_ylabel("Number of modules")
     ax2.set_title(rf"DAG width by topological layer "
-                  rf"($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)",
-                  fontsize=title_fs)
+                  rf"($G_{{\mathrm{{module}}}}^{{-}}$, {len(tr_layers)} layers)")
     ax2.set_xlim(-1, len(tr_layers))
-    ax2.tick_params(labelsize=tick_fs)
 
     plt.tight_layout()
     fig.savefig(OUTDIR / "dag_structure.pdf", bbox_inches="tight")

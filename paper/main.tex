@@ -1,7 +1,7 @@
 \documentclass[10pt]{article}
 \usepackage{preamble}
 
-\title{The network structure of \texttt{Mathlib}: Organization vs. Logic\\[6pt]\large DRAFT V2}
+\title{The network structure of \texttt{Mathlib}: Organization vs. Logic\\[6pt]\large DRAFT V2\thanks{\begin{tabular}[t]{@{}r@{~}l@{}}Dataset: & \url{https://huggingface.co/datasets/MathNetwork/MathlibGraph}\\Code: & \url{https://github.com/MathNetwork/MathlibGraph}\end{tabular}}}
 \author{
   Xinze Li\thanks{Department of Mathematics, University of Toronto} 
   \and 
@@ -50,16 +50,59 @@ We thank Leonardo de Moura for facilitating the collaboration that led to this w
 \newpage
 \input{sections/appendix/preliminaries}
 \section{Dependency Graphs}
-\label{sec:dependency-graphs}
+\label{sec:graph-definitions}
+
+The dependency graphs defined in this paper are not pure embodiments of mathematical logic---each is an entanglement of inherited mathematical structure and the organizational imprint of Lean's language mechanisms. Table~\ref{tab:decompositions} catalogs the complete family of decompositions, organized by the Lean mechanism they isolate.
+
+\begin{table}[!htb]
+\centering
+\caption{Tool-mediated decompositions of the dependency graphs. Each row identifies a Lean language mechanism, the corresponding graph decomposition or projection, and the dimension it isolates. Rows above the mid-rule have been extracted and analyzed; rows below are deferred to future work.}
+\label{tab:decompositions}
+\footnotesize
+\begin{tabular}{@{}lllrl@{}}
+\toprule
+\textbf{Lean mechanism} & \textbf{Decomposition} & \textbf{Isolates} & \textbf{Scale} & \textbf{Ref.} \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Edge-level decompositions of $G_{\mathrm{thm}}$}} \\[3pt]
+Statement vs.\ proof & $E_S \sqcup E_P \sqcup E_{SP}$ & Assertion vs.\ proof strategy & $8.1/43.9/48.0\%$ & Def.~\ref{def:stmt-proof-dep} \\
+Explicit vs.\ synthesized & $E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$ & Human-written vs.\ elaborator & $\sigma = 74.2\%$ & Def.~\ref{def:synth-partition} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Subgraphs of $G_{\mathrm{thm}}$}} \\[3pt]
+Typeclass synthesis & $G_{\mathrm{tc}}$ & Algebraic hierarchy infrastructure & $1{,}817$ / $29{,}952$ & Def.~\ref{def:tc-graph} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Node-level enrichment of $G_{\mathrm{thm}}$}} \\[3pt]
+Attributes \& metadata & $\alpha(d)$, $\kappa(d)$, $\upsilon(d)$ & Proof complexity, polymorphism & $165$ types & Def.~\ref{def:decl-attributes} \\
+\texttt{to\_additive} & $\sim_{\mathrm{add}}$ mirror pairs & Metaprogrammed duplication & $18{,}659$ pairs & Def.~\ref{def:decl-attributes} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Refinements of $G_{\mathrm{module}}$}} \\[3pt]
+Public/private imports & $G_{\mathrm{mod}}^{\mathrm{pub}}$ & Intentional API vs.\ all imports & $45{,}289$ / $1{,}912$ & Def.~\ref{def:visibility-graph} \\
+Compilation cost & $G_{\mathrm{build}}$ & Engineering bottlenecks & $47{,}201$ edges & Def.~\ref{def:build-graph} \\
+Import utilization & $\mathrm{util}(m_i, m_j)$ & Module granularity & median $1.6\%$ & Def.~\ref{def:import-util} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Additional subgraphs of $G_{\mathrm{thm}}$}} \\[3pt]
+Coercion insertion & $G_{\mathrm{coe}}$ & Implicit type conversion paths & $256$ coercions & Def.~\ref{def:coercion-graph} \\
+Structure inheritance & $G_{\mathrm{ext}}$ & \texttt{extends} hierarchy & $1{,}535$ edges & Def.~\ref{def:extends-graph} \\
+\texttt{deriving} handlers & $E_{\mathrm{auto}}$ & Auto-generated instances & $15$ handlers & Def.~\ref{def:deriving-edges} \\[6pt]
+\multicolumn{5}{@{}l}{\textit{Additional node-level enrichment of $G_{\mathrm{thm}}$}} \\[3pt]
+Tactic usage & $\tau(d)$ & Proof strategy selection & top: \texttt{rw}, \texttt{exact}, \texttt{simp} & Def.~\ref{def:tactic-usage} \\
+Definitional height & $\delta(d)$ & Kernel-level implicit coupling & median $7$, max $60$ & Def.~\ref{def:def-height} \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Planned decompositions (future work)}} \\[3pt]
+File co-modification & $G_{\mathrm{co}}$ & Social/development coupling & --- & \S\ref{sec:co-edit-graph} \\
+Temporal evolution & $G^{(t)}$ & Structural stability over time & --- & \S\ref{sec:temporal-graphs} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Each row acts as a \emph{projection} that isolates one dimension---inherited mathematical structure or human organizational process---from the entangled raw graph. The ``Scale'' column reports the footprint of each mechanism at our snapshot, extracted programmatically from Lean's \texttt{Environment} API across all $499{,}732$~Mathlib constants. All decompositions above the mid-rule have been extracted and empirically analyzed in this paper; the two remaining rows (file co-modification and temporal evolution) require additional data sources and are deferred to future work (\S\ref{sec:future-graphs}).
+
 \input{sections/appendix/module-graph}
 \input{sections/appendix/declaration-graph}
 \input{sections/appendix/namespace-graph}
 \input{sections/appendix/future-graphs}
-\input{sections/appendix/structural-overview}
-\input{sections/appendix/conclusion}
-\section{Supplementary Material}\label{app:supplementary}
+\section{Network Analysis Details}\label{app:supplementary}
+
+This section presents the detailed network statistics underlying the findings of \S\ref{sec:contribution}. The three dependency graphs defined in Appendix~\ref{sec:graph-definitions}---the module graph $G_{\mathrm{module}}$ (\S\ref{app:module-detail}), the declaration graph $G_{\mathrm{thm}}$ (\S\ref{app:decl-detail}), and the namespace graph $G_{\mathrm{ns}}$ (\S\ref{app:ns-detail})---are each examined through degree distribution, DAG depth, centrality rankings, community structure, and robustness analysis, supplemented by graph-specific measurements such as containment decay, cross-namespace heatmaps, and theorem/lemma validation. Section~\ref{sec:cross_level} then overlays the three levels, quantifying how file boundaries, namespace boundaries, and logical dependencies align and diverge.
+
 \input{sections/appendix/appendix-module}
 \input{sections/appendix/appendix-decl}
 \input{sections/appendix/appendix-ns}
 \input{sections/appendix/cross-level-analysis}
+\input{sections/appendix/conclusion}
 \end{document}

@@ -1,4 +1,883 @@
-\subsection{The Declaration Graph}
+\subsection{The Declaration Graph: Definitions and Decompositions}
 \label{sec:theorem-premise}
+\label{sec:declaration-graph}
 
-Definitions, examples, and illustrative figures for the declaration dependency graph---including premise extraction, declaration types, edge directionality, infrastructure layers, leaf theorems, and cross-namespace flow---appear in \S\ref{sec:declaration-graph}. Extended statistical analysis (degree distributions, centrality, community detection, and inter-kind flow tables) appears in Appendix~\ref{app:decl-detail}.
+This appendix collects the formal definitions, edge decompositions, mechanism-specific subgraphs, node-level metadata, and all illustrative figures for the declaration dependency graph. Extended statistical analysis (degree distributions, centrality rankings, community detection, robustness curves) appears in Appendix~\ref{app:decl-detail}.
+
+\subsubsection{The declaration graph $G_{\mathrm{thm}}$}
+When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's elaborator inserts automatically.
+
+\begin{definition}[Declaration graph]
+\label{def:thm-graph}
+The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
+\[
+  E_{\mathrm{thm}} = \{(d_1, d_2) \in \mathcal{D} \times \mathcal{D} \mid d_2 \text{ appears as a premise in the proof term of } d_1\}.
+\]
+Each node carries two attributes: its \emph{kind} (one of eight declaration types) and its \emph{module} (the source file in which it is defined).
+\end{definition}
+
+\noindent At our snapshot, $|\mathcal{D}| = 308{,}129$ and $|E_{\mathrm{thm}}| = 8{,}436{,}366$.
+Where the module graph captures the \emph{architecture} of the library, the declaration graph captures the \emph{reasoning structure} of mathematics itself.
+
+\paragraph{What is a premise?}
+Consider a simple example:
+
+\begin{codebox}
+\textit{\color{gray}-- Tactic proof (what the mathematician writes):}\\
+\textbf{theorem} \textcolor{red!70!black}{Nat.succ\_pos} (n : Nat) : 0 < n + 1 :=\\
+\hspace{1.5em}\textcolor{red!70!black}{Nat.zero\_lt\_succ} n\\[3pt]
+\textit{\color{gray}-- The proof term contains:}\\
+\textit{\color{gray}--\hspace{0.5em}Nat.zero\_lt\_succ\hspace{1em}(named constant from environment $\to$ premise)}\\
+\textit{\color{gray}--\hspace{0.5em}n\hspace{6.3em}(local variable, bound by theorem $\to$ NOT a premise)}
+\end{codebox}
+
+\noindent
+The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
+
+
+The eight declaration kinds are Lean~4's fundamental building blocks: theorems ($79.1\%$), definitions ($15.8\%$), abbreviations ($2.2\%$), constructors ($1.5\%$), inductive types ($1.2\%$), and three minor kinds (Table~\ref{tab:kind-overview} in Appendix~\ref{app:decl-detail}). We highlight two structural extremes below.
+
+\paragraph{Theorems as edge producers; axioms as pure sinks.}
+In $G_{\mathrm{thm}}$, a declaration is an \emph{edge producer} if it has high out-degree (its proof invokes many premises) and a \emph{pure sink} if it has zero or near-zero out-degree but is cited by many others (high in-degree). Theorems constitute $79.1\%$ of all declarations and are the primary edge producers. A theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it. At the opposite extreme, \module{Mathlib} rests on exactly three axioms---\decl{propext} (propositional extensionality), \decl{Classical.choice} (the axiom of choice), and \decl{Quot.sound}---which have near-zero out-degree but are transitively required by all $308{,}129$ declarations. Among the three, \decl{propext} alone accounts for $23{,}226$ incoming edges.
+
+\paragraph{Abbreviations as invisible hubs.}
+Abbreviations (\texttt{abbrev}) are definitionally transparent shorthands that the elaborator always unfolds, acting as notational glue---typically wrapping typeclass projections or operator notation:
+
+\begin{codebox}
+\textbf{abbrev} \textcolor{red!70!black}{OfNat.ofNat} (n : Nat) [inst : OfNat a n] : a := inst.ofNat
+\end{codebox}
+
+\noindent
+The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it. Because the elaborator inserts these references automatically, abbreviations have the most extreme in-degree distribution among non-axiom types---their citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning. By contrast, the most-cited \emph{inductive types}---\decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{Module} ($23{,}404$)---form a layer of mathematical infrastructure whose centrality reflects genuine mathematical importance.
+
+
+\paragraph{Edge directionality.}
+Not all declaration kinds participate equally in $G_{\mathrm{thm}}$. An edge $(d_1, d_2)$ means that $d_1$'s proof or body \emph{cites} $d_2$; it does not imply an edge in the reverse direction. For example, the theorem \decl{Nat.lt\_irrefl} proves the irreflexivity of strict ordering on natural numbers: no $n$ satisfies $n < n$.
+
+\begin{codebox}
+\textit{\color{gray}-- Irreflexivity of < on natural numbers}\\
+\textbf{theorem} \textcolor{red!70!black}{Nat.lt\_irrefl} (n : Nat) : Not (n < n) :=\\
+\hspace{1.5em}\textcolor{red!70!black}{Nat.not\_succ\_le\_self} n
+\end{codebox}
+
+\noindent
+The proof invokes \decl{Nat.not\_succ\_le\_self}, which establishes that $n + 1 \le n$ is impossible. The kernel also records two infrastructure premises: \decl{LT.lt}, the abbreviation that provides the~$<$ notation, and \decl{instLTNat}, the typeclass instance that connects~$<$ to \decl{Nat}. This gives three edges:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, red!70!black},
+]
+  % Premises (cited) at top
+  \node[dot, label={[align=center]above:{not\_succ\_le\_self\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}theorem}}}] (thm) at (-3.2,0) {};
+  \node[dot, label={[align=center]above:{LT.lt\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}abbrev}}}]              (ab)  at (0,0) {};
+  \node[dot, label={[align=center]above:{instLTNat\\[-2pt]{\normalfont\sffamily\scriptsize\color{gray}definition}}}]       (def) at (3.2,0) {};
+  % Citing theorem at bottom
+  \node[dot, label=below:{Nat.lt\_irrefl}] (t) at (0,-1.8) {};
+  \draw[dep] (t) -- (thm);
+  \draw[dep] (t) -- (ab);
+  \draw[dep] (t) -- (def);
+\end{tikzpicture}
+\caption{Premise edges for the theorem \decl{Nat.lt\_irrefl}: the mathematical premise \decl{not\_succ\_le\_self} (a theorem) and two infrastructure premises \decl{LT.lt} (an abbreviation providing $<$ notation) and \decl{instLTNat} (a typeclass instance). The edges are directed: none of the three premises cites \decl{lt\_irrefl} in return.}
+\label{fig:thm-single-edge}
+\end{figure}
+
+\noindent
+The eight kinds arrange into a clear hierarchy of edge production and consumption (Table~\ref{tab:inter-kind-flow} in Appendix~\ref{app:decl-detail}). Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing definitions and abbreviations---the computational and notational infrastructure on which proofs are built. Axioms and quotients are near-pure sinks (combined out-degree $= 3$). The graph is nearly acyclic; the only bidirectional edges ($4{,}713$ pairs) link inductive types to their own constructors (e.g., \decl{Nat}~$\leftrightarrow$~\decl{Nat.succ}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=red!70!black},
+  dot/.style={circle, fill=red!70!black, minimum size=3pt, inner sep=0pt},
+  dep/.style={->, >=Stealth, thin, red!70!black},
+]
+  % Top row: shared premises (cited)
+  \node[dot, label=above:{add\_comm}]  (ac) at (-3,0) {};
+  \node[dot, label=above:{add\_assoc}] (aa) at (0,0)  {};
+  \node[dot, label=above:{Eq.refl}]    (er) at (3,0)  {};
+
+  % Bottom row: two citing theorems
+  \node[dot, label=below:{add\_left\_comm}]  (alc) at (-2.2,-2) {};
+  \node[dot, label=below:{add\_right\_comm}] (arc) at (2.2,-2)  {};
+
+  % Edges from add_left_comm
+  \draw[dep] (alc) -- (ac);
+  \draw[dep] (alc) -- (aa);
+  \draw[dep] (alc) -- (er);
+
+  % Edges from add_right_comm
+  \draw[dep] (arc) -- (ac);
+  \draw[dep] (arc) -- (aa);
+  \draw[dep] (arc) -- (er);
+\end{tikzpicture}
+\caption{A fragment of $G_{\mathrm{thm}}$: the theorems \decl{add\_left\_comm} and \decl{add\_right\_comm} both cite the premises \decl{add\_comm}, \decl{add\_assoc}, and \decl{Eq.refl}. The shared node \decl{Eq.refl} (in-degree $69{,}580$) exemplifies the hub phenomenon. All names have the \texttt{Nat.}\ prefix removed except \decl{Eq.refl}.}
+\label{fig:thm-fragment}
+\end{figure}
+
+\medskip
+\noindent
+The \decl{Nat.lt\_irrefl} example above showed a single theorem's premises; we now turn to a \emph{pair} of theorems to illustrate how shared premises create the hub structure that dominates $G_{\mathrm{thm}}$. Consider \decl{Nat.add\_left\_comm}, which proves $a + (b + c) = b + (a + c)$ for natural numbers. The extracted premises are:
+
+\smallskip
+\begin{center}
+\small
+\begin{tabular}{ll}
+\textit{Mathematical premises:} & \decl{Nat.add\_comm}, \decl{Nat.add\_assoc} \\
+\textit{Equality infrastructure:} & \decl{Eq.refl}, \decl{Eq.symm}, \decl{Eq.mpr} \\
+\textit{Typeclass instances:} & \decl{instHAdd}, \decl{HAdd.hAdd}, \decl{instAddNat}
+\end{tabular}
+\end{center}
+\smallskip
+
+\noindent
+A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \decl{Eq.refl}---a constructor with in-degree $69{,}580$---is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
+
+\noindent\textbf{Note.}
+The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$.
+
+The graph is almost entirely connected: $308{,}054$ of $308{,}129$ nodes ($99.98\%$) belong to a single weakly connected component. The remaining $75$ nodes distribute across $71$ tiny components, of which $69$ are singletons.
+
+\paragraph{Empirical observations.}
+The degree statistics by declaration kind reveal that each type occupies a distinct structural niche---axioms and inductive types are heavily cited infrastructure, while theorems are dependency consumers (\S\ref{sec:thm-types}). The hub structure decomposes into a \emph{language infrastructure} layer and a \emph{mathematical infrastructure} layer (Remark~\ref{rem:two-layers}). Of all theorems, $44.8\%$ are never cited---leaf nodes whose consumers are necessarily external (\S\ref{sec:thm-leaves}, Remark~\ref{rem:leaf-theorems}). Cross-namespace edges account for $50.9\%$ of all declaration-level dependencies, far exceeding the module-level figure (\S\ref{sec:thm-cross-namespace}). Full analysis is in Appendix~\ref{app:decl-detail}.
+
+\medskip
+The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices. We organize these into three groups: edge-level decompositions that partition $E_{\mathrm{thm}}$ by the origin of each dependency (\S\ref{sec:stmt-proof}--\S\ref{sec:typeclass-synth}), subgraph constructions that isolate specific language mechanisms such as typeclass synthesis and coercions (\S\ref{sec:typeclass-synth}), and node-level enrichments that attach metadata---attributes, definitional height, tactic usage---to each declaration (\S\ref{sec:decl-attributes}).
+
+\subsubsection{Statement and proof decomposition}
+\label{sec:stmt-proof}
+Every declaration $d$ has a type~$\tau$ (the statement) and optionally a proof term~$\pi$; an edge may originate from either or both.
+
+\begin{definition}[Statement and proof dependency]\label{def:stmt-proof-dep}
+For declarations $a, b \in \mathcal{D}$, define:
+\begin{align*}
+  a \xrightarrow{S} b &\iff b \in \mathrm{refs}(a.\tau), \\
+  a \xrightarrow{P} b &\iff b \in \mathrm{refs}(a.\pi) \setminus \mathrm{refs}(a.\tau).
+\end{align*}
+The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S = \{(a,b) : a \xrightarrow{S} b\}$, and the \emph{pure proof dependency graph} is $G_P = (\mathcal{D}, E_P)$ where $E_P = \{(a,b) : a \xrightarrow{P} b\}$. An edge $(a,b) \in E_{\mathrm{thm}}$ that belongs to both $\mathrm{refs}(a.\tau)$ and $\mathrm{refs}(a.\pi)$ is classified as a \emph{mixed edge} $E_{SP}$. This yields a partition $E_{\mathrm{thm}} = E_S \sqcup E_P \sqcup E_{SP}$ (where $E_S$ excludes mixed edges for disjointness, i.e., $E_S$ consists of edges in $\mathrm{refs}(a.\tau) \setminus \mathrm{refs}(a.\pi)$, $E_{SP} = \mathrm{refs}(a.\tau) \cap \mathrm{refs}(a.\pi)$, and $E_P$ as above).
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.52\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textbf{theorem} \textcolor{red!70!black}{length\_nil}\\
+\hspace{1em}: [].{\textcolor{teal}{length}} = 0 := rfl\\[6pt]
+\textbf{theorem} \textcolor{red!70!black}{length\_cons} (a : $\alpha$) (l : List $\alpha$)\\
+\hspace{1em}: (a :: l).{\textcolor{teal}{length}} = l.{\textcolor{teal}{length}} + 1 := rfl\\[6pt]
+\textbf{theorem} \textcolor{red!70!black}{length\_append} (l1 l2 : List $\alpha$)\\
+\hspace{1em}: (l1 ++ l2).{\textcolor{violet}{length}} = l1.{\textcolor{violet}{length}} + l2.{\textcolor{violet}{length}}\\
+\hspace{1em}:= \textbf{by} induction l1 \textbf{with}\\
+\hspace{1em}| nil => simp [\textcolor{orange!80!red}{length\_nil}]\\
+\hspace{1em}| cons a l ih => simp [\textcolor{orange!80!red}{length\_cons}, ih]
+\caption{Source code: references colored by edge type.}
+\label{fig:sp-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.44\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sedge/.style={->, >=Stealth, teal, semithick},
+  pedge/.style={->, >=Stealth, orange!80!red, semithick, dashed},
+  spedge/.style={->, >=Stealth, violet, thick},
+]
+  % Row 1: length_append
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:length\_append}]
+    (la) at (2, 3.2) {};
+  % Row 2: length_nil, length_cons
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:length\_nil}]
+    (ln) at (0.3, 1.6) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:length\_cons}]
+    (lc) at (3.7, 1.6) {};
+  % Row 3: length (definition)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:length}]
+    (ll) at (2, 0) {};
+  % P edges (proof-only): orange dashed
+  \draw[pedge] (la) -- (ln);
+  \draw[pedge] (la) -- (lc);
+  % SP edge (mixed): violet thick
+  \draw[spedge] (la) -- (ll);
+  % S edges (statement-only): teal solid
+  \draw[sedge] (ln) -- (ll);
+  \draw[sedge] (lc) -- (ll);
+\end{tikzpicture}
+\caption{$E_{\mathrm{thm}} = \textcolor{teal}{E_S} \sqcup \textcolor{orange!80!red}{E_P} \sqcup \textcolor{violet}{E_{SP}}$.}
+\label{fig:sp-graph}
+\end{subfigure}
+\caption{Statement vs.\ proof decomposition (Definition~\ref{def:stmt-proof-dep}). (a)~Source code for three \texttt{List.length} theorems from \module{Init.Data.List.Lemmas}: \textcolor{teal}{teal} = reference only in the type~$\tau$ ($E_S$), \textcolor{orange!80!red}{orange dashed} = only in the proof~$\pi$ ($E_P$), \textcolor{violet}{violet} = in both ($E_{SP}$). For \decl{length\_nil} and \decl{length\_cons}, the definition \decl{length} appears only in~$\tau$; for \decl{length\_append}, it appears in both~$\tau$ and~$\pi$. (b)~The edge-classified subgraph. All names have the \texttt{List.}\ prefix removed.}
+\label{fig:stmt-proof-decomp}
+\end{figure}
+
+\subsubsection{Typeclass instance graph, coercions, and synthesized edges}
+\label{sec:typeclass-synth}
+
+Lean's \emph{typeclass mechanism} encodes mathematical knowledge that human practitioners share implicitly (e.g., which addition is meant by $a + b$) as explicit, machine-searchable declarations.  A \texttt{class} defines an abstract interface; an \texttt{instance} registers a concrete witness that a given type satisfies it.  The mechanism enables readable formal statements at the cost of creating a large infrastructure layer: $24{,}947$ instance declarations ($10.6\%$ of $\mathcal{D}$) form this layer, dominating the dependency graph's in-degree distribution.
+
+This subsection defines three related constructions: the typeclass instance graph $G_{\mathrm{tc}}$, the synthesized/explicit edge partition, and the coercion graph $G_{\mathrm{coe}}$ and structure inheritance graph $G_{\mathrm{ext}}$.
+
+\begin{definition}[Typeclass instance graph]\label{def:tc-graph}
+Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations and $\mathcal{I} \subset \mathcal{D}$ the set of all instance declarations. For each instance $i \in \mathcal{I}$, let $\mathrm{target}(i) \in \mathcal{C}$ be the class it provides and $\mathrm{requires}(i) \subseteq \mathcal{C}$ the classes it depends on as preconditions. The \emph{typeclass instance graph} is
+\[
+  G_{\mathrm{tc}} = (\mathcal{C},\, E_{\mathrm{tc}}), \quad (C_1, C_2) \in E_{\mathrm{tc}} \iff \exists\, i \in \mathcal{I} : \mathrm{target}(i) = C_2 \land C_1 \in \mathrm{requires}(i).
+\]
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.30\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}\\[2pt]
+\textbf{class} \textcolor{red!70!black}{Semigroup} ($\alpha$)\\
+\hspace{1em}\textbf{extends} \textcolor{teal}{Mul} $\alpha$\\[3pt]
+\textbf{class} \textcolor{red!70!black}{MulOneClass} ($\alpha$)\\
+\hspace{1em}\textbf{extends} \textcolor{teal}{Mul} $\alpha$, \textcolor{teal}{One} $\alpha$\\[3pt]
+\textbf{class} \textcolor{red!70!black}{Monoid} ($\alpha$)\\
+\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Semigroup} $\alpha$,\\
+\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{MulOneClass} $\alpha$\\[3pt]
+\textbf{class} \textcolor{red!70!black}{CommMonoid} ($\alpha$)\\
+\hspace{1em}\textbf{extends} \textcolor{red!70!black}{Monoid} $\alpha$,\\
+\hspace{1em}\phantom{\textbf{extends}} \textcolor{red!70!black}{CommSemigroup} $\alpha$
+\caption{Source: each \texttt{extends} creates an edge in $G_{\mathrm{ext}}$ and auto-generates a forgetful instance in~$G_{\mathrm{tc}}$.}
+\label{fig:tc-ext-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.33\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  scale=0.82, every node/.style={transform shape},
+  nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+  lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
+    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+  edg/.style={->, >=Stealth, red!60!black, semithick},
+]
+  \node[nd] (cm) at (1.6, 4.5) {CommMonoid};
+  \node[nd] (mon) at (0.2, 3.2) {Monoid};
+  \node[nd] (cs) at (3.0, 3.2) {CommSemi.};
+  \node[nd] (sg) at (0.0, 1.9) {Semigroup};
+  \node[nd] (moc) at (2.2, 1.9) {MulOneCl.};
+  \node[lf] (mul) at (0.5, 0.6) {Mul};
+  \node[lf] (one) at (2.6, 0.6) {One};
+  \draw[edg] (cm) -- (mon);
+  \draw[edg] (cm) -- (cs);
+  \draw[edg] (mon) -- (sg);
+  \draw[edg] (mon) -- (moc);
+  \draw[edg] (cs) -- (sg);
+  \draw[edg] (sg) -- (mul);
+  \draw[edg] (moc) -- (mul);
+  \draw[edg] (moc) -- (one);
+\end{tikzpicture}
+\caption{$G_{\mathrm{ext}}$: \texttt{extends} edges only (8 edges).}
+\label{fig:ext-graph}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.33\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  scale=0.82, every node/.style={transform shape},
+  nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+  lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
+    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+  edg/.style={->, >=Stealth, red!60!black, semithick},
+  extra/.style={->, >=Stealth, blue!60!black, thick},
+]
+  \node[nd] (cm) at (1.6, 4.5) {CommMonoid};
+  \node[nd] (mon) at (0.2, 3.2) {Monoid};
+  \node[nd] (cs) at (3.0, 3.2) {CommSemi.};
+  \node[nd] (sg) at (0.0, 1.9) {Semigroup};
+  \node[nd] (moc) at (2.2, 1.9) {MulOneCl.};
+  \node[lf] (mul) at (0.5, 0.6) {Mul};
+  \node[lf] (one) at (2.6, 0.6) {One};
+  % Same G_ext edges (thin, subdued)
+  \draw[edg, thin, red!30] (cm) -- (mon);
+  \draw[edg, thin, red!30] (cm) -- (cs);
+  \draw[edg, thin, red!30] (mon) -- (sg);
+  \draw[edg, thin, red!30] (mon) -- (moc);
+  \draw[edg, thin, red!30] (cs) -- (sg);
+  \draw[edg, thin, red!30] (sg) -- (mul);
+  \draw[edg, thin, red!30] (moc) -- (mul);
+  \draw[edg, thin, red!30] (moc) -- (one);
+  % Additional G_tc edges (blue, highlighted)
+  \draw[extra, bend right=25] (cm) to (sg);
+  \draw[extra, bend left=20] (cm) to (moc);
+  \draw[extra, bend left=25] (cs) to (mul);
+  \draw[extra, bend right=15] (cm) to (mul);
+  \draw[extra, bend left=15] (cm) to (one);
+\end{tikzpicture}
+\caption{$G_{\mathrm{tc}}$: adds \textcolor{blue!60!black}{5 transitive} forgetful instance edges.}
+\label{fig:tc-graph}
+\end{subfigure}
+\caption{$G_{\mathrm{ext}}$ vs.\ $G_{\mathrm{tc}}$ (Definitions~\ref{def:tc-graph} and~\ref{def:extends-graph}), from \module{Mathlib.Algebra.Group.Defs} (lines 173--759). (a)~Source: each \texttt{extends} creates a field inheritance edge. (b)~$G_{\mathrm{ext}}$: edges from \texttt{extends} only. (c)~$G_{\mathrm{tc}}$: the same nodes, but Lean auto-generates transitive forgetful instances (\textcolor{blue!60!black}{blue}), e.g.\ \texttt{CommMonoid} directly provides \texttt{Semigroup} without going through \texttt{Monoid}. Thus $G_{\mathrm{ext}} \subset G_{\mathrm{tc}}$.}
+\label{fig:tc-ext}
+\end{figure}
+
+In a traditional mathematical paper, a proof's dependencies are exactly what the author explicitly cites: if a proof invokes the intermediate value theorem, that citation is visible on the page.  In Lean, the situation is radically different.  When a mathematician writes \texttt{a + 0 = a}, the elaborator silently resolves \texttt{+} to a specific addition operation (via \texttt{HAdd}), interprets \texttt{0} as \texttt{OfNat.ofNat 0} for the relevant type, and synthesizes the required algebraic instances---each resolution creating a dependency edge that appears nowhere in the source code.  In Mathlib, $74.2\%$ of all dependency edges are synthesized in this way, meaning that the ``visible'' mathematical content accounts for barely a quarter of the actual dependency graph.
+
+\begin{definition}[Synthesized vs.\ explicit edge partition]\label{def:synth-partition}
+For each edge $(a, b) \in E_{\mathrm{thm}}$, define
+\[
+  \mathrm{synth}(a, b) =
+  \begin{cases}
+    1 & \text{if } b \text{ was inserted by typeclass instance synthesis during elaboration}, \\
+    0 & \text{if } b \text{ was explicitly referenced in the source}.
+  \end{cases}
+\]
+This partitions $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$. The \emph{synthesis ratio} $\sigma = |E_{\mathrm{synth}}| / |E_{\mathrm{thm}}|$ measures the fraction of the observed dependency structure attributable to the proof assistant's type system rather than to mathematical logic.
+\end{definition}
+
+\noindent At our snapshot, $\sigma = 74.2\%$: $6{,}257{,}832$ edges are synthesized and $2{,}178{,}534$ are explicit. The ``visible'' mathematical reasoning thus accounts for barely a quarter of the actual dependency graph.
+
+\begin{definition}[Coercion graph]\label{def:coercion-graph}
+Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} is
+\[
+  G_{\mathrm{coe}} = (\mathcal{T},\, E_{\mathrm{coe}}), \quad (T_1, T_2) \in E_{\mathrm{coe}} \iff \exists\, k \in \mathcal{K} : k \text{ coerces } T_1 \to T_2.
+\]
+Long coercion chains (paths of length $\ge 3$) degrade compilation performance; the diameter of $G_{\mathrm{coe}}$ measures this fragility. Together with $G_{\mathrm{tc}}$, the coercion graph captures the two main mechanisms by which Lean's type system silently inflates the dependency graph.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Lean number type coercions}\\[2pt]
+\textnormal{\sffamily The elaborator silently chains coercions:}\\[3pt]
+\textbf{example} (n : \textcolor{teal}{$\mathbb{N}$}) :
+  \textcolor{teal}{$\mathbb{R}$} := n\\
+\textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{1em}%
+--- inserts $\mathbb{N} \xrightarrow{\text{ofNat}}
+  \mathbb{Z} \xrightarrow{\text{ofInt}}
+  \mathbb{Q} \xrightarrow{\text{ofRat}} \mathbb{R}$}}\\[6pt]
+\textnormal{\sffamily Registered coercion instances:}\\[2pt]
+\hspace{1em}\textcolor{red!70!black}{Int.ofNat}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{N} \to \mathbb{Z}$}}\\
+\hspace{1em}\textcolor{red!70!black}{Rat.ofInt}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{Z} \to \mathbb{Q}$}}\\
+\hspace{1em}\textcolor{red!70!black}{Real.ofRat}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{Q} \to \mathbb{R}$}}\\
+\hspace{1em}\textcolor{red!70!black}{Complex.ofReal}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{R} \to \mathbb{C}$}}
+\caption{Source: a single coercion \texttt{n} $\to$ $\mathbb{R}$ triggers a chain of length~$3$.}
+\label{fig:coe-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  tp/.style={circle, draw=red!60!black, fill=red!6,
+    font=\small, text=red!70!black, inner sep=3pt, minimum size=20pt},
+  coe/.style={->, >=Stealth, red!60!black, semithick},
+]
+  \node[tp] (N) at (0, 0) {$\mathbb{N}$};
+  \node[tp] (Z) at (1.8, 0) {$\mathbb{Z}$};
+  \node[tp] (Q) at (3.6, 0) {$\mathbb{Q}$};
+  \node[tp] (R) at (5.4, 0) {$\mathbb{R}$};
+  \node[tp] (C) at (7.2, 0) {$\mathbb{C}$};
+  \draw[coe] (N) -- node[above, font=\tiny\sffamily, text=gray!60] {ofNat} (Z);
+  \draw[coe] (Z) -- node[above, font=\tiny\sffamily, text=gray!60] {ofInt} (Q);
+  \draw[coe] (Q) -- node[above, font=\tiny\sffamily, text=gray!60] {ofRat} (R);
+  \draw[coe] (R) -- node[above, font=\tiny\sffamily, text=gray!60] {ofReal} (C);
+  % Chain annotation
+  \node[font=\tiny\sffamily, text=gray!60] at (3.6, -0.7)
+    {$\underbrace{\hspace{5.2cm}}_{\text{chain length} = 3}$};
+\end{tikzpicture}
+\caption{$G_{\mathrm{coe}}$: the number type coercion chain. Diameter~$= 4$.}
+\label{fig:coe-graph}
+\end{subfigure}
+\caption{Coercion graph (Definition~\ref{def:coercion-graph}). (a)~Writing \texttt{(n :~$\mathbb{R}$)} where \texttt{n~:~$\mathbb{N}$} triggers the elaborator to chain three coercions $\mathbb{N} \to \mathbb{Z} \to \mathbb{Q} \to \mathbb{R}$, each a registered instance in~$\mathcal{K}$. The individual coercions are defined in \module{Init.Data.Int.Basic}, \module{Mathlib.Data.Rat.Cast.Defs}, and \module{Mathlib.Topology.Algebra.Order.Field}. (b)~The subgraph of~$G_{\mathrm{coe}}$ for the number tower. Long chains (length~$\ge 3$) degrade elaboration performance and can produce opaque error messages.}
+\label{fig:coercion}
+\end{figure}
+
+\noindent At our snapshot, $|\mathcal{K}| = 256$ registered coercions with diameter~$4$ (the number tower $\mathbb{N} \to \mathbb{Z} \to \mathbb{Q} \to \mathbb{R} \to \mathbb{C}$). The most-cited coercion node, \decl{DFunLike.coe} (in-degree $65{,}437$), mediates function-like coercions across the library; \decl{SetLike.coe} ($9{,}519$) is the second hub.
+
+\begin{definition}[Structure inheritance graph]\label{def:extends-graph}
+Lean structures may extend other structures via the \texttt{extends} keyword, inheriting their fields. The \emph{structure inheritance graph} is
+\[
+  G_{\mathrm{ext}} = (\mathcal{S},\, E_{\mathrm{ext}}), \quad (S_1, S_2) \in E_{\mathrm{ext}} \iff S_1 \texttt{ extends } S_2,
+\]
+where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} declarations. This graph encodes the algebraic hierarchy's inheritance lattice---a tool-mediated organizational layer that shapes which instances need to be defined and which are inherited automatically.
+\end{definition}
+
+\noindent At our snapshot, $|E_{\mathrm{ext}}| = 1{,}535$ \texttt{extends} edges among $|\mathcal{S}|$ structures. The most-extended structures---at the top of the algebraic hierarchy---are the same inductive types that dominate $G_{\mathrm{thm}}$'s in-degree: \decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{TopologicalSpace} ($25{,}310$), \decl{Module} ($23{,}404$), \decl{CommRing} ($20{,}837$).
+
+% Figure for G_ext merged into Figure~\ref{fig:tc-ext} above.
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textbf{theorem} \textcolor{red!70!black}{add\_zero} [AddMonoid $\alpha$] (a : $\alpha$)\\
+\hspace{1em}: a + 0 = a := \textcolor{red!70!black}{AddMonoid.add\_zero} a\\[8pt]
+\textnormal{\sffamily Elaborated term references:}\\[2pt]
+\hspace{1em}\textcolor{red!70!black}{AddMonoid.add\_zero}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- explicit}}\\
+\hspace{1em}\textcolor{gray!50}{HAdd.hAdd}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{+}}}\\
+\hspace{1em}\textcolor{gray!50}{OfNat.ofNat}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{0}}}
+\caption{Source: only \decl{AddMonoid.add\_zero} is explicit; \texttt{+}~and~\texttt{0} trigger instance synthesis.}
+\label{fig:tc-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sdot/.style={circle, fill=gray!50, minimum size=3.5pt, inner sep=0pt},
+  elink/.style={->, >=Stealth, red!70!black, semithick},
+  slink/.style={->, >=Stealth, gray!50, semithick, dashed},
+]
+  % Background zones (drawn first, behind nodes)
+  \fill[red!6, rounded corners=3pt] (-0.6, -0.5) rectangle (1.6, 1.0);
+  \node[font=\tiny\sffamily\itshape, red!40!black] at (0.5, 0.85) {math content};
+  \fill[gray!8, rounded corners=3pt] (1.9, -0.5) rectangle (5.0, 1.0);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (3.45, 0.85) {language infrastructure};
+  % Top node: the theorem
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:add\_zero}]
+    (thm) at (2.3, 2.8) {};
+  % Explicit dep (math content)
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:AddMonoid.add\_zero}]
+    (axiom) at (0.5, 0.2) {};
+  % Synthesized deps (language infrastructure)
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:HAdd.hAdd}]
+    (hadd) at (2.8, 0.2) {};
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:OfNat.ofNat}]
+    (ofnat) at (4.3, 0.2) {};
+  % Explicit edge (solid red)
+  \draw[elink] (thm) -- (axiom);
+  % Synthesized edges (dashed gray)
+  \draw[slink] (thm) -- (hadd);
+  \draw[slink] (thm) -- (ofnat);
+\end{tikzpicture}
+\caption{$E_{\mathrm{thm}} = \textcolor{red!70!black}{E_{\mathrm{explicit}}} \sqcup \textcolor{gray!50}{E_{\mathrm{synth}}}$.}
+\label{fig:synth-graph}
+\end{subfigure}
+\caption{Synthesized vs.\ explicit edge partition (Definition~\ref{def:synth-partition}). (a)~In the source for \decl{add\_zero} (from \module{Mathlib.Algebra.Group.Defs}, line 637), only \decl{AddMonoid.add\_zero} is an explicit reference; the notation~\texttt{+} and literal~\texttt{0} each trigger typeclass instance synthesis, silently inserting \textcolor{gray!50}{synthesized edges}. (b)~The subgraph of $G_{\mathrm{thm}}$: \textcolor{red!70!black}{solid} = explicit, \textcolor{gray!50}{dashed} = synthesized. The two zones separate mathematical content from language infrastructure (Remark~\ref{rem:two-layers}). Hub nodes such as \decl{OfNat.ofNat} (in-degree $89{,}936$) accumulate high centrality primarily through synthesized edges.}
+\label{fig:synth-partition}
+\end{figure}
+
+\subsubsection{Declaration attributes and node-level metadata}
+\label{sec:decl-attributes}
+Beyond graph topology, each declaration carries metadata that enriches $G_{\mathrm{thm}}$ with node-level features. We define four groups: the attribute function $\alpha(d)$ with derived measures of proof complexity and universe polymorphism; the definitional height $\delta(d)$, which captures implicit coupling through the kernel's unfolding mechanism; the tactic usage profile $\tau(d)$, which records proof strategy choices; and the auto-derived instance edges $E_{\mathrm{auto}}$, which isolate the purely tool-generated fragment of the dependency graph.
+
+\begin{definition}[Declaration attributes]\label{def:decl-attributes}
+The \emph{attribute function} $\alpha : \mathcal{D} \to \mathcal{P}(\mathcal{A})$ maps each declaration to its set of Lean attributes, where
+\[
+  \mathcal{A} = \{\texttt{simp},\, \texttt{ext},\, \texttt{to\_additive},\, \texttt{instance},\, \texttt{reducible},\, \texttt{inline},\, \ldots\}.
+\]
+In particular:
+\begin{itemize}
+  \item The \emph{proof complexity} $\kappa(d) = |\{\text{Expr nodes in } d.\pi\}|$ measures proof term size.
+  \item The \emph{universe polymorphism degree} $\upsilon(d) = |\text{universe parameters of } d|$.
+  \item The \texttt{@[to\_additive]} attribute instructs a metaprogram to generate the additive mirror of each marked multiplicative declaration. Formally, $d_1 \sim_{\mathrm{add}} d_2$ when $\texttt{to\_additive} \in \alpha(d_1)$ and $d_2$ is the generated counterpart. The \emph{flattening ratio} $\phi = |\{d : \texttt{to\_additive} \in \alpha(d)\}| / |\mathcal{D}|$ quantifies the fraction of the library that exists as such mirrored pairs.
+\end{itemize}
+\end{definition}
+
+\noindent At our snapshot, $32.9\%$ of declarations carry at least one attribute. The most prevalent are \texttt{@[simp]} ($40{,}223$ declarations, $17.1\%$), \texttt{@[to\_additive]} ($13{,}664$, $5.8\%$), and \texttt{@[simps]} ($6{,}830$, $2.9\%$). The flattening ratio is $\phi = 13{,}664 / 235{,}586 = 5.8\%$; including the generated mirrors, \texttt{@[to\_additive]} accounts for roughly $11.6\%$ of the library. A total of $105$ distinct attribute types are registered.
+
+Lean's kernel decides definitional equality by unfolding chains of definitions; the depth of this chain---the \emph{definitional height}---governs compilation cost and constitutes a form of implicit coupling invisible in $G_{\mathrm{thm}}$.
+
+\begin{definition}[Definitional height]\label{def:def-height}
+For each definition $d \in \mathcal{D}$ with \texttt{DefinitionVal}, Lean computes a \emph{definitional height} $\delta(d)$ stored in the \texttt{ReducibilityHints} field:
+\[
+  \delta(d) =
+  \begin{cases}
+    h \in \mathbb{N} & \text{if } d \text{ is \emph{regular} (semireducible), where } h \text{ counts unfolding steps},\\
+    \bot_{\mathrm{abbrev}} & \text{if } d \text{ is an \emph{abbreviation} (always unfolded)},\\
+    \bot_{\mathrm{opaque}} & \text{if } d \text{ is \emph{opaque} (never unfolded)}.
+  \end{cases}
+\]
+Declarations with high~$\delta$ are brittle: changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged. This quantity is invisible in $G_{\mathrm{thm}}$---it does not appear in $\mathrm{refs}(d.\pi)$---yet it constitutes a form of \emph{implicit coupling}.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Init.Data.Nat.Basic}\\[2pt]
+\textbf{def} \textcolor{red!70!black}{Nat.add} : Nat \textnormal{$\to$} Nat \textnormal{$\to$} Nat\\
+\hspace{1em}| n, 0 => n\\
+\hspace{1em}| n, succ m => succ (Nat.add n m)\\[4pt]
+\textbf{def} \textcolor{red!70!black}{Nat.mul} : Nat \textnormal{$\to$} Nat \textnormal{$\to$} Nat\\
+\hspace{1em}| \_, 0 => 0\\
+\hspace{1em}| n, succ m => \textcolor{red!70!black}{Nat.add} (\textcolor{red!70!black}{Nat.mul} n m) n\\[4pt]
+\textbf{def} \textcolor{red!70!black}{Nat.pow} : Nat \textnormal{$\to$} Nat \textnormal{$\to$} Nat\\
+\hspace{1em}| \_, 0 => 1\\
+\hspace{1em}| n, succ m => \textcolor{red!70!black}{Nat.mul} n (\textcolor{red!70!black}{Nat.pow} n m)
+\caption{Source: each definition unfolds through the previous one, increasing~$\delta$.}
+\label{fig:height-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  def/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=3pt, minimum height=14pt},
+  unfold/.style={->, >=Stealth, red!60!black, semithick, dashed},
+  ht/.style={font=\tiny\sffamily\bfseries, text=blue!60!black},
+]
+  \node[def] (pow) at (2.0, 3.6) {Nat.pow};
+  \node[ht, right=3pt of pow] {$\delta = 3$};
+  \node[def] (mul) at (2.0, 2.0) {Nat.mul};
+  \node[ht, right=3pt of mul] {$\delta = 2$};
+  \node[def] (add) at (2.0, 0.4) {Nat.add};
+  \node[ht, right=3pt of add] {$\delta = 1$};
+  % Unfolding arrows
+  \draw[unfold] (pow) -- node[left, font=\tiny\sffamily, text=gray!60] {unfolds} (mul);
+  \draw[unfold] (mul) -- node[left, font=\tiny\sffamily, text=gray!60] {unfolds} (add);
+  % Annotation
+  \node[font=\tiny\sffamily, text=gray!50, anchor=north west] at (-0.2, -0.3)
+    {Higher $\delta$ = longer unfolding chain};
+\end{tikzpicture}
+\caption{Unfolding chain: $\delta$ increases with each layer.}
+\label{fig:height-graph}
+\end{subfigure}
+\caption{Definitional height (Definition~\ref{def:def-height}). (a)~From \module{Init.Data.Nat.Basic}: \decl{Nat.pow} calls \decl{Nat.mul}, which calls \decl{Nat.add}. (b)~The unfolding chain: to type-check an expression involving \decl{Nat.pow}, the kernel may need to unfold through \decl{Nat.mul} and \decl{Nat.add}, yielding $\delta = 3$. Changes to any definition in the chain can break type-checking even if the explicit premises of \decl{Nat.pow} are unchanged.}
+\label{fig:def-height}
+\end{figure}
+
+\noindent Of the $101{,}021$ definitions with reducibility hints, $53{,}962$ are regular (semireducible), $42{,}786$ are abbreviations (always unfolded), and $4{,}273$ are opaque (never unfolded). Among regular definitions, $\delta$ has median~$7$, mean~$10.1$, and maximum~$60$, with $90\%$ of values below~$23$. The distribution is concentrated at low depths ($27.8\%$ in the range $5$--$9$) but has a long tail: the ten highest-$\delta$ declarations all belong to \ns{MeasureTheory} (conditional expectation, Bochner integral, $L^p$ spaces), reflecting deep unfolding chains through the measure-theoretic hierarchy.
+
+\begin{definition}[Tactic usage profile]\label{def:tactic-usage}
+For each declaration $d \in \mathcal{D}$ whose proof is written in tactic mode (i.e., $d.\pi$ begins with \texttt{by}), define the \emph{tactic profile}
+\[
+  \tau(d) = (t_1, t_2, \ldots, t_k),
+\]
+where each $t_i \in \mathcal{T}_{\mathrm{tac}}$ is a tactic name invoked in the proof script, preserving multiplicity and order. The aggregate tactic frequency $\mathrm{freq}(t) = |\{(d, i) : t_i = t\}|$ over all tactic-mode proofs measures the prevalence of each proof strategy across the library. Per-namespace distributions enable Jensen--Shannon divergence analysis of proof methodology variation across mathematical domains.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean, line 1056}\\[2pt]
+@[to\_additive]\\
+\textbf{theorem} \textcolor{red!70!black}{mul\_div\_assoc}\\
+\hspace{1em}(a b c : G) : a * b / c = a * (b / c) := \textbf{by}\\
+\hspace{1em}\textcolor{violet}{rw} [\textcolor{red!70!black}{div\_eq\_mul\_inv},\\
+\hspace{3em}\textcolor{red!70!black}{div\_eq\_mul\_inv},\\
+\hspace{3em}\textcolor{red!70!black}{mul\_assoc} \_ \_ \_]\\[6pt]
+\textnormal{\sffamily Extracted tactic profile:}\\[2pt]
+\hspace{1em}\textnormal{$\tau(\text{mul\_div\_assoc}) = ($}\textcolor{violet}{rw}\textnormal{$)$}\\[2pt]
+\textnormal{\sffamily Premises from proof:}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!60}{%
+div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
+\caption{Source: a tactic-mode proof. The profile $\tau(d)$ records tactic names.}
+\label{fig:tactic-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  tac/.style={rounded corners=2pt, draw=violet!60, fill=violet!8,
+    font=\tiny\ttfamily, text=violet!70!black, inner sep=3pt, minimum height=12pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+]
+  % The theorem node
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_div\_assoc}]
+    (thm) at (2.2, 3.2) {};
+  % Tactic tag
+  \node[tac, anchor=west] at (2.5, 3.2) {rw};
+  % Premises
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:div\_eq\_mul\_inv}]
+    (dm) at (1.0, 1.2) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:mul\_assoc}]
+    (ma) at (3.8, 1.2) {};
+  % Edges
+  \draw[dep] (thm) -- (dm);
+  \draw[dep] (thm) -- (ma);
+  % Frequency bar (mini)
+  \node[font=\tiny\sffamily, text=gray!60, anchor=north west] at (0.2, -0.1)
+    {Top tactics:};
+  \fill[violet!30] (0.2, -0.65) rectangle (2.9, -0.45);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.55)
+    {\texttt{rw}\hspace{4pt}16.9\%};
+  \fill[violet!25] (0.2, -1.0) rectangle (2.4, -0.8);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.9)
+    {\texttt{simp}\hspace{4pt}11.2\%};
+  \fill[violet!20] (0.2, -1.35) rectangle (2.3, -1.15);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -1.25)
+    {\texttt{exact}\hspace{4pt}10.4\%};
+\end{tikzpicture}
+\caption{$G_{\mathrm{thm}}$ with \textcolor{violet!70!black}{tactic tags}; bottom: aggregate $\mathrm{freq}(t)$.}
+\label{fig:tactic-graph}
+\end{subfigure}
+\caption{Tactic usage profile (Definition~\ref{def:tactic-usage}). (a)~From \module{Mathlib.Algebra.Group.Defs} (line 1056): \decl{mul\_div\_assoc} is proved by a single \textcolor{violet!70!black}{\texttt{rw}} invocation with three lemma arguments. The tactic profile $\tau(d)$ captures which tactics are used. (b)~The declaration node annotated with its tactic tag; the bar chart shows library-wide tactic frequencies over $79{,}910$ tactic-mode proofs (extracted via \texttt{jixia}~\cite{jixia2024}).}
+\label{fig:tactic-usage}
+\end{figure}
+
+\noindent Across $79{,}910$ tactic-mode proofs ($325{,}454$ tactic invocations, $7{,}053$ distinct tactics), the top three tactics---\texttt{rw} ($16.9\%$), \texttt{simp} ($11.2\%$), \texttt{exact} ($10.4\%$)---account for $38.5\%$ of all invocations. Per-namespace profiles reveal systematic variation: \texttt{Algebra} proofs favor \texttt{rw} ($20\%$) while \texttt{CategoryTheory} proofs favor \texttt{simp} ($13\%$); \texttt{MeasureTheory} has the highest \texttt{exact} rate ($13\%$) and \texttt{have} rate ($10\%$), reflecting a more lemma-chaining proof style.
+
+Lean's \texttt{deriving} mechanism automates the generation of meta-level typeclass instances (e.g., \texttt{DecidableEq}, \texttt{Repr}) that traditional mathematics takes for granted, creating declarations and dependency edges required for computational infrastructure.
+
+\begin{definition}[Auto-derived instance edges]\label{def:deriving-edges}
+Lean's \texttt{deriving} mechanism automatically generates typeclass instances (e.g., \texttt{Repr}, \texttt{DecidableEq}, \texttt{BEq}) for inductive types. Let $\mathcal{H} \subset \mathcal{A}$ be the set of registered \texttt{deriving} handlers. Each handler $h \in \mathcal{H}$ applied to a type $T$ produces a set of auto-generated declarations $\mathrm{derived}(h, T) \subset \mathcal{D}$, contributing edges in $G_{\mathrm{thm}}$ that were never written by a human. The set $E_{\mathrm{auto}} = \bigcup_{h, T} \{(d', d) : d \in \mathrm{derived}(h, T),\, d' \in \mathrm{refs}(d.\pi)\}$ captures the purely tool-generated fragment of the dependency graph.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Tactic/Linter/FlexibleLinter.lean, line 190}\\[2pt]
+\textbf{inductive} \textcolor{red!70!black}{Stained}\\
+\hspace{1em}| name \hspace{4pt}: Name \textnormal{$\to$} Stained\\
+\hspace{1em}| goal \hspace{4pt}: Stained\\
+\hspace{1em}| wildcard : Stained\\
+\hspace{1em}\textcolor{teal!70!black}{\textbf{deriving} Repr, Inhabited,}\\
+\hspace{1em}\textcolor{teal!70!black}{\phantom{\textbf{deriving}} DecidableEq, Hashable}\\[6pt]
+\textnormal{\sffamily Auto-generated declarations:}\\[2pt]
+\hspace{1em}\textcolor{gray!50}{instReprStained}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Repr} handler}}\\
+\hspace{1em}\textcolor{gray!50}{instInhabitedStained}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Inhabited} handler}}\\
+\hspace{1em}\textcolor{gray!50}{instDecidableEqStained}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{DecEq} handler}}\\
+\hspace{1em}\textcolor{gray!50}{instHashableStained}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Hashable} handler}}
+\caption{Source: \textcolor{teal!70!black}{\texttt{deriving}} auto-generates 4 instances.}
+\label{fig:auto-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  human/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  auto/.style={circle, fill=gray!40, minimum size=3.5pt, inner sep=0pt},
+  humanedge/.style={->, >=Stealth, red!70!black, semithick},
+  autoedge/.style={->, >=Stealth, gray!40, semithick, dashed},
+]
+  % Auto-generated instances (tool layer) — draw background first
+  \fill[gray!8, rounded corners=3pt] (-0.8, -1.6) rectangle (4.8, 0.6);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (2.0, 0.4) {$E_{\mathrm{auto}}$: tool-generated};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instRepr}]
+    (r) at (0.0, -0.2) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instInhab.}]
+    (i) at (1.5, -0.2) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instDecEq}]
+    (d) at (3.0, -0.2) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instHash.}]
+    (h) at (4.5, -0.2) {};
+  % The inductive type (human-written)
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]above:Stained}]
+    (st) at (2.0, 3.5) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]left:Stained.name}]
+    (sn) at (-0.2, 2.0) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]left:Stained.goal}]
+    (sg) at (1.2, 2.0) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]right:Stained.wildcard}]
+    (sw) at (4.2, 2.0) {};
+  % Auto edges (dashed gray) — draw before human edges so human edges render on top
+  \draw[autoedge] (r) -- (st);
+  \draw[autoedge] (i) -- (st);
+  \draw[autoedge] (d) -- (st);
+  \draw[autoedge] (h) -- (st);
+  \draw[autoedge] (d) -- (sn);
+  \draw[autoedge] (d) -- (sg);
+  % Human edges — drawn last, on top
+  \draw[humanedge] (sn) -- (st);
+  \draw[humanedge] (sg) -- (st);
+  \draw[humanedge] (sw) -- (st);
+\end{tikzpicture}
+\caption{\textcolor{red!70!black}{$\bullet$}\,human, \textcolor{gray!40}{$\bullet$}\,auto: $E_{\mathrm{auto}}$ edges are \textcolor{gray!40}{dashed}.}
+\label{fig:auto-graph}
+\end{subfigure}
+\caption{Auto-derived instance edges (Definition~\ref{def:deriving-edges}). (a)~From \module{Mathlib.Tactic.Linter.FlexibleLinter} (line 190): the \texttt{deriving} clause on \decl{Stained} instructs Lean to auto-generate four typeclass instances. (b)~In $G_{\mathrm{thm}}$, \textcolor{red!70!black}{solid} edges are human-written (constructors $\to$ type); \textcolor{gray!40}{dashed} edges belong to $E_{\mathrm{auto}}$---the auto-generated instances reference both the type and its constructors, but no human ever wrote these dependencies.}
+\label{fig:auto-derived}
+\end{figure}
+
+\noindent At our snapshot, $|\mathcal{H}| = 15$ registered \texttt{deriving} handlers produce $1{,}515$ auto-derived declarations and $34{,}090$ edges in $G_{\mathrm{thm}}$ ($0.40\%$ of $|E_{\mathrm{thm}}|$). While this fraction is small, these declarations are structurally distinctive: they have uniform dependency patterns (each references the parent type and its constructors) and inflate the graph's surface without contributing mathematical content.
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+@[simp] \textbf{theorem} \textcolor{red!70!black}{mul\_one}\\
+\hspace{1em}[Monoid $\alpha$] (a : $\alpha$) : a * 1 = a\\[6pt]
+@[to\_additive] \textbf{theorem} \textcolor{red!70!black}{mul\_comm}\\
+\hspace{1em}[CommMonoid $\alpha$] (a b : $\alpha$) : a * b = b * a\\[4pt]
+\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!50}{%
+generates \decl{add\_comm} automatically}}\\[6pt]
+@[simp, ext] \textbf{theorem} \textcolor{red!70!black}{Prod.mk.eta}\\
+\hspace{1em}: (p.1, p.2) = p\\[10pt]
+\textnormal{\sffamily Extracted metadata per node:}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\alpha(d)$: attribute set \{simp, ext, \ldots\}}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\kappa(d)$: proof term size (Expr node count)}\\
+\hspace{1em}\textnormal{\sffamily\tiny%
+$\upsilon(d)$: universe polymorphism degree}
+\caption{Declarations with Lean attributes and the metadata extracted from each.}
+\label{fig:attr-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  dot/.style={circle, fill=red!70!black, minimum size=4pt, inner sep=0pt},
+  depedge/.style={->, >=Stealth, gray!50, semithick},
+  tag/.style={rounded corners=1.5pt, font=\tiny\sffamily, inner sep=1.5pt},
+  simptag/.style={tag, fill=teal!15, text=teal!70!black, draw=teal!40},
+  exttag/.style={tag, fill=violet!15, text=violet!70!black, draw=violet!40},
+  toaddtag/.style={tag, fill=orange!15, text=orange!70!black, draw=orange!40},
+  mirror/.style={<->, >=Stealth, orange!60!black, semithick, dashed},
+  meta/.style={font=\tiny\sffamily, text=gray!60},
+]
+  % Node: mul_one
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_one}]
+    (mo) at (0, 3.2) {};
+  \node[simptag, anchor=west] at (0.25, 3.2) {simp};
+  \node[meta, anchor=west] at (0.25, 2.8) {$\kappa=12$\enspace$\upsilon=1$};
+  % Node: mul_comm
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_comm}]
+    (mc) at (0, 1.6) {};
+  \node[toaddtag, anchor=north] at (0, 1.1) {to\_additive};
+  \node[meta, anchor=west] at (0.25, 0.7) {$\kappa=34$\enspace$\upsilon=1$};
+  % Node: add_comm (mirror)
+  \node[dot, fill=orange!50!red, label={[font=\tiny\ttfamily, orange!60!black]right:add\_comm}]
+    (ac) at (4.0, 1.6) {};
+  \node[meta, anchor=west] at (4.25, 1.2) {$\kappa=34$\enspace$\upsilon=1$};
+  % Node: Prod.mk.eta
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:Prod.mk.eta}]
+    (pe) at (0, -0.4) {};
+  \node[simptag, anchor=west] at (0.25, -0.4) {simp};
+  \node[exttag, anchor=west] at (1.05, -0.4) {ext};
+  \node[meta, anchor=west] at (0.25, -0.85) {$\kappa=8$\enspace$\upsilon=2$};
+  % Mirror edge (to_additive)
+  \draw[mirror] (mc) -- node[above, font=\tiny\sffamily, text=orange!60!black] {$\sim_{\mathrm{add}}$} (ac);
+  % Dependency edges (faint)
+  \draw[depedge] (mo) -- (mc);
+  \draw[depedge] (mc) -- (pe);
+\end{tikzpicture}
+\caption{Nodes of $G_{\mathrm{thm}}$ enriched with attribute tags, proof complexity~$\kappa$, and universe degree~$\upsilon$. The \textcolor{orange!60!black}{dashed} arrow marks a \texttt{to\_additive} mirror pair.}
+\label{fig:attr-graph}
+\end{subfigure}
+\caption{Declaration metadata as node attributes (Definition~\ref{def:decl-attributes}). (a)~Lean source with attribute annotations. (b)~The declaration graph enriched with per-node metadata: colored tags indicate attributes ($\textcolor{teal!70!black}{\texttt{simp}}$, $\textcolor{violet!70!black}{\texttt{ext}}$, $\textcolor{orange!70!black}{\texttt{to\_additive}}$); $\kappa$ and $\upsilon$ are numeric features. The \textcolor{orange!60!black}{dashed} bidirectional arrow marks the automatically generated additive mirror \decl{add\_comm} $\sim_{\mathrm{add}}$ \decl{mul\_comm}.}
+\label{fig:decl-attributes}
+\end{figure}
+
+\subsubsection{Import utilization: a cross-level metric}
+\label{sec:import-util}
+With the declaration graph in hand, we can now define a metric that bridges the module and declaration levels, measuring how efficiently each module consumes its imports.
+
+\begin{definition}[Import utilization]\label{def:import-util}
+For each import edge $(m_i, m_j) \in E_{\mathrm{mod}}$, the \emph{import utilization} is
+\[
+  \mathrm{util}(m_i, m_j) = \frac{|\mathrm{refs}(m_i) \cap \mathcal{D}_{m_j}|}{|\mathcal{D}_{m_j}|},
+\]
+where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined in module~$m_j$ and $\mathrm{refs}(m_i) = \bigcup_{d \in \mathcal{D}_{m_i}} \mathrm{refs}(d.\pi)$ is the set of all premises invoked by declarations in~$m_i$. A low utilization indicates that $m_i$ imports $m_j$ for a small fraction of its exports, suggesting the module boundary is too coarse.
+\end{definition}
+
+\begin{figure}[!htb]
+\centering
+\begin{subfigure}[t]{0.50\textwidth}
+\centering
+\vspace{0pt}
+\raggedright\scriptsize\ttfamily
+\textsf{\bfseries\color{blue!60!black}Algebra/Order/ZeroLEOne.lean}\\[2pt]
+\textbf{public import} \textcolor{blue!60!black}{Algebra.Notation.Pi.Defs}\\
+\textbf{public import} \textcolor{gray!50}{Algebra.Notation.Prod}\\
+\textbf{public import} \textcolor{gray!50}{Order.Basic}\\[6pt]
+\textbf{instance} \textcolor{red!70!black}{Pi.instZeroLEOneClass}\\
+\hspace{1em}\{R : $\iota$ \textnormal{$\to$} Type*\}\\
+\hspace{1em}[{\textcolor{teal}{\textnormal{$\forall$} i, Zero (R i)}}]
+  [{\textcolor{teal}{\textnormal{$\forall$} i, One (R i)}}]\\
+\hspace{1em}[\textnormal{$\forall$} i, LE (R i)]
+  [\textnormal{$\forall$} i, ZeroLEOneClass (R i)]\\
+\hspace{1em}: ZeroLEOneClass (\textnormal{$\forall$} i, R i) :=\\
+\hspace{2em}\textnormal{$\langle$}fun \_ \textnormal{$\mapsto$} zero\_le\_one\textnormal{$\rangle$}\\[6pt]
+\textnormal{\sffamily Elaborated refs to \texttt{Pi.Defs}:}\\[2pt]
+\hspace{1em}\textcolor{red!70!black}{Pi.instOne}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \textcolor{teal}{One ($\forall$ i, R i)}}}\\
+\hspace{1em}\textcolor{red!70!black}{Pi.instZero}%
+  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \textcolor{teal}{Zero ($\forall$ i, R i)}}}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!50}{(2 of ${\sim}50$ declarations used)}}
+\caption{Source: typeclass synthesis references only \decl{Pi.instOne} and \decl{Pi.instZero} from the imported module.}
+\label{fig:util-source}
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.46\textwidth}
+\centering
+\vspace{0pt}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize, inner sep=2pt},
+  mod/.style={rounded corners=3pt, draw=blue!50!black, fill=blue!6,
+    font=\tiny\sffamily\bfseries, text=blue!60!black},
+  used/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  unused/.style={circle, fill=gray!30, minimum size=3.5pt, inner sep=0pt},
+  imp/.style={->, >=Stealth, blue!50!black, semithick},
+  ref/.style={->, >=Stealth, red!70!black, semithick, densely dashed},
+]
+  % Module ZeroLEOne (left)
+  \node[mod, minimum height=1.4cm, minimum width=1.6cm] (mi) at (0, 1.0) {};
+  \node[mod, draw=none, fill=none] at (0, 2.0) {ZeroLEOne};
+  \node[used, label={[font=\tiny\ttfamily, red!70!black, xshift=-2pt]left:instZLC}]
+    (zlc) at (0, 1.0) {};
+
+  % Module Pi.Defs (right)
+  \node[mod, minimum height=3.6cm, minimum width=2.2cm] (mj) at (4.2, 0.4) {};
+  \node[mod, draw=none, fill=none] at (4.2, 2.5) {Notation.Pi.Defs};
+  % Used (red)
+  \node[used, label={[font=\tiny\ttfamily, red!70!black]right:instOne}]
+    (io) at (3.7, 1.6) {};
+  \node[used, label={[font=\tiny\ttfamily, red!70!black]right:instZero}]
+    (iz) at (3.7, 1.0) {};
+  % Unused (gray)
+  \node[unused, label={[font=\tiny\ttfamily, gray!50]right:instMul}]
+    at (3.7, 0.4) {};
+  \node[unused, label={[font=\tiny\ttfamily, gray!50]right:instInv}]
+    at (3.7, -0.2) {};
+  \node[unused, label={[font=\tiny\ttfamily, gray!50]right:prod}]
+    at (3.7, -0.8) {};
+  \node[font=\tiny\sffamily, gray!40] at (4.2, -1.3) {$\cdots$ 45+ more};
+
+  % Import arrow
+  \draw[imp] (mi.east) -- node[above, font=\tiny\sffamily, text=blue!50!black] {import} (mj.west);
+  % Reference arrows
+  \draw[ref] (zlc) to[out=15, in=170] (io);
+  \draw[ref] (zlc) to[out=-5, in=185] (iz);
+\end{tikzpicture}
+
+\vspace{2pt}
+{\scriptsize $\mathrm{util} = \frac{|\{\text{instOne, instZero}\}|}{|\mathcal{D}_{\text{Pi.Defs}}|} \approx \frac{2}{50} = 0.04$}
+\caption{\textcolor{red!70!black}{$\bullet$}\,used, \textcolor{gray!30}{$\bullet$}\,unused. Utilization $\approx 4\%$.}
+\label{fig:util-graph}
+\end{subfigure}
+\caption{Import utilization (Definition~\ref{def:import-util}). (a)~\module{Mathlib.Algebra.Order.ZeroLEOne} (line 43) imports \module{Mathlib.Algebra.Notation.Pi.Defs}, which defines ${\sim}50$ declarations (pointwise instances for \texttt{One}, \texttt{Mul}, \texttt{Inv}, \texttt{Div}, etc.\ and their \texttt{to\_additive} mirrors). Typeclass synthesis resolves only \decl{Pi.instOne} and \decl{Pi.instZero} (\textcolor{red!70!black}{solid}); the remaining ${\sim}48$ declarations (\textcolor{gray!30}{gray}) are unused. (b)~The utilization is $2/50 = 0.04$, below the median of $1.6\%$ across all import edges. All names have the \module{Mathlib.}\ prefix removed.}
+\label{fig:import-util}
+\end{figure}

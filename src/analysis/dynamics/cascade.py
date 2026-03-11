@@ -181,9 +181,9 @@ def robustness_analysis(
     ax.plot(removal_fractions * 100, results_targeted, c=GOLD, linewidth=2,
             label='Targeted removal (by PageRank)', marker='s', markersize=3)
 
-    ax.set_xlabel('Fraction of nodes removed (%)', fontsize=12)
-    ax.set_ylabel('Largest WCC / Total nodes', fontsize=12)
-    ax.set_title('Network Robustness Analysis', fontsize=14, color=INDIGO)
+    ax.set_xlabel('Fraction of nodes removed (%)')
+    ax.set_ylabel('Largest WCC / Total nodes')
+    ax.set_title('Network Robustness Analysis', color=INDIGO)
     ax.legend()
     ax.grid(True, alpha=0.3)
     ax.set_xlim(0, max_removal_frac * 100)

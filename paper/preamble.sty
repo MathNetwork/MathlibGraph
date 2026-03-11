@@ -100,47 +100,6 @@
 \newcommand{\xinze}[1]{\textcolor{blue}{(\textbf{Comments}: #1)}}
 \newcommand{\oliver}[1]{\textcolor{green!40!black}{(\textbf{Oliver}: #1)}}
 
-% ---------- AI-collaboration margin bars (§5.1) ----------
-\RequirePackage[breakable,skins]{tcolorbox}
-
-% Three-color annotation system
-\definecolor{colorHuman}{HTML}{2D5FA0}   % indigo – Human-led
-\definecolor{colorAI}{HTML}{1A7A6E}      % teal   – AI + package
-\definecolor{colorFree}{HTML}{8B5E3C}    % brown  – free-form description
-
-% --- margin bar environments ---
-\newenvironment{marginhuman}{%
-  \begin{tcolorbox}[enhanced,breakable,
-    borderline west={3pt}{0pt}{colorHuman},
-    colback=white,colframe=white,
-    fonttitle=\bfseries\color{colorHuman},title={Human-led},
-    top=2pt,bottom=2pt,left=4pt,right=4pt,
-    boxrule=0pt,sharp corners]}
-  {\end{tcolorbox}}
-
-\newenvironment{marginai}[1][]{%
-  \begin{tcolorbox}[enhanced,breakable,
-    borderline west={3pt}{0pt}{colorAI},
-    colback=white,colframe=white,
-    fonttitle=\bfseries\color{colorAI},title={AI\ifx&#1&\else{} + \texttt{#1}\fi},
-    top=2pt,bottom=2pt,left=4pt,right=4pt,
-    boxrule=0pt,sharp corners]}
-  {\end{tcolorbox}}
-
-\newenvironment{marginfree}[1][]{%
-  \begin{tcolorbox}[enhanced,breakable,
-    borderline west={3pt}{0pt}{colorFree},
-    colback=white,colframe=white,
-    fonttitle=\bfseries\color{colorFree},title={\ifx&#1&Free\else#1\fi},
-    top=2pt,bottom=2pt,left=4pt,right=4pt,
-    boxrule=0pt,sharp corners]}
-  {\end{tcolorbox}}
-
-% --- float annotation tag (for figure/table captions) ---
-\newcommand{\aitag}[1][TikZ]{%
-  \texorpdfstring{{\color{colorAI}\rule{3pt}{8pt}}\,{\small\bfseries\color{colorAI}AI + #1}\;\;}{[AI + #1] }%
-}
-
 % ---------- theorem environments ----------
 \newtheorem{definition}{Definition}[subsection]
 \newtheorem{proposition}[definition]{Proposition}

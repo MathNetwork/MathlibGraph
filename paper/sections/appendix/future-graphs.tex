@@ -1,73 +1,7 @@
-\subsection{Future Graph Decompositions}
+\subsection{Additional Graph Definitions}
 \label{sec:future-graphs}
 
-Section~\ref{sec:definitions} defines the graph decompositions that can be investigated from a single commit snapshot. This section collects the planned analyses for those decompositions, together with two additional temporal constructions---the co-modification graph (\S\ref{sec:co-edit-graph}) and the temporal graph sequence (\S\ref{sec:temporal-graphs})---that require historical data. Illustrative figures and discussion of extraction requirements appear below. \xinze{Hi Adam! Could you help us use LeanScout to extract the data types defined in the following subsections (statement vs proof deps, typeclass instance edges, public/private import flags, declaration attributes, etc.)? That would let us turn these formal definitions into actual empirical results. Thanks!}
-
-We use the notation established in \S\ref{sec:definitions}: $d.\tau$ and $d.\pi$ denote a declaration's type and value, and $\mathrm{refs}(e)$ the set of named constants in an expression~$e$.
-
-\subsubsection{The Statement and Proof Dependency Graphs}
-\label{sec:stmt-proof-graph}
-
-The statement/proof decomposition (Definition~\ref{def:stmt-proof-dep}) partitions $E_{\mathrm{thm}} = E_S \sqcup E_P \sqcup E_{SP}$ according to whether each premise appears in a declaration's type, its proof term, or both (see Figure~\ref{fig:stmt-proof-decomp}).
-
-This decomposition directly instantiates the paper's central distinction. The statement dependency graph~$G_S$ captures \emph{inherited mathematical structure}: what a theorem asserts depends on logically prior definitions and results that are, in principle, invariant under changes of proof strategy. The pure proof dependency graph~$G_P$ captures \emph{human organizational process}: the choice of which lemmas, tactics, and automation to invoke reflects the tools, conventions, and taste of the proving community. The ratio $\rho = |E_P| / |E_{\mathrm{thm}}|$ would directly measure how much of the observed dependency network is proof engineering rather than mathematical necessity.
-
-\paragraph{Planned analyses.}
-Compare degree distributions, DAG depth profiles, community structure, and hub identity between~$G_S$ and~$G_P$. If statement-level dependencies form a sparser, deeper graph while proof-level dependencies are denser and shallower, this would confirm that the topological inversion observed in \S\ref{sec:dag-depth} (153-layer module hierarchy vs.\ 84-layer declaration DAG) has a finer analog at the edge level.
-
-\emph{Empirical analysis of this decomposition requires metaprogramming access to Lean's elaboration layer (specifically, separate traversal of \texttt{ConstantInfo.type} and \texttt{ConstantInfo.value}) and is deferred to future work.}
-
-\begin{remark}[Proof-internal dependency structure]\label{rem:local-deps}
-The decomposition $G_S / G_P$ refines the \emph{edges} of $G_{\mathrm{thm}}$. A complementary refinement concerns the \emph{internal structure} of each node: proof terms may contain local declarations introduced by \texttt{have}, \texttt{let}, or \texttt{suffices}, forming a proof-internal dependency tree~$G_{\mathrm{local}}(d)$ within each declaration~$d$. The size $|V(G_{\mathrm{local}}(d))|$ and depth of this tree measure proof complexity at a finer granularity than the proof term size~$\kappa(d)$ defined in \S\ref{sec:decl-metadata}. Extracting this structure requires access to the elaborated proof term or \texttt{InfoTree} and is left to future work.
-\end{remark}
-
-\subsubsection{The Typeclass Instance Graph}
-\label{sec:typeclass-graph}
-
-The hub nodes identified in \S\ref{sec:theorem-premise}---\decl{OfNat.ofNat} (in-degree $89{,}936$), \decl{DFunLike.coe} ($65{,}437$), \decl{Eq.refl} ($69{,}580$)---owe much of their centrality to Lean's typeclass instance synthesis, which automatically inserts premise references invisible to the proof author. Isolating these synthesized edges would separate the \emph{language infrastructure} layer from the \emph{mathematical content} layer identified qualitatively in Remark~\ref{rem:two-layers}.
-
-The typeclass instance graph $G_{\mathrm{tc}}$ (Definition~\ref{def:tc-graph}) and the synthesized/explicit edge partition $E_{\mathrm{thm}} = E_{\mathrm{explicit}} \sqcup E_{\mathrm{synth}}$ (Definition~\ref{def:synth-partition}) formalize this separation (see Figure~\ref{fig:synth-partition}).
-
-The typeclass system is Lean~4's mechanism for ad-hoc polymorphism---a \emph{tool-specific} organizational layer that has no analog in traditional mathematics. Baanen~\cite{baanen2022} demonstrated that typeclass design choices (bundled vs.\ unbundled) significantly reshape dependency structure; $G_{\mathrm{tc}}$ would isolate this effect. Recomputing centrality on the ``math-only'' subgraph $G_{\mathrm{thm}} \setminus E_{\mathrm{synth}}$ would test whether the hub structure shifts from language infrastructure (\decl{OfNat.ofNat}, \decl{DFunLike.coe}) to mathematical content (\decl{CategoryTheory.Category}, \decl{Real}).
-
-\paragraph{Coercion chains.}
-A complementary source of automatically inserted edges is the \emph{coercion} system. Lean allows automatic type coercions (e.g., $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q}$), which the elaborator chains silently. Let $\mathcal{K} \subset \mathcal{D}$ be the set of all registered coercion instances. The \emph{coercion graph} $G_{\mathrm{coe}} = (\mathcal{T},\, E_{\mathrm{coe}})$ has types as nodes and coercion instances as edges: $(T_1, T_2) \in E_{\mathrm{coe}}$ if there exists a coercion $T_1 \to T_2$ registered in the environment. Long coercion chains (paths of length $\ge 3$ in $G_{\mathrm{coe}}$) degrade compilation performance and can produce opaque error messages; the diameter and maximum chain length of $G_{\mathrm{coe}}$ directly measure this fragility. Together, $G_{\mathrm{tc}}$ and $G_{\mathrm{coe}}$ capture the two main mechanisms by which Lean's type system silently inflates the dependency graph.
-
-\paragraph{Planned analyses.}
-Measure $\sigma$ to quantify the typeclass overhead. Recompute degree distributions and centrality rankings on $G_{\mathrm{thm}} \setminus E_{\mathrm{synth}}$. Compare community structure with and without synthesized edges. Compute the diameter and chain-length distribution of $G_{\mathrm{coe}}$.
-
-\emph{Empirical analysis requires tracing typeclass instance synthesis and coercion resolution during elaboration and is deferred to future work.}
-
-\subsubsection{The Visibility Graph}
-\label{sec:visibility-graph}
-
-The module graph $G_{\mathrm{module}}$ (Definition~\ref{def:module-graph}) treats all \texttt{import} edges uniformly. The visibility graph $G_{\mathrm{mod}}^{\mathrm{pub}}$ (Definition~\ref{def:visibility-graph}) restricts to \texttt{public import} edges, whose transitive closure determines the actual namespace visibility scope (see Figure~\ref{fig:visibility}).
-
-The transition from all-public to selective-private imports is a live instance of \emph{organizational restructuring}---the community actively reshaping the module system to reduce unintended transitive dependencies and compilation cascades. Our snapshot (February 2026) captures a transitional moment where most imports remain \texttt{public}; as private imports are adopted, the 17.5\% redundancy rate (\S\ref{sec:transitive-reduction}) and the 92.2\% indirect dependency rate (\S\ref{sec:import_vs_declaration}) will both change.
-
-\paragraph{Import utilization.}
-The visibility graph refines import edges by access scope; a complementary refinement measures how much of an imported module is actually \emph{used}. For each import edge $(m_i, m_j) \in E_{\mathrm{mod}}$, define the \emph{import utilization}
-\[
-  \mathrm{util}(m_i, m_j) = \frac{|\mathrm{refs}(m_i) \cap \mathcal{D}_{m_j}|}{|\mathcal{D}_{m_j}|},
-\]
-where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined in module~$m_j$ and $\mathrm{refs}(m_i) = \bigcup_{d \in \mathcal{D}_{m_i}} \mathrm{refs}(d.\pi)$ is the set of all premises invoked by declarations in~$m_i$. We computed $\mathrm{util}(m_i, m_j)$ for all $30{,}793$ import edges between modules that define at least one declaration, cross-referencing the $499{,}732$ declaration-to-module mappings from Lean's \texttt{Environment} API with the $8.4$M declaration-level edges. The distribution is heavily right-skewed: the median utilization is $1.6\%$, the mean is $5.1\%$, and the inter-quartile range spans $[0\%, 5.7\%]$. Strikingly, $11{,}410$ import edges ($37\%$) have \emph{zero} utilization---the importing module does not directly reference any declaration from the imported module, relying entirely on transitive re-exports. These findings provide direct, quantitative evidence that the current module granularity is too coarse: most imports expose vastly more declarations than the importing module actually needs, amplifying unnecessary transitive exposure.
-
-\paragraph{Planned analyses.}
-Measure the current adoption rate of private imports. Compare the transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ with that of $G_{\mathrm{mod}}$. Simulate the effect of converting all transitively-redundant imports to private. Identify modules with systematically low utilization as candidates for splitting.
-
-\emph{Visibility analysis requires syntax-level extraction of import modifiers and is deferred to future work.}
-
-\subsubsection{The Build Graph}
-\label{sec:build-graph}
-
-The build graph $G_{\mathrm{build}}$ (Definition~\ref{def:build-graph}) augments $G_{\mathrm{module}}$ with per-module compilation times. Its critical path determines the minimum wall-clock build time, even with unlimited parallelism (see Figure~\ref{fig:build}).
-
-This graph directly substantiates the ``narrow waist creates compilation bottlenecks'' claim made in \S\ref{sec:sa-robustness} and \S\ref{sec:practice}. The current paper identifies bottleneck \emph{candidates} via centrality rankings (PageRank, betweenness), but centrality is a topological proxy---it does not account for the actual time cost of compiling each module. Huch and Wenzel~\cite{huch2024} demonstrate that DAG-based scheduling enables $>100\times$ speedup for the Isabelle AFP; Baanen et al.~\cite{baanen2025} report $6$--$33\%$ speedups from structural refactors in \module{Mathlib}. With per-module timing data, we could identify whether the critical path runs through the same high-centrality modules or through unexpected bottlenecks invisible to topological analysis.
-
-\paragraph{Planned analyses.}
-Profile a full \module{Mathlib} build to obtain $w(m)$ for each module. Compute the critical path and compare its constituent modules with centrality rankings from \S\ref{sec:centrality}. Measure the potential speedup from parallelization: the ratio of sequential build time ($\sum_m w(m)$) to critical path length ($W(\gamma^*)$).
-
-\emph{Empirical analysis requires profiling a full Lake build with per-module timing instrumentation and is deferred to future work.}
+This section defines two graph constructions that require data sources beyond a single commit snapshot: the co-modification graph (\S\ref{sec:co-edit-graph}), which captures logical coupling from version control history, and the temporal graph sequence (\S\ref{sec:temporal-graphs}), which enables longitudinal structural analysis.
 
 \subsubsection{The File Co-Modification Graph}
 \label{sec:co-edit-graph}
@@ -149,100 +83,6 @@ Group.Defs $\leftrightarrow$ Nat.Order: 1}
 \end{figure}
 
 This graph captures traces of \emph{human organizational process} from a data source entirely independent of Lean's compilation model: the Git history. Comparing $G_{\mathrm{co}}$ with $G_{\mathrm{module}}$ tests whether structural coupling predicts logical coupling. Module pairs with high co-modification weight but no direct import edge reveal hidden dependencies---candidates for refactoring or explicit import addition. Conversely, direct import edges with zero co-modification suggest stable, well-encapsulated interfaces.
-
-\paragraph{Planned analyses.}
-Extract $G_{\mathrm{co}}$ from the \module{Mathlib} Git log (approximately ${\sim}20{,}000$ merged PRs as of February 2026). Compute the overlap between high-weight edges in $G_{\mathrm{co}}$ and edges in $G_{\mathrm{module}}$. Identify module pairs with high logical coupling but no structural coupling.
-
-\emph{This data can be extracted directly from the Git history using standard tools (no metaprogramming access required) and is deferred to future work.}
-
-\subsubsection{Declaration Metadata as Node Attributes}
-\label{sec:decl-metadata}
-
-Beyond graph topology, declarations carry rich metadata---Lean attributes, proof term size, universe polymorphism degree, and \texttt{to\_additive} pairing---that can serve as node-level attributes (Definition~\ref{def:decl-attributes}; see Figure~\ref{fig:decl-attributes}), enabling correlation analyses between structural position and declaration properties.
-
-These attributes bridge the two dimensions of our framework. Proof complexity~$\kappa$ and tactic usage characterize the \emph{process} layer (how theorems are proved), while $\upsilon$ and the \texttt{to\_additive} equivalence characterize \emph{tool-mediated structure}---features arising from Lean's type system and metaprogramming infrastructure rather than mathematical content. In particular, computing~$\phi$ would convert our qualitative observation about semantic flattening (\S\ref{sec:thm-vs-lemma}) into a precise count of automatically generated mirrors.
-
-\paragraph{Definitional height.}
-Lean's type checker relies on \emph{definitional equality}: to verify that two types match, the kernel may need to unfold a chain of definitions. For each definition, Lean computes a \emph{definitional height} $\delta(d)$---the number of regular (semireducible) definitions in its transitive dependency chain---stored in the \texttt{ReducibilityHints} field. This quantity is invisible in the explicit dependency graph $G_{\mathrm{thm}}$---it does not appear in $\mathrm{refs}(d.\pi)$---yet it constitutes a form of \emph{implicit coupling}: declarations with high~$\delta$ are brittle, because changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged.
-
-We extracted $\delta(d)$ for all $101{,}021$ Mathlib definitions via the \texttt{DefinitionVal.hints} API. Of these, $53{,}962$ are \emph{regular} (semireducible) with a numeric height, $42{,}786$ are \emph{abbreviations} (always unfolded, no height), and $4{,}273$ are \emph{opaque} (never unfolded). Among regular definitions, the height distribution has median~$7$, mean~$10.1$, IQR~$[4, 14]$, and a maximum of~$60$. The distribution is roughly log-normal: $58\%$ of definitions have height $< 10$, while a tail of $13.5\%$ has height $\ge 20$. This confirms that most definitions sit at shallow depth, but a non-trivial fraction involves long unfolding chains that may contribute to elaboration and compilation bottlenecks.
-
-\paragraph{Tactic usage.}
-To extract per-declaration tactic usage, we employ \texttt{jixia}~\cite{jixia2024}, a static analysis tool for Lean~4 developed at BICMR, Peking University (see also~\cite{gao2025herald}). Running \texttt{jixia}'s declaration plugin over all $7{,}563$ Mathlib source files yields the pretty-printed proof term for each declaration, from which we parse tactic names.
-
-\smallskip\noindent\textbf{Proof mode distribution.}
-Of $235{,}586$ declarations extracted, $170{,}985$ are theorems ($72.6\%$), $35{,}635$ definitions ($15.1\%$), $24{,}947$ instances ($10.6\%$), and $4{,}019$ other (abbreviations, examples, opaques, inductives).
-Among theorems, $76{,}708$ ($44.9\%$) use tactic mode (proof begins with \texttt{by}) and $94{,}277$ ($55.1\%$) use term mode. An additional $3{,}202$ non-theorem declarations (primarily instances) also employ tactic proofs, bringing the total tactic-mode count to $79{,}910$.
-
-\smallskip\noindent\textbf{Proof complexity.}
-Tactic-mode proofs contain $325{,}454$ tactic steps in total. The distribution of steps per proof has median~$2$, mean~$4.1$, and IQR~$[1, 4]$, with a maximum of~$173$. Single-step proofs (\texttt{by simp}, \texttt{by exact \ldots}, etc.) account for $39.2\%$ of all tactic proofs, and $68.7\%$ use at most three steps. Only $9.4\%$ require ten or more steps. This confirms that most Mathlib proofs are short: the library favors fine-grained decomposition into small lemmas over long monolithic proof scripts.
-
-\smallskip\noindent\textbf{Global tactic frequencies.}
-Table~\ref{tab:tactic-freq} lists the fifteen most frequently invoked tactics. The top three---\texttt{rw} ($16.9\%$), \texttt{simp} ($11.2\%$), and \texttt{exact} ($10.4\%$)---together account for $38.5\%$ of all tactic steps. The top ten account for $67.0\%$. The dominance of \texttt{rw} (rewriting) reflects Mathlib's equational style: the most common proof strategy is to transform the goal by substituting known equalities. The prominence of \texttt{simp} (simplification) and \texttt{exact} (term-mode embedding) indicates that automation and direct proof-term construction are the next most common strategies.
-
-\begin{table}[ht]
-\centering
-\small
-\caption{Top 15 tactics by invocation count across all $79{,}910$ tactic-mode proofs ($325{,}454$ total steps).}
-\label{tab:tactic-freq}
-\begin{tabular}{l r r}
-\toprule
-\textbf{Tactic} & \textbf{Count} & \textbf{\%} \\
-\midrule
-\texttt{rw}       & 55,074 & 16.9 \\
-\texttt{simp}     & 36,380 & 11.2 \\
-\texttt{exact}    & 33,767 & 10.4 \\
-\texttt{have}     & 23,939 &  7.4 \\
-\texttt{refine}   & 18,158 &  5.6 \\
-\texttt{apply}    & 12,639 &  3.9 \\
-\texttt{obtain}   & 12,020 &  3.7 \\
-\texttt{intro}    & 10,321 &  3.2 \\
-\texttt{simpa}    &  8,372 &  2.6 \\
-\texttt{ext}      &  7,408 &  2.3 \\
-\texttt{rcases}   &  6,519 &  2.0 \\
-\texttt{simp\_rw} &  5,933 &  1.8 \\
-\texttt{let}      &  5,439 &  1.7 \\
-\texttt{rintro}   &  5,304 &  1.6 \\
-\texttt{by\_cases} & 3,959 &  1.2 \\
-\midrule
-\emph{Top 3}      & 125,221 & 38.5 \\
-\emph{Top 10}     & 218,070 & 67.0 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\smallskip\noindent\textbf{Per-namespace variation.}
-Tactic usage varies significantly across mathematical domains. Table~\ref{tab:tactic-ns} shows the top tactic for each of the ten largest namespaces. Notably, \texttt{rw} is the most common tactic in eight of ten namespaces, but \texttt{simp} leads in \module{CategoryTheory} (where diagrammatic reasoning is heavily automated) and \texttt{exact} ties with \texttt{rw} in \module{Topology} (where point-set arguments are often resolved by direct term construction).
-
-To quantify these differences, we compute the Jensen--Shannon divergence (JSD) between the tactic frequency distributions of namespace pairs. The most divergent pair is \module{CategoryTheory} vs.\ \module{MeasureTheory} ($\mathrm{JSD} = 0.180$), reflecting fundamentally different proof styles: categorical proofs rely heavily on \texttt{simp}, \texttt{aesop}, and \texttt{ext}, while measure-theoretic proofs favor \texttt{have}, \texttt{exact}, and \texttt{filter\_upwards}. The most similar pairs are \module{Algebra} vs.\ \module{LinearAlgebra} ($\mathrm{JSD} = 0.052$) and \module{RingTheory} vs.\ \module{LinearAlgebra} ($\mathrm{JSD} = 0.052$), confirming that algebraic subfields share closely related proof methodologies.
-
-\begin{table}[ht]
-\centering
-\small
-\caption{Tactic usage by top-level namespace (top 10 by tactic-proof count). The three most frequent tactics in each namespace are listed with their share of that namespace's total tactic steps.}
-\label{tab:tactic-ns}
-\begin{tabular}{l r l}
-\toprule
-\textbf{Namespace} & \textbf{Proofs} & \textbf{Top 3 tactics (\%)} \\
-\midrule
-\module{Algebra}         & 11,390 & \texttt{rw} (20), \texttt{simp} (13), \texttt{exact} (9) \\
-\module{Analysis}        &  9,677 & \texttt{rw} (16), \texttt{simp} (11), \texttt{exact} (10) \\
-\module{Data}            &  8,598 & \texttt{rw} (18), \texttt{simp} (14), \texttt{exact} (9) \\
-\module{RingTheory}      &  6,633 & \texttt{rw} (18), \texttt{simp} (10), \texttt{exact} (10) \\
-\module{Topology}        &  5,741 & \texttt{rw} (14), \texttt{exact} (14), \texttt{simp} (9) \\
-\module{CategoryTheory}  &  5,625 & \texttt{simp} (13), \texttt{rw} (13), \texttt{exact} (9) \\
-\module{MeasureTheory}   &  4,631 & \texttt{rw} (15), \texttt{exact} (13), \texttt{have} (10) \\
-\module{LinearAlgebra}   &  4,323 & \texttt{rw} (18), \texttt{simp} (12), \texttt{exact} (8) \\
-\module{Order}           &  3,780 & \texttt{rw} (16), \texttt{simp} (14), \texttt{exact} (14) \\
-\module{NumberTheory}    &  3,049 & \texttt{rw} (18), \texttt{have} (10), \texttt{exact} (10) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Planned analyses.}
-Correlate $\kappa(d)$ with topological depth $\mathrm{depth}(d)$ and in-degree $\deg^{-}(d)$. Test whether universe-polymorphic declarations ($\upsilon(d) \ge 1$) have systematically higher in-degree. Precisely count \texttt{to\_additive} mirrors to quantify semantic flattening. Correlate $\delta(d)$ with compilation time to test whether unfolding depth is a significant contributor to build bottlenecks.
-
-\emph{Definitional heights have been extracted (Table~\ref{tab:decompositions}); tactic usage has been extracted via \texttt{jixia}~\cite{jixia2024}; the remaining analyses (compilation-time correlations, universe polymorphism patterns) require additional data sources and are deferred to future work.}
 
 \subsubsection{Temporal Graph Sequences}
 \label{sec:temporal-graphs}
@@ -368,8 +208,3 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
 \end{figure}
 
 The temporal dimension directly captures the \emph{process} of organizational restructuring. If \module{Mathlib}'s dependency structure is primarily determined by inherited mathematical logic, structural indicators should be stable under refactoring; if organizational process dominates, we expect significant structural change at refactoring events while mathematical content remains constant. The Lean~3$\to$4 port is a natural experiment: identical mathematical content, entirely rewritten proof infrastructure.
-
-\paragraph{Planned analyses.}
-Construct $G^{(t)}$ for monthly snapshots spanning the post-port era (2023--2026). Track growth indicators, structural stability, and redundancy trends. Test whether the $17.5\%$ redundancy rate and $0.107$ cohesion are increasing, stable, or approaching critical thresholds.
-
-\emph{Longitudinal analysis requires running the extraction pipeline across multiple historical commits and is deferred to future work.}

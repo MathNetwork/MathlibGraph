@@ -6,12 +6,10 @@ Output:
   paper/analysis/ns_centrality_*.pdf
 """
 
-import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 
 COLORS = setup_style()
@@ -21,15 +19,13 @@ import numpy as np
 import networkx as nx
 from datasets import load_dataset
 
-OUTDIR = Path(__file__).resolve().parent.parent / "paper" / "analysis"
+OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 
 def plot_centrality_separate(in_deg, pagerank, betweenness, nodes,
                              title_prefix, color, out_prefix):
     """Plot 3 separate full-width centrality scatter plots."""
-    title_fs, label_fs, tick_fs = 14, 12, 11
-
     ids = list(nodes)
     indeg = np.array([in_deg.get(n, 0) for n in ids], dtype=float)
     pr = np.array([pagerank.get(n, 0) for n in ids], dtype=float)
@@ -47,10 +43,9 @@ def plot_centrality_separate(in_deg, pagerank, betweenness, nodes,
         ax.scatter(x[mask], y[mask], s=3, alpha=0.3, color=color, edgecolors="none")
         ax.set_xscale("log")
         ax.set_yscale("log")
-        ax.set_xlabel(xlabel, fontsize=label_fs)
-        ax.set_ylabel(ylabel, fontsize=label_fs)
-        ax.set_title(f"{xlabel} vs {ylabel} ({title_prefix})", fontsize=title_fs)
-        ax.tick_params(labelsize=tick_fs)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(f"{xlabel} vs {ylabel} ({title_prefix})")
         ax.grid(True, alpha=0.2, which="both")
         plt.tight_layout()
         out_path = OUTDIR / f"{out_prefix}_{suffix}.pdf"

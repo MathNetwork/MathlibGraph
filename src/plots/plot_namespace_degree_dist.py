@@ -7,12 +7,10 @@ degree distribution figures used in 7.1.1 and 7.1.2.
 Output: paper/analysis/ns_degree_distribution.pdf
 """
 
-import sys
 import time
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE
 
 COLORS = setup_style()
@@ -22,7 +20,7 @@ import numpy as np
 from datasets import load_dataset
 
 DEPTH = 2
-OUTDIR = Path(__file__).resolve().parent.parent / "paper" / "analysis"
+OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -84,7 +82,6 @@ def main():
 
     # ── Plot ──
     fig, axes = plt.subplots(1, 2, figsize=FIGSIZE_DOUBLE)
-    title_fs, label_fs, tick_fs, legend_fs = 14, 12, 11, 11
 
     # --- In-degree (left panel) --- green for namespace level
     ax = axes[0]
@@ -103,14 +100,13 @@ def main():
         ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linewidth=1.5,
                 linestyle="--", alpha=0.8,
                 label=rf"$k^{{-{alpha:.2f}}}$ ($x_{{\min}}=4$)")
-        ax.legend(loc="upper right", fontsize=legend_fs)
+        ax.legend(loc="upper right")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("In-degree", fontsize=label_fs)
-    ax.set_ylabel("Count", fontsize=label_fs)
-    ax.set_title(r"In-degree distribution of $G_{\mathrm{ns}}^{(2)}$", fontsize=title_fs)
-    ax.tick_params(labelsize=tick_fs)
+    ax.set_xlabel("In-degree")
+    ax.set_ylabel("Count")
+    ax.set_title(r"In-degree distribution of $G_{\mathrm{ns}}^{(2)}$")
     ax.grid(True, alpha=0.3, which="both")
 
     # --- Out-degree (right panel) --- green for namespace level (lighter)
@@ -130,14 +126,13 @@ def main():
         ax.plot(k_ref, ref_line, color=COLORS["quaternary"], linewidth=1.5,
                 linestyle="--", alpha=0.8,
                 label=rf"$k^{{-{alpha_out:.2f}}}$ ($x_{{\min}}=13$)")
-        ax.legend(loc="upper right", fontsize=legend_fs)
+        ax.legend(loc="upper right")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Out-degree", fontsize=label_fs)
-    ax.set_ylabel("Count", fontsize=label_fs)
-    ax.set_title(r"Out-degree distribution of $G_{\mathrm{ns}}^{(2)}$", fontsize=title_fs)
-    ax.tick_params(labelsize=tick_fs)
+    ax.set_xlabel("Out-degree")
+    ax.set_ylabel("Count")
+    ax.set_title(r"Out-degree distribution of $G_{\mathrm{ns}}^{(2)}$")
     ax.grid(True, alpha=0.3, which="both")
 
     plt.tight_layout()

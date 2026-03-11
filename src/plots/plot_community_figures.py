@@ -11,13 +11,11 @@ Output (6 files in paper/figures/):
 """
 
 import re
-import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
-from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE, FIGSIZE_HEATMAP, FIGSIZE_HEATMAP_WIDE
+from plot_style import setup_style, COLORS, FIGSIZE_SINGLE, FIGSIZE_DOUBLE, FIGSIZE_TRIPLE, FIGSIZE_HEATMAP, FIGSIZE_HEATMAP_WIDE, ANNOT_FS, LABEL_FS
 
 COLORS = setup_style()
 
@@ -28,7 +26,7 @@ import networkx as nx
 import community as community_louvain
 from sklearn.metrics import normalized_mutual_info_score
 
-OUTDIR = Path(__file__).resolve().parent.parent / "paper" / "figures"
+OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 # -- Shared palette --
@@ -176,11 +174,11 @@ def plot_community_graph(G_dir, partition, level_name, modularity,
         offset = 0.02 + 0.01 * np.sqrt(sz) / np.sqrt(max(s for s in sizes2.values()))
         label_pos[n] = (pos[n][0], pos[n][1] + offset)
 
-    nx.draw_networkx_labels(MG, label_pos, labels, font_size=13,
+    nx.draw_networkx_labels(MG, label_pos, labels, font_size=LABEL_FS,
                             font_weight="bold", ax=ax)
 
     ax.set_title(f"{level_name}-level Louvain communities (modularity = {modularity:.2f})",
-                 pad=12, fontsize=15)
+                 pad=12)
     ax.axis("off")
     plt.tight_layout()
     fig.savefig(out_path, bbox_inches="tight")
@@ -256,17 +254,16 @@ def plot_community_heatmap(partition, category_fn, level_name, nmi_value,
         else:
             row_labels.append(f"C{comm} ({dom}, {sz:,})")
 
-    # Plot — full width with larger fonts
+    # Plot — full width
     fig, ax = plt.subplots(figsize=(12, 7))
-    title_fs, label_fs, tick_fs, annot_fs = 15, 12, 10, 8
     norm = mcolors.LogNorm(vmin=max(1, matrix[matrix > 0].min()),
                            vmax=matrix.max()) if matrix.max() > 0 else None
     im = ax.imshow(matrix, aspect="auto", cmap=cmap, norm=norm)
 
     ax.set_xticks(range(len(top_cats)))
-    ax.set_xticklabels(top_cats, rotation=45, ha="right", fontsize=tick_fs)
+    ax.set_xticklabels(top_cats, rotation=45, ha="right")
     ax.set_yticks(range(len(top_comms)))
-    ax.set_yticklabels(row_labels, fontsize=tick_fs)
+    ax.set_yticklabels(row_labels)
 
     # Annotate cells
     for i in range(matrix.shape[0]):
@@ -275,10 +272,10 @@ def plot_community_heatmap(partition, category_fn, level_name, nmi_value,
             if v > 0:
                 color = "white" if v > matrix.max() * 0.4 else "black"
                 ax.text(j, i, f"{v:,}", ha="center", va="center",
-                        fontsize=annot_fs, color=color)
+                        fontsize=ANNOT_FS, color=color)
 
     ax.set_title(f"{level_name} communities vs. categories (NMI = {nmi_value:.2f})",
-                 pad=10, fontsize=title_fs)
+                 pad=10)
     fig.colorbar(im, ax=ax, shrink=0.6, label="Count")
     plt.tight_layout()
     fig.savefig(out_path, bbox_inches="tight")

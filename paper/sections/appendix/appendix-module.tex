@@ -1,6 +1,10 @@
 \subsection{Module Graph}\label{app:module-detail}
 
+The module graph $G_{\mathrm{module}}$ (Definition~\ref{def:module-graph}; \S\ref{sec:module-import}) captures file-level import dependencies among \module{Mathlib}'s $7{,}563$ source files.
+
 \subsubsection{Containment Decay}
+
+Table~\ref{tab:module-containment} reports the fraction of import edges that remain within the same group at successive depths of the module tree.
 
 \begin{table}[ht]
 \centering
@@ -23,54 +27,26 @@ At depth~$1$, the $13$ top-level packages (\module{Mathlib}, \module{Batteries},
 
 \subsubsection{Cross-Directory Heatmaps}\label{app:module-heatmaps}
 
+Figure~\ref{fig:namespace-heatmaps} visualises the inter-directory import flow as heatmaps for the raw and transitively reduced module graphs.
+
 \begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/namespace_heatmap_raw.pdf}
-\caption{Import counts between top-level directories (log scale) for $G_{\mathrm{module}}$. Each cell $(i, j)$ counts edges from directory~$i$ (row) to directory~$j$ (column); the diagonal captures intra-directory imports. Off-diagonal bright cells reveal cross-directory dependencies that violate the cognitive classification of~$T$.}
+\caption{Raw graph $G_{\mathrm{module}}$.}
 \label{fig:namespace-heatmap-raw}
-\end{figure}
-
-\begin{figure}[H]
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/namespace_heatmap_tr.pdf}
-\caption{Import counts between top-level directories (log scale) for $G_{\mathrm{module}}^{-}$ (transitive reduction). Compared to the raw graph (Figure~\ref{fig:namespace-heatmap-raw}), the transitive reduction removes redundant edges while preserving the essential dependency skeleton. The most prominent off-diagonal entries include \module{RingTheory}$\,\to\,$\module{Algebra} and the bidirectional coupling between \module{Algebra} and \module{Data}.}
+\caption{Transitive reduction $G_{\mathrm{module}}^{-}$.}
 \label{fig:namespace-heatmap-tr}
+\end{subfigure}
+\caption{Import counts between top-level directories (log scale). Each cell $(i, j)$ counts edges from directory~$i$ (row) to directory~$j$ (column); the diagonal captures intra-directory imports. Comparing (a) and (b), the transitive reduction removes redundant edges while preserving the essential dependency skeleton. The most prominent off-diagonal entries include \module{RingTheory}$\,\to\,$\module{Algebra} and the bidirectional coupling between \module{Algebra} and \module{Data}.}
+\label{fig:namespace-heatmaps}
 \end{figure}
-
-\subsubsection{Extended Analysis}\label{app:module-analysis}
-
-\noindent \textit{1. The tension between logical precision and cognitive management.} \\
-The divergence between the raw module graph $G_{\mathrm{module}}$ and its transitive reduction $G_{\mathrm{module}}^{-}$ quantifies the human cost of organizing logic. The 17.5\% edge redundancy (\S\ref{sec:transitive-reduction}), measured after Mathlib's \texttt{shake} linter has already pruned certain redundant imports, is not merely inefficiency; it represents the \textit{development ergonomics layer} of the library. Developers import entire theories (umbrella modules) to ease refactoring and future extensibility, sacrificing logical minimality for usability.
-
-Dependency for compilation follows the strict logical requirements of the type checker, ensuring that the build system avoids cycles and minimizes checking time. In contrast, dependency for development workflow serves the human prover and the automation: it brings tactics, notation, and typeclass instances into scope, populating the context for search and elaboration. We argue that the 17.5\% redundancy observed in \module{Mathlib} (post-\texttt{shake}) is not an inefficiency but a structural feature that creates robustness against refactoring and simplifies ongoing library development. The fact that \texttt{shake} intentionally preserves many of these imports suggests the \module{Mathlib} community agrees they serve a structural purpose. Optimizing solely for the transitive reduction would likely degrade the interactive experience, suggesting that future proof assistants could benefit from explicitly modeling these two layers separately: a minimal graph for the build system and a rich, redundant graph for the user.
-
-\medskip
-\noindent \textit{2. The architectural source of compilation bottlenecks.} \\
-The layer-width profile (\S\ref{sec:dag-depth}) reveals a distinct \textit{funnel topology}: a massive leaf layer ($>1,400$ modules) resting on a deep, narrow foundation. This extreme verticality (DAG depth~$153$; \S\ref{sec:dag-depth}) contrasts sharply with the flatter citation graphs of informal mathematics. While this depth ensures rigorous consistency, it creates significant structural fragility: changes in the narrow ``waist'' of the funnel (high-betweenness modules) trigger massive recompilation cascades. Lean's module system (introduced November 2025) addresses exactly this bottleneck: private imports reduce transitive visibility, directly shrinking the recompilation cascade. This identifies a critical scalability challenge: as libraries grow, the depth of the dependency chain becomes a liability that may require aggressive modularization or distinct compilation units.
-
-Moreover, this topology imposes a distinct evolutionary pressure on the library's development. Unlike informal mathematics, where foundational texts are static references, the modules in \module{Mathlib}'s ``theoretical waist'' remain mutable code. The depth of 153 layers implies that the maintenance cost of a lemma is strictly a function of its topological depth: a change in the narrow waist invalidates the verification of thousands of downstream results. One possible trajectory is that monolithic libraries will eventually hit a \textit{critical depth threshold} where the cost of coherence checks exceeds the capacity for rapid iteration. If so, future architectures may need to break this funnel into \textit{federated tiers}---effectively freezing the foundational layers into pre-compiled artifacts---to decouple the logical necessity of depth from the operational necessity of build speed. Lean's module system, with its distinction between \texttt{public import} and \texttt{import}, is already a step in this direction: private imports create compilation boundaries that decouple layers. This remains a conjecture unsupported by longitudinal data; whether the current depth of $153$ layers is approaching such a threshold, or is comfortably sustainable, cannot be determined from a single snapshot.
-
-Our analysis captures a single snapshot (commit \texttt{534cf0b}). Whether these structural properties are stable or evolving---and whether the 17.5\% redundancy rate (post-\texttt{shake}) and DAG depth of~$153$ are increasing, stable, or approaching a critical threshold---remains an open question that longitudinal analysis across \module{Mathlib} versions must address.
-
-\medskip
-\noindent \textit{3. Centrality as a proxy for maintenance roles.} \\
-We propose that the centrality measures computed in \S\ref{sec:centrality} can be interpreted as distinct maintenance signals.
-\begin{itemize}
-    \item \textit{In-degree} identifies the \textit{vocabulary} of the library (utilities used locally).
-    \item \textit{PageRank} identifies the \textit{axiomatic core} (the deep dependencies that underpin the truth of the system).
-    \item \textit{Betweenness} identifies \textit{structural bridges} (modules that connect disparate mathematical subfields).
-\end{itemize}
-Refactoring a high-betweenness module is riskier than refactoring a high in-degree module, as the former disrupts the connective tissue between theories. From an engineering perspective, the PageRank and betweenness rankings (Table~\ref{tab:centrality}) offer a principled priority ordering for compilation optimization and CI resource allocation: modifications to high-centrality modules may warrant broader downstream testing.
-
-\medskip
-\noindent \textit{Hypothesis: The Curated Small-World.} \\
-We hypothesize that successful formal libraries naturally evolve into \textit{curated small-world networks}. Unlike social networks which grow via preferential attachment, \module{Mathlib} grows via \textit{semantic attachment}: new modules cluster tightly within top-level directories (high local clustering), while bridge modules with high betweenness maintain global connectivity.
-
-The fact that 100\% of modules belong to a single weakly connected component provides empirical evidence for the structural unification of mathematical theories within \module{Mathlib}. The density of inter-directory edges (37.1\%, \S\ref{sec:cross-namespace}) functions as a system of high-betweenness shortcuts that prevent the library from fracturing into isolated ``theory islands.'' Our analysis of targeted node removal (Table~\ref{tab:robustness}) demonstrates that this connectivity is remarkably resilient: over 99\% of modules remain in the giant component even after the removal of the five most central hubs.
-
-The curated small-world is the form in which the tension between $T$ and $G_{\mathrm{module}}$ reaches dynamic equilibrium---but this equilibrium is not static. The module tree $T$ actively shapes $G_{\mathrm{module}}$: developers import along the cognitive contours of $T$, producing the 62.9\% intra-directory concentration and the directional redundancy identified in \S\ref{sec:transitive-reduction}. Simultaneously, $G_{\mathrm{module}}$ reshapes $T$: the 37.1\% of edges that cross directory boundaries exert pressure on the cognitive classification, and \module{Mathlib}'s ongoing directory reorganizations---such as the gradual absorption of \module{RingTheory} into \module{Algebra}---are precisely the points where logical necessity forces cognitive categories to yield. Neither $T$ alone nor $G_{\mathrm{module}}$ alone determines the architecture; each continuously remakes the other.
-
-This mutual determination also governs the library's evolution. The accumulation of DAG depth ($153$; \S\ref{sec:dag-depth}), cross-directory density (37.1\%), and hub concentration represents the growing tension between logical structure and cognitive organization. In this sense, formalization does not dissolve the human organization of mathematics, nor does it simply reveal where that organization must yield. It initiates a feedback loop: the formal product reshapes the cognitive framework that produced it, which in turn reshapes the next generation of formal products.
 
 \label{sec:structural-analysis}
 \subsubsection{Degree Distribution}
@@ -109,12 +85,11 @@ We plot the degree distributions on log--log axes (Figure~\ref{fig:degree-distri
 \label{fig:degree-distribution}
 \end{figure}
 
-\noindent\textbf{Note.}
 Both degree distributions are heavy-tailed but do not cleanly fit a power law. The out-degree distribution, in particular, becomes much more concentrated after transitive reduction (maximum dropping from $315$ to $70$, standard deviation from $4.12$ to $1.83$), indicating that many high-out-degree imports are transitively redundant.
 In contrast, the in-degree distribution is barely affected by transitive reduction (maximum: $167 \to 151$; standard deviation: $4.69 \to 3.91$). This asymmetry has a structural explanation: redundant edges arise primarily from developers importing umbrella modules---an act that inflates the importer's out-degree without changing the importee's in-degree. The development-ergonomic redundancy identified in \S\ref{sec:transitive-reduction} is \emph{directional}: it lives in the ``I depend on others'' direction, not the ``others depend on me'' direction.
-This directional asymmetry connects to the tree $T$: developers inflate their out-degree by importing umbrella modules that aggregate entire sub-hierarchies---effectively borrowing $T$'s organizational structure for development ergonomics. The redundancy is not random; it follows the contours of~$T$, because developers want easy access to related theory for future extensions and refactoring.
+The redundancy is not random; it follows the contours of the module tree~$T$, because developers import umbrella modules that aggregate entire sub-hierarchies for refactoring convenience.
 
-\subsubsection{DAG Depth and Layered Structure}
+\subsubsection{DAG Depth}
 \label{sec:dag-depth}
 
 All sources (modules with no incoming edges) sit at level~$0$, while the unique sink \module{Tactic.Linter.DirectoryDependency} sits at level~$153$.
@@ -134,10 +109,8 @@ A secondary peak is visible near level~$126$, where approximately $59$ modules c
 \label{fig:dag-structure}
 \end{figure}
 
-\noindent\textbf{Note.}
-The layer-width profile has a characteristic ``funnel'' shape: very wide at the top (many independent leaf files), narrowing through the middle layers (where mathematical theories converge), and tapering to a single sink at the bottom. This shape reflects the fact that advanced mathematics is built on a narrow foundation of shared definitions and tactics. This narrow waist also has engineering consequences: any change to a module in the bottleneck layers propagates upward through a large fraction of the library, creating recompilation cascades whose cost grows with the depth of the funnel. Lean's module system, by enabling private imports, is an existing engineering response to this narrow-waist problem.
+The funnel shape---wide at the top, tapering to a single sink---reflects the fact that advanced mathematics is built on a narrow foundation of shared definitions and tactics. Any change to a module in the bottleneck layers propagates upward through a large fraction of the library, creating recompilation cascades. Lean's module system, by enabling private imports, is an existing engineering response to this narrow-waist problem.
 
-\noindent\textbf{Module depth and import symmetry.}
 \label{rem:import-depth-symmetry}
 The DAG depth of~$153$ layers describes the topological extent of the dependency chain. A different notion of depth---the \emph{module depth}, i.e., the number of dot-separated components of a module's fully qualified name---describes how deeply a module sits in the naming hierarchy~$T$. Module depth is concentrated: $55.7\%$ of modules have depth~$4$ (e.g., \module{Mathlib.Data.Nat.Basic}), with a mean of~$4.22$. Import edges exhibit near-perfect depth symmetry: $55.4\%$ connect modules at the same naming depth, $23.3\%$ point from deeper to shallower, and $21.3\%$ from shallower to deeper (mean difference~$+0.03$). Only~$1.3\%$ of imports target modules at depth~$\le 2$. Developers import \emph{laterally}---peer to peer within the same naming stratum---rather than vertically across naming layers. As we shall see in \S\ref{sec:cross_level}, this symmetry contrasts sharply with the declaration-level dependency graph, where $37.6\%$ of edges flow from deeper to shallower namespaces and the mean depth difference rises to~$+0.36$: the module graph compresses and hides the strong infrastructure pull that the declaration graph reveals.
 
@@ -180,30 +153,33 @@ We compare in-degree, PageRank, and betweenness pairwise in Figures~\ref{fig:cen
 
 \begin{figure}[H]
 \centering
+\begin{subfigure}[t]{0.32\textwidth}
+\centering
 \includegraphics[width=\textwidth]{figures/module_centrality_indeg_pr.pdf}
-\caption{In-degree vs.\ PageRank in $G_{\mathrm{module}}$. Each point is one module. If the two measures were equivalent, points would cluster along a diagonal; the wide scatter confirms they capture distinct structural roles.}
+\caption{In-degree vs.\ PageRank.}
 \label{fig:centrality-indeg-pr}
-\end{figure}
-
-\begin{figure}[H]
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.32\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/module_centrality_indeg_betw.pdf}
-\caption{In-degree vs.\ betweenness centrality in $G_{\mathrm{module}}$. Modules with high betweenness but moderate in-degree serve as structural bridges between otherwise disconnected regions of the import graph.}
+\caption{In-degree vs.\ Betweenness.}
 \label{fig:centrality-indeg-betw}
-\end{figure}
-
-\begin{figure}[H]
+\end{subfigure}%
+\hfill
+\begin{subfigure}[t]{0.32\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/module_centrality_betw_pr.pdf}
-\caption{Betweenness vs.\ PageRank in $G_{\mathrm{module}}$. The three-way divergence visible in Tables~\ref{tab:centrality} is not confined to the top extremes but pervades the entire distribution.}
+\caption{Betweenness vs.\ PageRank.}
 \label{fig:centrality-betw-pr}
+\end{subfigure}
+\caption{Pairwise centrality scatter plots for $G_{\mathrm{module}}$. Each point is one module. The wide scatter across all three panels confirms that in-degree, PageRank, and betweenness capture distinct structural roles. The three-way divergence visible in Table~\ref{tab:centrality} pervades the entire distribution, not just the top extremes.}
+\label{fig:module-centrality}
 \end{figure}
 
-The three rankings largely differ: the only module appearing in all three top-20 lists is \module{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:module_conclusion}.
+The three rankings largely differ: the only module appearing in all three top-20 lists is \module{Mathlib.Init}. This divergence is not a technical detail---it is one of our central findings. It demonstrates that \emph{importance} in a formal mathematical library is irreducibly multidimensional: a module can be heavily used (high in-degree) without being foundational (high PageRank), and foundational without being a bridge (high betweenness). No single centrality measure captures the full structural role of a module; the three measures together define a taxonomy that we develop further in \S\ref{sec:cross-level-summary}.
 
-In particular, high-betweenness modules acquire their bridging role precisely by connecting regions of $G_{\mathrm{module}}$ that the tree $T$ separates. The top betweenness modules in Table~\ref{tab:centrality} typically sit at the boundary between top-level directories: they are the points where the logical structure of mathematics forces a passage across $T$'s cognitive borders.
-
-In-degree identifies the most frequently \emph{imported} modules (foundational definitions and commonly used tactics). PageRank, which propagates importance along dependency chains, promotes modules deep in the import hierarchy such as \module{Tactic.Linter.Header} and low-level logic utilities. Betweenness centrality highlights \emph{bottleneck} modules through which many shortest paths pass, favoring files like \module{LinearAlgebra.Span.Basic} and \module{Analysis.Normed.Module.FiniteDimension} that bridge otherwise distant parts of the library.
+In particular, high-betweenness modules acquire their bridging role by connecting regions of $G_{\mathrm{module}}$ that the tree $T$ separates. The top betweenness modules in Table~\ref{tab:centrality} typically sit at the boundary between top-level directories---the points where mathematical logic forces a passage across $T$'s cognitive borders.
 
 \subsubsection{Community Structure}
 \label{sec:module-community}
@@ -227,7 +203,7 @@ Communities with ${>}100$ nodes & $9$ \\
 \end{tabular}
 \end{table}
 
-The modularity of $0.64$ is the highest among the three levels---substantially above the declaration level ($0.48$) and the namespace level ($0.28$). This reflects the fact that modules are the unit at which human organization is most direct: developers place related files in the same directory, creating dense within-directory import clusters that Louvain readily detects.
+The modularity of $0.64$ is the highest among the three graph levels, reflecting the fact that modules are the unit at which human organization is most direct: developers place related files in the same directory, creating dense within-directory import clusters.
 
 \begin{table}[ht]
 \centering
@@ -252,12 +228,6 @@ ID & Size & Dominant directories \\
 \end{table}
 
 The communities map recognizably onto mathematical domains. \module{CategoryTheory} again dominates a single community ($64\%$ of Community~$7$), mirroring the exceptional autonomy observed at the declaration level (\S\ref{sec:thm-community}). The NMI between Louvain communities and top-level directories is $0.42$ (ARI~$= 0.28$)---higher than the declaration-level NMI of $0.34$ (\S\ref{sec:thm-community}). The stronger alignment reflects the fact that modules, unlike declarations, are explicitly organized into a directory tree; the import graph inherits much of that tree structure.
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/community_module_graph.pdf}
-\caption{Louvain community aggregation graph of $G_{\mathrm{module}}$ (modularity~$= 0.64$). Each node is a community; size $\propto \sqrt{\text{members}}$; labels show the dominant directory and count.}
-\label{fig:community-module-graph}
-\end{figure}
 
 \begin{figure}[H]
 \centering
@@ -289,10 +259,8 @@ Top-5 by betweenness     & $20$ & $48$ \\
 
 Removing the five highest in-degree modules (\module{Init}, \module{Tactic.Common}, \module{Analysis.Normed.Group.Basic}, \module{Util.CompileInductive}, and \module{Algebra.Ring.Defs}) fragments the raw graph into $29$ components, though the largest component still contains $7{,}530$ of the original $7{,}563$ nodes. The effect is more pronounced on $G_{\mathrm{module}}^{-}$ ($56$ components), since transitive reduction removes the alternative paths that would otherwise keep the graph connected.
 
-\noindent\textbf{Note.}
 \label{rem:robustness}
-The fragmentation is modest: even after targeted removal, over $99\%$ of modules remain in the giant component. This resilience stems from the high density of the module graph---each module has, on average, $3.12$ imports, providing redundant connectivity. The transitive reduction is more fragile precisely because it removes this redundancy.
-This finding reframes the development-ergonomic redundancy of \S\ref{sec:transitive-reduction}: the edges that developers add for ease of extension---guided by the categories of~$T$---simultaneously serve as structural insurance, providing alternative paths that keep the network connected when bridges fail.
+Even after targeted removal, over $99\%$ of modules remain in the giant component. The transitive reduction is more fragile ($56$ components vs.\ $29$) precisely because it removes the redundant connectivity that doubles as structural insurance.
 
 \begin{figure}[ht]
 \centering
@@ -302,3 +270,13 @@ This finding reframes the development-ergonomic redundancy of \S\ref{sec:transit
 \end{figure}
 
 Figure~\ref{fig:module-robustness} shows the progressive removal curves. Under random removal, the giant component degrades gracefully---removing $20\%$ of modules leaves $80\%$ connected. Under targeted attack on the highest-PageRank modules, the same $20\%$ removal reduces the giant component to $58\%$, a $22$-percentage-point gap that grows with the removal fraction. The curve confirms the hub-dominated vulnerability signature: the module graph's resilience depends on a small number of high-centrality hubs whose removal fragments the network far more effectively than chance would predict.
+
+\subsubsection{Extended Analysis}\label{app:module-analysis}
+
+The $17.5\%$ post-\texttt{shake} edge redundancy (\S\ref{sec:transitive-reduction}) represents a \textit{development ergonomics layer}: developers import umbrella modules to bring tactics, notation, and typeclass instances into scope, sacrificing logical minimality for usability. The fact that \texttt{shake} intentionally preserves many of these imports confirms they serve a structural purpose, suggesting that future proof assistants could benefit from explicitly modeling two dependency layers: a minimal graph for the build system and a richer graph for the interactive environment.
+
+The layer-width profile (\S\ref{sec:dag-depth}) reveals a \textit{funnel topology}: a massive leaf layer (${>}1{,}400$ modules) resting on a deep, narrow foundation. Changes in the narrow ``waist'' (high-betweenness modules) trigger recompilation cascades---a scalability challenge that Lean's module system (November 2025) addresses through private imports. Unlike informal mathematics, where foundational texts are static, \module{Mathlib}'s foundational modules remain mutable code; the maintenance cost of a module is a function of its topological depth. One possible trajectory is that monolithic libraries will hit a \textit{critical depth threshold} requiring \textit{federated tiers}---freezing foundational layers into pre-compiled artifacts.
+
+The three centrality measures (\S\ref{sec:centrality}) admit distinct operational interpretations: in-degree identifies frequently used \textit{vocabulary}; PageRank identifies the \textit{axiomatic core}; betweenness identifies \textit{structural bridges} between subfields. Refactoring a high-betweenness module carries more systemic risk than refactoring a high-in-degree module, since it disrupts cross-theory connectivity.
+
+We hypothesize that \module{Mathlib} has evolved into a \textit{curated small-world network}, growing via \textit{semantic attachment} rather than preferential attachment: new modules cluster within directories while bridge modules maintain global connectivity. The module tree~$T$ and the import graph~$G_{\mathrm{module}}$ continuously reshape each other: developers import along cognitive contours of~$T$, while cross-directory dependencies force periodic reorganization---as in the ongoing absorption of \module{RingTheory} into \module{Algebra}.

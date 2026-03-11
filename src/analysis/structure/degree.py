@@ -106,9 +106,9 @@ def degree_distribution_analysis(
         ax.scatter(x, y, c=INDIGO, alpha=0.6, s=20, label='Data')
         ax.set_xscale('log')
         ax.set_yscale('log')
-        ax.set_xlabel('Degree', fontsize=12)
-        ax.set_ylabel('Frequency', fontsize=12)
-        ax.set_title(title, fontsize=14, color=INDIGO)
+        ax.set_xlabel('Degree')
+        ax.set_ylabel('Frequency')
+        ax.set_title(title, color=INDIGO)
 
         # Power law fit line
         x_fit = np.array(x)

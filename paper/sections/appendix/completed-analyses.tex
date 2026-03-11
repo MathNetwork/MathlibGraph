@@ -1,0 +1,85 @@
+\subsection{Additional Empirical Observations}
+\label{sec:additional-empirical}
+
+The graph definitions of \S\ref{sec:graph-definitions} assign rich metadata to each declaration node. This section reports two completed empirical analyses that characterise the \emph{process} layer of the dependency graph: definitional height (a kernel-level measure of implicit coupling) and tactic usage (a proof-strategy fingerprint).
+
+\subsubsection{Definitional Height Distribution}
+\label{sec:definitional-height}
+
+Lean's type checker relies on \emph{definitional equality}: to verify that two types match, the kernel may need to unfold a chain of definitions. For each definition, Lean computes a \emph{definitional height} $\delta(d)$---the number of regular (semireducible) definitions in its transitive dependency chain---stored in the \texttt{ReducibilityHints} field. This quantity is invisible in the explicit dependency graph $G_{\mathrm{thm}}$---it does not appear in $\mathrm{refs}(d.\pi)$---yet it constitutes a form of \emph{implicit coupling}: declarations with high~$\delta$ are brittle, because changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged.
+
+We extracted $\delta(d)$ for all $101{,}021$ Mathlib definitions via the \texttt{DefinitionVal.hints} API. Of these, $53{,}962$ are \emph{regular} (semireducible) with a numeric height, $42{,}786$ are \emph{abbreviations} (always unfolded, no height), and $4{,}273$ are \emph{opaque} (never unfolded). Among regular definitions, the height distribution has median~$7$, mean~$10.1$, IQR~$[4, 14]$, and a maximum of~$60$. The distribution is roughly log-normal: $58\%$ of definitions have height $< 10$, while a tail of $13.5\%$ has height $\ge 20$. This confirms that most definitions sit at shallow depth, but a non-trivial fraction involves long unfolding chains that may contribute to elaboration and compilation bottlenecks.
+
+\subsubsection{Tactic Usage Patterns}
+\label{sec:tactic-usage}
+
+To extract per-declaration tactic usage, we employ \texttt{jixia}~\cite{jixia2024}, a static analysis tool for Lean~4 developed at BICMR, Peking University (see also~\cite{gao2025herald}). Running \texttt{jixia}'s declaration plugin over all $7{,}563$ Mathlib source files yields the pretty-printed proof term for each declaration, from which we parse tactic names.
+
+\smallskip\noindent\textbf{Proof mode distribution.}
+Of $235{,}586$ declarations extracted, $170{,}985$ are theorems ($72.6\%$), $35{,}635$ definitions ($15.1\%$), $24{,}947$ instances ($10.6\%$), and $4{,}019$ other (abbreviations, examples, opaques, inductives).
+Among theorems, $76{,}708$ ($44.9\%$) use tactic mode (proof begins with \texttt{by}) and $94{,}277$ ($55.1\%$) use term mode. An additional $3{,}202$ non-theorem declarations (primarily instances) also employ tactic proofs, bringing the total tactic-mode count to $79{,}910$.
+
+\smallskip\noindent\textbf{Proof complexity.}
+Tactic-mode proofs contain $325{,}454$ tactic steps in total. The distribution of steps per proof has median~$2$, mean~$4.1$, and IQR~$[1, 4]$, with a maximum of~$173$. Single-step proofs (\texttt{by simp}, \texttt{by exact \ldots}, etc.) account for $39.2\%$ of all tactic proofs, and $68.7\%$ use at most three steps. Only $9.4\%$ require ten or more steps. This confirms that most Mathlib proofs are short: the library favors fine-grained decomposition into small lemmas over long monolithic proof scripts.
+
+\smallskip\noindent\textbf{Global tactic frequencies.}
+Table~\ref{tab:tactic-freq} lists the fifteen most frequently invoked tactics. The top three---\texttt{rw} ($16.9\%$), \texttt{simp} ($11.2\%$), and \texttt{exact} ($10.4\%$)---together account for $38.5\%$ of all tactic steps. The top ten account for $67.0\%$. The dominance of \texttt{rw} (rewriting) reflects Mathlib's equational style: the most common proof strategy is to transform the goal by substituting known equalities. The prominence of \texttt{simp} (simplification) and \texttt{exact} (term-mode embedding) indicates that automation and direct proof-term construction are the next most common strategies.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Top 15 tactics by invocation count across all $79{,}910$ tactic-mode proofs ($325{,}454$ total steps).}
+\label{tab:tactic-freq}
+\begin{tabular}{l r r}
+\toprule
+\textbf{Tactic} & \textbf{Count} & \textbf{\%} \\
+\midrule
+\texttt{rw}       & 55,074 & 16.9 \\
+\texttt{simp}     & 36,380 & 11.2 \\
+\texttt{exact}    & 33,767 & 10.4 \\
+\texttt{have}     & 23,939 &  7.4 \\
+\texttt{refine}   & 18,158 &  5.6 \\
+\texttt{apply}    & 12,639 &  3.9 \\
+\texttt{obtain}   & 12,020 &  3.7 \\
+\texttt{intro}    & 10,321 &  3.2 \\
+\texttt{simpa}    &  8,372 &  2.6 \\
+\texttt{ext}      &  7,408 &  2.3 \\
+\texttt{rcases}   &  6,519 &  2.0 \\
+\texttt{simp\_rw} &  5,933 &  1.8 \\
+\texttt{let}      &  5,439 &  1.7 \\
+\texttt{rintro}   &  5,304 &  1.6 \\
+\texttt{by\_cases} & 3,959 &  1.2 \\
+\midrule
+\emph{Top 3}      & 125,221 & 38.5 \\
+\emph{Top 10}     & 218,070 & 67.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\smallskip\noindent\textbf{Per-namespace variation.}
+Tactic usage varies significantly across mathematical domains. Table~\ref{tab:tactic-ns} shows the top tactic for each of the ten largest namespaces. Notably, \texttt{rw} is the most common tactic in eight of ten namespaces, but \texttt{simp} leads in \module{CategoryTheory} (where diagrammatic reasoning is heavily automated) and \texttt{exact} ties with \texttt{rw} in \module{Topology} (where point-set arguments are often resolved by direct term construction).
+
+To quantify these differences, we compute the Jensen--Shannon divergence (JSD) between the tactic frequency distributions of namespace pairs. The most divergent pair is \module{CategoryTheory} vs.\ \module{MeasureTheory} ($\mathrm{JSD} = 0.180$), reflecting fundamentally different proof styles: categorical proofs rely heavily on \texttt{simp}, \texttt{aesop}, and \texttt{ext}, while measure-theoretic proofs favor \texttt{have}, \texttt{exact}, and \texttt{filter\_upwards}. The most similar pairs are \module{Algebra} vs.\ \module{LinearAlgebra} ($\mathrm{JSD} = 0.052$) and \module{RingTheory} vs.\ \module{LinearAlgebra} ($\mathrm{JSD} = 0.052$), confirming that algebraic subfields share closely related proof methodologies.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Tactic usage by top-level namespace (top 10 by tactic-proof count). The three most frequent tactics in each namespace are listed with their share of that namespace's total tactic steps.}
+\label{tab:tactic-ns}
+\begin{tabular}{l r l}
+\toprule
+\textbf{Namespace} & \textbf{Proofs} & \textbf{Top 3 tactics (\%)} \\
+\midrule
+\module{Algebra}         & 11,390 & \texttt{rw} (20), \texttt{simp} (13), \texttt{exact} (9) \\
+\module{Analysis}        &  9,677 & \texttt{rw} (16), \texttt{simp} (11), \texttt{exact} (10) \\
+\module{Data}            &  8,598 & \texttt{rw} (18), \texttt{simp} (14), \texttt{exact} (9) \\
+\module{RingTheory}      &  6,633 & \texttt{rw} (18), \texttt{simp} (10), \texttt{exact} (10) \\
+\module{Topology}        &  5,741 & \texttt{rw} (14), \texttt{exact} (14), \texttt{simp} (9) \\
+\module{CategoryTheory}  &  5,625 & \texttt{simp} (13), \texttt{rw} (13), \texttt{exact} (9) \\
+\module{MeasureTheory}   &  4,631 & \texttt{rw} (15), \texttt{exact} (13), \texttt{have} (10) \\
+\module{LinearAlgebra}   &  4,323 & \texttt{rw} (18), \texttt{simp} (12), \texttt{exact} (8) \\
+\module{Order}           &  3,780 & \texttt{rw} (16), \texttt{simp} (14), \texttt{exact} (14) \\
+\module{NumberTheory}    &  3,049 & \texttt{rw} (18), \texttt{have} (10), \texttt{exact} (10) \\
+\bottomrule
+\end{tabular}
+\end{table}
