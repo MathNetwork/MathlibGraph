@@ -1,0 +1,88 @@
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+We have analyzed the network structure of \module{Mathlib} at three levels of granularity plus their cross-level interaction. Table~\ref{tab:summary} collects the key quantitative findings.
+
+\begin{table}[ht]
+\centering
+\caption{Cross-level summary of structural findings.}
+\label{tab:summary}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Metric & \S\ref{sec:module-import} Module & \S\ref{sec:theorem-premise} Declaration & \S\ref{sec:namespace-graph} Namespace & \S\ref{sec:module-declaration} Cross-Level \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Scale and topology}} \\[2pt]
+Nodes                      & $7{,}563$        & $308{,}129$      & $10{,}097$       & --- \\
+Edges                      & $23{,}570$       & $8{,}436{,}366$  & $332{,}081$      & --- \\
+DAG depth                  & $153$            & $84$             & $8$              & --- \\
+Cross-namespace edges       & $37.1\%$         & $50.9\%$         & $85.8\%$         & --- \\
+Intra-module edges          & ---              & $9.6\%$          & ---              & --- \\
+Terminal nodes (zero out-citation) & ---       & $44.8\%$         & ---              & --- \\[4pt]
+\multicolumn{5}{@{}l}{\textit{Decomposition metrics}} \\[2pt]
+Synthesized edges ($\sigma$) & ---             & $74.2\%$         & ---              & --- \\
+Statement-only / proof-only / both & ---       & $8.1/43.9/48.0\%$ & ---            & --- \\
+Transitive redundancy       & $17.5\%$         & ---              & ---              & --- \\
+Definitional height         & ---              & med.\,$7$, max\,$60$ & ---          & --- \\
+Parallelism ratio           & $22.4\times$     & ---              & ---              & --- \\[4pt]
+\multicolumn{5}{@{}l}{\textit{Community and alignment}} \\[2pt]
+Centrality separation       & partial          & complete         & complete         & --- \\
+Community--namespace NMI   & ---              & $0.34$           & $0.25$           & --- \\
+Modularity                 & ---              & $0.48$           & $0.28$           & --- \\
+Single-node removal impact & $29$ components  & $\le 6$ nodes    & GCC $20.8\%$ at $20\%$ & --- \\
+Containment (depth $1$)    & ---              & ---              & $22.2\%$         & --- \\
+Theorem/lemma in-degree ratio & ---            & $1.47\times$     & ---              & --- \\[4pt]
+\multicolumn{5}{@{}l}{\textit{Cross-level}} \\[2pt]
+Module cohesion (mean)     & ---              & ---              & ---              & $0.107$ \\
+Zero-cohesion modules      & ---              & ---              & ---              & $8.4\%$ \\
+$G_{\mathrm{file}}/G_{\mathrm{module}}$ edge ratio & ---  & ---  & ---              & $9.1\times$ \\
+Active imports             & ---              & ---              & ---              & $72.1\%$ \\
+Indirect declaration deps  & ---              & ---              & ---              & $92.2\%$ \\
+Import utilization (median) & ---              & ---              & ---              & $1.6\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rather than recapitulating per-level findings (detailed in Appendix~\ref{app:supplementary}), we organise the discussion around the product\,/\,process lens of \S\ref{sec:conceptual-framework}.
+
+\label{sec:summary}
+\label{sec:interplay}
+The central claim of this paper is that the network structure of a formal mathematical library records not only the inherited mathematical structure, but also the human organizational process. Our data substantiate this claim with three process-traces embedded in the product, corresponding to the findings of \S\ref{sec:contribution}:
+
+\begin{enumerate}
+\item \textbf{Organizational divergence and cognitive compression} (Finding~1). At every granularity level, naming conventions and dependency-based community structure diverge: contributors impose a coarser taxonomy than the dependency graph warrants, trading structural precision for navigability. The cross-file declaration dependency graph contains $9.1\times$ more edges than the module import graph that abstracts it (\S\ref{sec:import_vs_declaration}), with $92.2\%$ of cross-file declaration dependencies reached through transitive import chains rather than direct imports. A further asymmetry separates product from process: in-degree is heavy-tailed and open-ended, because how widely a result is reused is determined by the mathematical content itself; out-degree is bounded, because the number of premises a single proof can invoke is constrained by human cognitive complexity.
+
+\item \textbf{Structural redundancy as development ergonomics} (Finding~2). The $17.5\%$ post-\texttt{shake} redundancy (\S\ref{sec:transitive-reduction}) records the gap between compiler requirements and developer workflow. The redundancy is directional, inflating out-degree without affecting in-degree. This asymmetry is consistent with an ergonomic motivation: redundant imports are added by the importer for convenience, not demanded by the imported module's consumers.
+
+\item \textbf{Topological inversion and semantic flattening} (Finding~3). The DAG depths are $153$/$84$/$8$ layers across module, declaration, and namespace graphs. That the coarser module graph is \emph{deeper} than the declaration graph it abstracts reflects the fact that a single module import pulls in an entire file, chaining import layers even when only a few declarations are actually needed; the file hierarchy is shaped by incremental organizational layering, while mathematical logic resists deep stratification. Formalization preserves traditional labels but flattens their meaning: the \texttt{theorem}/\texttt{lemma} distinction is partially validated in aggregate but contradicted in many individual cases (\S\ref{sec:thm-vs-lemma}).
+\end{enumerate}
+
+The relationship between product and process is not unidirectional. The $37.1\%$ cross-directory edge rate in $G_{\mathrm{module}}^{-}$ (\S\ref{sec:cross-namespace}) exerts reorganization pressure on the directory hierarchy, as witnessed by \module{Mathlib}'s ongoing absorption of \module{RingTheory} into \module{Algebra}. The deep dependency chain ($153$ layers) constrains the development process directly: modifications to high-PageRank modules trigger recompilation cascades that incentivize stability at the core and experimentation at the periphery. Formalization thus initiates a feedback cycle: the directory tree constrains which imports are convenient (co-located files are easier to discover), shaping the module graph; the module graph in turn reshapes the directory tree when cross-directory coupling becomes untenable.
+
+\label{sec:practice}
+\paragraph{Implications for practice.}
+These findings are not merely descriptive; several metrics admit direct operational use. Module cohesion (Definition~\ref{def:cohesion}) can flag scope drift when computed incrementally; the zero-citation rate (\S\ref{sec:thm-leaves}) identifies potentially redundant API surface. PageRank and betweenness rankings identify modules whose modification triggers the widest recompilation cascades, and could inform CI prioritization by assigning higher test priority to pull requests that touch high-centrality modules. Huch and Wenzel~\cite{huch2024} demonstrate ${>}100\times$ speedup from DAG-based parallel builds; Baanen et al.~\cite{baanen2025} report $6$--$33\%$ speedups from structural refactors.
+
+For language design, the two-layer hub structure (\S\ref{sec:thm-types}) suggests that an explicit boundary between language infrastructure and mathematical content could enable independent dependency analysis and compilation. The $92.2\%$ indirect dependency rate (\S\ref{sec:import_vs_declaration}) motivates finer-grained import mechanisms; Lean's module system (November 2025), distinguishing \texttt{public import} from \texttt{import}, is already a step in this direction.
+
+For AI systems that learn premise selection or proof generation from \module{Mathlib}, our analysis reveals structural features usable as training metadata: theorem/lemma annotations as importance signals, Louvain community labels as disciplinary tags, and declaration types as role indicators. As AI-generated proofs become a larger fraction of contributions, the metrics established here (redundancy rate, cohesion, degree distribution exponents, cross-namespace density) provide a baseline for detecting structural drift.
+
+\label{sec:limitations}
+\paragraph{Limitations.}
+Several limitations constrain these conclusions. The detailed analyses are computed from a single commit (\texttt{534cf0b}, February 2026); the cross-version comparison in \S\ref{sec:contribution} covers only a handful of aggregate indicators at four snapshots, and we cannot determine whether the finer structural properties we observe are stable, growing, or approaching critical thresholds. The evolutionary hypotheses advanced in \S\ref{sec:cross-level-summary} remain untested predictions. Our snapshot further captures the library in a transitional state where most imports are still public; as the community adopts private imports through Lean's module system, redundancy rates and transitive visibility will change. The ``process'' side of our analysis is inferred from structural traces in the product, not observed directly; we do not analyze PR workflows, contributor patterns, or commit history. Finally, our data are consistent with bidirectional influence between the module tree and the dependency graph (\S\ref{sec:summary}), but a causal account would require longitudinal or experimental evidence.
+
+\label{sec:future}
+\paragraph{Open problems.}
+Several graph definitions in \S\ref{sec:graph-definitions} remain empirically unexplored; \S\ref{sec:temporal-graphs} outlines a programme for temporal, visibility, and co-modification graphs. Beyond these, we highlight several directions.
+
+The growing ecosystem of downstream projects (FLT~\cite{flt_lean}, PFR~\cite{pfr_lean}, Sphere Eversion~\cite{sphere_eversion}, etc.) suggests a ``core + satellite'' architecture whose structural properties merit investigation; the federated-tiers hypothesis (\S\ref{app:module-analysis}) can be reframed as Mathlib consolidating as the foundational tier. Applying the same analysis to other formal libraries (Isabelle/AFP~\cite{blanchette2015,klein2012}, Coq/MathComp, Mizar/MML~\cite{bancerek2018}) would distinguish structural features intrinsic to mathematics from those contingent on a particular proof assistant or community.
+
+Network analysis may also inform the engineering question of how to decentralize a monolithic library. \module{Mathlib} currently functions as a single repository whose compilation cost grows with every contribution; the $153$-layer module DAG, the $17.5\%$ transitive redundancy, and the concentration of in-degree on a small set of infrastructure hubs all quantify the cost of this monolithic design. In principle, community detection and minimum-cut analysis on $G_{\mathrm{module}}$ could identify natural package boundaries (clusters of modules with dense internal coupling but sparse external edges) along which the library could be split into independently versioned packages without severing heavily trafficked dependency paths; whether such boundaries exist in practice remains to be tested. The import utilization metric (median $1.6\%$) suggests that most cross-package interfaces would be narrow. Such a decomposition would reduce per-project compilation cost, enable independent release cycles, and lower the barrier to contribution, but it requires balancing package autonomy against the coherence guarantees that a monorepo provides (e.g., global refactoring, uniform naming, CI-enforced compatibility). The network metrics developed here (cohesion, cross-namespace density, active import fraction) provide a quantitative basis for evaluating candidate splits before committing to them.
+
+More broadly, as \module{Mathlib} continues to grow, network analysis can locate where engineering pressure will concentrate. Our data already expose several scaling vulnerabilities. A small number of infrastructure declarations (typeclasses, coercions, core algebraic structures) absorb a disproportionate share of in-degree; any refactoring of these hubs propagates through a large fraction of the graph, and their recompilation cost grows with every new dependent. The $153$-layer module DAG determines the critical path for compilation, and as new modules are appended at the periphery this path risks growing further, widening the gap between wall-clock build time and the parallelism ratio. At the declaration level, the $50.9\%$ cross-namespace edge rate indicates that mathematical subfields are already tightly coupled; further growth in cross-cutting theories (e.g., algebraic geometry drawing simultaneously on algebra, topology, and category theory) is likely to increase this density, making clean modular boundaries harder to draw. Although \texttt{shake} has kept mean imports per file stable at ${\sim}3.1$ as the library doubled in size, the transitive redundancy rate ($17.5\%$) could still grow if new cross-cutting dependencies outpace linting, making import graphs increasingly opaque to contributors and tooling alike.
+
+Each of these pressures admits a network-level response. Hub concentration can be monitored via in-degree and PageRank thresholds that trigger review when a declaration's dependents exceed a critical mass. Critical-path length can be tracked across releases to alert maintainers when new contributions disproportionately extend the longest chain. Cross-namespace density can serve as an early warning for subfields that need interface stabilization. Redundancy growth is already partially addressed by \texttt{shake}, but could be further controlled by import utilization targets. Longitudinal tracking of these indicators across \module{Mathlib} releases would turn the static snapshot of this paper into a diagnostic dashboard for library health.
+
+The dependency graphs studied here capture only the strict logical skeleton of mathematics. Traditional mathematical texts encode a richer network of relations that are not formal dependencies but carry essential structural information: motivating insights, instructive counterexamples, clarifying remarks, historical context, and heuristic analogies between subfields. These ``soft'' edges have no representation in a proof assistant's environment, yet they guide how mathematicians navigate and extend a body of knowledge. Tools such as Leanblueprint~\cite{massot2020leanblueprint} already extract the strict dependency DAG of a formalization project to serve as a scaffolding for coordinating contributions; extending this scaffolding with soft-dependency layers, extracted for instance from the natural-language prose surrounding formal statements in textbooks and papers, could yield a more faithful map of mathematical knowledge. Such an extended network would have direct practical value: in a large formalization campaign, the order in which results are formalized is currently determined by the logical DAG alone, but soft dependencies (e.g., ``this proof is best understood after seeing the counterexample in \S3'') could inform a more cognitively efficient sequencing.
+
+A deeper question underlies all of these: is the dependency topology we observe a property of \emph{mathematics}, or of \emph{how mathematics is currently produced}? The metrics developed in this paper provide the vocabulary in which the answer, when it comes, can be expressed.
