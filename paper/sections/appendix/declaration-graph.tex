@@ -5,7 +5,7 @@
 This appendix collects the formal definitions, edge decompositions, mechanism-specific subgraphs, node-level metadata, and all illustrative figures for the declaration dependency graph. Extended statistical analysis (degree distributions, centrality rankings, community detection, robustness curves) appears in Appendix~\ref{app:decl-detail}.
 
 \subsubsection{The declaration graph $G_{\mathrm{thm}}$}
-When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's elaborator inserts automatically.
+When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's \emph{elaborator}---the compiler component responsible for resolving implicit arguments, typeclass instances, and coercions---inserts automatically.
 
 \begin{definition}[Declaration graph]
 \label{def:thm-graph}

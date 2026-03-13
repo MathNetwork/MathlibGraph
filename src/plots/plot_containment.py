@@ -23,7 +23,7 @@ decl_baseline = 9.6
 OUTDIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
-fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+fig, ax = plt.subplots(figsize=(12, 4))
 
 # x positions: 0=topdir, 1..6=namespace depths, 7=file
 x_ns = list(range(1, 7))

@@ -79,7 +79,7 @@ def robustness_curve(G, fractions, seed=42):
 def plot_robustness(fractions, random_gcc, targeted_gcc, title, out_path, color):
     """Plot robustness curves using the level color."""
     x = [0.0] + list(fractions)
-    fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+    fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(np.array(x) * 100, random_gcc, "o-", color=color,
             markersize=5, linewidth=1.5, label="Random removal")
     ax.plot(np.array(x) * 100, targeted_gcc, "s--", color=color, alpha=0.5,
@@ -88,6 +88,7 @@ def plot_robustness(fractions, random_gcc, targeted_gcc, title, out_path, color)
     ax.set_ylabel("Largest WCC / Total nodes")
     ax.set_title(title)
     ax.set_ylim(0, 1.05)
+    ax.set_xticks(np.arange(0, 55, 5))
     ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()

@@ -25,29 +25,6 @@ $5$ & $7{,}434$ & $0.8\%$   & $-8.0$  \\
 
 At depth~$1$, the $13$ top-level packages (\module{Mathlib}, \module{Batteries}, \module{Init}, etc.) contain $97.5\%$ of all import edges. The steepest single drop occurs at depth~$1 \to 2$ ($-37.3$ pp), when packages split into their subdirectories. The $60.2\%$ containment at depth~$2$ is consistent with the $61.4\%$ intra-directory rate reported in \S\ref{sec:cross-namespace}.\footnote{The small discrepancy ($60.2\%$ vs.\ $61.4\%$) reflects a difference in edge counts between our import parser and the \texttt{importGraph} tool.} By depth~$4$---the modal depth of modules---containment has fallen to $8.8\%$, and by depth~$5$ it is negligible.
 
-\subsubsection{Cross-Directory Heatmaps}\label{app:module-heatmaps}
-
-Figure~\ref{fig:namespace-heatmaps} visualises the inter-directory import flow as heatmaps for the raw and transitively reduced module graphs.
-
-\begin{figure}[H]
-\centering
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/namespace_heatmap_raw.pdf}
-\caption{Raw graph $G_{\mathrm{module}}$.}
-\label{fig:namespace-heatmap-raw}
-\end{subfigure}%
-\hfill
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/namespace_heatmap_tr.pdf}
-\caption{Transitive reduction $G_{\mathrm{module}}^{-}$.}
-\label{fig:namespace-heatmap-tr}
-\end{subfigure}
-\caption{Import counts between top-level directories (log scale). Each cell $(i, j)$ counts edges from directory~$i$ (row) to directory~$j$ (column); the diagonal captures intra-directory imports. Comparing (a) and (b), the transitive reduction removes redundant edges while preserving the essential dependency skeleton. The most prominent off-diagonal entries include \module{RingTheory}$\,\to\,$\module{Algebra} and the bidirectional coupling between \module{Algebra} and \module{Data}.}
-\label{fig:namespace-heatmaps}
-\end{figure}
-
 \label{sec:structural-analysis}
 \subsubsection{Degree Distribution}
 \label{sec:degree-distribution}
@@ -229,12 +206,6 @@ ID & Size & Dominant directories \\
 
 The communities map recognizably onto mathematical domains. \module{CategoryTheory} again dominates a single community ($64\%$ of Community~$7$), mirroring the exceptional autonomy observed at the declaration level (\S\ref{sec:thm-community}). The NMI between Louvain communities and top-level directories is $0.42$ (ARI~$= 0.28$)---higher than the declaration-level NMI of $0.34$ (\S\ref{sec:thm-community}). The stronger alignment reflects the fact that modules, unlike declarations, are explicitly organized into a directory tree; the import graph inherits much of that tree structure.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/community_module_heatmap.pdf}
-\caption{Community$\,\times\,$directory membership heatmap for $G_{\mathrm{module}}$ (NMI~$= 0.42$, log scale). \module{CategoryTheory} (C7) concentrates sharply in one column; \module{Algebra} fragments across three communities (C3, C0, C8).}
-\label{fig:community-module-heatmap}
-\end{figure}
 
 \subsubsection{Robustness}
 \label{sec:robustness}
@@ -264,7 +235,7 @@ Even after targeted removal, over $99\%$ of modules remain in the giant componen
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{figures/module_robustness_curve.pdf}
+\includegraphics[width=\textwidth]{figures/module_robustness_curve.pdf}
 \caption{Robustness curves for $G_{\mathrm{module}}$: fraction of nodes in the largest WCC as a function of the fraction removed, under random removal (blue) and targeted removal by PageRank (coral).}
 \label{fig:module-robustness}
 \end{figure}

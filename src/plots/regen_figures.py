@@ -99,7 +99,7 @@ def plot_degree_distribution(G, alpha_in, xmin_in, alpha_out, xmin_out):
 
 def plot_robustness_from_df(df):
     """Robustness curve -- matching unified style."""
-    fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+    fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(df["fraction_removed"] * 100, df["random_wcc_ratio"],
             "o-", color=COLORS["secondary"], markersize=4, linewidth=1.5,
             label="Random removal")
@@ -113,6 +113,7 @@ def plot_robustness_from_df(df):
     ax.legend()
     ax.grid(True, alpha=0.3)
     ax.set_ylim(0, 1.05)
+    ax.set_xticks(np.arange(0, 55, 5))
 
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / "thm_robustness_curve.pdf", bbox_inches="tight")

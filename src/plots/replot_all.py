@@ -156,7 +156,7 @@ def plot_centrality(csv_path, out_prefix, color, title_prefix):
 def plot_robustness(csv_path, out_name, color, title):
     """Plot robustness curve from cached data."""
     df = pd.read_csv(csv_path)
-    fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+    fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(df["fraction_removed"] * 100, df["random_gcc"],
             "o-", color=color, markersize=5, linewidth=1.5,
             label="Random removal")
@@ -167,6 +167,7 @@ def plot_robustness(csv_path, out_name, color, title):
     ax.set_ylabel("Largest WCC / Total nodes")
     ax.set_title(title)
     ax.set_ylim(0, 1.05)
+    ax.set_xticks(np.arange(0, 55, 5))
     ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -245,7 +246,7 @@ def plot_containment():
     file_containment = 15.6
     decl_baseline = 9.6
 
-    fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+    fig, ax = plt.subplots(figsize=(12, 4))
     x_ns = list(range(1, 7))
     ax.plot(x_ns, ns_containment, "o-", color=COLORS["tertiary"], linewidth=1.8,
             markersize=6, label="Namespace depth $k$", zorder=3)
