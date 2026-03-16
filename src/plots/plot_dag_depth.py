@@ -237,7 +237,7 @@ def main():
     # 3. Regenerate module-level DAG with fixed labels
     # ================================================================
     print("\n=== Module-level DAG (label fix) ===")
-    MATHLIB_ROOT = Path("/Users/moqian/MathNetwork/mathlib4/Mathlib")
+    MATHLIB_ROOT = Path(__file__).resolve().parent.parent.parent / "mathlib4" / "Mathlib"
 
     def lean_path_to_module(path):
         rel = path.relative_to(MATHLIB_ROOT.parent)

@@ -13,11 +13,11 @@ ROOT = Path(__file__).resolve().parent.parent  # src/
 
 # ── Canonical font-size spec ────────────────────────────────────────
 EXPECTED_FONT_SIZES = {
-    "TITLE_FS": 14,
-    "LABEL_FS": 12,
-    "TICK_FS": 11,
-    "LEGEND_FS": 11,
-    "ANNOT_FS": 9,
+    "TITLE_FS": 18,
+    "LABEL_FS": 16,
+    "TICK_FS": 14,
+    "LEGEND_FS": 14,
+    "ANNOT_FS": 11,
 }
 
 # All plotting scripts that generate paper figures

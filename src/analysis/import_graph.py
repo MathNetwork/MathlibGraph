@@ -17,7 +17,7 @@ import matplotlib.ticker as ticker
 import networkx as nx
 import numpy as np
 
-MATHLIB_ROOT = Path("/Users/moqian/MathNetwork/mathlib4/Mathlib")
+MATHLIB_ROOT = Path(__file__).resolve().parent.parent.parent / "mathlib4" / "Mathlib"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "paper" / "figures"
 
 # ===================================================================

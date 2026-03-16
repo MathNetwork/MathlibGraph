@@ -23,7 +23,7 @@ from analysis.import_graph_utils import (
     top_level_ns,
 )
 
-MATHLIB_ROOT = Path("/Users/moqian/MathNetwork/mathlib4/Mathlib")
+MATHLIB_ROOT = Path(__file__).resolve().parent.parent.parent / "mathlib4" / "Mathlib"
 
 
 # -------------------------------------------------------------------
