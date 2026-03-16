@@ -507,13 +507,14 @@ def do_namespace_level():
     # Louvain on undirected weighted
     print("  Running Louvain ...")
     t0 = time.time()
-    G_und = G.to_undirected()
-    # Merge reciprocal weights
+    G_und = nx.Graph()
+    G_und.add_nodes_from(G.nodes())
     for u, v, d in G.edges(data=True):
+        w = d.get("weight", 1)
         if G_und.has_edge(u, v):
-            G_und[u][v]["weight"] = G_und[u][v].get("weight", 0) + d.get("weight", 1)
+            G_und[u][v]["weight"] += w
         else:
-            G_und.add_edge(u, v, weight=d.get("weight", 1))
+            G_und.add_edge(u, v, weight=w)
     partition = community_louvain.best_partition(G_und, random_state=42)
     modularity = community_louvain.modularity(partition, G_und)
     n_comms = len(set(partition.values()))

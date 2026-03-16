@@ -67,7 +67,7 @@ The depth ordering across levels reveals a striking inversion: $153$ layers (mod
 In-degree, PageRank, and betweenness identify largely disjoint sets of important nodes at every level, confirming that structural importance is irreducibly multidimensional. The divergence sharpens at finer granularity: at the declaration level, no node appears in all three top-$10$ lists (Appendix~\ref{sec:sa-centrality}).
 
 \paragraph{Community detection.}
-Louvain modularity decreases from $0.64$ (module) to $0.48$ (declaration) to $0.28$ (namespace), reflecting progressively denser cross-boundary connectivity. Community--namespace alignment follows a parallel decline (NMI from $0.42$ to $0.25$). Only \ns{CategoryTheory} resists this trend, achieving $97.4\%$ community concentration at the declaration level---a unique degree of disciplinary self-containment (Appendix~\ref{sec:sa-community}).
+Louvain modularity decreases from $0.64$ (module) to $0.48$ (declaration) to $0.27$ (namespace), reflecting progressively denser cross-boundary connectivity. Community--namespace alignment follows a parallel decline (NMI from $0.42$ to $0.24$). Only \ns{CategoryTheory} resists this trend, achieving $97.4\%$ community concentration at the declaration level---a unique degree of disciplinary self-containment (Appendix~\ref{sec:sa-community}).
 
 \paragraph{Robustness.}
 All three graphs show the classic hub-vulnerability signature---resilient to random failure, fragile under targeted attack---but severity varies: at $20\%$ targeted removal, connectivity drops to $58\%$ (module), $46\%$ (declaration), $21\%$ (namespace). The namespace graph's heightened fragility reflects the concentration of connectivity in a few infrastructure namespaces (Appendix~\ref{sec:sa-robustness}).

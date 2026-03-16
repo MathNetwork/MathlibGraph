@@ -598,13 +598,14 @@ def cache_ns_community(G_ns):
     from sklearn.metrics import normalized_mutual_info_score
 
     t0 = time.time()
-    G_und = G_ns.to_undirected()
-    # Merge reciprocal weights
+    G_und = nx.Graph()
+    G_und.add_nodes_from(G_ns.nodes())
     for u, v, d in G_ns.edges(data=True):
+        w = d.get("weight", 1)
         if G_und.has_edge(u, v):
-            G_und[u][v]["weight"] = G_und[u][v].get("weight", 0) + d.get("weight", 1)
+            G_und[u][v]["weight"] += w
         else:
-            G_und.add_edge(u, v, weight=d.get("weight", 1))
+            G_und.add_edge(u, v, weight=w)
     partition = community_louvain.best_partition(G_und, random_state=42)
     print(f"    Louvain: {len(set(partition.values()))} communities ({time.time()-t0:.1f}s)")
 
