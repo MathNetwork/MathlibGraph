@@ -148,7 +148,7 @@ This separation echoes the module-level finding of \S\ref{sec:centrality}, where
 \subsubsection{Community Structure}
 \label{sec:ns-community}
 
-Louvain community detection (\S\ref{sec:prelim-community}) on the undirected, weighted projection of $G_{\mathrm{ns}}^{(2)}$ yields $12$ communities with modularity $Q = 0.270$.
+Louvain community detection (\S\ref{sec:prelim-community}) on the undirected, weighted projection of $G_{\mathrm{ns}}^{(2)}$ yields $12$ communities with modularity $Q = 0.271$.
 
 \begin{table}[ht]
 \centering
@@ -158,18 +158,18 @@ Louvain community detection (\S\ref{sec:prelim-community}) on the undirected, we
 \toprule
 ID & Size & Representative namespaces \\
 \midrule
-3 & $5{,}096$ & \ns{\_root\_}, \ns{Set}, \ns{Nat} \\
-5 & $2{,}227$ & \ns{Semiring}, \ns{NonUnitalNonAssocSemiring}, \ns{DFunLike} \\
-4 & $1{,}363$ & \ns{Eq}, \ns{CategoryTheory}, \ns{CategoryTheory.Functor} \\
-0 & $1{,}041$ & \ns{Real}, \ns{Zero}, \ns{Field} \\
-1 & $360$     & \ns{DivInvMonoid}, \ns{MulOne}, \ns{MulOneClass} \\
+2 & $5{,}112$ & \ns{\_root\_}, \ns{Eq}, \ns{Set} \\
+3 & $2{,}355$ & \ns{Semiring}, \ns{CommRing}, \ns{NonUnitalNonAssocSemiring} \\
+0 & $1{,}227$ & \ns{CategoryTheory}, \ns{CategoryTheory.Functor}, \ns{CategoryTheory.CategoryStruct} \\
+4 & $927$     & \ns{Real}, \ns{Complex}, \ns{NormedField} \\
+1 & $462$     & \ns{Monoid}, \ns{Subgroup}, \ns{MulOneClass} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The namespace-level community structure differs markedly from the declaration-level structure (\S\ref{sec:thm-community}). At the declaration level, Louvain detection produces $22$ communities with modularity $0.48$ and NMI~$= 0.34$ against the top-level namespace hierarchy. At the namespace level, the number of communities is smaller ($12$ vs.\ $22$), the modularity is lower ($0.270$ vs.\ $0.48$), and the NMI with the top-level directory falls to~$0.243$ (Table~\ref{tab:ns-communities}).
+The namespace-level community structure differs markedly from the declaration-level structure (\S\ref{sec:thm-community}). At the declaration level, Louvain detection produces $22$ communities with modularity $0.48$ and NMI~$= 0.34$ against the top-level namespace hierarchy. At the namespace level, the number of communities is smaller ($12$ vs.\ $22$), the modularity is lower ($0.271$ vs.\ $0.48$), and the NMI with the top-level directory falls to~$0.261$ (Table~\ref{tab:ns-communities}).
 
-The lower modularity reflects the coarsening inherent in namespace aggregation. When thousands of declarations are collapsed into a single namespace node, the fine-grained community boundaries that Louvain detects at the declaration level are blurred. Edges between namespaces are weighted sums of many declaration-level edges, and the averaging effect smooths out the modular structure that exists at finer granularity. The largest community (ID~$3$, $5{,}096$ nodes) spans half the graph and lacks a coherent mathematical identity: its dominant members (\ns{\_root\_}, \ns{Set}, \ns{Nat}) are foundational constructs used across all disciplines. This contrasts with the declaration-level communities, where the largest communities map onto recognizable mathematical disciplines (\S\ref{sec:thm-community}).
+The lower modularity reflects the coarsening inherent in namespace aggregation. When thousands of declarations are collapsed into a single namespace node, the fine-grained community boundaries that Louvain detects at the declaration level are blurred. Edges between namespaces are weighted sums of many declaration-level edges, and the averaging effect smooths out the modular structure that exists at finer granularity. The largest community (ID~$2$, $5{,}112$ nodes) spans half the graph and lacks a coherent mathematical identity: its dominant members (\ns{\_root\_}, \ns{Eq}, \ns{Set}) are foundational constructs used across all disciplines. This contrasts with the declaration-level communities, where the largest communities map onto recognizable mathematical disciplines (\S\ref{sec:thm-community}).
 
 
 
