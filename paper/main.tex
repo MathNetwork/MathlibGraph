@@ -33,8 +33,18 @@ We extract and analyze the dependency structure of Lean~4's \texttt{Mathlib} (30
 We thank Leonardo de Moura for facilitating the collaboration that led to this work, and for valuable feedback and discussions. We are grateful to Ginestra Bianconi for insightful feedback and for drawing the analogy between cross-namespace dependencies and horizontal gene transfer in phylogenetic networks. We thank Johan Commelin for connecting us with the Mathlib maintainer community, Oliver Nash for valuable comments on an earlier draft and for clarifications regarding \texttt{Mathlib}'s tooling and module system, and Franz Josef Och and Jennifer Bennett for valuable discussions. Xinze Li thanks his doctoral advisor Yevgeny Liokumovich and Luis Seco for their support, and Kasra Rafi, Bennett Chow, Bin Dong, Ronghui Gu, and Zaiwen Wen for helpful discussions on AI for mathematics.
 
 %\clearpage
+\begingroup
+\footnotesize
+\let\oldbibliography\thebibliography
+\renewcommand{\thebibliography}[1]{%
+  \oldbibliography{#1}%
+  \setlength{\itemsep}{0pt}%
+  \setlength{\parsep}{0pt}%
+  \setlength{\parskip}{0pt}%
+}
 \bibliographystyle{alpha}
 \bibliography{references}
+\endgroup
 
 \newpage
 \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
