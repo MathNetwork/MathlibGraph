@@ -1,17 +1,158 @@
 \section{Introduction}
 Mathematical knowledge forms a vast network of logical dependencies that historically remained unrecorded: traditional writing preserves final results while compressing the underlying deductions and foundations, leaving the network as a latent construct obscured by coarse-grained citations. The advent of proof assistants offers the opportunity to map these dependencies, turning mathematics into explicit machine-analyzable networks. Pioneered by de~Bruijn's Automath~\cite{debruijn1970} and subsequently advanced by systems such as Mizar~\cite{trybulec1978}, HOL~\cite{gordon1993}, Rocq\slash Coq~\cite{coquand1988}, and Isabelle~\cite{paulson1994}, modern interactive theorem provers rely on a foundational verification kernel. This kernel checks each declaration and records the precise premises it invokes~\cite{avigad2024}. Lean~4~\cite{lean4} continues this rigorous methodology today. Its extensive mathematical library \module{Mathlib}~\cite{mathlib2020} has grown to a scale where underlying statistical structures might naturally emerge. Its value lies not only in aggregating verified truths, but in transforming scattered results into a unified, queryable dependency network~\cite{feng2026erdos}.
 
-\violet{I would suggest to move all the graph illustration for each edge type from the appendix up to the main context. That will greatly help audience's grasp of what you do.}
-\xinze{We added a three-views figure in \S\ref{sec:contribution} (Figure~\ref{fig:three-views-main}) that covers the main layers. Moving all edge-type illustrations from the appendix into the intro would require significant restructuring. Simone, should we discuss how far to go with this?}
 Although the kernel deterministically enforces the validity of each theorem, the macroscopic organization of the library arises from human cognitive habits and collaborative workflows, encompassing naming conventions, file hierarchies, and namespace boundaries. Moreover, because the proof assistant also functions as a programming language, the type system of Lean introduces several structural layers absent from traditional mathematics. Each layer represents a necessary compromise between implicit human intuition and the strict demand of the compiler for explicitness. The typeclass mechanism, in particular, encodes mathematical knowledge that exists as implicit shared understanding among human practitioners (e.g., ``the integers form a ring'') as explicit \emph{instance declarations} for automated reasoning. This creates an entire stratum of nodes in the dependency graph that has no traditional counterpart (Definition~\ref{def:tc-graph}). More broadly, Lean's type system introduces distinct such compromises at every level:
 \begin{itemize}
 \item \emph{Synthesized edges} (Definition~\ref{def:synth-partition}). When a mathematician cites a lemma, the citation is visible on the page; when Lean resolves \texttt{a + 0 = a}, the compiler silently inserts references to \decl{HAdd}, \decl{OfNat}, and the relevant instances---$74.2\%$ of all dependency edges are invisible in the source code.
+\begin{center}
+\begin{tikzpicture}[scale=0.8, every node/.style={transform shape},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  sdot/.style={circle, fill=gray!50, minimum size=3.5pt, inner sep=0pt},
+  elink/.style={->, >=Stealth, red!70!black, semithick},
+  slink/.style={->, >=Stealth, gray!50, semithick, dashed},
+]
+  \fill[red!6, rounded corners=3pt] (-0.6, -0.5) rectangle (1.6, 1.0);
+  \node[font=\tiny\sffamily\itshape, red!40!black] at (0.5, 0.85) {math};
+  \fill[gray!8, rounded corners=3pt] (1.9, -0.5) rectangle (5.0, 1.0);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (3.45, 0.85) {infrastructure};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:add\_zero}]
+    (thm) at (2.3, 2.8) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:AddMonoid.add\_zero}]
+    (axiom) at (0.5, 0.2) {};
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:HAdd.hAdd}]
+    (hadd) at (2.8, 0.2) {};
+  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:OfNat.ofNat}]
+    (ofnat) at (4.3, 0.2) {};
+  \draw[elink] (thm) -- (axiom);
+  \draw[slink] (thm) -- (hadd);
+  \draw[slink] (thm) -- (ofnat);
+\end{tikzpicture}
+\end{center}
+
 \item \emph{Coercions} (Definition~\ref{def:coercion-graph}). A mathematician writes ``let $n \in \mathbb{R}$'' when $n$ is a natural number and the embedding is universally understood; Lean must register an explicit chain of coercion instances $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q} \hookrightarrow \mathbb{R}$, each silently inserting dependency edges.
+\begin{center}
+\begin{tikzpicture}[scale=0.8, every node/.style={transform shape},
+  tp/.style={circle, draw=red!60!black, fill=red!6,
+    font=\small, text=red!70!black, inner sep=3pt, minimum size=18pt},
+  coe/.style={->, >=Stealth, red!60!black, semithick},
+]
+  \node[tp] (N) at (0, 0) {$\mathbb{N}$};
+  \node[tp] (Z) at (1.8, 0) {$\mathbb{Z}$};
+  \node[tp] (Q) at (3.6, 0) {$\mathbb{Q}$};
+  \node[tp] (R) at (5.4, 0) {$\mathbb{R}$};
+  \draw[coe] (N) -- node[above, font=\tiny\sffamily, text=gray!60] {ofNat} (Z);
+  \draw[coe] (Z) -- node[above, font=\tiny\sffamily, text=gray!60] {ofInt} (Q);
+  \draw[coe] (Q) -- node[above, font=\tiny\sffamily, text=gray!60] {ofRat} (R);
+\end{tikzpicture}
+\end{center}
+
 \item \emph{Structure inheritance} (Definition~\ref{def:extends-graph}). The \texttt{extends} mechanism encodes ``every group is a monoid'' not as a logical implication but as a field-packing directive that auto-generates forgetful instances, building the algebraic hierarchy's inheritance lattice.
+\begin{center}
+\begin{tikzpicture}[scale=0.7, every node/.style={transform shape},
+  nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+  lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
+    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+  edg/.style={->, >=Stealth, red!60!black, semithick},
+]
+  \node[nd] (cm) at (1.6, 4.5) {CommMonoid};
+  \node[nd] (mon) at (0.2, 3.2) {Monoid};
+  \node[nd] (cs) at (3.0, 3.2) {CommSemi.};
+  \node[nd] (sg) at (0.0, 1.9) {Semigroup};
+  \node[nd] (moc) at (2.2, 1.9) {MulOneCl.};
+  \node[lf] (mul) at (0.5, 0.6) {Mul};
+  \node[lf] (one) at (2.6, 0.6) {One};
+  \draw[edg] (cm) -- (mon);
+  \draw[edg] (cm) -- (cs);
+  \draw[edg] (mon) -- (sg);
+  \draw[edg] (mon) -- (moc);
+  \draw[edg] (cs) -- (sg);
+  \draw[edg] (sg) -- (mul);
+  \draw[edg] (moc) -- (mul);
+  \draw[edg] (moc) -- (one);
+\end{tikzpicture}
+\end{center}
+
 \item \emph{Additive mirroring} (Definition~\ref{def:decl-attributes}). A textbook proves a theorem for groups and writes ``similarly for the additive case''; Lean requires a separate declaration with a distinct proof term, auto-generated by the \texttt{to\_additive} metaprogram that duplicates every marked multiplicative result.
+
 \item \emph{Definitional height} (Definition~\ref{def:def-height}). In traditional mathematics, the number of definitions that must be unfolded to verify a statement is rarely considered; Lean's kernel tracks this depth, which governs compilation cost and constitutes a form of implicit coupling invisible in the dependency graph.
+\begin{center}
+\begin{tikzpicture}[scale=0.8, every node/.style={transform shape},
+  def/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
+    font=\tiny\ttfamily, text=red!70!black, inner sep=3pt, minimum height=14pt},
+  unfold/.style={->, >=Stealth, red!60!black, semithick, dashed},
+  ht/.style={font=\tiny\sffamily\bfseries, text=blue!60!black},
+]
+  \node[def] (pow) at (0, 0) {Nat.pow};
+  \node[ht, right=3pt of pow] {$\delta = 3$};
+  \node[def] (mul) at (3.5, 0) {Nat.mul};
+  \node[ht, right=3pt of mul] {$\delta = 2$};
+  \node[def] (add) at (7.0, 0) {Nat.add};
+  \node[ht, right=3pt of add] {$\delta = 1$};
+  \draw[unfold] (pow) -- node[above, font=\tiny\sffamily, text=gray!60] {unfolds} (mul);
+  \draw[unfold] (mul) -- node[above, font=\tiny\sffamily, text=gray!60] {unfolds} (add);
+\end{tikzpicture}
+\end{center}
+
 \item \emph{Tactic usage} (Definition~\ref{def:tactic-usage}). Traditional proofs are written in natural language; Lean proofs are constructed via \emph{tactics}---automated proof strategies such as \texttt{simp}, \texttt{rw}, and \texttt{omega}---whose frequency and distribution vary across mathematical domains and encode the proof methodology favored by each subfield.
+\begin{center}
+\begin{tikzpicture}[scale=0.8, every node/.style={transform shape},
+  dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  tac/.style={rounded corners=2pt, draw=violet!60, fill=violet!8,
+    font=\tiny\ttfamily, text=violet!70!black, inner sep=3pt, minimum height=12pt},
+  dep/.style={->, >=Stealth, red!70!black, semithick},
+]
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_div\_assoc}]
+    (thm) at (2.2, 3.2) {};
+  \node[tac, anchor=west] at (2.5, 3.2) {rw};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:div\_eq\_mul\_inv}]
+    (dm) at (1.0, 1.2) {};
+  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:mul\_assoc}]
+    (ma) at (3.8, 1.2) {};
+  \draw[dep] (thm) -- (dm);
+  \draw[dep] (thm) -- (ma);
+  \fill[violet!30] (5.5, 2.8) rectangle (8.3, 3.0);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (5.6, 2.9)
+    {\texttt{rw}\hspace{4pt}16.9\%};
+  \fill[violet!25] (5.5, 2.35) rectangle (7.7, 2.55);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (5.6, 2.45)
+    {\texttt{simp}\hspace{4pt}11.2\%};
+  \fill[violet!20] (5.5, 1.9) rectangle (7.6, 2.1);
+  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (5.6, 2.0)
+    {\texttt{exact}\hspace{4pt}10.4\%};
+\end{tikzpicture}
+\end{center}
+
 \item \emph{Automatic deriving} (Definition~\ref{def:deriving-edges}). Properties like decidable equality or printable representation are meta-level common sense in traditional mathematics; Lean requires explicit instance witnesses, which \texttt{deriving} handlers generate automatically.
+\begin{center}
+\begin{tikzpicture}[scale=0.8, every node/.style={transform shape},
+  human/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
+  auto/.style={circle, fill=gray!40, minimum size=3.5pt, inner sep=0pt},
+  humanedge/.style={->, >=Stealth, red!70!black, semithick},
+  autoedge/.style={->, >=Stealth, gray!40, semithick, dashed},
+]
+  \fill[gray!8, rounded corners=3pt] (-0.8, -1.2) rectangle (4.2, 0.4);
+  \node[font=\tiny\sffamily\itshape, gray!50] at (1.7, 0.2) {$E_{\mathrm{auto}}$};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instRepr}]
+    (r) at (0.0, -0.4) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instDecEq}]
+    (d) at (1.7, -0.4) {};
+  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instHash.}]
+    (h) at (3.4, -0.4) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]above:Stained}]
+    (st) at (1.7, 2.8) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]left:name}]
+    (sn) at (0.0, 1.6) {};
+  \node[human, label={[font=\tiny\ttfamily, red!70!black]right:goal}]
+    (sg) at (3.4, 1.6) {};
+  \draw[autoedge] (r) -- (st);
+  \draw[autoedge] (d) -- (st);
+  \draw[autoedge] (h) -- (st);
+  \draw[humanedge] (sn) -- (st);
+  \draw[humanedge] (sg) -- (st);
+\end{tikzpicture}
+\end{center}
+
 \end{itemize}
 Each mechanism deposits its own signature in the dependency graph (\S\ref{sec:declaration-graph}), and collectively, they constitute the \emph{tool-infrastructure layer}. Consequently, we hypothesize that these network properties extend beyond the mere documentation of logical dependencies. They instead provide measurable traces of mathematical production, reflecting community behavior, tooling mechanisms, and the subtle nuances of language design.
 
