@@ -167,7 +167,7 @@ The \emph{public import subgraph} is
 \[
   G_{\mathrm{mod}}^{\mathrm{pub}} = (\mathcal{M},\, \{(m_i, m_j) \in E_{\mathrm{mod}} : \mathrm{vis}(m_i, m_j) = \texttt{public}\}).
 \]
-The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actual namespace visibility scope---which declarations are transitively accessible from which modules.
+The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actual namespace visibility scope: which declarations are transitively accessible from which modules.
 \end{definition}
 
 \noindent Our snapshot captures a transitional state in which most imports are still \texttt{public}; as private imports are adopted, $G_{\mathrm{mod}}^{\mathrm{pub}}$ will become a proper subgraph of $G_{\mathrm{module}}$, reducing transitive visibility and reshaping redundancy (\S\ref{sec:transitive-reduction}).
@@ -230,7 +230,7 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 \caption{Transitive visibility scope (blue shading) of module~A.}
 \label{fig:vis-graph}
 \end{subfigure}
-\caption{Visibility graph (Definition~\ref{def:visibility-graph}). (a)~\texttt{public import} re-exports the imported module's declarations; plain \texttt{import} keeps them private. (b)~Left: when~B publicly imports~C, A's transitive visibility includes~\{B,\,C\}. Right: when~B privately imports~C, A can see only~\{B\}---the private edge breaks the transitive chain, removing~C from $G_{\mathrm{mod}}^{\mathrm{pub}}$.}
+\caption{Visibility graph (Definition~\ref{def:visibility-graph}). (a)~\texttt{public import} re-exports the imported module's declarations; plain \texttt{import} keeps them private. (b)~Left: when~B publicly imports~C, A's transitive visibility includes~\{B,\,C\}. Right: when~B privately imports~C, A can see only~\{B\}, because the private edge breaks the transitive chain, removing~C from $G_{\mathrm{mod}}^{\mathrm{pub}}$.}
 \label{fig:visibility}
 \end{figure}
 \begin{figure}[H]
@@ -257,7 +257,7 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 \subsubsection{Transitive Reduction and Redundant Imports}
 \label{sec:transitive-reduction}
 
-Since $G_{\mathrm{module}}$ is a DAG, it has a unique \emph{transitive reduction}~\cite{ahu1972}: the smallest subgraph $G_{\mathrm{module}}^{-} \subseteq G_{\mathrm{module}}$ with the same reachability relation. An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{transitively redundant} if $m_2$ is reachable from $m_1$ via a path of length $\ge 2$ in $G_{\mathrm{module}}$---that is, the dependency is already implied by other imports.
+Since $G_{\mathrm{module}}$ is a DAG, it has a unique \emph{transitive reduction}~\cite{ahu1972}: the smallest subgraph $G_{\mathrm{module}}^{-} \subseteq G_{\mathrm{module}}$ with the same reachability relation. An edge $(m_1, m_2) \in E_{\mathrm{module}}$ is \emph{transitively redundant} if $m_2$ is reachable from $m_1$ via a path of length $\ge 2$ in $G_{\mathrm{module}}$; that is, the dependency is already implied by other imports.
 
 \begin{definition}[Transitive reduction]\label{def:transitive-reduction}
 The \emph{transitive reduction} of $G_{\mathrm{module}}$ is $G_{\mathrm{module}}^{-} = (\mathcal{M}, E_{\mathrm{module}}^{-})$ where

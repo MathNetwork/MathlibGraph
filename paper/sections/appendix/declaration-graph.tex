@@ -5,11 +5,11 @@
 This appendix collects the formal definitions, edge decompositions, mechanism-specific subgraphs, node-level metadata, and all illustrative figures for the declaration dependency graph. Extended statistical analysis (degree distributions, centrality rankings, community detection, robustness curves) appears in Appendix~\ref{app:decl-detail}.
 
 \subsubsection{The declaration graph $G_{\mathrm{thm}}$}
-When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}---a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's \emph{elaborator}---the compiler component responsible for resolving implicit arguments, typeclass instances, and coercions---inserts automatically.
+When a mathematician writes a proof in Lean, the tactic script is compiled into a \emph{proof term}, a fully explicit expression in Lean's dependent type theory. Every named constant from the environment that appears in this term is called a \textbf{premise} of the declaration. Premises include both the results a mathematician explicitly invokes and the infrastructure (typeclass instances, coercions, notation) that Lean's \emph{elaborator} (the compiler component responsible for resolving implicit arguments, typeclass instances, and coercions) inserts automatically.
 
 \begin{definition}[Declaration graph]
 \label{def:thm-graph}
-The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations---theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms---in \module{Mathlib}, and
+The \emph{declaration graph} is a directed graph $G_{\mathrm{thm}} = (\mathcal{D}, E_{\mathrm{thm}})$, where $\mathcal{D}$ is the set of all declarations (theorems, definitions, abbreviations, inductive types, constructors, opaques, quotients, and axioms) in \module{Mathlib}, and
 \[
   E_{\mathrm{thm}} = \{(d_1, d_2) \in \mathcal{D} \times \mathcal{D} \mid d_2 \text{ appears as a premise in the proof term of } d_1\}.
 \]
@@ -32,23 +32,23 @@ Consider a simple example:
 \end{codebox}
 
 \noindent
-The distinction is precise: a premise is an \emph{external} declaration---a theorem, definition, constructor, or other named constant already registered in the environment---not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
+The distinction is precise: a premise is an \emph{external} declaration (a theorem, definition, constructor, or other named constant already registered in the environment), not a local variable or bound parameter. In the example above, \decl{Nat.zero\_lt\_succ} is a premise because it is a theorem proved elsewhere; \texttt{n} is not, because it is a locally bound variable. In practice, the kernel records additional infrastructure premises (typeclass instances, notation abbreviations) that are invisible in the tactic script but present in the compiled term. It is these mechanically extracted premises that form the edges of $G_{\mathrm{thm}}$.
 
 
 The eight declaration kinds are Lean~4's fundamental building blocks: theorems ($79.1\%$), definitions ($15.8\%$), abbreviations ($2.2\%$), constructors ($1.5\%$), inductive types ($1.2\%$), and three minor kinds (Table~\ref{tab:kind-overview} in Appendix~\ref{app:decl-detail}). We highlight two structural extremes below.
 
 \paragraph{Theorems as edge producers; axioms as pure sinks.}
-In $G_{\mathrm{thm}}$, a declaration is an \emph{edge producer} if it has high out-degree (its proof invokes many premises) and a \emph{pure sink} if it has zero or near-zero out-degree but is cited by many others (high in-degree). Theorems constitute $79.1\%$ of all declarations and are the primary edge producers. A theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it. At the opposite extreme, \module{Mathlib} rests on exactly three axioms---\decl{propext} (propositional extensionality), \decl{Classical.choice} (the axiom of choice), and \decl{Quot.sound}---which have near-zero out-degree but are transitively required by all $308{,}129$ declarations. Among the three, \decl{propext} alone accounts for $23{,}226$ incoming edges.
+In $G_{\mathrm{thm}}$, a declaration is an \emph{edge producer} if it has high out-degree (its proof invokes many premises) and a \emph{pure sink} if it has zero or near-zero out-degree but is cited by many others (high in-degree). Theorems constitute $79.1\%$ of all declarations and are the primary edge producers. A theorem's out-edges point to the premises invoked in its proof, while its in-edges come from later theorems that cite it. At the opposite extreme, \module{Mathlib} rests on exactly three axioms (\decl{propext} (propositional extensionality), \decl{Classical.choice} (the axiom of choice), and \decl{Quot.sound}), which have near-zero out-degree but are transitively required by all $308{,}129$ declarations. Among the three, \decl{propext} alone accounts for $23{,}226$ incoming edges.
 
 \paragraph{Abbreviations as invisible hubs.}
-Abbreviations (\texttt{abbrev}) are definitionally transparent shorthands that the elaborator always unfolds, acting as notational glue---typically wrapping typeclass projections or operator notation:
+Abbreviations (\texttt{abbrev}) are definitionally transparent shorthands that the elaborator always unfolds, acting as notational glue, typically wrapping typeclass projections or operator notation:
 
 \begin{codebox}
 \textbf{abbrev} \textcolor{red!70!black}{OfNat.ofNat} (n : Nat) [inst : OfNat a n] : a := inst.ofNat
 \end{codebox}
 
 \noindent
-The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it. Because the elaborator inserts these references automatically, abbreviations have the most extreme in-degree distribution among non-axiom types---their citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning. By contrast, the most-cited \emph{inductive types}---\decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{Module} ($23{,}404$)---form a layer of mathematical infrastructure whose centrality reflects genuine mathematical importance.
+The most-cited node in the entire graph, \decl{OfNat.ofNat} (in-degree $89{,}936$), is an abbreviation: every declaration that mentions a numeric literal depends on it. Because the elaborator inserts these references automatically, abbreviations have the most extreme in-degree distribution among non-axiom types; their citation counts reflect the machinery of the proof assistant, not the structure of mathematical reasoning. By contrast, the most-cited \emph{inductive types} (\decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{Module} ($23{,}404$)) form a layer of mathematical infrastructure whose centrality reflects genuine mathematical importance.
 
 
 \paragraph{Edge directionality.}
@@ -85,7 +85,7 @@ The proof invokes \decl{Nat.not\_succ\_le\_self}, which establishes that $n + 1 
 \end{figure}
 
 \noindent
-The eight kinds arrange into a clear hierarchy of edge production and consumption (Table~\ref{tab:inter-kind-flow} in Appendix~\ref{app:decl-detail}). Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing definitions and abbreviations---the computational and notational infrastructure on which proofs are built. Axioms and quotients are near-pure sinks (combined out-degree $= 3$). The graph is nearly acyclic; the only bidirectional edges ($4{,}713$ pairs) link inductive types to their own constructors (e.g., \decl{Nat}~$\leftrightarrow$~\decl{Nat.succ}).
+The eight kinds arrange into a clear hierarchy of edge production and consumption (Table~\ref{tab:inter-kind-flow} in Appendix~\ref{app:decl-detail}). Theorems produce $89\%$ of all edges ($7.50$M of $8.44$M), primarily citing definitions and abbreviations, the computational and notational infrastructure on which proofs are built. Axioms and quotients are near-pure sinks (combined out-degree $= 3$). The graph is nearly acyclic; the only bidirectional edges ($4{,}713$ pairs) link inductive types to their own constructors (e.g., \decl{Nat}~$\leftrightarrow$~\decl{Nat.succ}).
 
 \begin{figure}[H]
 \centering
@@ -133,18 +133,18 @@ The \decl{Nat.lt\_irrefl} example above showed a single theorem's premises; we n
 \smallskip
 
 \noindent
-A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \decl{Eq.refl}---a constructor with in-degree $69{,}580$---is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
+A closely related theorem, \decl{Nat.add\_right\_comm} ($a + b + c = a + c + b$), depends on \emph{exactly the same} eight premises. The resulting fragment of $G_{\mathrm{thm}}$ is shown in Figure~\ref{fig:thm-fragment}: both theorems share all three displayed premises, and \decl{Eq.refl} (a constructor with in-degree $69{,}580$) is the single most-cited declaration in the entire graph. This shared-hub pattern is the mechanism by which a small number of foundational declarations accumulate enormous in-degree.
 
 \noindent\textbf{Note.}
-The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$---this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$.
+The module \module{Algebra.Group.Defs} contains dozens of declarations. In $G_{\mathrm{module}}$, this entire module is a single vertex; in $G_{\mathrm{thm}}$, each declaration within it becomes a separate vertex, and each premise reference becomes a separate edge. A single import edge in $G_{\mathrm{module}}$ thus unfolds into potentially hundreds of premise edges in $G_{\mathrm{thm}}$; this is why $|E_{\mathrm{thm}}|$ exceeds $|E_{\mathrm{module}}|$ by a factor of $360$.
 
 The graph is almost entirely connected: $308{,}054$ of $308{,}129$ nodes ($99.98\%$) belong to a single weakly connected component. The remaining $75$ nodes distribute across $71$ tiny components, of which $69$ are singletons.
 
 \paragraph{Empirical observations.}
-The degree statistics by declaration kind reveal that each type occupies a distinct structural niche---axioms and inductive types are heavily cited infrastructure, while theorems are dependency consumers (\S\ref{sec:thm-types}). The hub structure decomposes into a \emph{language infrastructure} layer and a \emph{mathematical infrastructure} layer (Remark~\ref{rem:two-layers}). Of all theorems, $44.8\%$ are never cited---leaf nodes whose consumers are necessarily external (\S\ref{sec:thm-leaves}, Remark~\ref{rem:leaf-theorems}). Cross-namespace edges account for $50.9\%$ of all declaration-level dependencies, far exceeding the module-level figure (\S\ref{sec:thm-cross-namespace}). Full analysis is in Appendix~\ref{app:decl-detail}.
+The degree statistics by declaration kind reveal that each type occupies a distinct structural niche: axioms and inductive types are heavily cited infrastructure, while theorems are dependency consumers (\S\ref{sec:thm-types}). The hub structure decomposes into a \emph{language infrastructure} layer and a \emph{mathematical infrastructure} layer (Remark~\ref{rem:two-layers}). Of all theorems, $44.8\%$ are never cited, leaf nodes whose consumers are necessarily external (\S\ref{sec:thm-leaves}, Remark~\ref{rem:leaf-theorems}). Cross-namespace edges account for $50.9\%$ of all declaration-level dependencies, far exceeding the module-level figure (\S\ref{sec:thm-cross-namespace}). Full analysis is in Appendix~\ref{app:decl-detail}.
 
 \medskip
-The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices. We organize these into three groups: edge-level decompositions that partition $E_{\mathrm{thm}}$ by the origin of each dependency (\S\ref{sec:stmt-proof}--\S\ref{sec:typeclass-synth}), subgraph constructions that isolate specific language mechanisms such as typeclass synthesis and coercions (\S\ref{sec:typeclass-synth}), and node-level enrichments that attach metadata---attributes, definitional height, tactic usage---to each declaration (\S\ref{sec:decl-attributes}).
+The declaration graph admits several decompositions that disentangle inherited mathematical structure from tool-mediated organizational choices. We organize these into three groups: edge-level decompositions that partition $E_{\mathrm{thm}}$ by the origin of each dependency (\S\ref{sec:stmt-proof}--\S\ref{sec:typeclass-synth}), subgraph constructions that isolate specific language mechanisms such as typeclass synthesis and coercions (\S\ref{sec:typeclass-synth}), and node-level enrichments that attach metadata (attributes, definitional height, tactic usage) to each declaration (\S\ref{sec:decl-attributes}).
 
 \subsubsection{Statement and proof decomposition}
 \label{sec:stmt-proof}
@@ -323,7 +323,7 @@ Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations a
 \label{fig:tc-ext}
 \end{figure}
 
-In a traditional mathematical paper, a proof's dependencies are exactly what the author explicitly cites: if a proof invokes the intermediate value theorem, that citation is visible on the page.  In Lean, the situation is radically different.  When a mathematician writes \texttt{a + 0 = a}, the elaborator silently resolves \texttt{+} to a specific addition operation (via \texttt{HAdd}), interprets \texttt{0} as \texttt{OfNat.ofNat 0} for the relevant type, and synthesizes the required algebraic instances---each resolution creating a dependency edge that appears nowhere in the source code.  In Mathlib, $74.2\%$ of all dependency edges are synthesized in this way, meaning that the ``visible'' mathematical content accounts for barely a quarter of the actual dependency graph.
+In a traditional mathematical paper, a proof's dependencies are exactly what the author explicitly cites: if a proof invokes the intermediate value theorem, that citation is visible on the page.  In Lean, the situation is radically different.  When a mathematician writes \texttt{a + 0 = a}, the elaborator silently resolves \texttt{+} to a specific addition operation (via \texttt{HAdd}), interprets \texttt{0} as \texttt{OfNat.ofNat 0} for the relevant type, and synthesizes the required algebraic instances, each resolution creating a dependency edge that appears nowhere in the source code.  In Mathlib, $74.2\%$ of all dependency edges are synthesized in this way, meaning that the ``visible'' mathematical content accounts for barely a quarter of the actual dependency graph.
 
 \begin{definition}[Synthesized vs.\ explicit edge partition]\label{def:synth-partition}
 For each edge $(a, b) \in E_{\mathrm{thm}}$, define
@@ -410,10 +410,10 @@ Lean structures may extend other structures via the \texttt{extends} keyword, in
 \[
   G_{\mathrm{ext}} = (\mathcal{S},\, E_{\mathrm{ext}}), \quad (S_1, S_2) \in E_{\mathrm{ext}} \iff S_1 \texttt{ extends } S_2,
 \]
-where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} declarations. This graph encodes the algebraic hierarchy's inheritance lattice---a tool-mediated organizational layer that shapes which instances need to be defined and which are inherited automatically.
+where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} declarations. This graph encodes the algebraic hierarchy's inheritance lattice, a tool-mediated organizational layer that shapes which instances need to be defined and which are inherited automatically.
 \end{definition}
 
-\noindent At our snapshot, $|E_{\mathrm{ext}}| = 1{,}535$ \texttt{extends} edges among $|\mathcal{S}|$ structures. The most-extended structures---at the top of the algebraic hierarchy---are the same inductive types that dominate $G_{\mathrm{thm}}$'s in-degree: \decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{TopologicalSpace} ($25{,}310$), \decl{Module} ($23{,}404$), \decl{CommRing} ($20{,}837$).
+\noindent At our snapshot, $|E_{\mathrm{ext}}| = 1{,}535$ \texttt{extends} edges among $|\mathcal{S}|$ structures. The most-extended structures, at the top of the algebraic hierarchy, are the same inductive types that dominate $G_{\mathrm{thm}}$'s in-degree: \decl{CategoryTheory.Category} ($44{,}487$), \decl{Real} ($26{,}637$), \decl{TopologicalSpace} ($25{,}310$), \decl{Module} ($23{,}404$), \decl{CommRing} ($20{,}837$).
 
 % Figure for G_ext merged into Figure~\ref{fig:tc-ext} above.
 
@@ -494,7 +494,7 @@ In particular:
 
 \noindent At our snapshot, $32.9\%$ of declarations carry at least one attribute. The most prevalent are \texttt{@[simp]} ($40{,}223$ declarations, $17.1\%$), \texttt{@[to\_additive]} ($13{,}664$, $5.8\%$), and \texttt{@[simps]} ($6{,}830$, $2.9\%$). The flattening ratio is $\phi = 13{,}664 / 235{,}586 = 5.8\%$; including the generated mirrors, \texttt{@[to\_additive]} accounts for roughly $11.6\%$ of the library. A total of $105$ distinct attribute types are registered.
 
-Lean's kernel decides definitional equality by unfolding chains of definitions; the depth of this chain---the \emph{definitional height}---governs compilation cost and constitutes a form of implicit coupling invisible in $G_{\mathrm{thm}}$.
+Lean's kernel decides definitional equality by unfolding chains of definitions; the depth of this chain (the \emph{definitional height}) governs compilation cost and constitutes a form of implicit coupling invisible in $G_{\mathrm{thm}}$.
 
 \begin{definition}[Definitional height]\label{def:def-height}
 For each definition $d \in \mathcal{D}$ with \texttt{DefinitionVal}, Lean computes a \emph{definitional height} $\delta(d)$ stored in the \texttt{ReducibilityHints} field:
@@ -506,7 +506,7 @@ For each definition $d \in \mathcal{D}$ with \texttt{DefinitionVal}, Lean comput
     \bot_{\mathrm{opaque}} & \text{if } d \text{ is \emph{opaque} (never unfolded)}.
   \end{cases}
 \]
-Declarations with high~$\delta$ are brittle: changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged. This quantity is invisible in $G_{\mathrm{thm}}$---it does not appear in $\mathrm{refs}(d.\pi)$---yet it constitutes a form of \emph{implicit coupling}.
+Declarations with high~$\delta$ are brittle: changes to any definition along the unfolding chain can break type-checking even if the explicit premise set is unchanged. This quantity is invisible in $G_{\mathrm{thm}}$ (it does not appear in $\mathrm{refs}(d.\pi)$), yet it constitutes a form of \emph{implicit coupling}.
 \end{definition}
 
 \begin{figure}[!htb]
@@ -634,7 +634,7 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
 \label{fig:tactic-usage}
 \end{figure}
 
-\noindent Across $79{,}910$ tactic-mode proofs ($325{,}454$ tactic invocations, $7{,}053$ distinct tactics), the top three tactics---\texttt{rw} ($16.9\%$), \texttt{simp} ($11.2\%$), \texttt{exact} ($10.4\%$)---account for $38.5\%$ of all invocations. Per-namespace profiles reveal systematic variation: \texttt{Algebra} proofs favor \texttt{rw} ($20\%$) while \texttt{CategoryTheory} proofs favor \texttt{simp} ($13\%$); \texttt{MeasureTheory} has the highest \texttt{exact} rate ($13\%$) and \texttt{have} rate ($10\%$), reflecting a more lemma-chaining proof style.
+\noindent Across $79{,}910$ tactic-mode proofs ($325{,}454$ tactic invocations, $7{,}053$ distinct tactics), the top three tactics (\texttt{rw} ($16.9\%$), \texttt{simp} ($11.2\%$), \texttt{exact} ($10.4\%$)) account for $38.5\%$ of all invocations. Per-namespace profiles reveal systematic variation: \texttt{Algebra} proofs favor \texttt{rw} ($20\%$) while \texttt{CategoryTheory} proofs favor \texttt{simp} ($13\%$); \texttt{MeasureTheory} has the highest \texttt{exact} rate ($13\%$) and \texttt{have} rate ($10\%$), reflecting a more lemma-chaining proof style.
 
 Lean's \texttt{deriving} mechanism automates the generation of meta-level typeclass instances (e.g., \texttt{DecidableEq}, \texttt{Repr}) that traditional mathematics takes for granted, creating declarations and dependency edges required for computational infrastructure.
 
@@ -713,7 +713,7 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
 \caption{\textcolor{red!70!black}{$\bullet$}\,human, \textcolor{gray!40}{$\bullet$}\,auto: $E_{\mathrm{auto}}$ edges are \textcolor{gray!40}{dashed}.}
 \label{fig:auto-graph}
 \end{subfigure}
-\caption{Auto-derived instance edges (Definition~\ref{def:deriving-edges}). (a)~From \module{Mathlib.Tactic.Linter.FlexibleLinter} (line 190): the \texttt{deriving} clause on \decl{Stained} instructs Lean to auto-generate four typeclass instances. (b)~In $G_{\mathrm{thm}}$, \textcolor{red!70!black}{solid} edges are human-written (constructors $\to$ type); \textcolor{gray!40}{dashed} edges belong to $E_{\mathrm{auto}}$---the auto-generated instances reference both the type and its constructors, but no human ever wrote these dependencies.}
+\caption{Auto-derived instance edges (Definition~\ref{def:deriving-edges}). (a)~From \module{Mathlib.Tactic.Linter.FlexibleLinter} (line 190): the \texttt{deriving} clause on \decl{Stained} instructs Lean to auto-generate four typeclass instances. (b)~In $G_{\mathrm{thm}}$, \textcolor{red!70!black}{solid} edges are human-written (constructors $\to$ type); \textcolor{gray!40}{dashed} edges belong to $E_{\mathrm{auto}}$: the auto-generated instances reference both the type and its constructors, but no human ever wrote these dependencies.}
 \label{fig:auto-derived}
 \end{figure}
 

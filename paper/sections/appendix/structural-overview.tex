@@ -1,6 +1,6 @@
 \section{Structural and Cross-Level Properties}
 \label{sec:structural-overview}
-Appendix~\ref{sec:graph-definitions} defines the dependency graphs at three granularity levels; the detailed per-graph network statistics appear in Appendices~\ref{app:module-detail}--\ref{app:ns-detail}. We now ask two complementary questions: (i)~do the three graphs share common structural signatures, or does each level have its own character? and (ii)~how do the three organizational systems---file boundaries, namespace boundaries, and logical dependencies---align and diverge when overlaid?
+Appendix~\ref{sec:graph-definitions} defines the dependency graphs at three granularity levels; the detailed per-graph network statistics appear in Appendices~\ref{app:module-detail}--\ref{app:ns-detail}. We now ask two complementary questions: (i)~do the three graphs share common structural signatures, or does each level have its own character? and (ii)~how do the three organizational systems (file boundaries, namespace boundaries, and logical dependencies) align and diverge when overlaid?
 
 The first question is addressed by five network-analytic tools applied uniformly across all three levels: degree distribution (\S\ref{sec:sa-degree}), DAG depth (\S\ref{sec:dag-depth}), centrality (\S\ref{sec:sa-centrality}), community detection (\S\ref{sec:sa-community}), and robustness (\S\ref{sec:sa-robustness}). The full analysis is reported in Appendix~\ref{sec:structural-analysis}; we summarize the key findings here. The second question is addressed by three cross-level measurements: namespace--module alignment, module cohesion, and namespace--declaration interaction. The full analysis is reported in Appendix~\ref{sec:cross_level}; this section extracts the definitions and results that are essential to the main narrative.
 
@@ -17,7 +17,7 @@ The first question is addressed by five network-analytic tools applied uniformly
 \begin{enumerate}
     \item \textit{Development-ergonomic redundancy as a feature.} A significant fraction of import edges are transitively redundant (even after \texttt{shake} linting), representing a development ergonomics layer where developers sacrifice logical minimality for usability.
 
-    \item \textit{Funnel topology and compilation bottlenecks.} The layer-width profile reveals a massive leaf layer resting on a deep, narrow foundation, creating recompilation cascades when the narrow ``waist'' is modified---a scalability challenge addressed by Lean's module system~\cite{baanen2025} and distributed builds~\cite{huch2024}.
+    \item \textit{Funnel topology and compilation bottlenecks.} The layer-width profile reveals a massive leaf layer resting on a deep, narrow foundation, creating recompilation cascades when the narrow ``waist'' is modified, a scalability challenge addressed by Lean's module system~\cite{baanen2025} and distributed builds~\cite{huch2024}.
 
     \item \textit{Multidimensional centrality.} In-degree, PageRank, and betweenness identify largely disjoint sets of important modules, suggesting that structural importance is irreducibly multidimensional (\S\ref{sec:sa-centrality}).
 \end{enumerate}
@@ -58,7 +58,7 @@ A detailed discussion is provided in Appendix~\ref{app:ns-analysis}.
 \subsubsection{Cross-Level Structural Comparison}
 
 \paragraph{Degree distributions.}
-All three graphs share heavy-tailed degree distributions best fit by lognormal rather than pure power-law models, confirming a universal ``few hubs, many peripheral nodes'' pattern across granularities. The key cross-level invariant is directional: in-degree is open-ended (a product property), while out-degree is bounded (a process property). This asymmetry intensifies at finer resolution---at the declaration level the standard deviation ratio exceeds $21{:}1$ (Tables~\ref{tab:degree-stats}, \ref{tab:thm-degree}, \ref{tab:ns-degree-stats}; Appendix~\ref{sec:sa-degree}).
+All three graphs share heavy-tailed degree distributions best fit by lognormal rather than pure power-law models, confirming a universal ``few hubs, many peripheral nodes'' pattern across granularities. The key cross-level invariant is directional: in-degree is open-ended (a product property), while out-degree is bounded (a process property). This asymmetry intensifies at finer resolution: at the declaration level the standard deviation ratio exceeds $21{:}1$ (Tables~\ref{tab:degree-stats}, \ref{tab:thm-degree}, \ref{tab:ns-degree-stats}; Appendix~\ref{sec:sa-degree}).
 
 \paragraph{DAG depth.}
 The depth ordering across levels reveals a striking inversion: $153$ layers (module), $84$ (declaration), $8$ (namespace after SCC condensation). Human-organized structure is the deepest; logical structure is the shallowest (Appendix~\ref{sec:dag-depth}). Depth is thus a feature of the production process, not of the mathematical product.
@@ -67,10 +67,10 @@ The depth ordering across levels reveals a striking inversion: $153$ layers (mod
 In-degree, PageRank, and betweenness identify largely disjoint sets of important nodes at every level, confirming that structural importance is irreducibly multidimensional. The divergence sharpens at finer granularity: at the declaration level, no node appears in all three top-$10$ lists (Appendix~\ref{sec:sa-centrality}).
 
 \paragraph{Community detection.}
-Louvain modularity decreases from $0.64$ (module) to $0.48$ (declaration) to $0.27$ (namespace), reflecting progressively denser cross-boundary connectivity. Community--namespace alignment follows a parallel decline (NMI from $0.42$ to $0.26$). Only \ns{CategoryTheory} resists this trend, achieving $97.4\%$ community concentration at the declaration level---a unique degree of disciplinary self-containment (Appendix~\ref{sec:sa-community}).
+Louvain modularity decreases from $0.64$ (module) to $0.48$ (declaration) to $0.27$ (namespace), reflecting progressively denser cross-boundary connectivity. Community--namespace alignment follows a parallel decline (NMI from $0.42$ to $0.26$). Only \ns{CategoryTheory} resists this trend, achieving $97.4\%$ community concentration at the declaration level, a unique degree of disciplinary self-containment (Appendix~\ref{sec:sa-community}).
 
 \paragraph{Robustness.}
-All three graphs show the classic hub-vulnerability signature---resilient to random failure, fragile under targeted attack---but severity varies: at $20\%$ targeted removal, connectivity drops to $58\%$ (module), $46\%$ (declaration), $21\%$ (namespace). The namespace graph's heightened fragility reflects the concentration of connectivity in a few infrastructure namespaces (Appendix~\ref{sec:sa-robustness}).
+All three graphs show the classic hub-vulnerability signature (resilient to random failure, fragile under targeted attack), but severity varies: at $20\%$ targeted removal, connectivity drops to $58\%$ (module), $46\%$ (declaration), $21\%$ (namespace). The namespace graph's heightened fragility reflects the concentration of connectivity in a few infrastructure namespaces (Appendix~\ref{sec:sa-robustness}).
 
 \subsection{Cross-Level Alignment}
 \label{sec:cross-level-summary}
@@ -78,7 +78,7 @@ All three graphs show the classic hub-vulnerability signature---resilient to ran
 \subsubsection{Module--Declaration Interaction}
 \label{sec:cohesion-main}
 
-In $G_{\mathrm{thm}}$, each module becomes a \emph{region}---a set of declaration-vertices sharing a common source file. For each module~$m$, we partition the incident edges into internal edges $E_{\mathrm{int}}(m)$ (both endpoints in~$m$) and external edges $E_{\mathrm{ext}}(m)$ (exactly one endpoint in~$m$). Figure~\ref{fig:module-region-app} illustrates this partition.
+In $G_{\mathrm{thm}}$, each module becomes a \emph{region}, a set of declaration-vertices sharing a common source file. For each module~$m$, we partition the incident edges into internal edges $E_{\mathrm{int}}(m)$ (both endpoints in~$m$) and external edges $E_{\mathrm{ext}}(m)$ (exactly one endpoint in~$m$). Figure~\ref{fig:module-region-app} illustrates this partition.
 
 \begin{definition}[Module cohesion]
 \label{def:cohesion}
@@ -100,4 +100,4 @@ A consistent ordering emerges across boundary types: namespace containment at de
 \subsubsection{Three Layers Combined}
 \label{sec:three-layers-main}
 
-Table~\ref{tab:three-layers-app} (Appendix~\ref{sec:three-layers}) assembles the cross-level measurements. Human organizational decisions---naming and filing---agree with each other (NMI~$= 0.71$) far more than either agrees with the logical structure of the dependency graph (NMI~$= 0.34$, cohesion~$0.107$, containment~$22.2\%$). The divergence is systematic, not accidental: it arises from the fundamental mismatch between the hierarchical nature of human organizational process and the cross-cutting nature of inherited mathematical structure.
+Table~\ref{tab:three-layers-app} (Appendix~\ref{sec:three-layers}) assembles the cross-level measurements. Human organizational decisions (naming and filing) agree with each other (NMI~$= 0.71$) far more than either agrees with the logical structure of the dependency graph (NMI~$= 0.34$, cohesion~$0.107$, containment~$22.2\%$). The divergence is systematic, not accidental: it arises from the fundamental mismatch between the hierarchical nature of human organizational process and the cross-cutting nature of inherited mathematical structure.

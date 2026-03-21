@@ -73,7 +73,7 @@ The \emph{Louvain algorithm}~\cite{blondel2008} is a greedy, hierarchical method
 \noindent
 The two phases alternate until modularity converges. The result is a hierarchical dendrogram of community merges; in practice, we use the partition at the level that maximizes~$Q$. The algorithm runs in $O(n \log n)$ time on sparse graphs, making it tractable for our largest graph ($308{,}054$ nodes, $8.4$M edges).
 
-To compare two partitions of the same vertex set---for example, a community assignment and a namespace labeling---we use two standard measures.
+To compare two partitions of the same vertex set (for example, a community assignment and a namespace labeling), we use two standard measures.
 
 \begin{definition}[Shannon Entropy~{\cite[Ch.~2]{cover1991}}]
 \label{def:shannon-entropy}

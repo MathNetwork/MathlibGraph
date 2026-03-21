@@ -6,7 +6,7 @@ This section defines two graph constructions that require data sources beyond a 
 \subsubsection{The File Co-Modification Graph}
 \label{sec:co-edit-graph}
 
-The module graph captures \emph{structural coupling} (explicit import dependencies), but software engineering research has long recognized a complementary form of coupling: \emph{logical coupling}, measured by co-modification frequency in version control~\cite{decan2019}. Two modules that are frequently modified together---even without a direct import relationship---likely share a hidden dependency that the import graph does not capture.
+The module graph captures \emph{structural coupling} (explicit import dependencies), but software engineering research has long recognized a complementary form of coupling: \emph{logical coupling}, measured by co-modification frequency in version control~\cite{decan2019}. Two modules that are frequently modified together, even without a direct import relationship, likely share a hidden dependency that the import graph does not capture.
 
 \begin{definition}[Co-modification graph]\label{def:co-edit-graph}
 Let $\{p_1, \ldots, p_R\}$ be the set of merged pull requests to \module{Mathlib} over a given time window. For each PR~$p_r$, let $\mathrm{files}(p_r) \subseteq \mathcal{M}$ be the set of modules modified. The \emph{co-modification graph} is the weighted undirected graph
@@ -75,14 +75,14 @@ Group.Defs $\leftrightarrow$ Nat.Order: 1}
   \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -2.0)
     {\textcolor{purple!70!black}{\rule{8pt}{2.5pt}} high weight ($w \ge 2$)};
 \end{tikzpicture}
-\caption{$G_{\mathrm{co}}$: edge weight = number of PRs co-modifying both modules. The \textcolor{red!60!black}{dashed edge} has no import in $G_{\mathrm{mod}}$---a hidden dependency.}
+\caption{$G_{\mathrm{co}}$: edge weight = number of PRs co-modifying both modules. The \textcolor{red!60!black}{dashed edge} has no import in $G_{\mathrm{mod}}$, indicating a hidden dependency.}
 \label{fig:co-edit-graph}
 \end{subfigure}
 \caption{Co-modification graph (Definition~\ref{def:co-edit-graph}). (a)~Three merged PRs and the files each touches. (b)~The resulting weighted undirected graph $G_{\mathrm{co}}$: \textcolor{blue!50!black}{solid} edges exist in both $G_{\mathrm{co}}$ and $G_{\mathrm{mod}}$ (structural + logical coupling); the \textcolor{red!60!black}{dashed} edge between \module{Algebra.Group.Defs} and \module{Data.Nat.Order} appears only in $G_{\mathrm{co}}$, revealing a hidden dependency invisible to the import graph. The \textcolor{purple!70!black}{thick} edge ($w=2$) indicates a stronger coupling. All names have the \module{Mathlib.}\ prefix removed.}
 \label{fig:co-modification}
 \end{figure}
 
-This graph captures traces of \emph{human organizational process} from a data source entirely independent of Lean's compilation model: the Git history. Comparing $G_{\mathrm{co}}$ with $G_{\mathrm{module}}$ tests whether structural coupling predicts logical coupling. Module pairs with high co-modification weight but no direct import edge reveal hidden dependencies---candidates for refactoring or explicit import addition. Conversely, direct import edges with zero co-modification suggest stable, well-encapsulated interfaces.
+This graph captures traces of \emph{human organizational process} from a data source entirely independent of Lean's compilation model: the Git history. Comparing $G_{\mathrm{co}}$ with $G_{\mathrm{module}}$ tests whether structural coupling predicts logical coupling. Module pairs with high co-modification weight but no direct import edge reveal hidden dependencies, candidates for refactoring or explicit import addition. Conversely, direct import edges with zero co-modification suggest stable, well-encapsulated interfaces.
 
 \subsubsection{Temporal Graph Sequences}
 \label{sec:temporal-graphs}
