@@ -5,7 +5,7 @@ Although the kernel deterministically enforces the validity of each theorem, the
 \begin{itemize}
 \item \emph{Synthesized edges} (Definition~\ref{def:synth-partition}). When a mathematician cites a lemma, the citation is visible on the page; when Lean resolves \texttt{a + 0 = a}, the compiler silently inserts references to \decl{HAdd}, \decl{OfNat}, and the relevant instances. In total, $74.2\%$ of all dependency edges are invisible in the source code.
 \begin{center}
-\begin{tikzpicture}[scale=1.2, every node/.style={transform shape},
+\begin{tikzpicture}[scale=0.95, every node/.style={transform shape},
   dot/.style={circle, fill=red!70!black, minimum size=5pt, inner sep=0pt},
   sdot/.style={circle, fill=gray!50, minimum size=5pt, inner sep=0pt},
   elink/.style={->, >=Stealth, red!70!black, semithick},
@@ -31,7 +31,7 @@ Although the kernel deterministically enforces the validity of each theorem, the
 
 \item \emph{Coercions} (Definition~\ref{def:coercion-graph}). A mathematician writes ``let $n \in \mathbb{R}$'' when $n$ is a natural number and the embedding is universally understood; Lean must register an explicit chain of coercion instances $\mathbb{N} \hookrightarrow \mathbb{Z} \hookrightarrow \mathbb{Q} \hookrightarrow \mathbb{R}$, each silently inserting dependency edges.
 \begin{center}
-\begin{tikzpicture}[scale=1.2, every node/.style={transform shape},
+\begin{tikzpicture}[scale=0.95, every node/.style={transform shape},
   tp/.style={circle, draw=red!60!black, fill=red!6,
     font=\small, text=red!70!black, inner sep=3pt, minimum size=20pt},
   coe/.style={->, >=Stealth, red!60!black, semithick},
@@ -48,7 +48,7 @@ Although the kernel deterministically enforces the validity of each theorem, the
 
 \item \emph{Structure inheritance} (Definition~\ref{def:extends-graph}). The \texttt{extends} mechanism encodes ``every group is a monoid'' not as a logical implication but as a field-packing directive that auto-generates forgetful instances, building the algebraic hierarchy's inheritance lattice.
 \begin{center}
-\begin{tikzpicture}[scale=1.1, every node/.style={transform shape},
+\begin{tikzpicture}[scale=0.9, every node/.style={transform shape},
   nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
     font=\scriptsize\ttfamily, text=red!70!black, inner sep=3pt, minimum height=15pt},
   lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
@@ -77,7 +77,7 @@ Although the kernel deterministically enforces the validity of each theorem, the
 
 \item \emph{Definitional height} (Definition~\ref{def:def-height}). In traditional mathematics, the number of definitions that must be unfolded to verify a statement is rarely considered; Lean's kernel tracks this depth, which governs compilation cost and constitutes a form of implicit coupling invisible in the dependency graph.
 \begin{center}
-\begin{tikzpicture}[scale=1.2, every node/.style={transform shape},
+\begin{tikzpicture}[scale=0.95, every node/.style={transform shape},
   def/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
     font=\scriptsize\ttfamily, text=red!70!black, inner sep=3pt, minimum height=15pt},
   unfold/.style={->, >=Stealth, red!60!black, semithick, dashed},
@@ -93,7 +93,7 @@ Although the kernel deterministically enforces the validity of each theorem, the
 
 \item \emph{Tactic usage} (Definition~\ref{def:tactic-usage}). Traditional proofs are written in natural language; Lean proofs are constructed via \emph{tactics}, automated proof strategies such as \texttt{simp}, \texttt{rw}, and \texttt{omega}, whose frequency and distribution vary across mathematical domains and encode the proof methodology favored by each subfield.
 \begin{center}
-\begin{tikzpicture}[scale=1.2, every node/.style={transform shape},
+\begin{tikzpicture}[scale=0.95, every node/.style={transform shape},
   dot/.style={circle, fill=red!70!black, minimum size=4pt, inner sep=0pt},
   tac/.style={rounded corners=2pt, draw=violet!60, fill=violet!8,
     font=\scriptsize\ttfamily, text=violet!70!black, inner sep=3pt, minimum height=14pt},
@@ -122,7 +122,7 @@ Although the kernel deterministically enforces the validity of each theorem, the
 
 \item \emph{Automatic deriving} (Definition~\ref{def:deriving-edges}). Properties like decidable equality or printable representation are meta-level common sense in traditional mathematics; Lean requires explicit instance witnesses, which \texttt{deriving} handlers generate automatically.
 \begin{center}
-\begin{tikzpicture}[scale=1.2, every node/.style={transform shape},
+\begin{tikzpicture}[scale=0.95, every node/.style={transform shape},
   human/.style={circle, fill=red!70!black, minimum size=4pt, inner sep=0pt},
   auto/.style={circle, fill=gray!40, minimum size=4pt, inner sep=0pt},
   humanedge/.style={->, >=Stealth, red!70!black, semithick},
