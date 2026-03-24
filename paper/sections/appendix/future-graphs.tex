@@ -33,10 +33,10 @@ An edge exists between $m_i$ and $m_j$ if $w_{\mathrm{co}}(m_i, m_j) \ge 1$.
 \hspace{1em}\textcolor{blue!60!black}{Algebra/Group/Defs.lean}\\
 \hspace{1em}\textcolor{blue!60!black}{Data/Nat/Order.lean}\\[8pt]
 \textnormal{\sffamily Co-modification counts:}\\[2pt]
-\hspace{1em}\textnormal{\sffamily\tiny%
+\hspace{1em}\textnormal{\sffamily\scriptsize%
 Nat.Defs $\leftrightarrow$ Int.Defs: 2 PRs,\quad
 Nat.Defs $\leftrightarrow$ Nat.Order: 1,}\\
-\hspace{1em}\textnormal{\sffamily\tiny%
+\hspace{1em}\textnormal{\sffamily\scriptsize%
 Int.Defs $\leftrightarrow$ Nat.Order: 1,\quad
 Group.Defs $\leftrightarrow$ Nat.Order: 1}
 \caption{Three PRs and the modules they touch. Pairs co-modified in multiple PRs get higher weight.}
@@ -47,32 +47,32 @@ Group.Defs $\leftrightarrow$ Nat.Order: 1}
 \centering
 \vspace{0pt}
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
+  every node/.style={font=\small, inner sep=2pt},
   mod/.style={rounded corners=2pt, draw=blue!50!black, fill=blue!6,
-    font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+    font=\small\ttfamily, text=blue!60!black, inner sep=4pt, minimum height=18pt},
   coedge/.style={-, blue!50!black, semithick},
   strongedge/.style={-, purple!70!black, very thick},
   hiddenedge/.style={-, red!60!black, semithick, dashed},
 ]
   % Nodes
-  \node[mod] (natd) at (0, 2.5) {Data.Nat.Defs};
-  \node[mod] (nato) at (3.8, 2.5) {Data.Nat.Order};
+  \node[mod] (natd) at (0, 2.8) {Data.Nat.Defs};
+  \node[mod] (nato) at (4.2, 2.8) {Data.Nat.Order};
   \node[mod] (intd) at (0, 0) {Data.Int.Defs};
-  \node[mod] (grpd) at (3.8, 0) {Algebra.Group.Defs};
+  \node[mod] (grpd) at (4.2, 0) {Algebra.Group.Defs};
   % Edges with weights
   % Strong edge: co-modified 2 times
-  \draw[strongedge] (natd) -- node[left, font=\tiny\sffamily, text=purple!70!black] {$w=2$} (intd);
+  \draw[strongedge] (natd) -- node[left, font=\small\sffamily, text=purple!70!black] {$w=2$} (intd);
   % Normal edges: co-modified 1 time, also in G_module
-  \draw[coedge] (natd) -- node[above, font=\tiny\sffamily, text=blue!50!black] {$w=1$} (nato);
-  \draw[coedge] (intd) -- node[below, font=\tiny\sffamily, text=blue!50!black, pos=0.55, yshift=-2pt, xshift=3pt] {$w=1$} (nato);
+  \draw[coedge] (natd) -- node[above, font=\small\sffamily, text=blue!50!black] {$w=1$} (nato);
+  \draw[coedge] (intd) -- node[below, font=\small\sffamily, text=blue!50!black, pos=0.55, yshift=-2pt, xshift=3pt] {$w=1$} (nato);
   % Hidden dependency: co-modified but NOT in G_module
-  \draw[hiddenedge] (grpd) -- node[right, font=\tiny\sffamily, text=red!60!black] {$w=1$} (nato);
+  \draw[hiddenedge] (grpd) -- node[right, font=\small\sffamily, text=red!60!black] {$w=1$} (nato);
   % Legend
-  \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -1.0)
+  \node[font=\small\sffamily, anchor=north west] at (-0.5, -1.2)
     {\textcolor{blue!50!black}{\rule{8pt}{1.5pt}} in $G_{\mathrm{co}} \cap G_{\mathrm{mod}}$};
-  \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -1.5)
+  \node[font=\small\sffamily, anchor=north west] at (-0.5, -1.8)
     {\textcolor{red!60!black}{- - -} in $G_{\mathrm{co}} \setminus G_{\mathrm{mod}}$ (hidden dep.)};
-  \node[font=\tiny\sffamily, anchor=north west] at (-0.5, -2.0)
+  \node[font=\small\sffamily, anchor=north west] at (-0.5, -2.4)
     {\textcolor{purple!70!black}{\rule{8pt}{2.5pt}} high weight ($w \ge 2$)};
 \end{tikzpicture}
 \caption{$G_{\mathrm{co}}$: edge weight = number of PRs co-modifying both modules. The \textcolor{red!60!black}{dashed edge} has no import in $G_{\mathrm{mod}}$, indicating a hidden dependency.}
@@ -106,13 +106,13 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
 \raggedright\scriptsize
 \textsf{\bfseries Timeline of snapshots}\\[6pt]
 \begin{tikzpicture}[
-  every node/.style={font=\tiny\sffamily},
+  every node/.style={font=\small\sffamily},
   dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
-  event/.style={font=\tiny\sffamily\itshape, text=red!60!black},
+  event/.style={font=\small\sffamily\itshape, text=red!60!black},
 ]
   % Timeline
   \draw[->, >=Stealth, gray!60, thick] (0, 0) -- (0, -5.2);
-  \node[font=\tiny\sffamily, gray!50, anchor=east] at (-0.15, 0) {$t$};
+  \node[font=\small\sffamily, gray!50, anchor=east] at (-0.15, 0) {$t$};
   % Snapshots
   \node[dot] (c1) at (0, -0.3) {};
   \node[anchor=west] at (0.2, -0.3) {$c_1$: Jan 2023};
@@ -137,14 +137,14 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
 \centering
 \vspace{0pt}
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
+  every node/.style={font=\small, inner sep=2pt},
   mod/.style={circle, fill=blue!60!black, minimum size=2.5pt, inner sep=0pt},
   edge/.style={-, blue!30!black, semithick, opacity=0.5},
   frame/.style={rounded corners=3pt, draw=gray!40, fill=gray!3, inner sep=4pt},
 ]
   % Graph at t=1 (small)
   \node[frame, minimum width=50pt, minimum height=40pt] (f1) at (0, -0.5) {};
-  \node[font=\tiny\sffamily, gray!60, above=0pt of f1] {$G^{(c_1)}$};
+  \node[font=\small\sffamily, gray!60, above=0pt of f1] {$G^{(c_1)}$};
   \node[mod] (a1) at (-0.4, -0.2) {};
   \node[mod] (b1) at (0.3, -0.1) {};
   \node[mod] (c1n) at (-0.1, -0.7) {};
@@ -153,10 +153,10 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
   \draw[edge] (b1) -- (c1n);
   \draw[edge] (c1n) -- (d1);
   % Growth indicators
-  \node[font=\tiny\sffamily, text=gray!50, below=2pt of f1] {$|\mathcal{D}|{=}50\text{k}$};
+  \node[font=\small\sffamily, text=gray!50, below=2pt of f1] {$|\mathcal{D}|{=}50\text{k}$};
   % Graph at t=3 (medium)
   \node[frame, minimum width=55pt, minimum height=45pt] (f3) at (2.8, -0.5) {};
-  \node[font=\tiny\sffamily, gray!60, above=0pt of f3] {$G^{(c_3)}$};
+  \node[font=\small\sffamily, gray!60, above=0pt of f3] {$G^{(c_3)}$};
   \node[mod] (a3) at (2.3, -0.1) {};
   \node[mod] (b3) at (3.0, 0.0) {};
   \node[mod] (c3n) at (2.5, -0.5) {};
@@ -169,10 +169,10 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
   \draw[edge] (c3n) -- (e3);
   \draw[edge] (d3) -- (e3);
   \draw[edge] (c3n) -- (f3n);
-  \node[font=\tiny\sffamily, text=gray!50, below=2pt of f3] {$|\mathcal{D}|{=}150\text{k}$};
+  \node[font=\small\sffamily, text=gray!50, below=2pt of f3] {$|\mathcal{D}|{=}150\text{k}$};
   % Graph at t=T (large, current)
   \node[frame, minimum width=62pt, minimum height=50pt, draw=orange!60!red] (fT) at (5.8, -0.5) {};
-  \node[font=\tiny\sffamily, orange!80!red, above=0pt of fT] {$G^{(c_T)}$};
+  \node[font=\small\sffamily, orange!80!red, above=0pt of fT] {$G^{(c_T)}$};
   \node[mod, fill=orange!80!red] (aT) at (5.3, 0.0) {};
   \node[mod, fill=orange!80!red] (bT) at (6.0, 0.1) {};
   \node[mod, fill=orange!80!red] (cT) at (5.5, -0.3) {};
@@ -190,12 +190,12 @@ Let $\{c_1, c_2, \ldots, c_T\}$ be a sequence of $T$ historical \module{Mathlib}
   \draw[-, orange!40!red, semithick, opacity=0.5] (hT) -- (fT2);
   \draw[-, orange!40!red, semithick, opacity=0.5] (cT) -- (hT);
   \draw[-, orange!40!red, semithick, opacity=0.5] (gT) -- (fT2);
-  \node[font=\tiny\sffamily, text=orange!80!red, below=2pt of fT] {$|\mathcal{D}|{=}318\text{k}$};
+  \node[font=\small\sffamily, text=orange!80!red, below=2pt of fT] {$|\mathcal{D}|{=}318\text{k}$};
   % Growth arrows (anchored to frame midpoints)
   \draw[->, >=Stealth, gray!40, thick] (f1.east) -- (f3.west);
   \draw[->, >=Stealth, gray!40, thick] (f3.east) -- (fT.west);
   % Tracked metrics below
-  \node[font=\tiny\sffamily, anchor=north west] at (-0.8, -2.0)
+  \node[font=\small\sffamily, anchor=north west] at (-0.8, -2.0)
     {Track: $|\mathcal{D}_t|$, edge density, community NMI, hub turnover, redundancy $r(G_{\mathrm{mod}}^{(t)})$};
 \end{tikzpicture}
 \caption{Graph snapshots growing over time; structural metrics tracked across the sequence detect events and trends.}

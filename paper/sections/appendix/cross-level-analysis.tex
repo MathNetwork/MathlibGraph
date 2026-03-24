@@ -136,39 +136,39 @@ where $\oplus$ denotes exclusive or. Figure~\ref{fig:module-region-app} illustra
     (0.2,4.7) -- (10.2,4.7) -- (11.4,5.09) -- (1.4,5.09) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0.2,4.7) -- (10.2,4.7) -- (10.2,4.57) -- (0.2,4.57) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
+  \node[font=\scriptsize\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
     {\textnormal{\module{Data.Nat.Defs}}};
   \node[dot] (sea) at (3.5,4.88) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
+  \node[font=\scriptsize\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
   \node[dot] (za)  at (7.5,4.88) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.6,4.88) {zero\_add};
+  \node[font=\scriptsize\ttfamily, red!70!black, anchor=west] at (7.6,4.88) {zero\_add};
 
   % ── Card 2 (middle): module Basic ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
     (0,2.5) -- (10.0,2.5) -- (11.2,2.89) -- (1.2,2.89) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0,2.5) -- (10.0,2.5) -- (10.0,2.37) -- (0,2.37) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
+  \node[font=\scriptsize\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
     {\textnormal{\module{Data.Nat.Basic}}};
   \node[dot] (ac)  at (3.3,2.68) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
+  \node[font=\scriptsize\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
   \node[dot] (alc) at (7.3,2.68) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
+  \node[font=\scriptsize\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
 
   % ── Card 1 (bottom, front): module Init.Prelude ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
     (1.0,0.15) -- (8.0,0.15) -- (8.9,0.46) -- (1.9,0.46) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (1.0,0.15) -- (8.0,0.15) -- (8.0,0.03) -- (1.0,0.03) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (8.2,0.09)
+  \node[font=\scriptsize\sffamily, blue!60!black, anchor=west] at (8.2,0.09)
     {\textnormal{\module{Init.Prelude}}};
   \node[dot] (er)  at (4.8,0.3) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
+  \node[font=\scriptsize\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
 
   % ── Namespace bracket (Data.Nat spans Cards 2–3) ──
   \draw[blue!50, semithick]
     (-0.2,2.37) -- (-0.5,2.37) -- (-0.5,5.09) -- (-0.2,5.09);
-  \node[font=\tiny\sffamily, blue!60!black, rotate=90, anchor=south]
+  \node[font=\scriptsize\sffamily, blue!60!black, rotate=90, anchor=south]
     at (-0.75,3.73) {namespace \textnormal{\ns{Data.Nat}}};
 
   % ── Module import dots & arrows (blue = $G_{\mathrm{module}}$) ──
@@ -310,26 +310,26 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   modbox/.style={draw=blue!50!black, fill=blue!6, rounded corners=3pt, semithick},
 ]
   % Module: Data.Nat.Defs (top)
-  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (defs) at (2.1,3.0) {};
-  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,3.7) {\module{Data.Nat.Defs}};
-  \node[dot] (sea) at (1.0,3.0) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
-  \node[dot] (za) at (3.2,3.0) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+  \node[modbox, minimum width=5.0cm, minimum height=1.2cm] (defs) at (2.3,3.2) {};
+  \node[font=\scriptsize\sffamily, text=blue!60!black] at (2.3,4.0) {\module{Data.Nat.Defs}};
+  \node[dot] (sea) at (1.0,3.2) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (1.0,3.1) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.6,3.2) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (3.6,3.1) {\decl{zero\_add}};
 
   % Module: Data.Nat.Basic (middle)
-  \node[modbox, minimum width=4.2cm, minimum height=1.0cm] (basic) at (2.1,1.2) {};
-  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,1.9) {\module{Data.Nat.Basic}};
+  \node[modbox, minimum width=5.0cm, minimum height=1.2cm] (basic) at (2.3,1.2) {};
+  \node[font=\scriptsize\sffamily, text=blue!60!black] at (2.3,2.0) {\module{Data.Nat.Basic}};
   \node[dot] (ac) at (1.0,1.2) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
-  \node[dot] (alc) at (3.2,1.2) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.6,1.2) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (3.6,1.1) {\decl{add\_left\_comm}};
 
   % Module: Init.Prelude (bottom)
-  \node[modbox, minimum width=2.4cm, minimum height=0.8cm] (init) at (2.1,-0.6) {};
-  \node[font=\tiny\sffamily, text=blue!60!black] at (2.1,0.0) {\module{Init.Prelude}};
-  \node[dot] (er) at (2.1,-0.6) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+  \node[modbox, minimum width=3.0cm, minimum height=1.0cm] (init) at (2.3,-0.7) {};
+  \node[font=\scriptsize\sffamily, text=blue!60!black] at (2.3,0.0) {\module{Init.Prelude}};
+  \node[dot] (er) at (2.3,-0.7) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (2.3,-0.8) {\decl{Eq.refl}};
 
   % Intra-module edge (solid)
   \draw[dep] (alc) -- (ac);
@@ -338,8 +338,8 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   \draw[depext] (sea) -- (ac);
   \draw[depext] (ac) -- (er);
   \draw[depext] (alc) to[out=-60,in=30] (er);
-  \draw[depext] (sea) to[out=-120,in=150] (er);
-  \draw[depext] (za) to[out=-90,in=45] (er);
+  \draw[depext] (sea) to[out=-110,in=150] (er);
+  \draw[depext] (za) to[out=-90,in=30] (er);
 \end{tikzpicture}
 \caption{Grouped by \textcolor{blue!60!black}{module}. Only $1$ of $6$ edges is intra-module (solid); $5$ are cross-module (dashed). Cohesion~$\approx 10.7\%$.}
 \label{fig:ns-vs-mod-module-cross}
@@ -355,26 +355,26 @@ The comparison reveals a consistent ordering: namespace containment at depth~$1$
   nsbox/.style={draw=green!50!black, fill=green!6, rounded corners=3pt, semithick},
 ]
   % Namespace: Nat (large box spanning both sets)
-  \node[nsbox, minimum width=4.6cm, minimum height=3.2cm] (nat) at (2.1,2.1) {};
-  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,3.9) {\ns{Nat}};
+  \node[nsbox, minimum width=5.4cm, minimum height=3.6cm] (nat) at (2.3,2.1) {};
+  \node[font=\scriptsize\sffamily, text=green!50!black] at (2.3,4.1) {\ns{Nat}};
 
   % Top row: formerly in Defs
-  \node[dot] (sea) at (1.0,3.0) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,2.9) {\decl{succ\_eq\_add\_one}};
-  \node[dot] (za) at (3.2,3.0) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,2.9) {\decl{zero\_add}};
+  \node[dot] (sea) at (1.0,3.2) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (1.0,3.1) {\decl{succ\_eq\_add\_one}};
+  \node[dot] (za) at (3.6,3.2) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (3.6,3.1) {\decl{zero\_add}};
 
   % Bottom row: formerly in Basic
   \node[dot] (ac) at (1.0,1.2) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
-  \node[dot] (alc) at (3.2,1.2) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (3.2,1.1) {\decl{add\_left\_comm}};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (1.0,1.1) {\decl{add\_comm}};
+  \node[dot] (alc) at (3.6,1.2) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (3.6,1.1) {\decl{add\_left\_comm}};
 
   % Namespace: Eq (bottom)
-  \node[nsbox, minimum width=2.4cm, minimum height=0.8cm] (eq) at (2.1,-0.6) {};
-  \node[font=\tiny\sffamily, text=green!50!black] at (2.1,0.0) {\ns{Eq}};
-  \node[dot] (er) at (2.1,-0.6) {};
-  \node[font=\tiny\ttfamily, red!70!black, below] at (2.1,-0.7) {\decl{Eq.refl}};
+  \node[nsbox, minimum width=3.0cm, minimum height=1.0cm] (eq) at (2.3,-0.7) {};
+  \node[font=\scriptsize\sffamily, text=green!50!black] at (2.3,0.0) {\ns{Eq}};
+  \node[dot] (er) at (2.3,-0.7) {};
+  \node[font=\scriptsize\ttfamily, red!70!black, below] at (2.3,-0.8) {\decl{Eq.refl}};
 
   % Intra-namespace edges (solid) — now includes cross-module edge!
   \draw[dep] (alc) -- (ac);
@@ -487,10 +487,10 @@ At one extreme, if each declaration occupied its own module, $G_{\mathrm{module}
 ]
   % Module A: d1, d2, d4
   \node[modbox, minimum width=1.6cm, minimum height=1.6cm] at (0,0.6) {};
-  \node[font=\tiny\sffamily, text=blue!60!black] at (0,1.65) {module $A$};
+  \node[font=\scriptsize\sffamily, text=blue!60!black] at (0,1.65) {module $A$};
   % Module B: d3, d5
   \node[modbox, minimum width=1.6cm, minimum height=1.6cm] at (2.8,0.6) {};
-  \node[font=\tiny\sffamily, text=blue!60!black] at (2.8,1.65) {module $B$};
+  \node[font=\scriptsize\sffamily, text=blue!60!black] at (2.8,1.65) {module $B$};
   % Intra-module edges
   \draw[dep] (0,0.05) -- (-0.35,1.0);
   \draw[dep] (0,0.05) -- (0.35,1.0);
@@ -585,10 +585,10 @@ At one extreme, if each declaration occupied its own namespace (flat naming: \ns
 ]
   % Namespace Nat (contains d1, d2, d4)
   \node[nsbox, minimum width=1.6cm, minimum height=1.6cm] at (0,0.6) {};
-  \node[font=\tiny\sffamily, text=green!50!black] at (0,1.65) {\ns{Nat}};
+  \node[font=\scriptsize\sffamily, text=green!50!black] at (0,1.65) {\ns{Nat}};
   % Namespace Nat.Prime (contains d3, d5)
   \node[nsbox, minimum width=1.6cm, minimum height=1.6cm] at (2.8,0.6) {};
-  \node[font=\tiny\sffamily, text=green!50!black] at (2.8,1.65) {\ns{Nat.Prime}};
+  \node[font=\scriptsize\sffamily, text=green!50!black] at (2.8,1.65) {\ns{Nat.Prime}};
   % Intra Nat edges (solid)
   \draw[dep] (0,0.05) -- (-0.35,1.0);
   \draw[dep] (0,0.05) -- (0.35,1.0);
