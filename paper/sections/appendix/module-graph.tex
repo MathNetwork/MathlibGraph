@@ -73,24 +73,24 @@ Its leaves are modules (source files); its internal nodes are shared prefixes of
 \begin{subfigure}[t]{0.52\textwidth}
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=2pt, text=blue!60!black},
-  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
   dep/.style={->, >=Stealth, thin, blue!60!black},
 ]
   \node[dot, label=above:{Mathlib}]              (root) at (1.8,0) {};
-  \node[dot, label=left:{Algebra}]               (alg)  at (0,-1.3) {};
-  \node[dot, label=right:{Data}]                 (dat)  at (3.6,-1.3) {};
-  \node[dot, label=left:{Algebra.Group}]         (grp)  at (0,-2.6) {};
-  \node[dot, label=right:{Data.Nat}]             (nat)  at (3.6,-2.6) {};
-  \node[dot, label=below:{Algebra.Group.Defs}]   (gd)   at (0,-3.9) {};
-  \node[dot, label=below:{Data.Nat.Notation}]    (nn)   at (3.6,-3.9) {};
+  \node[dot, label=left:{Algebra}]               (alg)  at (0,-1.5) {};
+  \node[dot, label=right:{Data}]                 (dat)  at (3.6,-1.5) {};
+  \node[dot, label=left:{Algebra.Group}]         (grp)  at (0,-3.0) {};
+  \node[dot, label=right:{Data.Nat}]             (nat)  at (3.6,-3.0) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]   (gd)   at (0,-4.5) {};
+  \node[dot, label=below:{Data.Nat.Notation}]    (nn)   at (3.6,-4.5) {};
   \draw[dep] (root) -- (alg);
   \draw[dep] (root) -- (dat);
   \draw[dep] (alg)  -- (grp);
   \draw[dep] (dat)  -- (nat);
   \draw[dep] (grp)  -- (gd);
   \draw[dep] (nat)  -- (nn);
-  \node[font=\scriptsize, text=gray] at (1.8,-1.3) {$\cdots$};
+  \node[font=\small, text=gray] at (1.8,-1.5) {$\cdots$};
 \end{tikzpicture}
 \caption{Module tree $T$: arrows point parent $\to$ child ($\in E_T$)}
 \label{fig:namespace-tree-app}
@@ -177,14 +177,14 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
 \vspace{0pt}
-\raggedright\scriptsize\ttfamily
+\raggedright\small\ttfamily
 \textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
 \textbf{public import} \textcolor{blue!60!black}{Init}%
-\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{re-exports Init's declarations}}\\[10pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{gray!60}{re-exports Init's declarations}}\\[10pt]
 \textsf{\itshape\normalfont\sffamily vs.}\\[10pt]
 \textsf{\bfseries\color{blue!60!black}Data/Nat/Notation.lean}\\[2pt]
 \textbf{import} \textcolor{blue!60!black}{Init}%
-\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{Init hidden from importers}}
+\hfill\textnormal{\sffamily\footnotesize\textcolor{gray!60}{Init hidden from importers}}
 \caption{\texttt{public import} re-exports; plain \texttt{import} keeps declarations private.}
 \label{fig:vis-source}
 \end{subfigure}%
@@ -192,40 +192,39 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
 \vspace{0pt}
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
-  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
+\begin{tikzpicture}[scale=1.25, every node/.style={transform shape, font=\footnotesize, inner sep=2pt},
+  dot/.style={circle, fill=blue!60!black, minimum size=5pt, inner sep=0pt},
   pub/.style={->, >=Stealth, blue!60!black, thick},
   priv/.style={->, >=Stealth, blue!60!black, thick, dashed},
 ]
   % Left: all public
-  \node[font=\tiny\sffamily\bfseries, blue!60!black] at (0.7, 3.8)
+  \node[font=\footnotesize\sffamily\bfseries, blue!60!black] at (0.7, 3.8)
     {$G_{\mathrm{mod}}^{\mathrm{pub}} = G_{\mathrm{mod}}$};
-  \fill[blue!6, rounded corners=3pt] (-0.2, -0.3) rectangle (1.6, 3.5);
-  \node[font=\tiny\sffamily\itshape, blue!40!black] at (0.7, -0.6)
+  \fill[blue!6, rounded corners=4pt] (-0.2, -0.3) rectangle (1.6, 3.5);
+  \node[font=\footnotesize\sffamily\itshape, blue!40!black] at (0.7, -0.6)
     {A sees \{B, C\}};
-  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:A}]
+  \node[dot, label={[font=\footnotesize\ttfamily, blue!60!black]right:A}]
     (a1) at (0.7, 3.0) {};
-  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:B}]
+  \node[dot, label={[font=\footnotesize\ttfamily, blue!60!black]right:B}]
     (b1) at (0.7, 1.5) {};
-  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:C}]
+  \node[dot, label={[font=\footnotesize\ttfamily, blue!60!black]right:C}]
     (c1) at (0.7, 0.0) {};
-  \draw[pub] (a1) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (b1);
-  \draw[pub] (b1) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (c1);
+  \draw[pub] (a1) -- node[left, font=\footnotesize\sffamily, text=blue!50!black] {pub} (b1);
+  \draw[pub] (b1) -- node[left, font=\footnotesize\sffamily, text=blue!50!black] {pub} (c1);
   % Right: private inner import
-  \node[font=\tiny\sffamily\bfseries, blue!60!black] at (3.7, 3.8)
+  \node[font=\footnotesize\sffamily\bfseries, blue!60!black] at (3.7, 3.8)
     {$G_{\mathrm{mod}}^{\mathrm{pub}} \subset G_{\mathrm{mod}}$};
-  \fill[blue!6, rounded corners=3pt] (2.8, 0.9) rectangle (4.6, 3.5);
-  \node[font=\tiny\sffamily\itshape, blue!40!black] at (3.7, -0.6)
+  \fill[blue!6, rounded corners=4pt] (2.8, 0.9) rectangle (4.6, 3.5);
+  \node[font=\footnotesize\sffamily\itshape, blue!40!black] at (3.7, -0.6)
     {A sees \{B\} only};
-  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:A}]
+  \node[dot, label={[font=\footnotesize\ttfamily, blue!60!black]right:A}]
     (a2) at (3.7, 3.0) {};
-  \node[dot, label={[font=\tiny\ttfamily, blue!60!black]right:B}]
+  \node[dot, label={[font=\footnotesize\ttfamily, blue!60!black]right:B}]
     (b2) at (3.7, 1.5) {};
-  \node[dot, fill=gray!40, label={[font=\tiny\ttfamily, gray!50]right:C}]
+  \node[dot, fill=gray!40, label={[font=\footnotesize\ttfamily, gray!50]right:C}]
     (c2) at (3.7, 0.0) {};
-  \draw[pub] (a2) -- node[left, font=\tiny\sffamily, text=blue!50!black] {pub} (b2);
-  \draw[priv] (b2) -- node[left, font=\tiny\sffamily, text=gray!50] {priv} (c2);
+  \draw[pub] (a2) -- node[left, font=\footnotesize\sffamily, text=blue!50!black] {pub} (b2);
+  \draw[priv] (b2) -- node[left, font=\footnotesize\sffamily, text=gray!50] {priv} (c2);
 \end{tikzpicture}
 \caption{Transitive visibility scope (blue shading) of module~A.}
 \label{fig:vis-graph}
@@ -235,9 +234,8 @@ The transitive closure of $G_{\mathrm{mod}}^{\mathrm{pub}}$ determines the actua
 \end{figure}
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[
-  every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
-  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+\begin{tikzpicture}[every node/.style={font=\small\ttfamily, inner sep=2pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
   dep/.style={->, >=Stealth, thin, blue!60!black},
 ]
   \node[dot, label=above:{Init}]                (d) at (0,0) {};
@@ -279,16 +277,15 @@ The \emph{redundancy rate} of $G_{\mathrm{module}}$ is the fraction of edges rem
 \begin{subfigure}[t]{0.42\textwidth}
 \centering
 \vspace{0pt}
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize\ttfamily, inner sep=1pt, text=blue!60!black},
-  dot/.style={circle, fill=blue!60!black, minimum size=3pt, inner sep=0pt},
+\begin{tikzpicture}[every node/.style={font=\small\ttfamily, inner sep=1pt, text=blue!60!black},
+  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
   dep/.style={->, >=Stealth, thin, blue!60!black},
   redundant/.style={->, >=Stealth, orange!80!red, dashed, thick},
 ]
   \node[dot, label=above:{Init}]                (d) at (0,0) {};
-  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.2,-1.2) {};
-  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.2,-1.2) {};
-  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-2.4) {};
+  \node[dot, label=left:{Data.Int.Notation}]    (b) at (-1.5,-1.5) {};
+  \node[dot, label=right:{Data.Nat.Notation}]   (c) at (1.5,-1.5) {};
+  \node[dot, label=below:{Algebra.Group.Defs}]  (a) at (0,-3) {};
 
   \draw[dep] (a) -- (b);
   \draw[dep] (a) -- (c);
@@ -343,27 +340,27 @@ maximized over all directed paths~$\gamma$ from a source to a sink. The modules 
 \begin{subfigure}[t]{0.42\textwidth}
 \centering
 \vspace{0pt}
-\raggedright\scriptsize\ttfamily
+\raggedright\small\ttfamily
 \textsf{\bfseries\color{blue!60!black}Algebra/Order/Group.lean}%
-\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[2pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{orange!80!red}{$w = 1$\,s}}\\[2pt]
 \textbf{import} \textcolor{blue!60!black}{Mathlib.Data.Nat.Defs}%
-\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\
+\hfill\textnormal{\sffamily\footnotesize\textcolor{gray!60}{$w = 2$\,s}}\\
 \textbf{import} \textcolor{blue!60!black}{Mathlib.Algebra.Group.Defs}%
-\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 6$\,s}}\\
+\hfill\textnormal{\sffamily\footnotesize\textcolor{orange!80!red}{$w = 6$\,s}}\\
 \textbf{import} \textcolor{blue!60!black}{Mathlib.Data.Int.Defs}%
-\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[8pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{gray!60}{$w = 2$\,s}}\\[8pt]
 \textsf{\bfseries\color{blue!60!black}Data/Nat/Defs.lean}%
-\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
 \textbf{import} \textcolor{blue!60!black}{Init}%
-\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
 \textsf{\bfseries\color{blue!60!black}Algebra/Group/Defs.lean}%
-\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 6$\,s}}\\[2pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{orange!80!red}{$w = 6$\,s}}\\[2pt]
 \textbf{import} \textcolor{blue!60!black}{Init}%
-\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{orange!80!red}{$w = 1$\,s}}\\[8pt]
 \textsf{\bfseries\color{blue!60!black}Data/Int/Defs.lean}%
-\hfill\textnormal{\sffamily\tiny\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
+\hfill\textnormal{\sffamily\footnotesize\textcolor{gray!60}{$w = 2$\,s}}\\[2pt]
 \textbf{import} \textcolor{blue!60!black}{Init}%
-\hfill\textnormal{\sffamily\tiny\textcolor{orange!80!red}{$w = 1$\,s}}
+\hfill\textnormal{\sffamily\footnotesize\textcolor{orange!80!red}{$w = 1$\,s}}
 \caption{Import structure with per-module compilation times. The \textcolor{orange!80!red}{critical path} passes through \module{Algebra.Group.Defs} ($w=6$\,s).}
 \label{fig:build-source}
 \end{subfigure}%
@@ -371,28 +368,20 @@ maximized over all directed paths~$\gamma$ from a source to a sink. The modules 
 \begin{subfigure}[t]{0.55\textwidth}
 \centering
 \vspace{0pt}
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize, inner sep=2pt},
-  mod/.style={rounded corners=2pt, draw=blue!50!black, fill=blue!6,
-    font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
-  critmod/.style={rounded corners=2pt, draw=orange!80!red, fill=orange!6,
-    line width=0.8pt, font=\tiny\ttfamily, text=blue!60!black, inner sep=3pt, minimum height=14pt},
+\begin{tikzpicture}[every node/.style={font=\footnotesize, inner sep=2pt},
+  dot/.style={circle, fill=blue!60!black, minimum size=4pt, inner sep=0pt},
+  critdot/.style={circle, fill=orange!80!red, minimum size=4pt, inner sep=0pt},
   edge/.style={->, >=Stealth, blue!50!black, semithick},
   critedge/.style={->, >=Stealth, orange!80!red, thick},
 ]
   % Source (top)
-  \node[critmod] (top) at (2.2, 4) {Algebra.Order.Group};
-  \node[font=\tiny\sffamily, text=orange!80!red, above=1pt of top] {$w = 1$\,s};
+  \node[critdot, label={[font=\footnotesize\sffamily, text=orange!80!red]right:{$w = 1$\,s}}] (top) at (2, 3.2) {};
   % Middle row
-  \node[mod] (nat) at (-0.3, 2) {Data.Nat.Defs};
-  \node[font=\tiny\sffamily, text=gray!60, above=1pt of nat] {$w = 2$\,s};
-  \node[critmod] (grp) at (2.2, 2) {Algebra.Group.Defs};
-  \node[font=\tiny\sffamily, text=orange!80!red, above=1pt of grp] {$w = 6$\,s};
-  \node[mod] (int) at (4.7, 2) {Data.Int.Defs};
-  \node[font=\tiny\sffamily, text=gray!60, above=1pt of int] {$w = 2$\,s};
+  \node[dot, label={[font=\footnotesize\sffamily, text=gray!60]left:{$w = 2$\,s}}] (nat) at (-0.3, 1.6) {};
+  \node[critdot, label={[font=\footnotesize\sffamily, text=orange!80!red]right:{$w = 6$\,s}}] (grp) at (2, 1.6) {};
+  \node[dot, label={[font=\footnotesize\sffamily, text=gray!60]right:{$w = 2$\,s}}] (int) at (4.3, 1.6) {};
   % Sink (bottom)
-  \node[critmod] (init) at (2.2, 0) {Init};
-  \node[font=\tiny\sffamily, text=orange!80!red, below=1pt of init] {$w = 1$\,s};
+  \node[critdot, label={[font=\footnotesize\sffamily, text=orange!80!red]right:{$w = 1$\,s}}] (init) at (2, 0) {};
   % Non-critical edges (blue)
   \draw[edge] (top) -- (nat);
   \draw[edge] (top) -- (int);
@@ -402,10 +391,10 @@ maximized over all directed paths~$\gamma$ from a source to a sink. The modules 
   \draw[critedge] (top) -- (grp);
   \draw[critedge] (grp) -- (init);
   % Annotations (below the graph)
-  \node[font=\tiny\sffamily, text=orange!80!red, anchor=west]
-    at (-0.3, -1.2) {$\gamma^*$: Order.Group $\to$ Group.Defs $\to$ Init};
-  \node[font=\tiny\sffamily, anchor=west]
-    at (-0.3, -1.8) {$W(\gamma^*) = 8$\,s\quad Sequential: $12$\,s\quad Speedup: $1.5\times$};
+  \node[font=\footnotesize\sffamily, text=orange!80!red, anchor=west]
+    at (-0.3, -0.9) {$\gamma^*$: Order.Group $\to$ Group.Defs $\to$ Init};
+  \node[font=\footnotesize\sffamily, anchor=west]
+    at (-0.3, -1.5) {$W(\gamma^*) = 8$\,s\quad Sequential: $12$\,s\quad Speedup: $1.5\times$};
 \end{tikzpicture}
 \caption{$G_{\mathrm{build}}$: the \textcolor{orange!80!red}{critical path} $\gamma^*$ determines the minimum build time.}
 \label{fig:build-graph}

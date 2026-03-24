@@ -90,34 +90,34 @@ We define a family of dependency graphs from \module{Mathlib} and analyze them a
     (0.2,4.7) -- (10.2,4.7) -- (11.4,5.09) -- (1.4,5.09) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0.2,4.7) -- (10.2,4.7) -- (10.2,4.57) -- (0.2,4.57) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
+  \node[font=\footnotesize\sffamily, blue!60!black, anchor=west] at (10.4,4.63)
     {\textnormal{\module{Data.Nat.Defs}}};
   \node[dot] (sea) at (3.5,4.88) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
+  \node[font=\footnotesize\ttfamily, red!70!black, anchor=west] at (3.6,4.88) {succ\_eq\_add\_one};
   \node[dot] (za)  at (7.5,4.88) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.6,4.88) {zero\_add};
+  \node[font=\footnotesize\ttfamily, red!70!black, anchor=west] at (7.6,4.88) {zero\_add};
 
   % ── Card 2 (middle): module Basic ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
     (0,2.5) -- (10.0,2.5) -- (11.2,2.89) -- (1.2,2.89) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (0,2.5) -- (10.0,2.5) -- (10.0,2.37) -- (0,2.37) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
+  \node[font=\footnotesize\sffamily, blue!60!black, anchor=west] at (10.2,2.43)
     {\textnormal{\module{Data.Nat.Basic}}};
   \node[dot] (ac)  at (3.3,2.68) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
+  \node[font=\footnotesize\ttfamily, red!70!black, anchor=east] at (3.2,2.68) {add\_comm};
   \node[dot] (alc) at (7.3,2.68) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
+  \node[font=\footnotesize\ttfamily, red!70!black, anchor=west] at (7.4,2.68) {add\_left\_comm};
 
   % ── Card 1 (bottom, front): module Init.Prelude ──
   \filldraw[fill=blue!8, draw=blue!50!black, semithick, line join=round]
     (1.0,0.15) -- (8.0,0.15) -- (8.9,0.46) -- (1.9,0.46) -- cycle;
   \filldraw[fill=blue!18, draw=blue!50!black, semithick, line join=round]
     (1.0,0.15) -- (8.0,0.15) -- (8.0,0.03) -- (1.0,0.03) -- cycle;
-  \node[font=\tiny\sffamily, blue!60!black, anchor=west] at (8.2,0.09)
+  \node[font=\footnotesize\sffamily, blue!60!black, anchor=west] at (8.2,0.09)
     {\textnormal{\module{Init.Prelude}}};
   \node[dot] (er)  at (4.8,0.3) {};
-  \node[font=\tiny\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
+  \node[font=\footnotesize\ttfamily, red!70!black, anchor=west] at (4.9,0.3) {Eq.refl};
 
 
   % ── Module import dots & arrows (blue = $G_{\mathrm{module}}$) ──

@@ -189,15 +189,15 @@ The \emph{statement dependency graph} is $G_S = (\mathcal{D}, E_S)$ where $E_S =
   spedge/.style={->, >=Stealth, violet, thick},
 ]
   % Row 1: length_append
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:length\_append}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]above:length\_append}]
     (la) at (2, 3.2) {};
   % Row 2: length_nil, length_cons
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:length\_nil}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]left:length\_nil}]
     (ln) at (0.3, 1.6) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]right:length\_cons}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]right:length\_cons}]
     (lc) at (3.7, 1.6) {};
   % Row 3: length (definition)
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:length}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]below:length}]
     (ll) at (2, 0) {};
   % P edges (proof-only): orange dashed
   \draw[pedge] (la) -- (ln);
@@ -256,9 +256,9 @@ Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations a
 \begin{tikzpicture}[
   scale=0.82, every node/.style={transform shape},
   nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
-    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+    font=\footnotesize\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
   lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
-    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+    font=\footnotesize\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
   edg/.style={->, >=Stealth, red!60!black, semithick},
 ]
   \node[nd] (cm) at (1.6, 4.5) {CommMonoid};
@@ -287,9 +287,9 @@ Let $\mathcal{C} \subset \mathcal{D}$ be the set of all typeclass declarations a
 \begin{tikzpicture}[
   scale=0.82, every node/.style={transform shape},
   nd/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
-    font=\tiny\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
+    font=\footnotesize\ttfamily, text=red!70!black, inner sep=2.5pt, minimum height=13pt},
   lf/.style={rounded corners=2pt, draw=teal!60!black, fill=teal!6,
-    font=\tiny\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
+    font=\footnotesize\ttfamily, text=teal!70!black, inner sep=2.5pt, minimum height=13pt},
   edg/.style={->, >=Stealth, red!60!black, semithick},
   extra/.style={->, >=Stealth, blue!60!black, thick},
 ]
@@ -357,19 +357,19 @@ Long coercion chains (paths of length $\ge 3$) degrade compilation performance; 
 \textnormal{\sffamily The elaborator silently chains coercions:}\\[3pt]
 \textbf{example} (n : \textcolor{teal}{$\mathbb{N}$}) :
   \textcolor{teal}{$\mathbb{R}$} := n\\
-\textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{1em}%
+\textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{1em}%
 --- inserts $\mathbb{N} \xrightarrow{\text{ofNat}}
   \mathbb{Z} \xrightarrow{\text{ofInt}}
   \mathbb{Q} \xrightarrow{\text{ofRat}} \mathbb{R}$}}\\[6pt]
 \textnormal{\sffamily Registered coercion instances:}\\[2pt]
 \hspace{1em}\textcolor{red!70!black}{Int.ofNat}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{N} \to \mathbb{Z}$}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}: $\mathbb{N} \to \mathbb{Z}$}}\\
 \hspace{1em}\textcolor{red!70!black}{Rat.ofInt}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{Z} \to \mathbb{Q}$}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}: $\mathbb{Z} \to \mathbb{Q}$}}\\
 \hspace{1em}\textcolor{red!70!black}{Real.ofRat}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{Q} \to \mathbb{R}$}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}: $\mathbb{Q} \to \mathbb{R}$}}\\
 \hspace{1em}\textcolor{red!70!black}{Complex.ofReal}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}: $\mathbb{R} \to \mathbb{C}$}}
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}: $\mathbb{R} \to \mathbb{C}$}}
 \caption{Source: a single coercion \texttt{n} $\to$ $\mathbb{R}$ triggers a chain of length~$3$.}
 \label{fig:coe-source}
 \end{subfigure}%
@@ -388,12 +388,12 @@ Long coercion chains (paths of length $\ge 3$) degrade compilation performance; 
   \node[tp] (Q) at (3.6, 0) {$\mathbb{Q}$};
   \node[tp] (R) at (5.4, 0) {$\mathbb{R}$};
   \node[tp] (C) at (7.2, 0) {$\mathbb{C}$};
-  \draw[coe] (N) -- node[above, font=\tiny\sffamily, text=gray!60] {ofNat} (Z);
-  \draw[coe] (Z) -- node[above, font=\tiny\sffamily, text=gray!60] {ofInt} (Q);
-  \draw[coe] (Q) -- node[above, font=\tiny\sffamily, text=gray!60] {ofRat} (R);
-  \draw[coe] (R) -- node[above, font=\tiny\sffamily, text=gray!60] {ofReal} (C);
+  \draw[coe] (N) -- node[above, font=\footnotesize\sffamily, text=gray!60] {ofNat} (Z);
+  \draw[coe] (Z) -- node[above, font=\footnotesize\sffamily, text=gray!60] {ofInt} (Q);
+  \draw[coe] (Q) -- node[above, font=\footnotesize\sffamily, text=gray!60] {ofRat} (R);
+  \draw[coe] (R) -- node[above, font=\footnotesize\sffamily, text=gray!60] {ofReal} (C);
   % Chain annotation
-  \node[font=\tiny\sffamily, text=gray!60] at (3.6, -0.7)
+  \node[font=\footnotesize\sffamily, text=gray!60] at (3.6, -0.7)
     {$\underbrace{\hspace{5.2cm}}_{\text{chain length} = 3}$};
 \end{tikzpicture}
 \caption{$G_{\mathrm{coe}}$: the number type coercion chain. Diameter~$= 4$.}
@@ -427,11 +427,11 @@ where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} dec
 \hspace{1em}: a + 0 = a := \textcolor{red!70!black}{AddMonoid.add\_zero} a\\[8pt]
 \textnormal{\sffamily Elaborated term references:}\\[2pt]
 \hspace{1em}\textcolor{red!70!black}{AddMonoid.add\_zero}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- explicit}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- explicit}}\\
 \hspace{1em}\textcolor{gray!50}{HAdd.hAdd}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{+}}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{+}}}\\
 \hspace{1em}\textcolor{gray!50}{OfNat.ofNat}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{0}}}
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \texttt{0}}}
 \caption{Source: only \decl{AddMonoid.add\_zero} is explicit; \texttt{+}~and~\texttt{0} trigger instance synthesis.}
 \label{fig:tc-source}
 \end{subfigure}%
@@ -448,19 +448,19 @@ where $\mathcal{S} \subset \mathcal{D}$ is the set of all \texttt{structure} dec
 ]
   % Background zones (drawn first, behind nodes)
   \fill[red!6, rounded corners=3pt] (-0.6, -0.5) rectangle (1.6, 1.0);
-  \node[font=\tiny\sffamily\itshape, red!40!black] at (0.5, 0.85) {math content};
+  \node[font=\footnotesize\sffamily\itshape, red!40!black] at (0.5, 0.85) {math content};
   \fill[gray!8, rounded corners=3pt] (1.9, -0.5) rectangle (5.0, 1.0);
-  \node[font=\tiny\sffamily\itshape, gray!50] at (3.45, 0.85) {language infrastructure};
+  \node[font=\footnotesize\sffamily\itshape, gray!50] at (3.45, 0.85) {language infrastructure};
   % Top node: the theorem
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]above:add\_zero}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]above:add\_zero}]
     (thm) at (2.3, 2.8) {};
   % Explicit dep (math content)
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:AddMonoid.add\_zero}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]below:AddMonoid.add\_zero}]
     (axiom) at (0.5, 0.2) {};
   % Synthesized deps (language infrastructure)
-  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:HAdd.hAdd}]
+  \node[sdot, label={[font=\footnotesize\ttfamily, gray!60]below:HAdd.hAdd}]
     (hadd) at (2.8, 0.2) {};
-  \node[sdot, label={[font=\tiny\ttfamily, gray!60]below:OfNat.ofNat}]
+  \node[sdot, label={[font=\footnotesize\ttfamily, gray!60]below:OfNat.ofNat}]
     (ofnat) at (4.3, 0.2) {};
   % Explicit edge (solid red)
   \draw[elink] (thm) -- (axiom);
@@ -535,9 +535,9 @@ Declarations with high~$\delta$ are brittle: changes to any definition along the
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize, inner sep=2pt},
   def/.style={rounded corners=2pt, draw=red!60!black, fill=red!6,
-    font=\tiny\ttfamily, text=red!70!black, inner sep=3pt, minimum height=14pt},
+    font=\footnotesize\ttfamily, text=red!70!black, inner sep=3pt, minimum height=14pt},
   unfold/.style={->, >=Stealth, red!60!black, semithick, dashed},
-  ht/.style={font=\tiny\sffamily\bfseries, text=blue!60!black},
+  ht/.style={font=\footnotesize\sffamily\bfseries, text=blue!60!black},
 ]
   \node[def] (pow) at (2.0, 3.6) {Nat.pow};
   \node[ht, right=3pt of pow] {$\delta = 3$};
@@ -546,10 +546,10 @@ Declarations with high~$\delta$ are brittle: changes to any definition along the
   \node[def] (add) at (2.0, 0.4) {Nat.add};
   \node[ht, right=3pt of add] {$\delta = 1$};
   % Unfolding arrows
-  \draw[unfold] (pow) -- node[left, font=\tiny\sffamily, text=gray!60] {unfolds} (mul);
-  \draw[unfold] (mul) -- node[left, font=\tiny\sffamily, text=gray!60] {unfolds} (add);
+  \draw[unfold] (pow) -- node[left, font=\footnotesize\sffamily, text=gray!60] {unfolds} (mul);
+  \draw[unfold] (mul) -- node[left, font=\footnotesize\sffamily, text=gray!60] {unfolds} (add);
   % Annotation
-  \node[font=\tiny\sffamily, text=gray!50, anchor=north west] at (-0.2, -0.3)
+  \node[font=\footnotesize\sffamily, text=gray!50, anchor=north west] at (-0.2, -0.3)
     {Higher $\delta$ = longer unfolding chain};
 \end{tikzpicture}
 \caption{Unfolding chain: $\delta$ increases with each layer.}
@@ -585,7 +585,7 @@ where each $t_i \in \mathcal{T}_{\mathrm{tac}}$ is a tactic name invoked in the 
 \textnormal{\sffamily Extracted tactic profile:}\\[2pt]
 \hspace{1em}\textnormal{$\tau(\text{mul\_div\_assoc}) = ($}\textcolor{violet}{rw}\textnormal{$)$}\\[2pt]
 \textnormal{\sffamily Premises from proof:}\\[2pt]
-\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!60}{%
+\hspace{1em}\textnormal{\sffamily\scriptsize\textcolor{gray!60}{%
 div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
 \caption{Source: a tactic-mode proof. The profile $\tau(d)$ records tactic names.}
 \label{fig:tactic-source}
@@ -598,33 +598,33 @@ div\_eq\_mul\_inv (2$\times$), mul\_assoc (1$\times$)}}
   every node/.style={font=\scriptsize, inner sep=2pt},
   dot/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
   tac/.style={rounded corners=2pt, draw=violet!60, fill=violet!8,
-    font=\tiny\ttfamily, text=violet!70!black, inner sep=3pt, minimum height=12pt},
+    font=\footnotesize\ttfamily, text=violet!70!black, inner sep=3pt, minimum height=12pt},
   dep/.style={->, >=Stealth, red!70!black, semithick},
 ]
   % The theorem node
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_div\_assoc}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]left:mul\_div\_assoc}]
     (thm) at (2.2, 3.2) {};
   % Tactic tag
   \node[tac, anchor=west] at (2.5, 3.2) {rw};
   % Premises
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:div\_eq\_mul\_inv}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]below:div\_eq\_mul\_inv}]
     (dm) at (1.0, 1.2) {};
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]below:mul\_assoc}]
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]below:mul\_assoc}]
     (ma) at (3.8, 1.2) {};
   % Edges
   \draw[dep] (thm) -- (dm);
   \draw[dep] (thm) -- (ma);
   % Frequency bar (mini)
-  \node[font=\tiny\sffamily, text=gray!60, anchor=north west] at (0.2, -0.1)
+  \node[font=\footnotesize\sffamily, text=gray!60, anchor=north west] at (0.2, -0.1)
     {Top tactics:};
   \fill[violet!30] (0.2, -0.65) rectangle (2.9, -0.45);
-  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.55)
+  \node[font=\footnotesize\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.55)
     {\texttt{rw}\hspace{4pt}16.9\%};
   \fill[violet!25] (0.2, -1.0) rectangle (2.4, -0.8);
-  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.9)
+  \node[font=\footnotesize\sffamily, text=violet!70!black, anchor=west] at (0.3, -0.9)
     {\texttt{simp}\hspace{4pt}11.2\%};
   \fill[violet!20] (0.2, -1.35) rectangle (2.3, -1.15);
-  \node[font=\tiny\sffamily, text=violet!70!black, anchor=west] at (0.3, -1.25)
+  \node[font=\footnotesize\sffamily, text=violet!70!black, anchor=west] at (0.3, -1.25)
     {\texttt{exact}\hspace{4pt}10.4\%};
 \end{tikzpicture}
 \caption{$G_{\mathrm{thm}}$ with \textcolor{violet!70!black}{tactic tags}; bottom: aggregate $\mathrm{freq}(t)$.}
@@ -644,7 +644,7 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
 
 \begin{figure}[!htb]
 \centering
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.50\textwidth}
 \centering
 \vspace{0pt}
 \raggedright\scriptsize\ttfamily
@@ -657,18 +657,18 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
 \hspace{1em}\textcolor{teal!70!black}{\phantom{\textbf{deriving}} DecidableEq, Hashable}\\[6pt]
 \textnormal{\sffamily Auto-generated declarations:}\\[2pt]
 \hspace{1em}\textcolor{gray!50}{instReprStained}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Repr} handler}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Repr} handler}}\\
 \hspace{1em}\textcolor{gray!50}{instInhabitedStained}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Inhabited} handler}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Inhabited} handler}}\\
 \hspace{1em}\textcolor{gray!50}{instDecidableEqStained}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{DecEq} handler}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- by \texttt{DecEq} handler}}\\
 \hspace{1em}\textcolor{gray!50}{instHashableStained}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Hashable} handler}}
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- by \texttt{Hashable} handler}}
 \caption{Source: \textcolor{teal!70!black}{\texttt{deriving}} auto-generates 4 instances.}
 \label{fig:auto-source}
 \end{subfigure}%
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.46\textwidth}
 \centering
 \vspace{0pt}
 \begin{tikzpicture}[
@@ -679,25 +679,25 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
   autoedge/.style={->, >=Stealth, gray!40, semithick, dashed},
 ]
   % Auto-generated instances (tool layer) — draw background first
-  \fill[gray!8, rounded corners=3pt] (-0.8, -1.6) rectangle (4.8, 0.6);
-  \node[font=\tiny\sffamily\itshape, gray!50] at (2.0, 0.4) {$E_{\mathrm{auto}}$: tool-generated};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instRepr}]
-    (r) at (0.0, -0.2) {};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instInhab.}]
-    (i) at (1.5, -0.2) {};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instDecEq}]
+  \fill[gray!8, rounded corners=3pt] (-0.5, -1.8) rectangle (5.0, 0.6);
+  \node[font=\footnotesize\sffamily\itshape, gray!50] at (2.2, 0.4) {$E_{\mathrm{auto}}$: tool-generated};
+  \node[auto, label={[font=\footnotesize\ttfamily, gray!50]below:instRepr}]
+    (r) at (0.2, -0.2) {};
+  \node[auto, label={[font=\footnotesize\ttfamily, gray!50]below:instInhab.}]
+    (i) at (1.7, -0.2) {};
+  \node[auto, label={[font=\footnotesize\ttfamily, gray!50]below:instDecEq}]
     (d) at (3.0, -0.2) {};
-  \node[auto, label={[font=\tiny\ttfamily, gray!50]below:instHash.}]
+  \node[auto, label={[font=\footnotesize\ttfamily, gray!50]below:instHash.}]
     (h) at (4.5, -0.2) {};
   % The inductive type (human-written)
-  \node[human, label={[font=\tiny\ttfamily, red!70!black]above:Stained}]
-    (st) at (2.0, 3.5) {};
-  \node[human, label={[font=\tiny\ttfamily, red!70!black]left:Stained.name}]
-    (sn) at (-0.2, 2.0) {};
-  \node[human, label={[font=\tiny\ttfamily, red!70!black]left:Stained.goal}]
-    (sg) at (1.2, 2.0) {};
-  \node[human, label={[font=\tiny\ttfamily, red!70!black]right:Stained.wildcard}]
-    (sw) at (4.2, 2.0) {};
+  \node[human, label={[font=\footnotesize\ttfamily, red!70!black]above:Stained}]
+    (st) at (2.2, 4.0) {};
+  \node[human, label={[font=\footnotesize\ttfamily, red!70!black]left:Stained.name}]
+    (sn) at (0.0, 2.2) {};
+  \node[human, label={[font=\footnotesize\ttfamily, red!70!black]below:Stained.goal}]
+    (sg) at (2.2, 2.2) {};
+  \node[human, label={[font=\footnotesize\ttfamily, red!70!black]right:Stained.wildcard}]
+    (sw) at (4.5, 2.2) {};
   % Auto edges (dashed gray) — draw before human edges so human edges render on top
   \draw[autoedge] (r) -- (st);
   \draw[autoedge] (i) -- (st);
@@ -721,65 +721,65 @@ Lean's \texttt{deriving} mechanism automatically generates typeclass instances (
 
 \begin{figure}[!htb]
 \centering
-\begin{subfigure}[t]{0.46\textwidth}
+\begin{subfigure}[t]{0.42\textwidth}
 \centering
 \vspace{0pt}
-\raggedright\scriptsize\ttfamily
+\raggedright\footnotesize\ttfamily
 @[simp] \textbf{theorem} \textcolor{red!70!black}{mul\_one}\\
-\hspace{1em}[Monoid $\alpha$] (a : $\alpha$) : a * 1 = a\\[6pt]
+\hspace{1em}[Monoid $\alpha$] (a : $\alpha$) : a * 1 = a\\[5pt]
 @[to\_additive] \textbf{theorem} \textcolor{red!70!black}{mul\_comm}\\
-\hspace{1em}[CommMonoid $\alpha$] (a b : $\alpha$) : a * b = b * a\\[4pt]
-\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!50}{%
-generates \decl{add\_comm} automatically}}\\[6pt]
+\hspace{1em}[CommMonoid $\alpha$] (a b : $\alpha$) : a * b = b * a\\[3pt]
+\hspace{1em}\textnormal{\sffamily\scriptsize\textcolor{gray!50}{%
+generates \decl{add\_comm} automatically}}\\[5pt]
 @[simp, ext] \textbf{theorem} \textcolor{red!70!black}{Prod.mk.eta}\\
-\hspace{1em}: (p.1, p.2) = p\\[10pt]
+\hspace{1em}: (p.1, p.2) = p\\[8pt]
 \textnormal{\sffamily Extracted metadata per node:}\\[2pt]
-\hspace{1em}\textnormal{\sffamily\tiny%
+\hspace{1em}\textnormal{\sffamily\scriptsize%
 $\alpha(d)$: attribute set \{simp, ext, \ldots\}}\\
-\hspace{1em}\textnormal{\sffamily\tiny%
+\hspace{1em}\textnormal{\sffamily\scriptsize%
 $\kappa(d)$: proof term size (Expr node count)}\\
-\hspace{1em}\textnormal{\sffamily\tiny%
+\hspace{1em}\textnormal{\sffamily\scriptsize%
 $\upsilon(d)$: universe polymorphism degree}
 \caption{Declarations with Lean attributes and the metadata extracted from each.}
 \label{fig:attr-source}
 \end{subfigure}%
 \hfill
-\begin{subfigure}[t]{0.50\textwidth}
+\begin{subfigure}[t]{0.55\textwidth}
 \centering
 \vspace{0pt}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize, inner sep=2pt},
   dot/.style={circle, fill=red!70!black, minimum size=4pt, inner sep=0pt},
   depedge/.style={->, >=Stealth, gray!50, semithick},
-  tag/.style={rounded corners=1.5pt, font=\tiny\sffamily, inner sep=1.5pt},
+  tag/.style={rounded corners=1.5pt, font=\footnotesize\sffamily, inner sep=1.5pt},
   simptag/.style={tag, fill=teal!15, text=teal!70!black, draw=teal!40},
   exttag/.style={tag, fill=violet!15, text=violet!70!black, draw=violet!40},
   toaddtag/.style={tag, fill=orange!15, text=orange!70!black, draw=orange!40},
   mirror/.style={<->, >=Stealth, orange!60!black, semithick, dashed},
-  meta/.style={font=\tiny\sffamily, text=gray!60},
+  meta/.style={font=\footnotesize\sffamily, text=gray!60},
 ]
   % Node: mul_one
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_one}]
-    (mo) at (0, 3.2) {};
-  \node[simptag, anchor=west] at (0.25, 3.2) {simp};
-  \node[meta, anchor=west] at (0.25, 2.8) {$\kappa=12$\enspace$\upsilon=1$};
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]left:mul\_one}]
+    (mo) at (0, 4.0) {};
+  \node[simptag, anchor=west] at (0.25, 4.0) {simp};
+  \node[meta, anchor=west] at (1.1, 4.0) {$\kappa=12$\enspace$\upsilon=1$};
   % Node: mul_comm
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:mul\_comm}]
-    (mc) at (0, 1.6) {};
-  \node[toaddtag, anchor=north] at (0, 1.1) {to\_additive};
-  \node[meta, anchor=west] at (0.25, 0.7) {$\kappa=34$\enspace$\upsilon=1$};
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]left:mul\_comm}]
+    (mc) at (0, 2.0) {};
+  \node[toaddtag, anchor=west] at (0.25, 1.45) {to\_additive};
+  \node[meta, anchor=west] at (1.8, 1.45) {$\kappa=34$\enspace$\upsilon=1$};
   % Node: add_comm (mirror)
-  \node[dot, fill=orange!50!red, label={[font=\tiny\ttfamily, orange!60!black]right:add\_comm}]
-    (ac) at (4.0, 1.6) {};
-  \node[meta, anchor=west] at (4.25, 1.2) {$\kappa=34$\enspace$\upsilon=1$};
+  \node[dot, fill=orange!50!red, label={[font=\footnotesize\ttfamily, orange!60!black]right:add\_comm}]
+    (ac) at (5.0, 2.0) {};
+  \node[meta, anchor=west] at (5.25, 1.45) {$\kappa=34$\enspace$\upsilon=1$};
   % Node: Prod.mk.eta
-  \node[dot, label={[font=\tiny\ttfamily, red!70!black]left:Prod.mk.eta}]
-    (pe) at (0, -0.4) {};
-  \node[simptag, anchor=west] at (0.25, -0.4) {simp};
-  \node[exttag, anchor=west] at (1.05, -0.4) {ext};
-  \node[meta, anchor=west] at (0.25, -0.85) {$\kappa=8$\enspace$\upsilon=2$};
+  \node[dot, label={[font=\footnotesize\ttfamily, red!70!black]left:Prod.mk.eta}]
+    (pe) at (0, 0) {};
+  \node[simptag, anchor=west] at (0.25, 0) {simp};
+  \node[exttag, anchor=west] at (1.05, 0) {ext};
+  \node[meta, anchor=west] at (1.75, 0) {$\kappa=8$\enspace$\upsilon=2$};
   % Mirror edge (to_additive)
-  \draw[mirror] (mc) -- node[above, font=\tiny\sffamily, text=orange!60!black] {$\sim_{\mathrm{add}}$} (ac);
+  \draw[mirror] (mc) -- node[above, font=\footnotesize\sffamily, text=orange!60!black] {$\sim_{\mathrm{add}}$} (ac);
   % Dependency edges (faint)
   \draw[depedge] (mo) -- (mc);
   \draw[depedge] (mc) -- (pe);
@@ -823,10 +823,10 @@ where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined
 \hspace{2em}\textnormal{$\langle$}fun \_ \textnormal{$\mapsto$} zero\_le\_one\textnormal{$\rangle$}\\[6pt]
 \textnormal{\sffamily Elaborated refs to \texttt{Pi.Defs}:}\\[2pt]
 \hspace{1em}\textcolor{red!70!black}{Pi.instOne}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \textcolor{teal}{One ($\forall$ i, R i)}}}\\
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \textcolor{teal}{One ($\forall$ i, R i)}}}\\
 \hspace{1em}\textcolor{red!70!black}{Pi.instZero}%
-  \textnormal{\sffamily\tiny\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \textcolor{teal}{Zero ($\forall$ i, R i)}}}\\[2pt]
-\hspace{1em}\textnormal{\sffamily\tiny\textcolor{gray!50}{(2 of ${\sim}50$ declarations used)}}
+  \textnormal{\sffamily\scriptsize\textcolor{gray!60}{\hspace{4pt}--- synth.\ for \textcolor{teal}{Zero ($\forall$ i, R i)}}}\\[2pt]
+\hspace{1em}\textnormal{\sffamily\scriptsize\textcolor{gray!50}{(2 of ${\sim}50$ declarations used)}}
 \caption{Source: typeclass synthesis references only \decl{Pi.instOne} and \decl{Pi.instZero} from the imported module.}
 \label{fig:util-source}
 \end{subfigure}%
@@ -834,40 +834,40 @@ where $\mathcal{D}_{m_j} \subset \mathcal{D}$ is the set of declarations defined
 \begin{subfigure}[t]{0.46\textwidth}
 \centering
 \vspace{0pt}
-\begin{tikzpicture}[
+\begin{tikzpicture}[scale=0.88, every node/.append style={transform shape},
   every node/.style={font=\scriptsize, inner sep=2pt},
   mod/.style={rounded corners=3pt, draw=blue!50!black, fill=blue!6,
-    font=\tiny\sffamily\bfseries, text=blue!60!black},
+    font=\footnotesize\sffamily\bfseries, text=blue!60!black},
   used/.style={circle, fill=red!70!black, minimum size=3.5pt, inner sep=0pt},
   unused/.style={circle, fill=gray!30, minimum size=3.5pt, inner sep=0pt},
   imp/.style={->, >=Stealth, blue!50!black, semithick},
   ref/.style={->, >=Stealth, red!70!black, semithick, densely dashed},
 ]
   % Module ZeroLEOne (left)
-  \node[mod, minimum height=1.4cm, minimum width=1.6cm] (mi) at (0, 1.0) {};
+  \node[mod, minimum height=1.4cm, minimum width=1.5cm] (mi) at (0, 1.0) {};
   \node[mod, draw=none, fill=none] at (0, 2.0) {ZeroLEOne};
-  \node[used, label={[font=\tiny\ttfamily, red!70!black, xshift=-2pt]left:instZLC}]
+  \node[used, label={[font=\footnotesize\ttfamily, red!70!black, xshift=-2pt]left:instZLC}]
     (zlc) at (0, 1.0) {};
 
   % Module Pi.Defs (right)
-  \node[mod, minimum height=3.6cm, minimum width=2.2cm] (mj) at (4.2, 0.4) {};
-  \node[mod, draw=none, fill=none] at (4.2, 2.5) {Notation.Pi.Defs};
+  \node[mod, minimum height=3.6cm, minimum width=2.0cm] (mj) at (3.8, 0.4) {};
+  \node[mod, draw=none, fill=none] at (3.8, 2.5) {Notation.Pi.Defs};
   % Used (red)
-  \node[used, label={[font=\tiny\ttfamily, red!70!black]right:instOne}]
-    (io) at (3.7, 1.6) {};
-  \node[used, label={[font=\tiny\ttfamily, red!70!black]right:instZero}]
-    (iz) at (3.7, 1.0) {};
+  \node[used, label={[font=\footnotesize\ttfamily, red!70!black]right:instOne}]
+    (io) at (3.35, 1.6) {};
+  \node[used, label={[font=\footnotesize\ttfamily, red!70!black]right:instZero}]
+    (iz) at (3.35, 1.0) {};
   % Unused (gray)
-  \node[unused, label={[font=\tiny\ttfamily, gray!50]right:instMul}]
-    at (3.7, 0.4) {};
-  \node[unused, label={[font=\tiny\ttfamily, gray!50]right:instInv}]
-    at (3.7, -0.2) {};
-  \node[unused, label={[font=\tiny\ttfamily, gray!50]right:prod}]
-    at (3.7, -0.8) {};
-  \node[font=\tiny\sffamily, gray!40] at (4.2, -1.3) {$\cdots$ 45+ more};
+  \node[unused, label={[font=\footnotesize\ttfamily, gray!50]right:instMul}]
+    at (3.35, 0.4) {};
+  \node[unused, label={[font=\footnotesize\ttfamily, gray!50]right:instInv}]
+    at (3.35, -0.2) {};
+  \node[unused, label={[font=\footnotesize\ttfamily, gray!50]right:prod}]
+    at (3.35, -0.8) {};
+  \node[font=\footnotesize\sffamily, gray!40] at (3.8, -1.3) {$\cdots$ 45+ more};
 
   % Import arrow
-  \draw[imp] (mi.east) -- node[above, font=\tiny\sffamily, text=blue!50!black] {import} (mj.west);
+  \draw[imp] (mi.east) -- node[above, font=\footnotesize\sffamily, text=blue!50!black] {import} (mj.west);
   % Reference arrows
   \draw[ref] (zlc) to[out=15, in=170] (io);
   \draw[ref] (zlc) to[out=-5, in=185] (iz);

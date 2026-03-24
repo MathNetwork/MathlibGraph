@@ -19,10 +19,12 @@ COLORS = {
 }
 
 # ── Unified font sizes (single source of truth) ─────────────────────
-TITLE_FS = 18       # axes / figure titles
-LABEL_FS = 16       # axis labels (xlabel, ylabel)
-TICK_FS = 14        # tick labels
-LEGEND_FS = 14      # legend text
+# Figures are typically placed in 0.32\textwidth subfigures (~5 cm),
+# so they shrink to ~40%.  Use large sizes so text stays readable.
+TITLE_FS = 22       # axes / figure titles
+LABEL_FS = 20       # axis labels (xlabel, ylabel)
+TICK_FS = 18        # tick labels
+LEGEND_FS = 18      # legend text
 ANNOT_FS = 11       # heatmap cell annotations
 
 # Larger sizes for heatmaps (bigger figures, scaled down more in LaTeX)
@@ -31,7 +33,7 @@ HEATMAP_LABEL_FS = 22
 HEATMAP_TICK_FS = 15
 
 # ── Standard figure sizes (width, height) in inches ──────────────────
-FIGSIZE_SINGLE = (6, 4)        # single-column / standalone
+FIGSIZE_SINGLE = (5, 3.8)      # single-column / standalone (compact for 0.32\textwidth)
 FIGSIZE_DOUBLE = (12, 5)       # double-column / two subplots side by side
 FIGSIZE_TRIPLE = (15, 4.5)     # three subplots side by side
 FIGSIZE_HEATMAP = (14, 10)     # heatmap (needs room for labels)
