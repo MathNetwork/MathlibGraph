@@ -1,15 +1,15 @@
-# The Network Structure of Mathlib: Software Engineering vs. Mathematical Dependencies
+# MathlibGraph
 
-Code and data for the paper by Xinze Li, Nanyun Peng, and Simone Severini.
+Code and data for the paper *The Network Structure of Mathlib: Software Engineering vs. Mathematical Dependencies* by Xinze Li, Nanyun Peng, and Simone Severini.
 
-We extract and analyze the dependency structure of Lean 4's [Mathlib](https://github.com/leanprover-community/mathlib4) (308,129 declarations, 8.4M edges) as a multi-layer network at the declaration, module, and namespace levels.
+We extract and analyze the dependency structure of Lean 4's [Mathlib](https://github.com/leanprover-community/mathlib4) (308,129 declarations, 8,436,366 edges) as a multi-layer network at the declaration, module, and namespace levels.
 
 ## Dataset
 
 **HuggingFace**: [MathNetwork/MathlibGraph](https://huggingface.co/datasets/MathNetwork/MathlibGraph)
 
 Extracted from Mathlib commit [`534cf0b`](https://github.com/leanprover-community/mathlib4/commit/534cf0b) (2 Feb 2026). Contains:
-- `mathlib_nodes.csv` — 317,655 declarations with metadata (kind, module, namespace, docstring, etc.)
+- `mathlib_nodes.csv` — 308,129 declarations with metadata (kind, module, namespace, docstring, etc.)
 - `mathlib_edges.csv` — 8,436,366 dependency edges with `is_explicit` flag (25.8% explicit, 74.2% compiler-inserted)
 
 ## Repository Structure
