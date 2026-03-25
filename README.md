@@ -1,6 +1,12 @@
-# MathlibGraph
+<div align="center">
 
-Code and data for the paper *The Network Structure of Mathlib: Software Engineering vs. Mathematical Dependencies* by Xinze Li, Nanyun Peng, and Simone Severini.
+# The Network Structure of Mathlib:<br>Software Engineering vs. Mathematical Dependencies
+
+**Xinze Li** &nbsp;&middot;&nbsp; **Nanyun Peng** &nbsp;&middot;&nbsp; **Simone Severini**
+
+University of Toronto &nbsp;&middot;&nbsp; UCLA / Google Cloud &nbsp;&middot;&nbsp; UCL / Google Cloud
+
+</div>
 
 We extract and analyze the dependency structure of Lean 4's [Mathlib](https://github.com/leanprover-community/mathlib4) (308,129 declarations, 8,436,366 edges) as a multi-layer network at the declaration, module, and namespace levels.
 
