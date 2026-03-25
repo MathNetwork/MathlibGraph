@@ -1,36 +1,32 @@
-# MathlibGraph
+# The Network Structure of Mathlib: Software Engineering vs. Mathematical Dependencies
 
-> Network-theoretic analysis of the dependency structure of formalized mathematics.
+Code and data for the paper by Xinze Li, Nanyun Peng, and Simone Severini.
 
-This repository contains the research paper and analysis code for studying Mathlib (the mathematical library for Lean 4) as a multi-layer dependency network — comprising the module import graph, the declaration dependency graph, and namespace-level aggregations.
-
-## Repository Structure
-
-```
-MathlibGraph/
-├── paper/                         # LaTeX paper
-│   ├── main.tex                   # Entry point
-│   ├── sections/                  # Paper sections
-│   └── figures/                   # Generated figures (PDF)
-├── src/                           # Analysis code
-│   ├── analysis/                  # Analysis modules
-│   │   ├── import_graph.py        # Module import graph analysis
-│   │   └── import_graph_utils.py  # Utility functions
-│   ├── parser/                    # Data extraction
-│   │   ├── from_lean4export.py    # NDJSON → nodes.csv
-│   │   ├── from_premises.py       # premises → edges.csv
-│   │   └── merge.py               # Validation & statistics
-│   ├── tests/                     # Tests
-│   └── output/                    # Analysis output (JSON)
-└── docs/                          # Documentation site (Nextra)
-```
+We extract and analyze the dependency structure of Lean 4's [Mathlib](https://github.com/leanprover-community/mathlib4) (308,129 declarations, 8.4M edges) as a multi-layer network at the declaration, module, and namespace levels.
 
 ## Dataset
 
 **HuggingFace**: [MathNetwork/MathlibGraph](https://huggingface.co/datasets/MathNetwork/MathlibGraph)
 
-Extracted from Mathlib commit [`534cf0b`](https://github.com/leanprover-community/mathlib4/commit/534cf0b) (2 Feb 2026).
+Extracted from Mathlib commit [`534cf0b`](https://github.com/leanprover-community/mathlib4/commit/534cf0b) (2 Feb 2026). Contains:
+- `mathlib_nodes.csv` — 317,655 declarations with metadata (kind, module, namespace, docstring, etc.)
+- `mathlib_edges.csv` — 8,436,366 dependency edges with `is_explicit` flag (25.8% explicit, 74.2% compiler-inserted)
+
+## Repository Structure
+
+```
+├── paper/              # LaTeX source
+│   ├── main.tex
+│   ├── sections/       # Main + appendix sections
+│   └── figures/        # Generated figures (PDF)
+├── src/
+│   ├── parser/         # Data extraction pipeline (Lean 4 → CSV)
+│   ├── analysis/       # Network analysis (degree, centrality, community, cascades)
+│   ├── plots/          # Figure generation
+│   └── main.py         # Full analysis pipeline
+└── data/               # Raw intermediate data (NDJSON)
+```
 
 ## License
 
-Apache License 2.0
+[MIT License](LICENSE)
