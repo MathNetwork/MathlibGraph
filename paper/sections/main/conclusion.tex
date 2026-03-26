@@ -47,7 +47,7 @@ Table~\ref{tab:summary} collects the key quantitative findings. Rather than reca
 
 \label{sec:summary}
 \label{sec:interplay} 
-The central claim of this paper is that the network structure of a formal mathematical library records not only the inherited mathematical structure, but also the human organizational process. Our data substantiate this claim by identifying three distinct process traces embedded within the product, corresponding to the findings of \S\ref{sec:contribution}:
+Our data identify three distinct process traces embedded within the product, corresponding to the findings of \S\ref{sec:contribution}:
 
 \begin{enumerate}
 \item At every granularity level, naming conventions and dependency-based community structures diverge. Contributors impose a coarser taxonomy than the dependency graph logically warrants, trading structural precision for human navigability. The cross-file declaration dependency graph contains $9.1\times$ more edges than the module import graph that abstracts it (\S\ref{sec:import_vs_declaration}). Furthermore, $92.2\%$ of cross-file declaration dependencies are reached through transitive import chains rather than direct imports. An additional asymmetry separates product from process: in-degree is heavy-tailed and open-ended because mathematical content dictates how widely a result is reused, whereas out-degree remains bounded because human cognitive complexity limits the number of premises a single proof can practically invoke.
